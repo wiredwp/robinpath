@@ -1,0 +1,3067 @@
+/**
+ * RobinPath Interpreter
+ * 
+ * See README.md for full documentation and usage examples.
+ */
+
+// RobinPath Interpreter Implementation
+
+// Module adapter interface
+export interface ModuleAdapter {
+    name: string;
+    functions: Record<string, BuiltinHandler>;
+    functionMetadata: Record<string, FunctionMetadata>;
+    moduleMetadata: ModuleMetadata;
+}
+
+import JSON5 from 'json5';
+
+// Import core modules
+import MathModule from './modules/Math';
+import StringModule from './modules/String';
+import JsonModule from './modules/Json';
+import TimeModule from './modules/Time';
+import RandomModule from './modules/Random';
+import ArrayModule from './modules/Array';
+import TestModule from './modules/Test';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+type Value = string | number | boolean | null | object;
+
+interface Environment {
+    variables: Map<string, Value>;
+    functions: Map<string, DefineFunction>;
+    builtins: Map<string, BuiltinHandler>;
+    metadata: Map<string, FunctionMetadata>;
+    moduleMetadata: Map<string, ModuleMetadata>;
+    currentModule: string | null; // Current module context set by "use" command
+}
+
+interface Frame {
+    locals: Map<string, Value>;
+    lastValue: Value;
+}
+
+export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
+
+// ============================================================================
+// Metadata Types
+// ============================================================================
+
+export type DataType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' | 'any';
+
+export type FormInputType = 
+    | 'text' 
+    | 'number' 
+    | 'textarea' 
+    | 'select' 
+    | 'checkbox' 
+    | 'radio' 
+    | 'date' 
+    | 'datetime' 
+    | 'file' 
+    | 'json'
+    | 'code';
+
+export interface ParameterMetadata {
+    name: string;
+    dataType: DataType;
+    description: string;
+    formInputType: FormInputType;
+    required?: boolean;
+    defaultValue?: Value;
+}
+
+export interface FunctionMetadata {
+    description: string;
+    parameters: ParameterMetadata[];
+    returnType: DataType;
+    returnDescription: string;
+    example?: string; // Optional example usage
+}
+
+export interface ModuleMetadata {
+    description: string;
+    methods: string[];
+}
+
+type Arg = 
+    | { type: 'subexpr'; code: string }   // $( ... ) inline subexpression
+    | { type: 'var'; name: string }
+    | { type: 'lastValue' }
+    | { type: 'literal'; value: Value }
+    | { type: 'number'; value: number }
+    | { type: 'string'; value: string };
+
+interface CommandCall {
+    type: 'command';
+    name: string;
+    args: Arg[];
+}
+
+interface Assignment {
+    type: 'assignment';
+    targetName: string;
+    command?: CommandCall;
+    literalValue?: Value;
+    isLastValue?: boolean; // True if assignment is from $ (last value)
+}
+
+interface ShorthandAssignment {
+    type: 'shorthand';
+    targetName: string;
+}
+
+interface InlineIf {
+    type: 'inlineIf';
+    conditionExpr: string;
+    command: Statement;
+}
+
+interface IfBlock {
+    type: 'ifBlock';
+    conditionExpr: string;
+    thenBranch: Statement[];
+    elseBranch?: Statement[];
+    elseifBranches?: Array<{ condition: string; body: Statement[] }>;
+}
+
+interface IfTrue {
+    type: 'ifTrue';
+    command: Statement;
+}
+
+interface IfFalse {
+    type: 'ifFalse';
+    command: Statement;
+}
+
+interface DefineFunction {
+    type: 'define';
+    name: string;
+    body: Statement[];
+}
+
+interface ForLoop {
+    type: 'forLoop';
+    varName: string;
+    iterableExpr: string;
+    body: Statement[];
+}
+
+type Statement = 
+    | CommandCall 
+    | Assignment 
+    | ShorthandAssignment 
+    | InlineIf 
+    | IfBlock 
+    | IfTrue 
+    | IfFalse 
+    | DefineFunction
+    | ForLoop;
+
+// ============================================================================
+// Logical Line Splitter
+// ============================================================================
+
+/**
+ * Split a script into logical lines, respecting strings and $() subexpressions.
+ * Treats ; and \n as line separators, but only at the top level (not inside strings or $()).
+ */
+function splitIntoLogicalLines(script: string): string[] {
+    const lines: string[] = [];
+    let current = '';
+    let inString: false | '"' | "'" | '`' = false;
+    let subexprDepth = 0;
+    let i = 0;
+
+    while (i < script.length) {
+        const char = script[i];
+        const nextChar = i + 1 < script.length ? script[i + 1] : '';
+        const prevChar = i > 0 ? script[i - 1] : '';
+
+        // Handle strings
+        if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+            if (!inString) {
+                // Start of string
+                inString = char;
+                current += char;
+            } else if (char === inString) {
+                // End of string
+                inString = false;
+                current += char;
+            } else {
+                // Different quote type inside string
+                current += char;
+            }
+            i++;
+            continue;
+        }
+
+        if (inString) {
+            // Inside string - just copy characters
+            current += char;
+            i++;
+            continue;
+        }
+
+        // Handle $() subexpressions
+        if (char === '$' && nextChar === '(') {
+            subexprDepth++;
+            current += char;
+            i++;
+            continue;
+        }
+
+        if (char === ')' && subexprDepth > 0) {
+            subexprDepth--;
+            current += char;
+            i++;
+            continue;
+        }
+
+        // Handle line separators (only at top level, not inside $())
+        if (char === '\n' || (char === ';' && subexprDepth === 0)) {
+            // End of logical line
+            if (current.trim()) {
+                lines.push(current.trim());
+            }
+            current = '';
+            i++;
+            continue;
+        }
+
+        // Regular character
+        current += char;
+        i++;
+    }
+
+    // Push remaining content
+    if (current.trim()) {
+        lines.push(current.trim());
+    }
+
+    return lines.filter(line => line.length > 0);
+}
+
+// ============================================================================
+// Lexer
+// ============================================================================
+
+class Lexer {
+    static tokenize(line: string): string[] {
+        const tokens: string[] = [];
+        let current = '';
+        let inString = false;
+        let stringChar = '';
+        let i = 0;
+
+        while (i < line.length) {
+            const char = line[i];
+            const nextChar = i + 1 < line.length ? line[i + 1] : '';
+
+            // Handle comments
+            if (!inString && char === '#') {
+                break; // Rest of line is comment
+            }
+
+            // Handle strings (", ', and `)
+            if ((char === '"' || char === "'" || char === '`') && (i === 0 || line[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = char;
+                    if (current.trim()) {
+                        tokens.push(current.trim());
+                        current = '';
+                    }
+                    current += char;
+                } else if (char === stringChar) {
+                    inString = false;
+                    current += char;
+                    tokens.push(current);
+                    current = '';
+                    stringChar = '';
+                } else {
+                    current += char;
+                }
+                i++;
+                continue;
+            }
+
+            if (inString) {
+                current += char;
+                i++;
+                continue;
+            }
+
+            // Handle operators (==, !=, >=, <=, &&, ||)
+            if (char === '=' && nextChar === '=') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('==');
+                i += 2;
+                continue;
+            }
+            if (char === '!' && nextChar === '=') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('!=');
+                i += 2;
+                continue;
+            }
+            if (char === '>' && nextChar === '=') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('>=');
+                i += 2;
+                continue;
+            }
+            if (char === '<' && nextChar === '=') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('<=');
+                i += 2;
+                continue;
+            }
+            if (char === '&' && nextChar === '&') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('&&');
+                i += 2;
+                continue;
+            }
+            if (char === '|' && nextChar === '|') {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push('||');
+                i += 2;
+                continue;
+            }
+
+            // Handle single character operators and delimiters
+            if (['=', '>', '<', '!', '(', ')'].includes(char)) {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle whitespace
+            if (/\s/.test(char)) {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                i++;
+                continue;
+            }
+
+            current += char;
+            i++;
+        }
+
+        if (current.trim()) {
+            tokens.push(current.trim());
+        }
+
+        return tokens.filter(t => t.length > 0);
+    }
+
+    static parseString(token: string): string {
+        if ((token.startsWith('"') && token.endsWith('"')) || 
+            (token.startsWith("'") && token.endsWith("'")) ||
+            (token.startsWith('`') && token.endsWith('`'))) {
+            const quote = token[0];
+            const unquoted = token.slice(1, -1);
+            // Handle escape sequences based on quote type
+            if (quote === '"') {
+                return unquoted.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+            } else if (quote === "'") {
+                return unquoted.replace(/\\'/g, "'").replace(/\\\\/g, '\\');
+            } else if (quote === '`') {
+                return unquoted.replace(/\\`/g, '`').replace(/\\\\/g, '\\');
+            }
+        }
+        return token;
+    }
+
+    static isString(token: string): boolean {
+        return (token.startsWith('"') && token.endsWith('"')) || 
+               (token.startsWith("'") && token.endsWith("'")) ||
+               (token.startsWith('`') && token.endsWith('`'));
+    }
+
+    static isNumber(token: string): boolean {
+        return /^-?\d+$/.test(token);
+    }
+
+    static isVariable(token: string): boolean {
+        return /^\$[A-Za-z_][A-Za-z0-9_]*$/.test(token);
+    }
+
+    static isLastValue(token: string): boolean {
+        return token === '$';
+    }
+
+    static isPositionalParam(token: string): boolean {
+        return /^\$[0-9]+$/.test(token);
+    }
+}
+
+// ============================================================================
+// Parser
+// ============================================================================
+
+class Parser {
+    private lines: string[];
+    private currentLine: number = 0;
+
+    constructor(lines: string[]) {
+        this.lines = lines;
+    }
+
+    private getLineContent(lineNumber: number): string {
+        if (lineNumber >= 0 && lineNumber < this.lines.length) {
+            return this.lines[lineNumber].trim();
+        }
+        return '';
+    }
+
+    private createError(message: string, lineNumber: number): Error {
+        const lineContent = this.getLineContent(lineNumber);
+        const lineInfo = lineContent ? `\n  Line content: ${lineContent}` : '';
+        return new Error(`Line ${lineNumber + 1}: ${message}${lineInfo}`);
+    }
+
+    parse(): Statement[] {
+        const statements: Statement[] = [];
+        
+        while (this.currentLine < this.lines.length) {
+            const line = this.lines[this.currentLine].trim();
+            
+            // Skip empty lines and comments
+            if (!line || line.startsWith('#')) {
+                this.currentLine++;
+                continue;
+            }
+
+            const stmt = this.parseStatement();
+            if (stmt) {
+                statements.push(stmt);
+            }
+        }
+
+        return statements;
+    }
+
+    private parseStatement(): Statement | null {
+        if (this.currentLine >= this.lines.length) return null;
+
+        const line = this.lines[this.currentLine].trim();
+        if (!line || line.startsWith('#')) {
+            this.currentLine++;
+            return null;
+        }
+
+        const tokens = Lexer.tokenize(line);
+
+        if (tokens.length === 0) {
+            this.currentLine++;
+            return null;
+        }
+
+        // Check for define block
+        if (tokens[0] === 'def') {
+            return this.parseDefine();
+        }
+
+        // Check for for loop
+        if (tokens[0] === 'for') {
+            return this.parseForLoop();
+        }
+
+        // Check for block if
+        if (tokens[0] === 'if' && !tokens.includes('then')) {
+            return this.parseIfBlock();
+        }
+
+        // Check for inline if
+        if (tokens[0] === 'if' && tokens.includes('then')) {
+            return this.parseInlineIf();
+        }
+
+        // Check for iftrue/iffalse
+        if (tokens[0] === 'iftrue') {
+            this.currentLine++;
+            const restTokens = tokens.slice(1);
+            const command = this.parseCommandFromTokens(restTokens);
+            return { type: 'ifTrue', command };
+        }
+
+        if (tokens[0] === 'iffalse') {
+            this.currentLine++;
+            const restTokens = tokens.slice(1);
+            const command = this.parseCommandFromTokens(restTokens);
+            return { type: 'ifFalse', command };
+        }
+
+        // Check for assignment
+        if (tokens.length >= 3 && Lexer.isVariable(tokens[0]) && tokens[1] === '=') {
+            const targetName = tokens[0].slice(1);
+            const restTokens = tokens.slice(2);
+            
+            // Check if it's a literal value (number, string, boolean, null, or $)
+            if (restTokens.length === 1) {
+                const token = restTokens[0];
+                if (Lexer.isLastValue(token)) {
+                    // Special case: $var = $ means assign last value
+                    // This is handled by executeAssignment which will use frame.lastValue
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: null, // Will be resolved at execution time from frame.lastValue
+                        isLastValue: true
+                    };
+                } else if (Lexer.isNumber(token)) {
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: parseInt(token, 10) 
+                    };
+                } else if (Lexer.isString(token)) {
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: Lexer.parseString(token) 
+                    };
+                } else if (token === 'true') {
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: true 
+                    };
+                } else if (token === 'false') {
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: false 
+                    };
+                } else if (token === 'null') {
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: null 
+                    };
+                }
+            }
+            
+            // Otherwise, treat as command
+            const command = this.parseCommandFromTokens(restTokens);
+            this.currentLine++;
+            return { type: 'assignment', targetName, command };
+        }
+
+        // Check for shorthand assignment or positional param reference
+        if (tokens.length === 1) {
+            if (Lexer.isVariable(tokens[0])) {
+                const targetName = tokens[0].slice(1);
+                this.currentLine++;
+                return { type: 'shorthand', targetName };
+            } else if (Lexer.isPositionalParam(tokens[0])) {
+                // Positional params alone on a line are no-ops (just references)
+                // They're used for documentation/clarity in function definitions
+                this.currentLine++;
+                return { type: 'shorthand', targetName: tokens[0].slice(1) };
+            }
+        }
+
+        // Regular command
+        const command = this.parseCommandFromTokens(tokens);
+        this.currentLine++;
+        return command;
+    }
+
+    private parseDefine(): DefineFunction {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        if (tokens.length < 2) {
+            throw this.createError('def requires a function name', this.currentLine);
+        }
+
+        const name = tokens[1];
+        this.currentLine++;
+
+        const body: Statement[] = [];
+        let closed = false;
+
+        while (this.currentLine < this.lines.length) {
+            const line = this.lines[this.currentLine].trim();
+            
+            if (!line || line.startsWith('#')) {
+                this.currentLine++;
+                continue;
+            }
+
+            const tokens = Lexer.tokenize(line);
+            
+            // If this is our closing enddef, consume it and stop
+            if (tokens[0] === 'enddef') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            // Otherwise, let parseStatement handle it (including nested blocks)
+            const stmt = this.parseStatement();
+            if (stmt) {
+                body.push(stmt);
+            }
+        }
+
+        if (!closed) {
+            throw this.createError('missing enddef', this.currentLine);
+        }
+
+        return { type: 'define', name, body };
+    }
+
+    private parseForLoop(): ForLoop {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        // Parse: for $var in <expr>
+        if (tokens.length < 4) {
+            throw this.createError('for loop requires: for $var in <expr>', this.currentLine);
+        }
+        
+        if (tokens[0] !== 'for') {
+            throw this.createError('expected for keyword', this.currentLine);
+        }
+        
+        // Get loop variable
+        if (!Lexer.isVariable(tokens[1])) {
+            throw this.createError('for loop variable must be a variable (e.g., $i, $item)', this.currentLine);
+        }
+        const varName = tokens[1].slice(1); // Remove $
+        
+        if (tokens[2] !== 'in') {
+            throw this.createError("for loop requires 'in' keyword", this.currentLine);
+        }
+        
+        // Get iterable expression (everything after 'in')
+        const exprTokens = tokens.slice(3);
+        const iterableExpr = exprTokens.join(' ');
+        
+        this.currentLine++;
+
+        const body: Statement[] = [];
+        let closed = false;
+
+        while (this.currentLine < this.lines.length) {
+            const line = this.lines[this.currentLine].trim();
+            
+            if (!line || line.startsWith('#')) {
+                this.currentLine++;
+                continue;
+            }
+
+            const tokens = Lexer.tokenize(line);
+            
+            // If this is our closing endfor, consume it and stop
+            if (tokens[0] === 'endfor') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            // Otherwise, let parseStatement handle it (including nested blocks)
+            const stmt = this.parseStatement();
+            if (stmt) {
+                body.push(stmt);
+            }
+        }
+
+        if (!closed) {
+            throw this.createError('missing endfor', this.currentLine);
+        }
+
+        return { type: 'forLoop', varName, iterableExpr, body };
+    }
+
+    private parseIfBlock(): IfBlock {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        // Extract condition (everything after 'if')
+        const ifIndex = tokens.indexOf('if');
+        const conditionTokens = tokens.slice(ifIndex + 1);
+        const conditionExpr = conditionTokens.join(' ');
+
+        this.currentLine++;
+
+        const thenBranch: Statement[] = [];
+        const elseifBranches: Array<{ condition: string; body: Statement[] }> = [];
+        let elseBranch: Statement[] | undefined;
+        let currentBranch: Statement[] = thenBranch;
+        let closed = false;
+
+        while (this.currentLine < this.lines.length) {
+            const line = this.lines[this.currentLine].trim();
+            
+            if (!line || line.startsWith('#')) {
+                this.currentLine++;
+                continue;
+            }
+
+            const tokens = Lexer.tokenize(line);
+
+            // Handle elseif - switch to new branch
+            if (tokens[0] === 'elseif') {
+                const elseifIndex = tokens.indexOf('elseif');
+                const conditionTokens = tokens.slice(elseifIndex + 1);
+                const condition = conditionTokens.join(' ');
+                
+                elseifBranches.push({ condition, body: [] });
+                currentBranch = elseifBranches[elseifBranches.length - 1].body;
+                this.currentLine++;
+                continue;
+            }
+
+            // Handle else - switch to else branch
+            if (tokens[0] === 'else') {
+                elseBranch = [];
+                currentBranch = elseBranch;
+                this.currentLine++;
+                continue;
+            }
+
+            // If this is our closing endif, consume it and stop
+            if (tokens[0] === 'endif') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            // Otherwise, let parseStatement handle it (including nested blocks)
+            const stmt = this.parseStatement();
+            if (stmt) {
+                currentBranch.push(stmt);
+            }
+        }
+
+        if (!closed) {
+            throw this.createError('missing endif', this.currentLine);
+        }
+
+        return {
+            type: 'ifBlock',
+            conditionExpr,
+            thenBranch,
+            elseifBranches: elseifBranches.length > 0 ? elseifBranches : undefined,
+            elseBranch
+        };
+    }
+
+    private parseInlineIf(): InlineIf {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        const thenIndex = tokens.indexOf('then');
+        if (thenIndex === -1) {
+            throw this.createError("inline if requires 'then'", this.currentLine);
+        }
+
+        const conditionTokens = tokens.slice(1, thenIndex);
+        const conditionExpr = conditionTokens.join(' ');
+        
+        const commandTokens = tokens.slice(thenIndex + 1);
+        
+        // Check if this is an assignment FIRST, before trying to parse as command
+        let finalCommand: Statement;
+        if (commandTokens.length >= 3 && Lexer.isVariable(commandTokens[0]) && commandTokens[1] === '=') {
+            // This is an assignment
+            const targetName = commandTokens[0].slice(1);
+            const restTokens = commandTokens.slice(2);
+            
+            // Check if it's a literal value
+            if (restTokens.length === 1) {
+                const token = restTokens[0];
+                if (Lexer.isNumber(token)) {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: parseInt(token, 10) 
+                    };
+                } else if (Lexer.isString(token)) {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: Lexer.parseString(token) 
+                    };
+                } else if (token === 'true') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: true 
+                    };
+                } else if (token === 'false') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: false 
+                    };
+                } else if (token === 'null') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: null 
+                    };
+                } else {
+                    const cmd = this.parseCommandFromTokens(restTokens);
+                    finalCommand = { type: 'assignment', targetName, command: cmd };
+                }
+            } else {
+                const cmd = this.parseCommandFromTokens(restTokens);
+                finalCommand = { type: 'assignment', targetName, command: cmd };
+            }
+        } else {
+            // Not an assignment, parse as regular command
+            finalCommand = this.parseCommandFromTokens(commandTokens);
+        }
+
+        this.currentLine++;
+        return { type: 'inlineIf', conditionExpr, command: finalCommand };
+    }
+
+    private parseCommandFromTokens(tokens: string[]): CommandCall {
+        if (tokens.length === 0) {
+            throw this.createError('empty command', this.currentLine);
+        }
+
+        const name = tokens[0];
+        
+        // Validate that the first token is not a literal number, string, or variable
+        // (strings should be quoted, numbers should not be command names, variables are not commands)
+        if (Lexer.isNumber(name)) {
+            throw this.createError(`expected command name, got number: ${name}`, this.currentLine);
+        }
+        if (Lexer.isString(name)) {
+            throw this.createError(`expected command name, got string literal: ${name}`, this.currentLine);
+        }
+        if (Lexer.isVariable(name) || Lexer.isPositionalParam(name)) {
+            throw this.createError(`expected command name, got variable: ${name}`, this.currentLine);
+        }
+        
+        const args: Arg[] = [];
+        const line = this.lines[this.currentLine];
+
+        // We need to scan the original line to find $(...) subexpressions
+        // because tokenization may have split them incorrectly
+        let i = 1;
+        
+        // Find the position after the command name in the original line
+        const nameEndPos = line.indexOf(name) + name.length;
+        let pos = nameEndPos;
+        
+        // Skip whitespace after command name
+        while (pos < line.length && /\s/.test(line[pos])) {
+            pos++;
+        }
+
+        while (i < tokens.length || pos < line.length) {
+            // Check if we're at a $( subexpression in the original line
+            if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
+                // Extract the subexpression code
+                const subexprCode = this.extractSubexpression(line, pos);
+                args.push({ type: 'subexpr', code: subexprCode.code });
+                
+                // Skip past the $() in the original line
+                pos = subexprCode.endPos;
+                
+                // Skip any tokens that were part of this subexpression
+                // We'll skip tokens until we find one that starts after our end position
+                while (i < tokens.length) {
+                    const tokenStart = line.indexOf(tokens[i], pos - 100); // Search from a bit before
+                    if (tokenStart === -1 || tokenStart >= pos) {
+                        break;
+                    }
+                    i++;
+                }
+                
+                // Skip whitespace
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+                continue;
+            }
+            
+            // If we've processed all tokens, break
+            if (i >= tokens.length) {
+                break;
+            }
+            
+            const token = tokens[i];
+            
+            if (Lexer.isLastValue(token)) {
+                args.push({ type: 'lastValue' });
+            } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
+                args.push({ type: 'var', name: token.slice(1) });
+            } else if (Lexer.isString(token)) {
+                args.push({ type: 'string', value: Lexer.parseString(token) });
+            } else if (Lexer.isNumber(token)) {
+                args.push({ type: 'number', value: parseInt(token, 10) });
+            } else {
+                // Treat as literal string
+                args.push({ type: 'literal', value: token });
+            }
+            
+            // Advance position in line (approximate)
+            const tokenPos = line.indexOf(token, pos);
+            if (tokenPos !== -1) {
+                pos = tokenPos + token.length;
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+            }
+            
+            i++;
+        }
+
+        return { type: 'command', name, args };
+    }
+
+    /**
+     * Extract a $(...) subexpression from a line, starting at the given position.
+     * Returns the inner code and the end position.
+     */
+    private extractSubexpression(line: string, startPos: number): { code: string; endPos: number } {
+        // Skip past "$("
+        let pos = startPos + 2;
+        let depth = 1;
+        let inString: false | '"' | "'" | '`' = false;
+        const code: string[] = [];
+        
+        while (pos < line.length && depth > 0) {
+            const char = line[pos];
+            const prevChar = pos > 0 ? line[pos - 1] : '';
+            
+            // Handle strings
+            if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
+                }
+                code.push(char);
+                pos++;
+                continue;
+            }
+            
+            if (inString) {
+                code.push(char);
+                pos++;
+                continue;
+            }
+            
+            // Handle nested parentheses
+            if (char === '$' && pos + 1 < line.length && line[pos + 1] === '(') {
+                depth++;
+                code.push(char);
+                pos++;
+                continue;
+            }
+            
+            if (char === ')') {
+                depth--;
+                if (depth > 0) {
+                    // This is a closing paren for a nested subexpr
+                    code.push(char);
+                }
+                // If depth === 0, we're done - don't include this closing paren
+                pos++;
+                continue;
+            }
+            
+            code.push(char);
+            pos++;
+        }
+        
+        return {
+            code: code.join(''),
+            endPos: pos
+        };
+    }
+}
+
+// ============================================================================
+// Expression Evaluator
+// ============================================================================
+
+class ExpressionEvaluator {
+    private frame: Frame;
+    private globals: Environment;
+
+    constructor(frame: Frame, globals: Environment) {
+        this.frame = frame;
+        this.globals = globals;
+    }
+
+    evaluate(expr: string): boolean {
+        // Simple expression evaluator using JS delegation
+        // Replace $ and $var references with actual values
+        let jsExpr = expr;
+
+        // Replace $name variables first (before bare $)
+        jsExpr = jsExpr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
+            const val = this.resolveVariable(name);
+            return this.valueToJS(val);
+        });
+
+        // Replace $1, $2, etc. (positional params)
+        jsExpr = jsExpr.replace(/\$([0-9]+)/g, (_match, num) => {
+            const val = this.frame.locals.get(num) ?? null;
+            return this.valueToJS(val);
+        });
+
+        // Replace $ (last value) - must be last, and only when not followed by word character
+        // Match $ at word boundary but not if followed by letter/digit (which would be a variable)
+        jsExpr = jsExpr.replace(/(^|\W)\$(?=\W|$)/g, (_match, prefix) => {
+            const val = this.frame.lastValue;
+            return prefix + this.valueToJS(val);
+        });
+
+        try {
+            // Evaluate in a safe context
+            const result = this.evalExpression(jsExpr);
+            return this.isTruthy(result);
+        } catch (error) {
+            throw new Error(`Expression evaluation error: ${expr} - ${error}`);
+        }
+    }
+
+    private resolveVariable(name: string): Value {
+        // Check locals first
+        if (this.frame.locals.has(name)) {
+            return this.frame.locals.get(name)!;
+        }
+        // Check globals
+        if (this.globals.variables.has(name)) {
+            return this.globals.variables.get(name)!;
+        }
+        return null;
+    }
+
+    private valueToJS(val: Value): string {
+        if (val === null || val === undefined) {
+            return 'null';
+        }
+        if (typeof val === 'string') {
+            return JSON.stringify(val);
+        }
+        if (typeof val === 'number') {
+            return val.toString();
+        }
+        if (typeof val === 'boolean') {
+            return val.toString();
+        }
+        return JSON.stringify(val);
+    }
+
+    private evalExpression(expr: string): any {
+        // Simple expression evaluator
+        // This is a basic implementation - in production you'd want a proper parser
+        try {
+            // eslint-disable-next-line no-eval
+            return eval(expr);
+        } catch {
+            // Fallback: try to parse as boolean
+            return expr === 'true' || expr === '1';
+        }
+    }
+
+    private isTruthy(val: any): boolean {
+        if (val === null || val === undefined) {
+            return false;
+        }
+        if (typeof val === 'number') {
+            return val !== 0;
+        }
+        if (typeof val === 'string') {
+            return val.length > 0;
+        }
+        if (typeof val === 'boolean') {
+            return val;
+        }
+        return true;
+    }
+}
+
+// ============================================================================
+// Executor
+// ============================================================================
+
+class Executor {
+    private environment: Environment;
+    private callStack: Frame[] = [];
+    private parentThread: RobinPathThread | null = null;
+
+    constructor(environment: Environment, parentThread?: RobinPathThread | null) {
+        this.environment = environment;
+        this.parentThread = parentThread || null;
+        // Initialize global frame
+        this.callStack.push({
+            locals: new Map(),
+            lastValue: null
+        });
+    }
+
+    getCurrentFrame(): Frame {
+        return this.callStack[this.callStack.length - 1];
+    }
+
+    getEnvironment(): Environment {
+        return this.environment;
+    }
+
+    getCallStack(): Frame[] {
+        return this.callStack;
+    }
+
+    /**
+     * Execute a single statement (public method for state tracking)
+     */
+    async executeStatementPublic(stmt: Statement): Promise<void> {
+        await this.executeStatement(stmt);
+    }
+
+    async execute(statements: Statement[]): Promise<Value> {
+        for (const stmt of statements) {
+            await this.executeStatement(stmt);
+        }
+        return this.getCurrentFrame().lastValue;
+    }
+
+    private async executeStatement(stmt: Statement): Promise<void> {
+        switch (stmt.type) {
+            case 'command':
+                await this.executeCommand(stmt);
+                break;
+            case 'assignment':
+                await this.executeAssignment(stmt);
+                break;
+            case 'shorthand':
+                this.executeShorthandAssignment(stmt);
+                break;
+            case 'inlineIf':
+                await this.executeInlineIf(stmt);
+                break;
+            case 'ifBlock':
+                await this.executeIfBlock(stmt);
+                break;
+            case 'ifTrue':
+                await this.executeIfTrue(stmt);
+                break;
+            case 'ifFalse':
+                await this.executeIfFalse(stmt);
+                break;
+            case 'define':
+                this.registerFunction(stmt);
+                break;
+            case 'forLoop':
+                await this.executeForLoop(stmt);
+                break;
+        }
+    }
+
+    private async executeCommand(cmd: CommandCall): Promise<void> {
+        const frame = this.getCurrentFrame();
+        const args = await Promise.all(cmd.args.map(arg => this.evaluateArg(arg)));
+
+        // Special handling for "use" command - it needs to modify the environment
+        if (cmd.name === 'use') {
+            // Show help if no arguments
+            if (args.length === 0) {
+                const result = `Use Command:
+  use <moduleName>         - Set module context (e.g., "use math")
+  use clear                - Clear module context
+  
+Examples:
+  use math                 - Use math module (then "add 5 5" instead of "math.add 5 5")
+  use clear                - Clear module context`;
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            const moduleName = String(args[0]);
+            
+            // If "clear", clear the current module context
+            if (moduleName === 'clear' || moduleName === '' || moduleName === null) {
+                this.environment.currentModule = null;
+                const result = 'Cleared module context';
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            // Convert to string (handles both quoted strings and unquoted literals)
+            const name = String(moduleName);
+            
+            // Check if the module exists (has metadata or has registered functions)
+            const hasMetadata = this.environment.moduleMetadata.has(name);
+            const hasFunctions = Array.from(this.environment.builtins.keys()).some(
+                key => key.startsWith(`${name}.`)
+            );
+            
+            if (!hasMetadata && !hasFunctions) {
+                const errorMsg = `Error: Module "${name}" not found`;
+                console.log(errorMsg);
+                frame.lastValue = errorMsg;
+                return;
+            }
+            
+            // Set the current module context in this executor's environment
+            this.environment.currentModule = name;
+            const result = `Using module: ${name}`;
+            console.log(result);
+            frame.lastValue = result;
+            return;
+        }
+
+        // Special handling for "explain" command - it needs to respect current module context
+        if (cmd.name === 'explain') {
+            // Show help if no arguments
+            if (args.length === 0) {
+                const result = `Explain Command:
+  explain <moduleName>     - Show module documentation and available methods
+  explain <module.function> - Show function documentation with parameters and return type
+  
+Examples:
+  explain math             - Show math module documentation
+  explain math.add         - Show add function documentation
+  explain add              - Show add function (if "use math" is active)`;
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            const nameArg = args[0];
+            if (!nameArg) {
+                const errorMsg = 'Error: explain requires a module or function name';
+                console.log(errorMsg);
+                frame.lastValue = errorMsg;
+                return;
+            }
+            
+            // Convert to string (handles both quoted strings and unquoted literals)
+            let name = String(nameArg);
+            
+            // If name doesn't have a dot and currentModule is set, check if it's the module name itself
+            // If it matches the current module, treat it as a module name (don't prepend)
+            // Otherwise, prepend the current module to make it a function call
+            if (!name.includes('.') && this.environment.currentModule) {
+                // Check if the name matches the current module name
+                if (name === this.environment.currentModule) {
+                    // It's the module name itself - don't prepend, treat as module
+                    // name stays as is
+                } else {
+                    // It's a function name - prepend the current module
+                    name = `${this.environment.currentModule}.${name}`;
+                }
+            }
+
+            // Check if it's a module name (no dot) or module.function (has dot)
+            if (name.includes('.')) {
+                // It's a module.function - return function metadata as JSON
+                const functionMetadata = this.environment.metadata.get(name);
+                if (!functionMetadata) {
+                    const error = { error: `No documentation available for function: ${name}` };
+                    frame.lastValue = error;
+                    return;
+                }
+
+                // Return structured JSON object
+                const result = {
+                    type: 'function',
+                    name: name,
+                    description: functionMetadata.description,
+                    parameters: functionMetadata.parameters || [],
+                    returnType: functionMetadata.returnType,
+                    returnDescription: functionMetadata.returnDescription,
+                    example: functionMetadata.example || null
+                };
+                
+                frame.lastValue = result;
+                return;
+            } else {
+                // It's a module name - return module metadata as JSON
+                const moduleMetadata = this.environment.moduleMetadata.get(name);
+                if (!moduleMetadata) {
+                    const error = { error: `No documentation available for module: ${name}` };
+                    frame.lastValue = error;
+                    return;
+                }
+
+                // Return structured JSON object
+                const result = {
+                    type: 'module',
+                    name: name,
+                    description: moduleMetadata.description,
+                    methods: moduleMetadata.methods || []
+                };
+                
+                frame.lastValue = result;
+                return;
+            }
+        }
+
+        // Special handling for "thread" command - needs access to parent RobinPath
+        if (cmd.name === 'thread') {
+            const parent = this.parentThread?.getParent();
+            
+            if (!parent) {
+                const errorMsg = 'Error: thread command must be executed in a thread context';
+                console.log(errorMsg);
+                frame.lastValue = errorMsg;
+                return;
+            }
+            
+            // Check if thread control is enabled
+            if (!parent.isThreadControlEnabled()) {
+                const errorMsg = 'Error: Thread control is disabled. Set threadControl: true in constructor to enable.';
+                console.log(errorMsg);
+                frame.lastValue = errorMsg;
+                return;
+            }
+            
+            // Show help if no arguments
+            if (args.length === 0) {
+                const result = `Thread Commands:
+  thread list              - List all threads
+  thread use <id>          - Switch to a thread
+  thread create <id>       - Create a new thread with ID
+  thread close [id]        - Close current thread or thread by ID`;
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            const subcommand = String(args[0]);
+            
+            if (subcommand === 'list') {
+                const threads = parent.listThreads();
+                let result = 'Threads:\n';
+                for (const thread of threads) {
+                    const marker = thread.isCurrent ? ' (current)' : '';
+                    result += `  - ${thread.id}${marker}\n`;
+                }
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            if (subcommand === 'use' && args.length > 1) {
+                const threadId = String(args[1]);
+                try {
+                    parent.useThread(threadId);
+                    const result = `Switched to thread: ${threadId}`;
+                    console.log(result);
+                    frame.lastValue = result;
+                } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    console.log(errorMsg);
+                    frame.lastValue = errorMsg;
+                }
+                return;
+            }
+            
+            if (subcommand === 'create' && args.length > 1) {
+                const threadId = String(args[1]);
+                try {
+                    parent.createThread(threadId);
+                    const result = `Created thread: ${threadId}`;
+                    console.log(result);
+                    frame.lastValue = result;
+                } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    console.log(errorMsg);
+                    frame.lastValue = errorMsg;
+                }
+                return;
+            }
+            
+            if (subcommand === 'close') {
+                if (args.length > 1) {
+                    // Close specific thread by ID
+                    const threadId = String(args[1]);
+                    try {
+                        parent.closeThread(threadId);
+                        const result = `Closed thread: ${threadId}`;
+                        console.log(result);
+                        frame.lastValue = result;
+                    } catch (error) {
+                        const errorMsg = error instanceof Error ? error.message : String(error);
+                        console.log(errorMsg);
+                        frame.lastValue = errorMsg;
+                    }
+                } else {
+                    // Close current thread
+                    if (!parent.currentThread) {
+                        const errorMsg = 'Error: No current thread to close';
+                        console.log(errorMsg);
+                        frame.lastValue = errorMsg;
+                    } else {
+                        const threadId = parent.currentThread.id;
+                        parent.closeThread(threadId);
+                        const result = `Closed current thread: ${threadId}`;
+                        console.log(result);
+                        frame.lastValue = result;
+                    }
+                }
+                return;
+            }
+            
+            const errorMsg = 'Error: thread command usage: thread list|use <id>|create <id>|close [id]';
+            console.log(errorMsg);
+            frame.lastValue = errorMsg;
+            return;
+        }
+
+        // Special handling for "module" command
+        if (cmd.name === 'module') {
+            const parent = this.parentThread?.getParent();
+            
+            // Show help if no arguments
+            if (args.length === 0) {
+                const result = `Module Commands:
+  module list              - List all available modules`;
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            const subcommand = String(args[0]);
+            
+            if (subcommand === 'list') {
+                // Get all modules from moduleMetadata
+                // Use parent's getAllModuleInfo if available, otherwise use current executor's environment
+                let moduleMap: Map<string, ModuleMetadata>;
+                if (parent) {
+                    moduleMap = parent.getAllModuleInfo();
+                } else {
+                    moduleMap = new Map(this.environment.moduleMetadata);
+                }
+                
+                const modules = Array.from(moduleMap.keys());
+                let result = 'Available Modules:\n';
+                if (modules.length === 0) {
+                    result += '  (no modules registered)\n';
+                } else {
+                    for (const moduleName of modules.sort()) {
+                        const moduleInfo = moduleMap.get(moduleName);
+                        if (moduleInfo) {
+                            result += `  - ${moduleName}: ${moduleInfo.description}\n`;
+                        } else {
+                            result += `  - ${moduleName}\n`;
+                        }
+                    }
+                }
+                console.log(result);
+                frame.lastValue = result;
+                return;
+            }
+            
+            const errorMsg = 'Error: module command usage: module list';
+            console.log(errorMsg);
+            frame.lastValue = errorMsg;
+            return;
+        }
+
+        // Special handling: if "json" is called with arguments, always treat as builtin function
+        // (not as module, even if json module exists)
+        if (cmd.name === 'json' && args.length > 0) {
+            if (this.environment.builtins.has('json')) {
+                const handler = this.environment.builtins.get('json')!;
+                const result = await Promise.resolve(handler(args));
+                frame.lastValue = result !== undefined ? result : null;
+                return;
+            }
+        }
+
+        // Determine the actual function name to use
+        // If command doesn't have a dot and currentModule is set, prepend module name
+        let functionName = cmd.name;
+        if (!functionName.includes('.') && this.environment.currentModule) {
+            functionName = `${this.environment.currentModule}.${functionName}`;
+        }
+
+        // Check if it's a user-defined function (check original name first, then module-prefixed)
+        if (this.environment.functions.has(cmd.name)) {
+            const func = this.environment.functions.get(cmd.name)!;
+            const result = await this.callFunction(func, args);
+            // Ensure lastValue is set (even if result is undefined, preserve it)
+            frame.lastValue = result !== undefined ? result : null;
+            return;
+        }
+
+        // Handle function name conflicts by checking argument types
+        // For example, "length" exists in both string and array modules
+        if (cmd.name === 'length' && args.length > 0) {
+            const firstArg = args[0];
+            if (Array.isArray(firstArg)) {
+                // Call array.length
+                if (this.environment.builtins.has('array.length')) {
+                    const handler = this.environment.builtins.get('array.length')!;
+                    const result = await Promise.resolve(handler(args));
+                    frame.lastValue = result !== undefined ? result : null;
+                    return;
+                }
+            } else {
+                // Call string.length
+                if (this.environment.builtins.has('string.length')) {
+                    const handler = this.environment.builtins.get('string.length')!;
+                    const result = await Promise.resolve(handler(args));
+                    frame.lastValue = result !== undefined ? result : null;
+                    return;
+                }
+            }
+        }
+
+        // Check if it's a builtin (try module-prefixed name first, then original)
+        if (this.environment.builtins.has(functionName)) {
+            const handler = this.environment.builtins.get(functionName)!;
+            const result = await Promise.resolve(handler(args));
+            // Ensure lastValue is set (even if result is undefined, preserve it)
+            frame.lastValue = result !== undefined ? result : null;
+            return;
+        }
+
+        // If module-prefixed lookup failed, try original name as fallback
+        if (functionName !== cmd.name && this.environment.builtins.has(cmd.name)) {
+            const handler = this.environment.builtins.get(cmd.name)!;
+            const result = await Promise.resolve(handler(args));
+            frame.lastValue = result !== undefined ? result : null;
+            return;
+        }
+
+        throw new Error(`Unknown function: ${cmd.name}`);
+    }
+
+    private async callFunction(func: DefineFunction, args: Value[]): Promise<Value> {
+        // Create new frame
+        const frame: Frame = {
+            locals: new Map(),
+            lastValue: null
+        };
+
+        // Set positional parameters
+        for (let i = 0; i < args.length; i++) {
+            frame.locals.set(String(i + 1), args[i]);
+        }
+
+        this.callStack.push(frame);
+
+        try {
+            // Execute function body
+            for (const stmt of func.body) {
+                await this.executeStatement(stmt);
+            }
+
+            return frame.lastValue;
+        } finally {
+            this.callStack.pop();
+        }
+    }
+
+    private async executeAssignment(assign: Assignment): Promise<void> {
+        const frame = this.getCurrentFrame();
+        
+        if (assign.isLastValue) {
+            // Special case: $var = $ means assign last value
+            const value = frame.lastValue;
+            frame.lastValue = value;
+            this.setVariable(assign.targetName, value);
+        } else if (assign.literalValue !== undefined) {
+            // Direct literal assignment
+            frame.lastValue = assign.literalValue;
+            this.setVariable(assign.targetName, assign.literalValue);
+        } else if (assign.command) {
+            // Command-based assignment
+            await this.executeCommand(assign.command);
+            const value = frame.lastValue;
+            this.setVariable(assign.targetName, value);
+        } else {
+            throw new Error('Assignment must have either literalValue or command');
+        }
+    }
+
+    private executeShorthandAssignment(assign: ShorthandAssignment): void {
+        const frame = this.getCurrentFrame();
+        const value = frame.lastValue;
+        
+        // Check if this is a positional parameter (numeric name)
+        // Positional params are read-only, so this is a no-op
+        if (/^[0-9]+$/.test(assign.targetName)) {
+            // This is a positional param reference (like $1, $2) - just a no-op
+            // The value is already available via the parameter
+            return;
+        }
+        
+        // Regular variable assignment
+        this.setVariable(assign.targetName, value);
+    }
+
+    private async executeInlineIf(ifStmt: InlineIf): Promise<void> {
+        const frame = this.getCurrentFrame();
+        const evaluator = new ExpressionEvaluator(frame, this.environment);
+        const condition = evaluator.evaluate(ifStmt.conditionExpr);
+        
+        if (condition) {
+            await this.executeStatement(ifStmt.command);
+        }
+    }
+
+    private async executeIfBlock(ifStmt: IfBlock): Promise<void> {
+        const frame = this.getCurrentFrame();
+        const evaluator = new ExpressionEvaluator(frame, this.environment);
+        
+        // Check main condition
+        if (evaluator.evaluate(ifStmt.conditionExpr)) {
+            for (const stmt of ifStmt.thenBranch) {
+                await this.executeStatement(stmt);
+            }
+            return;
+        }
+
+        // Check elseif branches
+        if (ifStmt.elseifBranches) {
+            for (const branch of ifStmt.elseifBranches) {
+                if (evaluator.evaluate(branch.condition)) {
+                    for (const stmt of branch.body) {
+                        await this.executeStatement(stmt);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Execute else branch if present
+        if (ifStmt.elseBranch) {
+            for (const stmt of ifStmt.elseBranch) {
+                await this.executeStatement(stmt);
+            }
+        }
+    }
+
+    private async executeIfTrue(ifStmt: IfTrue): Promise<void> {
+        const frame = this.getCurrentFrame();
+        if (this.isTruthy(frame.lastValue)) {
+            await this.executeStatement(ifStmt.command);
+        }
+    }
+
+    private async executeIfFalse(ifStmt: IfFalse): Promise<void> {
+        const frame = this.getCurrentFrame();
+        if (!this.isTruthy(frame.lastValue)) {
+            await this.executeStatement(ifStmt.command);
+        }
+    }
+
+    private registerFunction(func: DefineFunction): void {
+        this.environment.functions.set(func.name, func);
+    }
+
+    private async executeForLoop(forLoop: ForLoop): Promise<void> {
+        const frame = this.getCurrentFrame();
+        
+        // Evaluate the iterable expression
+        // We need to evaluate it as a command/expression to get the iterable value
+        const iterable = await this.evaluateIterableExpr(forLoop.iterableExpr);
+        
+        if (!Array.isArray(iterable)) {
+            throw new Error(`for loop iterable must be an array, got ${typeof iterable}`);
+        }
+        
+        // Store the original lastValue to restore after loop (if zero iterations)
+        const originalLastValue = frame.lastValue;
+        
+        // Iterate over the array
+        for (let i = 0; i < iterable.length; i++) {
+            const element = iterable[i];
+            
+            // Set loop variable in current frame
+            frame.locals.set(forLoop.varName, element);
+            frame.lastValue = element;
+            
+            // Execute body
+            for (const stmt of forLoop.body) {
+                await this.executeStatement(stmt);
+            }
+        }
+        
+        // After loop, $ is the last body's $ from the last iteration
+        // (or originalLastValue if zero iterations)
+        if (iterable.length === 0) {
+            frame.lastValue = originalLastValue;
+        }
+        // Otherwise, frame.lastValue is already set from the last iteration
+    }
+    
+    private async evaluateIterableExpr(expr: string): Promise<Value> {
+        // Parse the expression as if it were a command/statement
+        // This handles: $list, range 1 10, db.query ..., etc.
+        const lines = [expr];
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        
+        if (statements.length === 0) {
+            throw new Error(`Invalid iterable expression: ${expr}`);
+        }
+        
+        // Execute the statement(s) to get the value
+        // Usually it's a single command or variable reference
+        for (const stmt of statements) {
+            await this.executeStatement(stmt);
+        }
+        
+        return this.getCurrentFrame().lastValue;
+    }
+
+    private async evaluateArg(arg: Arg): Promise<Value> {
+        const frame = this.getCurrentFrame();
+
+        switch (arg.type) {
+            case 'subexpr':
+                // Execute subexpression in a new frame with same environment
+                return await this.executeSubexpression(arg.code);
+            case 'lastValue':
+                return frame.lastValue;
+            case 'var':
+                return this.resolveVariable(arg.name);
+            case 'number':
+                return arg.value;
+            case 'string':
+                return arg.value;
+            case 'literal':
+                return arg.value;
+        }
+    }
+
+    /**
+     * Execute a subexpression $(code) in its own frame.
+     * Returns the final $ value from the subexpression.
+     */
+    private async executeSubexpression(code: string): Promise<Value> {
+        // Split into logical lines (handles ; inside $())
+        const lines = splitIntoLogicalLines(code);
+        
+        // Parse the subexpression
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        
+        // Create a new frame for the subexpression
+        // It shares the same environment but has its own frame for $ and locals
+        const currentFrame = this.getCurrentFrame();
+        const subexprFrame: Frame = {
+            locals: new Map(),
+            lastValue: currentFrame.lastValue // Start with caller's $ (though it will be overwritten)
+        };
+        
+        // Push the subexpression frame
+        this.callStack.push(subexprFrame);
+        
+        try {
+            // Execute statements in the subexpression
+            for (const stmt of statements) {
+                await this.executeStatement(stmt);
+            }
+            
+            // Return the final $ from the subexpression
+            return subexprFrame.lastValue;
+        } finally {
+            // Pop the subexpression frame
+            this.callStack.pop();
+        }
+    }
+
+    private resolveVariable(name: string): Value {
+        const frame = this.getCurrentFrame();
+        
+        // Check positional params first
+        if (frame.locals.has(name)) {
+            return frame.locals.get(name)!;
+        }
+        
+        // Check globals
+        if (this.environment.variables.has(name)) {
+            return this.environment.variables.get(name)!;
+        }
+        
+        return null;
+    }
+
+    private setVariable(name: string, value: Value): void {
+        // Proper scoping: globals at top level, locals in functions
+        if (this.callStack.length === 1) {
+            // Global scope - write to environment
+            this.environment.variables.set(name, value);
+        } else {
+            // Function scope - write to current frame locals only
+            const frame = this.getCurrentFrame();
+            frame.locals.set(name, value);
+        }
+    }
+
+    private isTruthy(val: Value): boolean {
+        if (val === null || val === undefined) {
+            return false;
+        }
+        if (typeof val === 'number') {
+            return val !== 0;
+        }
+        if (typeof val === 'string') {
+            return val.length > 0;
+        }
+        if (typeof val === 'boolean') {
+            return val;
+        }
+        return true;
+    }
+}
+
+// ============================================================================
+// Execution State Tracker
+// ============================================================================
+
+/**
+ * Tracks execution state for each statement in the AST
+ */
+class ExecutionStateTracker {
+    private state: Map<number, { lastValue: Value; beforeValue: Value }> = new Map();
+
+    setState(index: number, state: { lastValue: Value; beforeValue: Value }): void {
+        this.state.set(index, state);
+    }
+
+    getState(index: number): { lastValue: Value; beforeValue: Value } | undefined {
+        return this.state.get(index);
+    }
+}
+
+// ============================================================================
+// RobinPath Thread
+// ============================================================================
+
+/**
+ * A thread/session for RobinPath execution.
+ * Each thread has its own variables, functions, and $ (lastValue),
+ * but shares builtins and metadata with the root interpreter.
+ */
+export class RobinPathThread {
+    private environment: Environment;
+    private executor: Executor;
+    public readonly id: string;
+    private parent: RobinPath | null = null;
+
+    constructor(baseEnvironment: Environment, id: string, parent?: RobinPath) {
+        this.id = id;
+        this.parent = parent || null;
+        // Create a thread-local environment:
+        // - new variables map
+        // - new functions map (user-defined)
+        // - shared builtins + metadata
+        // - per-thread currentModule context
+        this.environment = {
+            variables: new Map(),                     // per-thread vars
+            functions: new Map(),                     // per-thread def/enddef
+            builtins: baseEnvironment.builtins,       // shared
+            metadata: baseEnvironment.metadata,       // shared
+            moduleMetadata: baseEnvironment.moduleMetadata, // shared
+            currentModule: null                       // per-thread module context
+        };
+
+        this.executor = new Executor(this.environment, this);
+    }
+
+    /**
+     * Check if a script needs more input (incomplete block)
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' } if incomplete,
+     * or { needsMore: false } if complete.
+     */
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' } {
+        try {
+            const lines = splitIntoLogicalLines(script);
+            const parser = new Parser(lines);
+            parser.parse();
+            return { needsMore: false };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            // Check for missing block closers
+            if (errorMessage.includes('missing endif')) {
+                return { needsMore: true, waitingFor: 'endif' };
+            }
+            if (errorMessage.includes('missing enddef')) {
+                return { needsMore: true, waitingFor: 'enddef' };
+            }
+            if (errorMessage.includes('missing endfor')) {
+                return { needsMore: true, waitingFor: 'endfor' };
+            }
+            
+            // If it's a different error, the script is malformed but complete
+            // (we'll let executeScript handle the actual error)
+            return { needsMore: false };
+        }
+    }
+
+    /**
+     * Execute a RobinPath script in this thread
+     */
+    async executeScript(script: string): Promise<Value> {
+        // Split into logical lines (handles ; separator)
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        const result = await this.executor.execute(statements);
+        return result;
+    }
+
+    /**
+     * Execute a single line in this thread (for REPL)
+     */
+    async executeLine(line: string): Promise<Value> {
+        // Split into logical lines (handles ; separator)
+        const lines = splitIntoLogicalLines(line);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        const result = await this.executor.execute(statements);
+        return result;
+    }
+
+    /**
+     * Get the last value ($) from this thread
+     */
+    getLastValue(): Value {
+        return this.executor.getCurrentFrame().lastValue;
+    }
+
+    /**
+     * Get a variable value from this thread
+     */
+    getVariable(name: string): Value {
+        return this.environment.variables.get(name) ?? null;
+    }
+
+    /**
+     * Set a variable value in this thread
+     */
+    setVariable(name: string, value: Value): void {
+        this.environment.variables.set(name, value);
+    }
+
+    /**
+     * Get the current module name (set by "use" command)
+     * Returns null if no module is currently in use
+     */
+    getCurrentModule(): string | null {
+        return this.environment.currentModule;
+    }
+
+    /**
+     * Get the parent RobinPath instance
+     */
+    getParent(): RobinPath | null {
+        return this.parent;
+    }
+
+    /**
+     * Get the AST with execution state for the current thread
+     * Returns a JSON-serializable object with:
+     * - AST nodes with execution state ($ lastValue at each node)
+     * - Available variables (thread-local and global)
+     * - Organized for UI representation
+     * 
+     * Note: This method executes the script to capture execution state at each node.
+     */
+    async getASTWithState(script: string): Promise<{
+        ast: any[];
+        variables: {
+            thread: Record<string, Value>;
+            global: Record<string, Value>;
+        };
+        lastValue: Value;
+        callStack: Array<{
+            locals: Record<string, Value>;
+            lastValue: Value;
+        }>;
+    }> {
+        // Parse the script to get AST
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+
+        // Execute with state tracking - track $ at each statement level
+        const stateTracker = new ExecutionStateTracker();
+        await this.executeWithStateTracking(statements, stateTracker);
+
+        // Get current execution state
+        const frame = this.executor.getCurrentFrame();
+        const callStack = this.executor.getCallStack();
+
+        // Serialize AST with execution state
+        const ast = statements.map((stmt, index) => {
+            const state = stateTracker.getState(index);
+            return this.serializeStatement(stmt, state);
+        });
+
+        // Get variables
+        const threadVars: Record<string, Value> = {};
+        for (const [name, value] of this.environment.variables.entries()) {
+            threadVars[name] = value;
+        }
+
+        const globalVars: Record<string, Value> = {};
+        if (this.parent) {
+            const parentEnv = (this.parent as any).environment as Environment;
+            for (const [name, value] of parentEnv.variables.entries()) {
+                globalVars[name] = value;
+            }
+        }
+
+        // Get call stack information
+        const callStackInfo = callStack.map(frame => ({
+            locals: Object.fromEntries(frame.locals.entries()),
+            lastValue: frame.lastValue
+        }));
+
+        return {
+            ast,
+            variables: {
+                thread: threadVars,
+                global: globalVars
+            },
+            lastValue: frame.lastValue,
+            callStack: callStackInfo
+        };
+    }
+
+    /**
+     * Execute statements with state tracking
+     */
+    private async executeWithStateTracking(statements: Statement[], tracker: ExecutionStateTracker): Promise<void> {
+        for (let i = 0; i < statements.length; i++) {
+            const stmt = statements[i];
+            const beforeState = this.executor.getCurrentFrame().lastValue;
+            
+            await this.executor.executeStatementPublic(stmt);
+            
+            const afterState = this.executor.getCurrentFrame().lastValue;
+            tracker.setState(i, {
+                lastValue: afterState,
+                beforeValue: beforeState
+            });
+        }
+    }
+
+    /**
+     * Serialize a statement to JSON with execution state
+     */
+    private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }): any {
+        const base: any = {
+            type: stmt.type,
+            lastValue: state?.lastValue ?? null
+        };
+
+        switch (stmt.type) {
+            case 'command':
+                return {
+                    ...base,
+                    name: stmt.name,
+                    args: stmt.args.map(arg => this.serializeArg(arg))
+                };
+            case 'assignment':
+                return {
+                    ...base,
+                    targetName: stmt.targetName,
+                    command: stmt.command ? this.serializeStatement(stmt.command) : undefined,
+                    literalValue: stmt.literalValue,
+                    isLastValue: stmt.isLastValue
+                };
+            case 'shorthand':
+                return {
+                    ...base,
+                    targetName: stmt.targetName
+                };
+            case 'inlineIf':
+                return {
+                    ...base,
+                    conditionExpr: stmt.conditionExpr,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'ifBlock':
+                return {
+                    ...base,
+                    conditionExpr: stmt.conditionExpr,
+                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s)),
+                    elseifBranches: stmt.elseifBranches?.map(branch => ({
+                        condition: branch.condition,
+                        body: branch.body.map(s => this.serializeStatement(s))
+                    })),
+                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s))
+                };
+            case 'ifTrue':
+                return {
+                    ...base,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'ifFalse':
+                return {
+                    ...base,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'define':
+                return {
+                    ...base,
+                    name: stmt.name,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'forLoop':
+                return {
+                    ...base,
+                    varName: stmt.varName,
+                    iterableExpr: stmt.iterableExpr,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+        }
+    }
+
+    /**
+     * Serialize an argument to JSON
+     */
+    private serializeArg(arg: Arg): any {
+        switch (arg.type) {
+            case 'subexpr':
+                return { type: 'subexpr', code: arg.code };
+            case 'var':
+                return { type: 'var', name: arg.name };
+            case 'lastValue':
+                return { type: 'lastValue' };
+            case 'number':
+                return { type: 'number', value: arg.value };
+            case 'string':
+                return { type: 'string', value: arg.value };
+            case 'literal':
+                return { type: 'literal', value: arg.value };
+        }
+    }
+
+    /**
+     * Get all available commands, modules, and functions for this thread
+     * Includes thread-local user-defined functions in addition to shared builtins and modules
+     * 
+     * @param context Optional syntax context to filter commands based on what's valid next
+     */
+    getAvailableCommands(context?: {
+        inIfBlock?: boolean;
+        inDefBlock?: boolean;
+        afterIf?: boolean;
+        afterDef?: boolean;
+        afterElseif?: boolean;
+    }): {
+        native: Array<{ name: string; type: string; description: string }>;
+        builtin: Array<{ name: string; type: string; description: string }>;
+        modules: Array<{ name: string; type: string; description: string }>;
+        moduleFunctions: Array<{ name: string; type: string; description: string }>;
+        userFunctions: Array<{ name: string; type: string; description: string }>;
+    } {
+        const parent = this.getParent();
+        
+        // Get base commands from parent or environment
+        let baseCommands: {
+            native: Array<{ name: string; type: string; description: string }>;
+            builtin: Array<{ name: string; type: string; description: string }>;
+            modules: Array<{ name: string; type: string; description: string }>;
+            moduleFunctions: Array<{ name: string; type: string; description: string }>;
+            userFunctions: Array<{ name: string; type: string; description: string }>;
+        };
+        
+        if (parent) {
+            baseCommands = parent.getAvailableCommands();
+        } else {
+            // Fallback: get from environment directly
+            const nativeCommands: { [key: string]: string } = {
+                'if': 'Conditional statement - starts a conditional block',
+                'then': 'Used with inline if statements',
+                'else': 'Alternative branch in conditional blocks',
+                'elseif': 'Additional condition in conditional blocks',
+                'endif': 'Ends a conditional block',
+                'def': 'Defines a user function - starts function definition',
+                'enddef': 'Ends a function definition',
+                'iftrue': 'Executes command if last value is truthy',
+                'iffalse': 'Executes command if last value is falsy'
+            };
+            
+            // Apply syntax context filtering
+            const ctx = context || {};
+            const syntaxCtx = {
+                canStartStatement: !ctx.afterIf && !ctx.afterDef && !ctx.afterElseif,
+                canUseBlockKeywords: !ctx.inIfBlock && !ctx.inDefBlock,
+                canUseEndKeywords: !!(ctx.inIfBlock || ctx.inDefBlock),
+                canUseConditionalKeywords: !!ctx.inIfBlock
+            };
+            
+            const filteredNative: Array<{ name: string; type: string; description: string }> = [];
+            const allNative = Object.keys(nativeCommands).map(name => ({
+                name,
+                type: 'native',
+                description: nativeCommands[name]
+            }));
+            
+            if (syntaxCtx.canUseBlockKeywords) {
+                filteredNative.push(...allNative.filter(n => n.name === 'if' || n.name === 'def'));
+            }
+            if (syntaxCtx.canUseConditionalKeywords) {
+                filteredNative.push(...allNative.filter(n => n.name === 'elseif' || n.name === 'else'));
+            }
+            if (syntaxCtx.canUseEndKeywords) {
+                if (ctx.inIfBlock) {
+                    filteredNative.push(...allNative.filter(n => n.name === 'endif'));
+                }
+                if (ctx.inDefBlock) {
+                    filteredNative.push(...allNative.filter(n => n.name === 'enddef'));
+                }
+            }
+            if (syntaxCtx.canStartStatement) {
+                filteredNative.push(...allNative.filter(n => n.name === 'iftrue' || n.name === 'iffalse'));
+            }
+            
+            const builtin: Array<{ name: string; type: string; description: string }> = [];
+            if (syntaxCtx.canStartStatement) {
+                for (const [name] of this.environment.builtins.entries()) {
+                    if (!name.includes('.')) {
+                        const metadata = this.environment.metadata.get(name);
+                        builtin.push({
+                            name,
+                            type: 'builtin',
+                            description: metadata?.description || 'Builtin command'
+                        });
+                    }
+                }
+                builtin.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            const modules: Array<{ name: string; type: string; description: string }> = [];
+            if (syntaxCtx.canStartStatement) {
+                for (const [name, metadata] of this.environment.moduleMetadata.entries()) {
+                    modules.push({
+                        name,
+                        type: 'module',
+                        description: metadata.description || 'Module'
+                    });
+                }
+                modules.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            const moduleFunctions: Array<{ name: string; type: string; description: string }> = [];
+            if (syntaxCtx.canStartStatement) {
+                for (const [name] of this.environment.builtins.entries()) {
+                    if (name.includes('.')) {
+                        const metadata = this.environment.metadata.get(name);
+                        moduleFunctions.push({
+                            name,
+                            type: 'moduleFunction',
+                            description: metadata?.description || 'Module function'
+                        });
+                    }
+                }
+                moduleFunctions.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            baseCommands = {
+                native: filteredNative,
+                builtin,
+                modules,
+                moduleFunctions,
+                userFunctions: []
+            };
+        }
+        
+        // Replace user-defined functions with thread-local ones (only if we can start statements)
+        const ctx = context || {};
+        const syntaxCtx = {
+            canStartStatement: !ctx.afterIf && !ctx.afterDef && !ctx.afterElseif,
+            canUseBlockKeywords: !ctx.inIfBlock && !ctx.inDefBlock,
+            canUseEndKeywords: !!(ctx.inIfBlock || ctx.inDefBlock),
+            canUseConditionalKeywords: !!ctx.inIfBlock
+        };
+        
+        const userFunctions: Array<{ name: string; type: string; description: string }> = [];
+        if (syntaxCtx.canStartStatement) {
+            for (const name of this.environment.functions.keys()) {
+                userFunctions.push({
+                    name,
+                    type: 'userFunction',
+                    description: 'User-defined function'
+                });
+            }
+            userFunctions.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        return {
+            native: baseCommands.native,
+            builtin: baseCommands.builtin,
+            modules: baseCommands.modules,
+            moduleFunctions: baseCommands.moduleFunctions,
+            userFunctions
+        };
+    }
+}
+
+// ============================================================================
+// RobinPath Interpreter
+// ============================================================================
+
+export class RobinPath {
+    private environment: Environment;
+    private lastExecutor: Executor | null = null;
+    private persistentExecutor: Executor | null = null;
+    private threads: Map<string, RobinPathThread> = new Map();
+    public currentThread: RobinPathThread | null = null;
+    private threadControl: boolean;
+
+    constructor(options?: { threadControl?: boolean }) {
+        this.threadControl = options?.threadControl ?? false;
+        this.environment = {
+            variables: new Map(),
+            functions: new Map(),
+            builtins: new Map(),
+            metadata: new Map(),
+            moduleMetadata: new Map(),
+            currentModule: null
+        };
+
+        // Create persistent executor for REPL mode
+        this.persistentExecutor = new Executor(this.environment, null);
+
+        // Register some basic builtins
+        this.registerBuiltin('log', (args) => {
+            console.log(...args);
+            return args.length > 0 ? args[args.length - 1] : null;
+        });
+
+        this.registerBuiltin('json', (args) => {
+            if (args.length === 0) {
+                throw new Error('json requires a JSON5 string argument');
+            }
+            const jsonString = String(args[0]);
+            try {
+                // Parse JSON5 string into object
+                return JSON5.parse(jsonString);
+            } catch (error) {
+                throw new Error(`Invalid JSON5: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        });
+
+        this.registerBuiltin('range', (args) => {
+            const start = Number(args[0]) || 0;
+            const end = Number(args[1]) || 0;
+            const result: number[] = [];
+            
+            if (start <= end) {
+                for (let i = start; i <= end; i++) {
+                    result.push(i);
+                }
+            } else {
+                // Reverse range
+                for (let i = start; i >= end; i--) {
+                    result.push(i);
+                }
+            }
+            
+            return result;
+        });
+
+        // Load native modules
+        this.loadNativeModules();
+
+        // Note: "use" command is handled specially in executeCommand to access the executor's environment
+
+        this.registerBuiltin('explain', (args) => {
+            const nameArg = args[0];
+            if (!nameArg) {
+                const errorMsg = 'Error: explain requires a module or function name';
+                console.log(errorMsg);
+                return errorMsg;
+            }
+            
+            // Convert to string (handles both quoted strings and unquoted literals)
+            const name = String(nameArg);
+
+            // Check if it's a module name (no dot) or module.function (has dot)
+            if (name.includes('.')) {
+                // It's a module.function - show function metadata
+                const functionMetadata = this.environment.metadata.get(name);
+                if (!functionMetadata) {
+                    const errorMsg = `No documentation available for function: ${name}`;
+                    console.log(errorMsg);
+                    return errorMsg;
+                }
+
+                // Format the function metadata as a readable string
+                let result = `Function: ${name}\n\n`;
+                result += `Description: ${functionMetadata.description}\n\n`;
+
+                if (functionMetadata.parameters && functionMetadata.parameters.length > 0) {
+                    result += `Parameters:\n`;
+                    for (const param of functionMetadata.parameters) {
+                        result += `  - ${param.name} (${param.dataType})`;
+                        if (param.required) {
+                            result += ' [required]';
+                        }
+                        result += `\n    ${param.description}`;
+                        if (param.formInputType) {
+                            result += `\n    Input type: ${param.formInputType}`;
+                        }
+                        if (param.defaultValue !== undefined) {
+                            result += `\n    Default: ${JSON.stringify(param.defaultValue)}`;
+                        }
+                        result += '\n';
+                    }
+                } else {
+                    result += `Parameters: None\n`;
+                }
+
+                result += `\nReturns: ${functionMetadata.returnType}`;
+                if (functionMetadata.returnDescription) {
+                    result += `\n  ${functionMetadata.returnDescription}`;
+                }
+
+                if (functionMetadata.example) {
+                    result += `\n\nExample:\n  ${functionMetadata.example}`;
+                }
+
+                // Automatically print the result
+                console.log(result);
+                return result;
+            } else {
+                // It's a module name - show module metadata
+                const moduleMetadata = this.environment.moduleMetadata.get(name);
+                if (!moduleMetadata) {
+                    const errorMsg = `No documentation available for module: ${name}`;
+                    console.log(errorMsg);
+                    return errorMsg;
+                }
+
+                // Format the module metadata as a readable string
+                let result = `Module: ${name}\n\n`;
+                result += `Description: ${moduleMetadata.description}\n\n`;
+                
+                if (moduleMetadata.methods && moduleMetadata.methods.length > 0) {
+                    result += `Available Methods:\n`;
+                    for (const method of moduleMetadata.methods) {
+                        result += `  - ${method}\n`;
+                    }
+                } else {
+                    result += `Available Methods: None\n`;
+                }
+
+                // Automatically print the result
+                console.log(result);
+                return result;
+            }
+        });
+    }
+
+    /**
+     * Native modules registry
+     * Add new modules here to auto-load them
+     */
+    private static readonly NATIVE_MODULES: ModuleAdapter[] = [
+        MathModule,
+        StringModule,
+        JsonModule,
+        TimeModule,
+        RandomModule,
+        ArrayModule,
+        TestModule
+    ];
+
+    /**
+     * Load a single module using the adapter pattern
+     */
+    private loadModule(module: ModuleAdapter): void {
+        // Register all module functions
+        this.registerModule(module.name, module.functions);
+        
+        // Register function metadata
+        this.registerModuleMeta(module.name, module.functionMetadata);
+        
+        // Register module-level metadata
+        this.registerModuleInfo(module.name, module.moduleMetadata);
+        
+        // For core modules, also register functions as builtins (without module prefix)
+        // This allows calling them directly: add 5 5 instead of math.add 5 5
+        const coreModuleNames = ['math', 'string', 'json', 'time', 'random', 'array', 'test'];
+        const isCoreModule = coreModuleNames.includes(module.name.toLowerCase());
+        if (isCoreModule) {
+            for (const [funcName, funcHandler] of Object.entries(module.functions)) {
+                // Only register if not already registered (avoid conflicts with existing builtins)
+                if (!this.environment.builtins.has(funcName)) {
+                    this.environment.builtins.set(funcName, funcHandler);
+                }
+            }
+        }
+    }
+
+    /**
+     * Load all native modules
+     */
+    private loadNativeModules(): void {
+        for (const module of RobinPath.NATIVE_MODULES) {
+            this.loadModule(module);
+        }
+    }
+
+    /**
+     * Register a builtin function
+     */
+    registerBuiltin(name: string, handler: BuiltinHandler): void {
+        this.environment.builtins.set(name, handler);
+    }
+
+    /**
+     * Register a module with multiple functions
+     * @example
+     * rp.registerModule('fs', {
+     *   read: (args) => { ... },
+     *   write: (args) => { ... }
+     * });
+     */
+    registerModule(moduleName: string, functions: Record<string, BuiltinHandler>): void {
+        for (const [funcName, handler] of Object.entries(functions)) {
+            this.environment.builtins.set(`${moduleName}.${funcName}`, handler);
+        }
+    }
+
+    /**
+     * Register a module function (e.g., 'fs.read')
+     */
+    registerModuleFunction(module: string, func: string, handler: BuiltinHandler): void {
+        this.environment.builtins.set(`${module}.${func}`, handler);
+    }
+
+    /**
+     * Register an external class constructor (e.g., 'Client', 'Database')
+     */
+    registerConstructor(name: string, handler: BuiltinHandler): void {
+        this.environment.builtins.set(name, handler);
+    }
+
+    /**
+     * Register metadata for a module with multiple functions
+     * @example
+     * rp.registerModuleMeta('fs', {
+     *   read: {
+     *     description: 'Reads a file from the filesystem',
+     *     parameters: [
+     *       {
+     *         name: 'filename',
+     *         dataType: 'string',
+     *         description: 'Path to the file to read',
+     *         formInputType: 'text',
+     *         required: true
+     *       }
+     *     ],
+     *     returnType: 'string',
+     *     returnDescription: 'Contents of the file'
+     *   },
+     *   write: {
+     *     description: 'Writes content to a file',
+     *     parameters: [
+     *       {
+     *         name: 'filename',
+     *         dataType: 'string',
+     *         description: 'Path to the file to write',
+     *         formInputType: 'text',
+     *         required: true
+     *       },
+     *       {
+     *         name: 'content',
+     *         dataType: 'string',
+     *         description: 'Content to write to the file',
+     *         formInputType: 'textarea',
+     *         required: true
+     *       }
+     *     ],
+     *     returnType: 'boolean',
+     *     returnDescription: 'True if write was successful'
+     *   }
+     * });
+     */
+    registerModuleMeta(moduleName: string, functions: Record<string, FunctionMetadata>): void {
+        for (const [funcName, metadata] of Object.entries(functions)) {
+            this.environment.metadata.set(`${moduleName}.${funcName}`, metadata);
+        }
+    }
+
+    /**
+     * Register metadata for a single module function (e.g., 'fs.read')
+     * @example
+     * rp.registerModuleFunctionMeta('fs', 'read', {
+     *   description: 'Reads a file from the filesystem',
+     *   parameters: [
+     *     {
+     *       name: 'filename',
+     *       dataType: 'string',
+     *       description: 'Path to the file to read',
+     *       formInputType: 'text',
+     *       required: true
+     *     }
+     *   ],
+     *   returnType: 'string',
+     *   returnDescription: 'Contents of the file'
+     * });
+     */
+    registerModuleFunctionMeta(module: string, func: string, metadata: FunctionMetadata): void {
+        this.environment.metadata.set(`${module}.${func}`, metadata);
+    }
+
+    /**
+     * Get metadata for a function (builtin or module function)
+     * Returns null if no metadata is registered
+     */
+    getFunctionMetadata(functionName: string): FunctionMetadata | null {
+        return this.environment.metadata.get(functionName) ?? null;
+    }
+
+    /**
+     * Get all registered function metadata
+     */
+    getAllFunctionMetadata(): Map<string, FunctionMetadata> {
+        return new Map(this.environment.metadata);
+    }
+
+    /**
+     * Register module-level metadata (description and list of methods)
+     * @example
+     * rp.registerModuleInfo('fs', {
+     *   description: 'File system operations for reading and writing files',
+     *   methods: ['read', 'write', 'exists', 'delete']
+     * });
+     */
+    registerModuleInfo(moduleName: string, metadata: ModuleMetadata): void {
+        this.environment.moduleMetadata.set(moduleName, metadata);
+    }
+
+    /**
+     * Get module metadata (description and methods list)
+     * Returns null if no metadata is registered
+     */
+    getModuleInfo(moduleName: string): ModuleMetadata | null {
+        return this.environment.moduleMetadata.get(moduleName) ?? null;
+    }
+
+    /**
+     * Get all registered module metadata
+     */
+    getAllModuleInfo(): Map<string, ModuleMetadata> {
+        return new Map(this.environment.moduleMetadata);
+    }
+
+    /**
+     * Get syntax context for available commands
+     * Determines what commands are valid based on the current syntax position
+     */
+    private getSyntaxContext(context?: {
+        inIfBlock?: boolean;
+        inDefBlock?: boolean;
+        afterIf?: boolean;
+        afterDef?: boolean;
+        afterElseif?: boolean;
+    }): {
+        canStartStatement: boolean;
+        canUseBlockKeywords: boolean;
+        canUseEndKeywords: boolean;
+        canUseConditionalKeywords: boolean;
+    } {
+        const ctx = context || {};
+        
+        return {
+            // Can start a new statement (commands, assignments, etc.)
+            canStartStatement: !ctx.afterIf && !ctx.afterDef && !ctx.afterElseif,
+            
+            // Can use block keywords (if, def)
+            canUseBlockKeywords: !ctx.inIfBlock && !ctx.inDefBlock,
+            
+            // Can use end keywords (endif, enddef)
+            canUseEndKeywords: !!(ctx.inIfBlock || ctx.inDefBlock),
+            
+            // Can use conditional keywords (elseif, else)
+            canUseConditionalKeywords: !!ctx.inIfBlock
+        };
+    }
+
+    /**
+     * Get all available commands, modules, and functions
+     * Returns a structured object with categories, each containing objects with:
+     * - name: The command/function name
+     * - type: The type (native, builtin, module, moduleFunction, userFunction)
+     * - description: Description if available
+     * 
+     * @param context Optional syntax context to filter commands based on what's valid next
+     */
+    getAvailableCommands(context?: {
+        inIfBlock?: boolean;
+        inDefBlock?: boolean;
+        afterIf?: boolean;
+        afterDef?: boolean;
+        afterElseif?: boolean;
+    }): {
+        native: Array<{ name: string; type: string; description: string }>;
+        builtin: Array<{ name: string; type: string; description: string }>;
+        modules: Array<{ name: string; type: string; description: string }>;
+        moduleFunctions: Array<{ name: string; type: string; description: string }>;
+        userFunctions: Array<{ name: string; type: string; description: string }>;
+    } {
+        const syntaxCtx = this.getSyntaxContext(context);
+        // Native commands (language keywords) - filtered by syntax context
+        const allNativeCommands: { [key: string]: string } = {
+            'if': 'Conditional statement - starts a conditional block',
+            'then': 'Used with inline if statements',
+            'else': 'Alternative branch in conditional blocks',
+            'elseif': 'Additional condition in conditional blocks',
+            'endif': 'Ends a conditional block',
+            'def': 'Defines a user function - starts function definition',
+            'enddef': 'Ends a function definition',
+            'iftrue': 'Executes command if last value is truthy',
+            'iffalse': 'Executes command if last value is falsy'
+        };
+        
+        const native: Array<{ name: string; type: string; description: string }> = [];
+        
+        // Add block-starting keywords if allowed
+        if (syntaxCtx.canUseBlockKeywords) {
+            if (allNativeCommands['if']) {
+                native.push({ name: 'if', type: 'native', description: allNativeCommands['if'] });
+            }
+            if (allNativeCommands['def']) {
+                native.push({ name: 'def', type: 'native', description: allNativeCommands['def'] });
+            }
+        }
+        
+        // Add conditional keywords if in if block
+        if (syntaxCtx.canUseConditionalKeywords) {
+            if (allNativeCommands['elseif']) {
+                native.push({ name: 'elseif', type: 'native', description: allNativeCommands['elseif'] });
+            }
+            if (allNativeCommands['else']) {
+                native.push({ name: 'else', type: 'native', description: allNativeCommands['else'] });
+            }
+        }
+        
+        // Add end keywords if in a block
+        if (syntaxCtx.canUseEndKeywords) {
+            if (context?.inIfBlock && allNativeCommands['endif']) {
+                native.push({ name: 'endif', type: 'native', description: allNativeCommands['endif'] });
+            }
+            if (context?.inDefBlock && allNativeCommands['enddef']) {
+                native.push({ name: 'enddef', type: 'native', description: allNativeCommands['enddef'] });
+            }
+        }
+        
+        // Add iftrue/iffalse if we can start statements
+        if (syntaxCtx.canStartStatement) {
+            if (allNativeCommands['iftrue']) {
+                native.push({ name: 'iftrue', type: 'native', description: allNativeCommands['iftrue'] });
+            }
+            if (allNativeCommands['iffalse']) {
+                native.push({ name: 'iffalse', type: 'native', description: allNativeCommands['iffalse'] });
+            }
+        }
+        
+        // Builtin commands (root level commands, excluding module functions)
+        // Only include if we can start statements
+        const builtin: Array<{ name: string; type: string; description: string }> = [];
+        if (syntaxCtx.canStartStatement) {
+            for (const [name] of this.environment.builtins.entries()) {
+                if (!name.includes('.')) {
+                    const metadata = this.environment.metadata.get(name);
+                    builtin.push({
+                        name,
+                        type: 'builtin',
+                        description: metadata?.description || 'Builtin command'
+                    });
+                }
+            }
+            builtin.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        // Available modules - only show if we can start statements (for "use" command context)
+        const modules: Array<{ name: string; type: string; description: string }> = [];
+        if (syntaxCtx.canStartStatement) {
+            for (const [name, metadata] of this.environment.moduleMetadata.entries()) {
+                modules.push({
+                    name,
+                    type: 'module',
+                    description: metadata.description || 'Module'
+                });
+            }
+            modules.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        // Module functions (module.function format) - only if we can start statements
+        const moduleFunctions: Array<{ name: string; type: string; description: string }> = [];
+        if (syntaxCtx.canStartStatement) {
+            for (const [name] of this.environment.builtins.entries()) {
+                if (name.includes('.')) {
+                    const metadata = this.environment.metadata.get(name);
+                    moduleFunctions.push({
+                        name,
+                        type: 'moduleFunction',
+                        description: metadata?.description || 'Module function'
+                    });
+                }
+            }
+            moduleFunctions.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        // User-defined functions - only if we can start statements
+        const userFunctions: Array<{ name: string; type: string; description: string }> = [];
+        if (syntaxCtx.canStartStatement) {
+            for (const name of this.environment.functions.keys()) {
+                userFunctions.push({
+                    name,
+                    type: 'userFunction',
+                    description: 'User-defined function'
+                });
+            }
+            userFunctions.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        return {
+            native,
+            builtin,
+            modules,
+            moduleFunctions,
+            userFunctions
+        };
+    }
+
+    /**
+     * Check if a script needs more input (incomplete block)
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' } if incomplete,
+     * or { needsMore: false } if complete.
+     */
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' } {
+        try {
+            const lines = splitIntoLogicalLines(script);
+            const parser = new Parser(lines);
+            parser.parse();
+            return { needsMore: false };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            // Check for missing block closers
+            if (errorMessage.includes('missing endif')) {
+                return { needsMore: true, waitingFor: 'endif' };
+            }
+            if (errorMessage.includes('missing enddef')) {
+                return { needsMore: true, waitingFor: 'enddef' };
+            }
+            if (errorMessage.includes('missing endfor')) {
+                return { needsMore: true, waitingFor: 'endfor' };
+            }
+            
+            // If it's a different error, the script is malformed but complete
+            // (we'll let executeScript handle the actual error)
+            return { needsMore: false };
+        }
+    }
+
+    /**
+     * Execute a RobinPath script
+     */
+    async executeScript(script: string): Promise<Value> {
+        // Split into logical lines (handles ; separator)
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        
+        const executor = new Executor(this.environment, null);
+        this.lastExecutor = executor;
+        const result = await executor.execute(statements);
+        return result;
+    }
+
+    /**
+     * Execute a single line (for REPL)
+     * Uses a persistent executor to maintain state ($, variables) between calls.
+     * Functions and builtins persist across calls.
+     */
+    async executeLine(line: string): Promise<Value> {
+        // Split into logical lines (handles ; separator)
+        const lines = splitIntoLogicalLines(line);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+        
+        if (!this.persistentExecutor) {
+            this.persistentExecutor = new Executor(this.environment, null);
+        }
+        
+        this.lastExecutor = this.persistentExecutor;
+        const result = await this.persistentExecutor.execute(statements);
+        return result;
+    }
+
+    /**
+     * Get the last value ($)
+     * Returns the value from the most recent execution (script or REPL line).
+     */
+    getLastValue(): Value {
+        if (this.lastExecutor) {
+            return this.lastExecutor.getCurrentFrame().lastValue;
+        }
+        return null;
+    }
+
+    /**
+     * Generate a UUID v4
+     */
+    private generateUUID(): string {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    /**
+     * Create a new thread/session.
+     * Each thread has its own variables, functions, and $,
+     * but shares builtins and metadata with the root interpreter.
+     * 
+     * @param id Optional thread ID. If not provided, a UUID will be generated.
+     * @returns The created thread
+     * 
+     * @example
+     * const rp = new RobinPath();
+     * const thread = rp.createThread('my-thread');
+     * await thread.executeScript('math.add 5 5');
+     * console.log(thread.getLastValue()); // 10
+     */
+    createThread(id?: string): RobinPathThread {
+        const threadId = id || this.generateUUID();
+        
+        // Check if thread with this ID already exists
+        if (this.threads.has(threadId)) {
+            throw new Error(`Thread with ID "${threadId}" already exists`);
+        }
+        
+        const thread = new RobinPathThread(this.environment, threadId, this);
+        this.threads.set(threadId, thread);
+        
+        // Set as current thread if no current thread exists
+        if (!this.currentThread) {
+            this.currentThread = thread;
+        }
+        
+        return thread;
+    }
+
+    /**
+     * Get a thread by ID
+     */
+    getThread(id: string): RobinPathThread | null {
+        return this.threads.get(id) ?? null;
+    }
+
+    /**
+     * List all threads with their IDs
+     */
+    listThreads(): Array<{ id: string; isCurrent: boolean }> {
+        const threads: Array<{ id: string; isCurrent: boolean }> = [];
+        for (const [id, thread] of this.threads.entries()) {
+            threads.push({
+                id,
+                isCurrent: thread === this.currentThread
+            });
+        }
+        return threads;
+    }
+
+    /**
+     * Switch to a different thread
+     */
+    useThread(id: string): void {
+        const thread = this.threads.get(id);
+        if (!thread) {
+            throw new Error(`Thread with ID "${id}" not found`);
+        }
+        this.currentThread = thread;
+    }
+
+    /**
+     * Check if thread control is enabled
+     */
+    isThreadControlEnabled(): boolean {
+        return this.threadControl;
+    }
+
+    /**
+     * Close a thread by ID
+     * If the closed thread is the current thread, currentThread is set to null
+     */
+    closeThread(id: string): void {
+        const thread = this.threads.get(id);
+        if (!thread) {
+            throw new Error(`Thread with ID "${id}" not found`);
+        }
+        
+        // If this is the current thread, clear currentThread
+        if (this.currentThread === thread) {
+            this.currentThread = null;
+        }
+        
+        // Remove from threads map
+        this.threads.delete(id);
+    }
+
+    /**
+     * Get a variable value
+     */
+    getVariable(name: string): Value {
+        return this.environment.variables.get(name) ?? null;
+    }
+
+    /**
+     * Set a variable value (for external use)
+     */
+    setVariable(name: string, value: Value): void {
+        this.environment.variables.set(name, value);
+    }
+}

@@ -1,0 +1,293 @@
+# RobinPath Test Script
+# This script tests various features of the RobinPath interpreter
+
+# Test 1: Basic math operations
+add 10 20
+$result
+log "Test 1 - Addition result:" $result
+
+multiply $result 5
+log "Test 1 - Multiplication result:" $
+
+# Test 2: Variable assignment
+$balance = 100
+log "Test 2 - Balance:" $balance
+
+# Test 3: Inline conditional
+if $balance > 0 then log "Test 3 - Balance is positive"
+
+# Test 4: Block if with else
+$score = 85
+if $score >= 90
+  log "Test 4 - Grade: A"
+elseif $score >= 80
+  log "Test 4 - Grade: B"
+elseif $score >= 70
+  log "Test 4 - Grade: C"
+else
+  log "Test 4 - Grade: F"
+endif
+
+# Test 5: User-defined function
+def greet
+$1
+$2
+log "Test 5 - Hello" $1
+log "Test 5 - Your age is" $2
+add $2 1
+enddef
+
+greet "Alice" 25
+log "Test 5 - Next year age:" $
+
+# Test 6: Function with return value
+def sum_and_double
+add $1 $2
+multiply $ 2
+enddef
+
+sum_and_double 10 20
+log "Test 6 - Sum and double result:" $
+
+# Test 7: Nested conditionals
+$value = 42
+if $value > 0
+  if $value < 50
+    log "Test 7 - Value is between 0 and 50"
+  else
+    log "Test 7 - Value is 50 or greater"
+  endif
+else
+  log "Test 7 - Value is negative or zero"
+endif
+
+# Test 8: Shorthand assignment
+add 5 3
+$sum
+log "Test 8 - Shorthand assignment result:" $sum
+
+# Test 9: Using last value ($)
+add 7 8
+multiply $ 2
+log "Test 9 - Chained operations result:" $
+
+# Test 10: Complex expression
+$age = 18
+$citizen = "yes"
+if ($age >= 18) && ($citizen == "yes") then log "Test 10 - Loan approved"
+
+# Test 11: For loop
+for $i in range 1 5
+  log "Test 11 - Loop iteration:" $i
+endfor
+
+# Test 12: Nested for loop
+for $i in range 1 3
+  for $j in range 1 2
+    log "Test 12 - Nested loop:" $i $j
+  endfor
+endfor
+
+# Test 13: For loop with array
+$numbers = range 10 12
+for $num in $numbers
+  log "Test 13 - Number:" $num
+endfor
+
+# Test 14: For loop inside if
+$count = 3
+if $count > 0
+  for $i in range 1 $count
+    log "Test 14 - Conditional loop:" $i
+  endfor
+endif
+
+# Test 15: If inside for loop
+for $i in range 1 5
+  if $i > 3
+    log "Test 15 - Greater than 3:" $i
+  endif
+endfor
+
+# Test 16: Math module tests
+add 5 10
+assertEqual $ 15 "Math.add failed"
+add 1 2 3 4
+assertEqual $ 10 "Math.add multiple args failed"
+multiply 5 3
+assertEqual $ 15 "Math.multiply failed"
+multiply 2 3 4
+assertEqual $ 24 "Math.multiply multiple args failed"
+subtract 10 3
+assertEqual $ 7 "Math.subtract failed"
+divide 15 3
+assertEqual $ 5 "Math.divide failed"
+modulo 17 5
+assertEqual $ 2 "Math.modulo failed"
+power 2 8
+assertEqual $ 256 "Math.power failed"
+sqrt 16
+assertEqual $ 4 "Math.sqrt failed"
+abs -5
+assertEqual $ 5 "Math.abs failed"
+round 3.7
+assertEqual $ 4 "Math.round failed"
+floor 3.7
+assertEqual $ 3 "Math.floor failed"
+ceil 3.2
+assertEqual $ 4 "Math.ceil failed"
+min 5 2 8 1
+assertEqual $ 1 "Math.min failed"
+max 5 2 8 1
+assertEqual $ 8 "Math.max failed"
+log "Test 16 - Math module: All passed"
+
+# Test 17: String module tests
+length "hello"
+assertEqual $ 5 "String.length failed"
+substring "hello" 1 4
+assertEqual $ "ell" "String.substring failed"
+toUpperCase "hello"
+assertEqual $ "HELLO" "String.toUpperCase failed"
+toLowerCase "HELLO"
+assertEqual $ "hello" "String.toLowerCase failed"
+trim "  hello  "
+assertEqual $ "hello" "String.trim failed"
+replace "hello world" "world" "universe"
+assertEqual $ "hello universe" "String.replace failed"
+replaceAll "a b a" "a" "x"
+assertEqual $ "x b x" "String.replaceAll failed"
+split "a,b,c" ","
+$splitArr = $
+get $splitArr 0
+assertEqual $ "a" "String.split first element failed"
+startsWith "hello" "he"
+assertTrue $ "String.startsWith failed"
+endsWith "hello" "lo"
+assertTrue $ "String.endsWith failed"
+contains "hello" "ell"
+assertTrue $ "String.contains failed"
+indexOf "hello" "l"
+assertEqual $ 2 "String.indexOf failed"
+lastIndexOf "hello" "l"
+assertEqual $ 3 "String.lastIndexOf failed"
+charAt "hello" 1
+assertEqual $ "e" "String.charAt failed"
+padStart "5" 3 "0"
+assertEqual $ "005" "String.padStart failed"
+padEnd "5" 3 "0"
+assertEqual $ "500" "String.padEnd failed"
+repeat "ha" 3
+assertEqual $ "hahaha" "String.repeat failed"
+log "Test 17 - String module: All passed"
+
+# Test 18: Array module tests
+$arr = range 1 5
+length $arr
+assertEqual $ 5 "Array.length failed"
+get $arr 2
+assertEqual $ 3 "Array.get failed"
+slice $arr 1 4
+$sliced = $
+length $sliced
+assertEqual $ 3 "Array.slice length failed"
+get $sliced 0
+assertEqual $ 2 "Array.slice content failed"
+push $arr 6
+$pushed = $
+length $pushed
+assertEqual $ 6 "Array.push length failed"
+get $pushed 5
+assertEqual $ 6 "Array.push content failed"
+$arr1 = range 1 2
+$arr2 = range 3 4
+concat $arr1 $arr2
+$concatted = $
+length $concatted
+assertEqual $ 4 "Array.concat length failed"
+get $concatted 0
+assertEqual $ 1 "Array.concat content failed"
+join $arr ","
+assertEqual $ "1,2,3,4,5" "Array.join failed"
+log "Test 18 - Array module: All passed"
+
+# Test 19: Json module tests
+$jsonStr = '{"name": "John", "age": 30}'
+json.parse $jsonStr
+$parsed = $
+assertNotNull $parsed "Json.parse failed"
+json.get $parsed "name"
+assertEqual $ "John" "Json.get failed"
+json.set $parsed "city" "NYC"
+$setObj = $
+json.get $setObj "city"
+assertEqual $ "NYC" "Json.set failed"
+json.stringify $parsed
+$stringified = $
+contains $stringified "John"
+assertTrue $ "Json.stringify failed"
+json.isValid $jsonStr
+assertTrue $ "Json.isValid failed"
+json.keys $parsed
+$keys = $
+assertContains $keys "name" "Json.keys failed"
+json.values $parsed
+$values = $
+assertContains $values "John" "Json.values failed"
+json.parse '{"a": 1}'
+$obj1 = $
+json.parse '{"b": 2}'
+$obj2 = $
+json.merge $obj1 $obj2
+$merged = $
+json.get $merged "a"
+assertEqual $ 1 "Json.merge failed"
+json.get $merged "b"
+assertEqual $ 2 "Json.merge failed"
+json.clone $parsed
+$cloned = $
+json.get $cloned "name"
+assertEqual $ "John" "Json.clone failed"
+log "Test 19 - Json module: All passed"
+
+# Test 20: Time module tests
+time.now
+$now = $
+assertNotNull $now "Time.now failed"
+assertType $now "string" "Time.now type failed"
+time.timestamp
+$ts = $
+assertType $ts "number" "Time.timestamp type failed"
+assertGreater $ts 0 "Time.timestamp value failed"
+time.format "2024-01-15"
+$formatted = $
+assertType $formatted "string" "Time.format type failed"
+time.addDays "2024-01-15T00:00:00.000Z" 7
+$added = $
+assertNotNull $added "Time.addDays failed"
+time.diffDays "2024-01-01" "2024-01-08"
+assertEqual $ 7 "Time.diffDays failed"
+log "Test 20 - Time module: All passed"
+
+# Test 21: Random module tests
+random.int 1 10
+$randInt = $
+assertGreaterOrEqual $randInt 1 "Random.int min failed"
+assertLessOrEqual $randInt 10 "Random.int max failed"
+random.float
+$randFloat = $
+assertGreaterOrEqual $randFloat 0 "Random.float min failed"
+assertLess $randFloat 1 "Random.float max failed"
+random.uuid
+$uuid = $
+assertType $uuid "string" "Random.uuid type failed"
+length $uuid
+assertGreater $ 30 "Random.uuid length failed"
+$arr = range 1 5
+random.choice $arr
+$choice = $
+assertContains $arr $choice "Random.choice failed"
+log "Test 21 - Random module: All passed"
+
+log "All tests completed!"
+
