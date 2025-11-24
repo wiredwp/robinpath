@@ -349,6 +349,20 @@ $sum            # Assigns 8 to $sum
 log $sum        # Prints 8
 ```
 
+### Variable-to-Variable Assignment
+
+Assign the value of one variable to another:
+
+```robinpath
+$city = "New York"
+$city2 = $city  # Copies "New York" to $city2
+log $city2      # Prints "New York"
+
+$number1 = 42
+$number2 = $number1  # Copies 42 to $number2
+$number3 = $number2  # Can chain assignments
+```
+
 ### Comments
 
 Lines starting with `#` are comments:
@@ -410,7 +424,10 @@ greet "Alice" 25
 log "Next year:" $  # Prints 26
 ```
 
-Functions can return values by leaving the last computed value on the stack:
+Functions can return values in two ways:
+
+**Implicit return (last value):**
+Functions automatically return the last computed value:
 
 ```robinpath
 def sum_and_double
@@ -420,6 +437,39 @@ enddef
 
 sum_and_double 10 20
 log $  # Prints 60
+```
+
+**Explicit return statement:**
+Use the `return` statement to return a value and terminate function execution:
+
+```robinpath
+def calculate
+  if $1 > 10
+    return 100
+  endif
+  multiply $1 2
+enddef
+
+calculate 5
+log $  # Prints 10
+
+calculate 15
+log $  # Prints 100 (returned early)
+```
+
+The `return` statement can return:
+- A literal value: `return 42` or `return "hello"`
+- A variable: `return $result`
+- The last value (`$`): `return` (no value specified)
+- A subexpression: `return $(add 5 5)`
+
+**Return in global scope:**
+The `return` statement also works in global scope to terminate script execution:
+
+```robinpath
+log "This will execute"
+return "done"
+log "This will not execute"
 ```
 
 ### Modules
@@ -785,6 +835,26 @@ multiply $result 2
 log "Double:" $
 ```
 
+### Variable Assignment
+
+```robinpath
+# Direct assignment
+$name = "Alice"
+$age = 25
+
+# Variable-to-variable assignment
+$name2 = $name
+$age2 = $age
+
+# Chained assignments
+$original = 100
+$copy1 = $original
+$copy2 = $copy1
+
+log $name2 $age2  # Prints "Alice" 25
+log $copy2        # Prints 100
+```
+
 ### Conditional Logic
 
 ```robinpath
@@ -804,11 +874,29 @@ endfor
 
 ### Function with Return Value
 
+**Implicit return:**
 ```robinpath
 def calculate
 multiply $1 $2
 add $ 10
 enddef
+
+calculate 5 3
+log "Result:" $  # Prints 25
+```
+
+**Explicit return:**
+```robinpath
+def calculate
+  if $1 > 10
+    return 100
+  endif
+  multiply $1 $2
+  add $ 10
+enddef
+
+calculate 15 3
+log "Result:" $  # Prints 100 (returned early)
 
 calculate 5 3
 log "Result:" $  # Prints 25
