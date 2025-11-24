@@ -1,7 +1,7 @@
 {
   "name": "@wiredwp/robinpath",
   "description": "RobinPath - A lightweight, fast, and easy-to-use scripting language for automation and data processing.",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "author": "Ryan Lee <ryan@wiredwp.com>",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,9 +19,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "publish": "npm run build && npm publish --access public",
     "test": "npm run build && node test/run.js",
     "cli": "npm run build && node bin/robinpath.js"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "package.json"
+  ],
   "bin": {
     "robinpath": "./bin/robinpath.js"
   },
