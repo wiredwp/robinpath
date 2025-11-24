@@ -4,15 +4,254 @@ A scripting language interpreter with a REPL interface and built-in modules for 
 
 ## Installation
 
+Install RobinPath as a dependency in your project:
+
 ```bash
-npm install
+npm i @wiredwp/robinpath
 ```
 
-## Running
+## Integration
 
-### CLI (REPL)
+### Basic Usage
+
+Import and create a `RobinPath` instance to execute scripts in your application:
+
+```typescript
+import { RobinPath } from '@wiredwp/robinpath';
+
+// Create an interpreter instance
+const rp = new RobinPath();
+
+// Execute a script
+const result = await rp.executeScript(`
+  add 10 20
+  multiply $ 2
+`);
+
+console.log('Result:', result); // 60
+```
+
+### REPL Mode (Persistent State)
+
+Use `executeLine()` for REPL-like behavior where state persists between calls:
+
+```typescript
+const rp = new RobinPath();
+
+// First line - sets $result
+await rp.executeLine('$result = add 10 20');
+console.log(rp.getLastValue()); // 30
+
+// Second line - uses previous result
+await rp.executeLine('multiply $result 2');
+console.log(rp.getLastValue()); // 60
+```
+
+### Working with Variables
+
+Get and set variables programmatically:
+
+```typescript
+const rp = new RobinPath();
+
+// Set a variable from JavaScript
+rp.setVariable('name', 'Alice');
+rp.setVariable('age', 25);
+
+// Execute script that uses the variable
+await rp.executeScript(`
+  log "Hello" $name
+  log "Age:" $age
+`);
+
+// Get a variable value
+const name = rp.getVariable('name');
+console.log(name); // "Alice"
+```
+
+### Threads (Isolated Execution Contexts)
+
+Create isolated execution contexts with threads:
+
+```typescript
+const rp = new RobinPath({ threadControl: true });
+
+// Create a new thread
+const thread1 = rp.createThread('user-123');
+await thread1.executeScript('$count = 10');
+
+// Create another thread with separate variables
+const thread2 = rp.createThread('user-456');
+await thread2.executeScript('$count = 20');
+
+// Each thread maintains its own state
+console.log(thread1.getVariable('count')); // 10
+console.log(thread2.getVariable('count')); // 20
+
+// Switch between threads
+rp.useThread('user-123');
+console.log(rp.currentThread?.getVariable('count')); // 10
+```
+
+### Registering Custom Functions
+
+Extend RobinPath with your own builtin functions:
+
+```typescript
+const rp = new RobinPath();
+
+// Register a simple builtin
+rp.registerBuiltin('greet', (args) => {
+  const name = String(args[0] ?? 'World');
+  return `Hello, ${name}!`;
+});
+
+// Use it in scripts
+await rp.executeScript('greet "Alice"');
+console.log(rp.getLastValue()); // "Hello, Alice!"
+```
+
+### Registering Custom Modules
+
+Create and register custom modules:
+
+```typescript
+const rp = new RobinPath();
+
+// Register module functions
+rp.registerModule('myapp', {
+  process: (args) => {
+    const data = args[0];
+    // Process data...
+    return processedData;
+  },
+  validate: (args) => {
+    const input = args[0];
+    return isValid(input);
+  }
+});
+
+// Register function metadata for documentation
+rp.registerModuleFunctionMeta('myapp', 'process', {
+  description: 'Processes input data',
+  parameters: [
+    {
+      name: 'data',
+      dataType: 'object',
+      description: 'Data to process',
+      formInputType: 'json',
+      required: true
+    }
+  ],
+  returnType: 'object',
+  returnDescription: 'Processed data'
+});
+
+// Register module-level metadata
+rp.registerModuleInfo('myapp', {
+  description: 'Custom application module',
+  methods: ['process', 'validate']
+});
+
+// Use in scripts
+await rp.executeScript(`
+  use myapp
+  myapp.process $data
+`);
+```
+
+### Getting Available Commands
+
+Query available commands for autocomplete or help:
+
+```typescript
+const rp = new RobinPath();
+
+const commands = rp.getAvailableCommands();
+console.log(commands.native);      // Language keywords (if, def, etc.)
+console.log(commands.builtin);     // Root-level builtins
+console.log(commands.modules);     // Available modules
+console.log(commands.moduleFunctions); // Module.function names
+console.log(commands.userFunctions);   // User-defined functions
+```
+
+### AST with Execution State
+
+Get the AST with execution state for debugging or visualization:
+
+```typescript
+const rp = new RobinPath({ threadControl: true });
+const thread = rp.createThread('debug');
+
+const script = `
+  add 5 5
+  $result = $
+  if $result > 5
+    multiply $result 2
+  endif
+`;
+
+const astResult = await thread.getASTWithState(script);
+console.log(astResult.ast);        // AST with lastValue at each node
+console.log(astResult.variables);  // Thread and global variables
+console.log(astResult.lastValue);  // Final result
+console.log(astResult.callStack);  // Call stack frames
+```
+
+### Checking for Incomplete Blocks
+
+Check if a script needs more input (useful for multi-line input):
+
+```typescript
+const rp = new RobinPath();
+
+const check1 = rp.needsMoreInput('if $x > 5');
+console.log(check1); // { needsMore: true, waitingFor: 'endif' }
+
+const check2 = rp.needsMoreInput('if $x > 5\n  log "yes"\nendif');
+console.log(check2); // { needsMore: false }
+```
+
+### Error Handling
+
+Handle errors from script execution:
+
+```typescript
+const rp = new RobinPath();
+
+try {
+  await rp.executeScript('unknown_function 123');
+} catch (error) {
+  console.error('Script error:', error.message);
+  // "Unknown function: unknown_function"
+}
+```
+
+## CLI Usage
+
+### Installation
+
+Install globally to use the `robinpath` command:
+
+```bash
+npm i -g @wiredwp/robinpath
+```
+
+Or use it directly with `npx`:
+
+```bash
+npx @wiredwp/robinpath
+```
+
+### Starting the REPL
 
 Start the interactive REPL:
+
+```bash
+robinpath
+```
+
+Or if installed locally:
 
 ```bash
 npm run cli
@@ -20,11 +259,53 @@ npm run cli
 
 This will start an interactive session where you can type commands and see results immediately.
 
-**REPL Commands:**
+### REPL Commands
+
 - `help` or `.help` - Show help message
 - `exit`, `quit`, `.exit`, `.quit` - Exit the REPL
 - `clear` or `.clear` - Clear the screen
-- `..` - Show all available commands
+- `..` - Show all available commands as JSON
+
+### REPL Features
+
+**Multi-line Blocks:**
+The REPL automatically detects incomplete blocks and waits for completion:
+
+```robinpath
+> if $x > 5
+...   log "yes"
+... endif
+```
+
+**Thread Management:**
+When thread control is enabled, the prompt shows the current thread and module:
+
+```robinpath
+default@math> add 5 5
+10
+default@math> use clear
+Cleared module context
+default> thread list
+Threads:
+  - default (current)
+  - user-123
+default> thread use user-123
+Switched to thread: user-123
+user-123>
+```
+
+**Module Context:**
+The prompt shows the current module when using `use`:
+
+```robinpath
+> use math
+Using module: math
+default@math> add 5 5
+10
+default@math> use clear
+Cleared module context
+default>
+```
 
 ## Basic Syntax
 
