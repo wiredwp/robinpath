@@ -152,6 +152,11 @@ interface ForLoop {
     body: Statement[];
 }
 
+interface ReturnStatement {
+    type: 'return';
+    value?: Arg; // Optional value to return (if not provided, returns $)
+}
+
 type Statement = 
     | CommandCall 
     | Assignment 
@@ -161,7 +166,8 @@ type Statement =
     | IfTrue 
     | IfFalse 
     | DefineFunction
-    | ForLoop;
+    | ForLoop
+    | ReturnStatement;
 
 // ============================================================================
 // Logical Line Splitter
@@ -498,6 +504,11 @@ class Parser {
             return this.parseForLoop();
         }
 
+        // Check for return statement
+        if (tokens[0] === 'return') {
+            return this.parseReturn();
+        }
+
         // Check for block if
         if (tokens[0] === 'if' && !tokens.includes('then')) {
             return this.parseIfBlock();
@@ -530,7 +541,7 @@ class Parser {
             
             // Check if it's a literal value (number, string, boolean, null, or $)
             if (restTokens.length === 1) {
-                const token = restTokens[0];
+                const token = restTokens[0].trim(); // Ensure token is trimmed
                 if (Lexer.isLastValue(token)) {
                     // Special case: $var = $ means assign last value
                     // This is handled by executeAssignment which will use frame.lastValue
@@ -540,6 +551,44 @@ class Parser {
                         targetName, 
                         literalValue: null, // Will be resolved at execution time from frame.lastValue
                         isLastValue: true
+                    };
+                } else if (token === 'true') {
+                    // Check for boolean true BEFORE checking for variables
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: true 
+                    };
+                } else if (token === 'false') {
+                    // Check for boolean false BEFORE checking for variables
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: false 
+                    };
+                } else if (token === 'null') {
+                    // Check for null BEFORE checking for variables
+                    this.currentLine++;
+                    return { 
+                        type: 'assignment', 
+                        targetName, 
+                        literalValue: null 
+                    };
+                } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
+                    // Special case: $var1 = $var2 means assign variable value
+                    // Create a command that just references the variable
+                    const varName = token.slice(1);
+                    this.currentLine++;
+                    return {
+                        type: 'assignment',
+                        targetName,
+                        command: {
+                            type: 'command',
+                            name: '_var', // Special internal command name
+                            args: [{ type: 'var', name: varName }]
+                        }
                     };
                 } else if (Lexer.isNumber(token)) {
                     this.currentLine++;
@@ -554,27 +603,6 @@ class Parser {
                         type: 'assignment', 
                         targetName, 
                         literalValue: Lexer.parseString(token) 
-                    };
-                } else if (token === 'true') {
-                    this.currentLine++;
-                    return { 
-                        type: 'assignment', 
-                        targetName, 
-                        literalValue: true 
-                    };
-                } else if (token === 'false') {
-                    this.currentLine++;
-                    return { 
-                        type: 'assignment', 
-                        targetName, 
-                        literalValue: false 
-                    };
-                } else if (token === 'null') {
-                    this.currentLine++;
-                    return { 
-                        type: 'assignment', 
-                        targetName, 
-                        literalValue: null 
                     };
                 }
             }
@@ -711,6 +739,70 @@ class Parser {
         }
 
         return { type: 'forLoop', varName, iterableExpr, body };
+    }
+
+    private parseReturn(): ReturnStatement {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        this.currentLine++;
+        
+        // If there's a value after "return", parse it as an argument
+        if (tokens.length > 1) {
+            const valueTokens = tokens.slice(1);
+            // Parse the value as a single argument
+            const arg = this.parseReturnValue(valueTokens);
+            return { type: 'return', value: arg };
+        }
+        
+        // No value specified - returns $ (last value)
+        return { type: 'return' };
+    }
+
+    private parseReturnValue(tokens: string[]): Arg {
+        if (tokens.length === 0) {
+            return { type: 'lastValue' };
+        }
+        
+        const line = this.lines[this.currentLine - 1]; // Get the original line
+        const returnIndex = line.indexOf('return');
+        
+        // Find the position after "return" in the original line
+        const afterReturnStart = returnIndex + 6; // "return" is 6 chars
+        let pos = afterReturnStart;
+        
+        // Skip whitespace after "return"
+        while (pos < line.length && /\s/.test(line[pos])) {
+            pos++;
+        }
+        
+        // Check if we're at a $( subexpression
+        if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
+            const subexprCode = this.extractSubexpression(line, pos);
+            return { type: 'subexpr', code: subexprCode.code };
+        }
+        
+        // Otherwise, parse the first token
+        const token = tokens[0].trim(); // Ensure token is trimmed
+        
+        if (Lexer.isLastValue(token)) {
+            return { type: 'lastValue' };
+        } else if (token === 'true') {
+            return { type: 'literal', value: true };
+        } else if (token === 'false') {
+            return { type: 'literal', value: false };
+        } else if (token === 'null') {
+            return { type: 'literal', value: null };
+        } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
+            return { type: 'var', name: token.slice(1) };
+        } else if (Lexer.isString(token)) {
+            return { type: 'string', value: Lexer.parseString(token) };
+        } else if (Lexer.isNumber(token)) {
+            return { type: 'number', value: parseInt(token, 10) };
+        } else {
+            // Treat as literal
+            return { type: 'literal', value: token };
+        }
     }
 
     private parseIfBlock(): IfBlock {
@@ -929,6 +1021,12 @@ class Parser {
             
             if (Lexer.isLastValue(token)) {
                 args.push({ type: 'lastValue' });
+            } else if (token === 'true') {
+                args.push({ type: 'literal', value: true });
+            } else if (token === 'false') {
+                args.push({ type: 'literal', value: false });
+            } else if (token === 'null') {
+                args.push({ type: 'literal', value: null });
             } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
                 args.push({ type: 'var', name: token.slice(1) });
             } else if (Lexer.isString(token)) {
@@ -1125,6 +1223,18 @@ class ExpressionEvaluator {
 // Executor
 // ============================================================================
 
+/**
+ * Special exception used to signal early return from functions or global scope
+ */
+class ReturnException extends Error {
+    value: Value;
+    constructor(value: Value) {
+        super('Return');
+        this.value = value;
+        this.name = 'ReturnException';
+    }
+}
+
 class Executor {
     private environment: Environment;
     private callStack: Frame[] = [];
@@ -1160,10 +1270,18 @@ class Executor {
     }
 
     async execute(statements: Statement[]): Promise<Value> {
-        for (const stmt of statements) {
-            await this.executeStatement(stmt);
+        try {
+            for (const stmt of statements) {
+                await this.executeStatement(stmt);
+            }
+            return this.getCurrentFrame().lastValue;
+        } catch (error) {
+            if (error instanceof ReturnException) {
+                // Return statement was executed - return the value and stop execution
+                return error.value;
+            }
+            throw error;
         }
-        return this.getCurrentFrame().lastValue;
     }
 
     private async executeStatement(stmt: Statement): Promise<void> {
@@ -1195,12 +1313,25 @@ class Executor {
             case 'forLoop':
                 await this.executeForLoop(stmt);
                 break;
+            case 'return':
+                await this.executeReturn(stmt);
+                break;
         }
     }
 
     private async executeCommand(cmd: CommandCall): Promise<void> {
         const frame = this.getCurrentFrame();
         const args = await Promise.all(cmd.args.map(arg => this.evaluateArg(arg)));
+
+        // Special handling for "_var" command - internal command to return variable value
+        if (cmd.name === '_var') {
+            if (args.length === 0) {
+                throw new Error('_var command requires a variable name argument');
+            }
+            // The variable value is already evaluated by evaluateArg, so just return it
+            frame.lastValue = args[0];
+            return;
+        }
 
         // Special handling for "use" command - it needs to modify the environment
         if (cmd.name === 'use') {
@@ -1593,6 +1724,12 @@ Examples:
             }
 
             return frame.lastValue;
+        } catch (error) {
+            if (error instanceof ReturnException) {
+                // Return statement was executed - return the value
+                return error.value;
+            }
+            throw error;
         } finally {
             this.callStack.pop();
         }
@@ -1689,6 +1826,19 @@ Examples:
         const frame = this.getCurrentFrame();
         if (!this.isTruthy(frame.lastValue)) {
             await this.executeStatement(ifStmt.command);
+        }
+    }
+
+    private async executeReturn(returnStmt: ReturnStatement): Promise<void> {
+        const frame = this.getCurrentFrame();
+        
+        // If a value is specified, evaluate it; otherwise use lastValue ($)
+        if (returnStmt.value !== undefined) {
+            const value = await this.evaluateArg(returnStmt.value);
+            throw new ReturnException(value);
+        } else {
+            // No value specified - return $ (last value)
+            throw new ReturnException(frame.lastValue);
         }
     }
 
@@ -2156,6 +2306,11 @@ export class RobinPathThread {
                     varName: stmt.varName,
                     iterableExpr: stmt.iterableExpr,
                     body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'return':
+                return {
+                    ...base,
+                    value: stmt.value ? this.serializeArg(stmt.value) : undefined
                 };
         }
     }
