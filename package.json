@@ -1,15 +1,21 @@
 {
   "name": "@wiredwp/robinpath",
   "description": "RobinPath - A lightweight, fast, and easy-to-use scripting language for automation and data processing.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Ryan Lee <ryan@wiredwp.com>",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "npm run build && node test/run.js",
     "cli": "npm run build && node bin/robinpath.js"
@@ -19,7 +25,8 @@
   },
   "devDependencies": {
     "typescript": "~5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.0.0"
   },
   "dependencies": {
     "json5": "^2.2.3"
