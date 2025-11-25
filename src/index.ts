@@ -157,6 +157,12 @@ interface ReturnStatement {
     value?: Arg; // Optional value to return (if not provided, returns $)
 }
 
+interface CommentStatement {
+    type: 'comment';
+    text: string; // Comment text without the #
+    lineNumber: number; // Original line number for reference
+}
+
 type Statement = 
     | CommandCall 
     | Assignment 
@@ -167,7 +173,8 @@ type Statement =
     | IfFalse 
     | DefineFunction
     | ForLoop
-    | ReturnStatement;
+    | ReturnStatement
+    | CommentStatement;
 
 // ============================================================================
 // Logical Line Splitter
@@ -463,8 +470,20 @@ class Parser {
         while (this.currentLine < this.lines.length) {
             const line = this.lines[this.currentLine].trim();
             
-            // Skip empty lines and comments
-            if (!line || line.startsWith('#')) {
+            // Skip empty lines
+            if (!line) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comments
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim(); // Remove # and trim
+                statements.push({
+                    type: 'comment',
+                    text: commentText,
+                    lineNumber: this.currentLine
+                });
                 this.currentLine++;
                 continue;
             }
@@ -650,7 +669,19 @@ class Parser {
         while (this.currentLine < this.lines.length) {
             const line = this.lines[this.currentLine].trim();
             
-            if (!line || line.startsWith('#')) {
+            if (!line) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comments
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim();
+                body.push({
+                    type: 'comment',
+                    text: commentText,
+                    lineNumber: this.currentLine
+                });
                 this.currentLine++;
                 continue;
             }
@@ -713,7 +744,19 @@ class Parser {
         while (this.currentLine < this.lines.length) {
             const line = this.lines[this.currentLine].trim();
             
-            if (!line || line.startsWith('#')) {
+            if (!line) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comments
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim();
+                body.push({
+                    type: 'comment',
+                    text: commentText,
+                    lineNumber: this.currentLine
+                });
                 this.currentLine++;
                 continue;
             }
@@ -825,7 +868,19 @@ class Parser {
         while (this.currentLine < this.lines.length) {
             const line = this.lines[this.currentLine].trim();
             
-            if (!line || line.startsWith('#')) {
+            if (!line) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comments
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim();
+                currentBranch.push({
+                    type: 'comment',
+                    text: commentText,
+                    lineNumber: this.currentLine
+                });
                 this.currentLine++;
                 continue;
             }
@@ -1315,6 +1370,9 @@ class Executor {
                 break;
             case 'return':
                 await this.executeReturn(stmt);
+                break;
+            case 'comment':
+                // Comments are no-ops during execution
                 break;
         }
     }
@@ -2228,6 +2286,15 @@ export class RobinPathThread {
             const stmt = statements[i];
             const beforeState = this.executor.getCurrentFrame().lastValue;
             
+            // Comments don't execute, so skip them but still track state
+            if (stmt.type === 'comment') {
+                tracker.setState(i, {
+                    lastValue: beforeState, // Comments preserve the last value
+                    beforeValue: beforeState
+                });
+                continue;
+            }
+            
             await this.executor.executeStatementPublic(stmt);
             
             const afterState = this.executor.getCurrentFrame().lastValue;
@@ -2311,6 +2378,12 @@ export class RobinPathThread {
                 return {
                     ...base,
                     value: stmt.value ? this.serializeArg(stmt.value) : undefined
+                };
+            case 'comment':
+                return {
+                    ...base,
+                    text: stmt.text,
+                    lineNumber: stmt.lineNumber
                 };
         }
     }
