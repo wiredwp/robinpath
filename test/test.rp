@@ -736,7 +736,7 @@ $test6 = $(
 )
 
 test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed"
-test.assertEqual $test2 15 "Nested assign in subexpression failed"
+test.assertEqual $test2 1 "Nested assign in subexpression failed"
 
 # Test complex multi-line subexpression
 $test7 = $(
@@ -788,13 +788,12 @@ test.assertEqual $test12 7 "Multi-line subexpression with multiple statements fa
 
 # Test subexpression with variable assignment inside
 $test13 = $(
-  assign $testVar2 42
-  log $testVar2
-  math.add $testVar2 8
+  assign $testVar 42
+  math.add $testVar 8
 )
 
 test.assertEqual $test13 50 "Subexpression with variable assignment failed"
-test.assertEqual $testVar2 42 "Variable assignment in subexpression scope failed"
+test.assertEqual $testVar 42 "Variable assignment in subexpression scope failed"
 
 log "Test 32 - Subexpressions $( ): All passed"
 

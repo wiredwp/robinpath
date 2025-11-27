@@ -44,6 +44,7 @@ interface Environment {
 interface Frame {
     locals: Map<string, Value>;
     lastValue: Value;
+    isFunctionFrame?: boolean; // True if this frame is from a function (def/enddef), false/undefined if from subexpression
 }
 
 export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
@@ -2138,7 +2139,8 @@ Examples:
         // Create new frame
         const frame: Frame = {
             locals: new Map(),
-            lastValue: null
+            lastValue: null,
+            isFunctionFrame: true
         };
 
         // Set positional parameters
@@ -2370,7 +2372,8 @@ Examples:
         const currentFrame = this.getCurrentFrame();
         const subexprFrame: Frame = {
             locals: new Map(),
-            lastValue: currentFrame.lastValue // Start with caller's $ (though it will be overwritten)
+            lastValue: currentFrame.lastValue, // Start with caller's $ (though it will be overwritten)
+            isFunctionFrame: false // Subexpressions are not function frames
         };
         
         // Push the subexpression frame
@@ -2413,20 +2416,40 @@ Examples:
     }
 
     private setVariable(name: string, value: Value): void {
-        // Proper scoping following JavaScript rules:
-        // - In global scope (callStack.length === 1): write to environment.variables
-        // - In function scope (callStack.length > 1): write to frame.locals (function-local)
-        // Variables set inside a function are scoped to that function and do not affect
-        // global variables with the same name. When the function returns, the frame is
-        // popped and local variables are discarded.
+        const currentFrame = this.getCurrentFrame();
+        const isFunctionFrame = currentFrame.isFunctionFrame === true;
+        
+        // Check if variable exists in parent scopes (walking up the call stack)
+        // This allows subexpressions to modify parent scope variables
+        for (let i = this.callStack.length - 2; i >= 0; i--) {
+            const parentFrame = this.callStack[i];
+            if (parentFrame.locals.has(name)) {
+                // Variable exists in parent frame - modify it
+                parentFrame.locals.set(name, value);
+                return;
+            }
+        }
+        
+        // Check if variable exists in global environment
+        if (this.environment.variables.has(name)) {
+            // Variable exists in global scope - modify it
+            this.environment.variables.set(name, value);
+            return;
+        }
+        
+        // Variable doesn't exist in any parent scope - create new variable
         if (this.callStack.length === 1) {
             // Global scope - write to environment
             this.environment.variables.set(name, value);
-        } else {
-            // Function scope - write to current frame locals only
+        } else if (isFunctionFrame) {
+            // Function scope - create local variable
             // This ensures variables declared within def stay within def
-            const frame = this.getCurrentFrame();
-            frame.locals.set(name, value);
+            currentFrame.locals.set(name, value);
+        } else {
+            // Subexpression scope - create in global environment
+            // This ensures variables created in subexpressions are accessible after the subexpression
+            // and allows subexpressions to modify parent variables if they exist (checked above)
+            this.environment.variables.set(name, value);
         }
     }
 
