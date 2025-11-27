@@ -21,6 +21,7 @@ import JSON5 from 'json5';
 import MathModule from './modules/Math';
 import StringModule from './modules/String';
 import JsonModule from './modules/Json';
+import ObjectModule from './modules/Object';
 import TimeModule from './modules/Time';
 import RandomModule from './modules/Random';
 import ArrayModule from './modules/Array';
@@ -3169,6 +3170,7 @@ export class RobinPath {
         MathModule,
         StringModule,
         JsonModule,
+        ObjectModule,
         TimeModule,
         RandomModule,
         ArrayModule,

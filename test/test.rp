@@ -240,39 +240,46 @@ $jsonStr = '{"name": "John", "age": 30}'
 json.parse $jsonStr
 $parsed = $
 test.assertNotNull $parsed "Json.parse failed"
-json.get $parsed "name"
-test.assertEqual $ "John" "Json.get failed"
-json.set $parsed "city" "NYC"
-$setObj = $
-json.get $setObj "city"
-test.assertEqual $ "NYC" "Json.set failed"
 json.stringify $parsed
 $stringified = $
 string.contains $stringified "John"
 test.assertTrue $ "Json.stringify failed"
 json.isValid $jsonStr
 test.assertTrue $ "Json.isValid failed"
-json.keys $parsed
+log "Test 19 - Json module: All passed"
+
+# Test 19b: Object module tests (get, set, keys, values, entries, merge, clone)
+$testObj = $parsed
+get $testObj "name"
+test.assertEqual $ "John" "Object.get failed"
+set $testObj "city" "NYC"
+$setObj = $
+get $setObj "city"
+test.assertEqual $ "NYC" "Object.set failed"
+keys $setObj
 $keys = $
-test.assertContains $keys "name" "Json.keys failed"
-json.values $parsed
+test.assertContains $keys "name" "Object.keys failed"
+values $setObj
 $values = $
-test.assertContains $values "John" "Json.values failed"
+test.assertContains $values "John" "Object.values failed"
 json.parse '{"a": 1}'
 $obj1 = $
 json.parse '{"b": 2}'
 $obj2 = $
-json.merge $obj1 $obj2
+merge $obj1 $obj2
 $merged = $
-json.get $merged "a"
-test.assertEqual $ 1 "Json.merge failed"
-json.get $merged "b"
-test.assertEqual $ 2 "Json.merge failed"
-json.clone $parsed
+get $merged "a"
+test.assertEqual $ 1 "Object.merge failed"
+get $merged "b"
+test.assertEqual $ 2 "Object.merge failed"
+clone $parsed
 $cloned = $
-json.get $cloned "name"
-test.assertEqual $ "John" "Json.clone failed"
-log "Test 19 - Json module: All passed"
+get $cloned "name"
+test.assertEqual $ "John" "Object.clone failed"
+entries $cloned
+$entries = $
+test.assertNotNull $entries "Object.entries failed"
+log "Test 19b - Object module: All passed"
 
 # Test 20: Time module tests
 time.now
@@ -786,14 +793,15 @@ $test12 = $(
 )
 test.assertEqual $test12 7 "Multi-line subexpression with multiple statements failed"
 
-# Test subexpression with variable assignment inside
+# Test subexpression with variable assignment inside (modifies parent scope)
+$testVar = 10  # Set initial value in parent scope
 $test13 = $(
-  assign $testVar 42
+  assign $testVar 42  # This should modify the parent $testVar
   math.add $testVar 8
 )
 
 test.assertEqual $test13 50 "Subexpression with variable assignment failed"
-test.assertEqual $testVar 42 "Variable assignment in subexpression scope failed"
+test.assertEqual $testVar 42 "Variable assignment in subexpression should modify parent scope"
 
 log "Test 32 - Subexpressions $( ): All passed"
 

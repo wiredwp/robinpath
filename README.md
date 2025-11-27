@@ -552,10 +552,42 @@ string.toUpperCase "world"
 **Available Modules:**
 - `math` - Mathematical operations (add, subtract, multiply, divide, etc.)
 - `string` - String manipulation (length, substring, replace, etc.)
-- `json` - JSON parsing and manipulation
+- `json` - JSON parsing and stringification (parse, stringify, isValid)
+- `object` - Object manipulation operations (get, set, keys, values, entries, merge, clone) - **Global module**
 - `time` - Date and time operations
 - `random` - Random number generation
 - `array` - Array operations (push, pop, slice, etc.)
+
+**Object Module (Global):**
+The Object module provides object manipulation functions and is available globally (no `use` command needed):
+
+```robinpath
+json.parse '{"name": "John", "age": 30}'
+$user = $
+
+# Get a value using dot-notation path
+get $user "name"          # Returns "John"
+get $user "age"           # Returns 30
+
+# Set a value using dot-notation path
+set $user "city" "NYC"    # Sets user.city = "NYC"
+get $user "city"          # Returns "NYC"
+
+# Get object keys, values, and entries
+keys $user                # Returns ["name", "age", "city"]
+values $user              # Returns ["John", 30, "NYC"]
+entries $user             # Returns [["name", "John"], ["age", 30], ["city", "NYC"]]
+
+# Merge objects
+json.parse '{"a": 1}'
+$obj1 = $
+json.parse '{"b": 2}'
+$obj2 = $
+merge $obj1 $obj2         # Returns {a: 1, b: 2}
+
+# Clone an object (deep copy)
+clone $user               # Returns a deep copy of $user
+```
 
 ### Inline Subexpressions
 
@@ -583,31 +615,32 @@ endif
 ```
 
 **Variable Scope in Subexpressions:**
-Variables declared within a subexpression `$( ... )` are scoped to that subexpression. They can be used inside the subexpression but do not affect variables with the same name outside:
+Subexpressions can read and modify variables from parent scopes. If a variable exists in a parent scope, the `assign` command will modify that variable:
 
 ```robinpath
 $testVar = 10
 
 $result = $(
-  assign $testVar 42  # This modifies $testVar within the subexpression
-  add $testVar 8      # Uses 42, returns 50
+  assign $testVar 42  # This modifies the parent $testVar
+  math.add $testVar 8  # Uses 42, returns 50
 )
 
 log $result    # Prints 50
-log $testVar   # Prints 10 (original value, not affected by subexpression)
+log $testVar   # Prints 42 (modified by subexpression)
 ```
 
-However, if you want to modify a variable from outside the subexpression, you can use the `assign` command:
+If a variable doesn't exist in parent scopes, it will be created in the global scope:
 
 ```robinpath
-$outerVar = 0
 $result = $(
-  assign $outerVar 100  # This modifies the outer $outerVar
-  add 1 2
+  assign $newVar 100  # Creates $newVar in global scope
+  math.add $newVar 1
 )
-log $result     # Prints 3
-log $outerVar   # Prints 100 (modified by subexpression)
+log $result     # Prints 101
+log $newVar     # Prints 100 (created in global scope)
 ```
+
+Note: Functions (`def`/`enddef`) maintain their own local scope and do not modify parent variables.
 
 ### String Literals
 
