@@ -91,9 +91,14 @@ export interface ModuleMetadata {
     methods: string[];
 }
 
+// Attribute access path segment
+type AttributePathSegment = 
+    | { type: 'property'; name: string }      // .propertyName
+    | { type: 'index'; index: number };        // [35]
+
 type Arg = 
     | { type: 'subexpr'; code: string }   // $( ... ) inline subexpression
-    | { type: 'var'; name: string }
+    | { type: 'var'; name: string; path?: AttributePathSegment[] }  // $var or $var.property or $var[0] or $var.property[0]
     | { type: 'lastValue' }
     | { type: 'literal'; value: Value }
     | { type: 'number'; value: number }
@@ -377,7 +382,69 @@ class Lexer {
             }
 
             // Handle single character operators and delimiters
-            if (['=', '>', '<', '!', '(', ')'].includes(char)) {
+            // Note: '.' and '[' ']' are handled specially for attribute access and array indexing
+            if (['=', '>', '<', '!', '(', ')', ']'].includes(char)) {
+                // Special handling for ']' - it might be part of a variable like $arr[0]
+                if (char === ']' && current.trim().startsWith('$')) {
+                    // This is part of a variable - keep it in current
+                    current += char;
+                    i++;
+                    continue;
+                }
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle '[' - might be part of variable or standalone
+            if (char === '[') {
+                // If current starts with $, it's part of a variable
+                if (current.trim().startsWith('$')) {
+                    current += char;
+                    i++;
+                    continue;
+                }
+                // Otherwise, it's a standalone token
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                    current = '';
+                }
+                tokens.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle '.' - might be part of variable attribute access or decimal number
+            if (char === '.') {
+                // If current starts with $, it's part of a variable attribute access
+                if (current.trim().startsWith('$')) {
+                    current += char;
+                    i++;
+                    continue;
+                }
+                // If current is a number (starts with digit), check if next char is also a digit
+                const currentTrimmed = current.trim();
+                if (/^-?\d+$/.test(currentTrimmed)) {
+                    // Check if next character is a digit (for decimal numbers)
+                    if (i + 1 < line.length && /\d/.test(line[i + 1])) {
+                        // This is a decimal number - keep the dot as part of the number
+                        current += char;
+                        i++;
+                        continue;
+                    }
+                    // If next char is not a digit, this might be end of number (like "3.") or module.function
+                    // Push the number and treat . as separate token
+                    tokens.push(currentTrimmed);
+                    current = '';
+                    tokens.push(char);
+                    i++;
+                    continue;
+                }
+                // Otherwise, it's a standalone token (for module.function syntax)
                 if (current.trim()) {
                     tokens.push(current.trim());
                     current = '';
@@ -433,11 +500,65 @@ class Lexer {
     }
 
     static isNumber(token: string): boolean {
+        // Match integers and decimal numbers
+        return /^-?\d+(\.\d+)?$/.test(token);
+    }
+
+    static isInteger(token: string): boolean {
+        // Match only integers (no decimal point)
         return /^-?\d+$/.test(token);
     }
 
     static isVariable(token: string): boolean {
-        return /^\$[A-Za-z_][A-Za-z0-9_]*$/.test(token);
+        // Match: $var, $var.property, $var[0], $var.property[0], $var.property.subproperty, etc.
+        return /^\$[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*$/.test(token);
+    }
+
+    /**
+     * Parse attribute access path from a variable token
+     * Returns the base variable name and path segments
+     */
+    static parseVariablePath(token: string): { name: string; path: AttributePathSegment[] } {
+        if (!token.startsWith('$')) {
+            throw new Error(`Invalid variable token: ${token}`);
+        }
+
+        const name = token.slice(1); // Remove $
+        const path: AttributePathSegment[] = [];
+        
+        // Extract base variable name (everything before first . or [)
+        const baseMatch = name.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
+        if (!baseMatch) {
+            throw new Error(`Invalid variable name: ${name}`);
+        }
+        
+        const baseName = baseMatch[1];
+        let remaining = name.slice(baseName.length);
+        
+        // Parse path segments (.property or [index])
+        while (remaining.length > 0) {
+            if (remaining.startsWith('.')) {
+                // Property access: .propertyName
+                const propMatch = remaining.match(/^\.([A-Za-z_][A-Za-z0-9_]*)/);
+                if (!propMatch) {
+                    throw new Error(`Invalid property access: ${remaining}`);
+                }
+                path.push({ type: 'property', name: propMatch[1] });
+                remaining = remaining.slice(propMatch[0].length);
+            } else if (remaining.startsWith('[')) {
+                // Array index: [number]
+                const indexMatch = remaining.match(/^\[(\d+)\]/);
+                if (!indexMatch) {
+                    throw new Error(`Invalid array index: ${remaining}`);
+                }
+                path.push({ type: 'index', index: parseInt(indexMatch[1], 10) });
+                remaining = remaining.slice(indexMatch[0].length);
+            } else {
+                throw new Error(`Unexpected character in variable path: ${remaining}`);
+            }
+        }
+        
+        return { name: baseName, path };
     }
 
     static isLastValue(token: string): boolean {
@@ -564,8 +685,15 @@ class Parser {
         }
 
         // Check for assignment
+        // Only allow simple variable names as assignment targets (no attribute paths)
         if (tokens.length >= 3 && Lexer.isVariable(tokens[0]) && tokens[1] === '=') {
-            const targetName = tokens[0].slice(1);
+            // Parse the target variable name (only base name, no paths for assignment targets)
+            const targetVar = tokens[0];
+            // Check if it's a simple variable (no paths)
+            if (!/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(targetVar)) {
+                throw this.createError('Assignment target must be a simple variable name (attribute access not supported)', this.currentLine);
+            }
+            const targetName = targetVar.slice(1);
             const restTokens = tokens.slice(2);
             
             // Check if it's a literal value (number, string, boolean, null, or $)
@@ -605,9 +733,8 @@ class Parser {
                         targetName, 
                         literalValue: null 
                     };
-                } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
-                    // Special case: $var1 = $var2 means assign variable value
-                    // Create a command that just references the variable
+                } else if (Lexer.isPositionalParam(token)) {
+                    // Special case: $var1 = $1 means assign positional param value
                     const varName = token.slice(1);
                     this.currentLine++;
                     return {
@@ -619,12 +746,26 @@ class Parser {
                             args: [{ type: 'var', name: varName }]
                         }
                     };
+                } else if (Lexer.isVariable(token)) {
+                    // Special case: $var1 = $var2 means assign variable value
+                    // Create a command that just references the variable
+                    const { name: varName, path } = Lexer.parseVariablePath(token);
+                    this.currentLine++;
+                    return {
+                        type: 'assignment',
+                        targetName,
+                        command: {
+                            type: 'command',
+                            name: '_var', // Special internal command name
+                            args: [{ type: 'var', name: varName, path }]
+                        }
+                    };
                 } else if (Lexer.isNumber(token)) {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
-                        literalValue: parseInt(token, 10) 
+                        literalValue: parseFloat(token) 
                     };
                 } else if (Lexer.isString(token)) {
                     this.currentLine++;
@@ -672,9 +813,20 @@ class Parser {
         // Check for shorthand assignment or positional param reference
         if (tokens.length === 1) {
             if (Lexer.isVariable(tokens[0])) {
-                const targetName = tokens[0].slice(1);
-                this.currentLine++;
-                return { type: 'shorthand', targetName };
+                const targetVar = tokens[0];
+                // For shorthand assignment, only allow simple variable names (reading attributes is allowed)
+                // If it has a path, it's just a reference, not an assignment
+                if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(targetVar)) {
+                    // Simple variable - shorthand assignment
+                    const targetName = targetVar.slice(1);
+                    this.currentLine++;
+                    return { type: 'shorthand', targetName };
+                } else {
+                    // Variable with path - just a reference, treat as no-op (or could be used in expressions)
+                    // For now, we'll treat it as a no-op since we can't assign to attributes
+                    this.currentLine++;
+                    return null;
+                }
             } else if (Lexer.isPositionalParam(tokens[0])) {
                 // Positional params alone on a line are no-ops (just references)
                 // They're used for documentation/clarity in function definitions
@@ -880,12 +1032,15 @@ class Parser {
             return { type: 'literal', value: false };
         } else if (token === 'null') {
             return { type: 'literal', value: null };
-        } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
+        } else if (Lexer.isPositionalParam(token)) {
             return { type: 'var', name: token.slice(1) };
+        } else if (Lexer.isVariable(token)) {
+            const { name, path } = Lexer.parseVariablePath(token);
+            return { type: 'var', name, path };
         } else if (Lexer.isString(token)) {
             return { type: 'string', value: Lexer.parseString(token) };
         } else if (Lexer.isNumber(token)) {
-            return { type: 'number', value: parseInt(token, 10) };
+            return { type: 'number', value: parseFloat(token) };
         } else {
             // Treat as literal
             return { type: 'literal', value: token };
@@ -1021,7 +1176,7 @@ class Parser {
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
-                        literalValue: parseInt(token, 10) 
+                        literalValue: parseFloat(token) 
                     };
                 } else if (Lexer.isString(token)) {
                     finalCommand = { 
@@ -1069,7 +1224,28 @@ class Parser {
             throw this.createError('empty command', this.currentLine);
         }
 
-        const name = tokens[0];
+        // Handle module function calls: math.add -> tokens: ["math", ".", "add"]
+        // Combine module name and function name if second token is "."
+        let name: string;
+        let argStartIndex = 1;
+        if (tokens.length >= 3 && tokens[1] === '.') {
+            // Validate module name doesn't start with a number
+            if (/^\d/.test(tokens[0])) {
+                throw this.createError(`module name cannot start with a number: ${tokens[0]}`, this.currentLine);
+            }
+            // Validate function name doesn't start with a number
+            if (/^\d/.test(tokens[2])) {
+                throw this.createError(`function name cannot start with a number: ${tokens[2]}`, this.currentLine);
+            }
+            name = `${tokens[0]}.${tokens[2]}`;
+            argStartIndex = 3;
+        } else {
+            name = tokens[0];
+            // Validate function name doesn't start with a number
+            if (/^\d/.test(name)) {
+                throw this.createError(`function name cannot start with a number: ${name}`, this.currentLine);
+            }
+        }
         
         // Validate that the first token is not a literal number, string, variable, or last value reference
         // (strings should be quoted, numbers should not be command names, variables are not commands, $ is not a command)
@@ -1091,10 +1267,22 @@ class Parser {
 
         // We need to scan the original line to find $(...) subexpressions
         // because tokenization may have split them incorrectly
-        let i = 1;
+        let i = argStartIndex;
         
         // Find the position after the command name in the original line
-        const nameEndPos = line.indexOf(name) + name.length;
+        // For module functions like "math.add", we need to find the position after the full name
+        let nameEndPos: number;
+        if (argStartIndex === 3) {
+            // Module function: tokens[0] + "." + tokens[2]
+            // Find where tokens[0] starts, then calculate end position
+            const moduleToken = tokens[0];
+            const modulePos = line.indexOf(moduleToken);
+            // Calculate end: module name + "." + function name
+            nameEndPos = modulePos + moduleToken.length + 1 + tokens[2].length;
+        } else {
+            // Regular function: just tokens[0]
+            nameEndPos = line.indexOf(name) + name.length;
+        }
         let pos = nameEndPos;
         
         // Skip whitespace after command name
@@ -1144,12 +1332,15 @@ class Parser {
                 args.push({ type: 'literal', value: false });
             } else if (token === 'null') {
                 args.push({ type: 'literal', value: null });
-            } else if (Lexer.isVariable(token) || Lexer.isPositionalParam(token)) {
+            } else if (Lexer.isPositionalParam(token)) {
                 args.push({ type: 'var', name: token.slice(1) });
+            } else if (Lexer.isVariable(token)) {
+                const { name, path } = Lexer.parseVariablePath(token);
+                args.push({ type: 'var', name, path });
             } else if (Lexer.isString(token)) {
                 args.push({ type: 'string', value: Lexer.parseString(token) });
             } else if (Lexer.isNumber(token)) {
-                args.push({ type: 'number', value: parseInt(token, 10) });
+                args.push({ type: 'number', value: parseFloat(token) });
             } else {
                 // Treat as literal string
                 args.push({ type: 'literal', value: token });
@@ -1289,10 +1480,17 @@ class ExpressionEvaluator {
             jsExpr = await this.replaceSubexpressions(jsExpr);
         }
 
-        // Replace $name variables first (before bare $)
-        jsExpr = jsExpr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
-            const val = this.resolveVariable(name);
-            return this.valueToJS(val);
+        // Replace $name variables with attribute access (before bare $)
+        // Match: $var, $var.property, $var[0], $var.property[0], etc.
+        jsExpr = jsExpr.replace(/\$([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*)/g, (_match, varPath) => {
+            try {
+                const { name, path } = Lexer.parseVariablePath('$' + varPath);
+                const val = this.resolveVariable(name, path);
+                return this.valueToJS(val);
+            } catch {
+                // If parsing fails, return the original match
+                return _match;
+            }
         });
 
         // Replace $1, $2, etc. (positional params)
@@ -1451,10 +1649,11 @@ class ExpressionEvaluator {
         for (const token of argTokens) {
             if (token === '$') {
                 args.push({ type: 'lastValue' });
-            } else if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
+            } else if (Lexer.isPositionalParam(token)) {
                 args.push({ type: 'var', name: token.slice(1) });
-            } else if (/^\$[0-9]+$/.test(token)) {
-                args.push({ type: 'var', name: token.slice(1) });
+            } else if (Lexer.isVariable(token)) {
+                const { name, path } = Lexer.parseVariablePath(token);
+                args.push({ type: 'var', name, path });
             } else if (token === 'true') {
                 args.push({ type: 'literal', value: true });
             } else if (token === 'false') {
@@ -1462,7 +1661,7 @@ class ExpressionEvaluator {
             } else if (token === 'null') {
                 args.push({ type: 'literal', value: null });
             } else if (/^-?\d+$/.test(token)) {
-                args.push({ type: 'number', value: parseInt(token, 10) });
+                args.push({ type: 'number', value: parseFloat(token) });
             } else if ((token.startsWith('"') && token.endsWith('"')) || 
                        (token.startsWith("'") && token.endsWith("'"))) {
                 args.push({ type: 'string', value: token.slice(1, -1) });
@@ -1475,16 +1674,50 @@ class ExpressionEvaluator {
         return await this.executor.executeFunctionCall(funcName, args);
     }
 
-    private resolveVariable(name: string): Value {
+    private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
         // Check locals first
+        let baseValue: Value;
         if (this.frame.locals.has(name)) {
-            return this.frame.locals.get(name)!;
+            baseValue = this.frame.locals.get(name)!;
+        } else if (this.globals.variables.has(name)) {
+            // Check globals
+            baseValue = this.globals.variables.get(name)!;
+        } else {
+            return null;
         }
-        // Check globals
-        if (this.globals.variables.has(name)) {
-            return this.globals.variables.get(name)!;
+        
+        // If no path, return the base value
+        if (!path || path.length === 0) {
+            return baseValue;
         }
-        return null;
+        
+        // Traverse the path segments
+        let current: any = baseValue;
+        for (let i = 0; i < path.length; i++) {
+            const segment = path[i];
+            
+            if (segment.type === 'property') {
+                // Property access: .propertyName
+                if (current === null || current === undefined) {
+                    throw new Error(`Cannot access property '${segment.name}' of null`);
+                }
+                if (typeof current !== 'object') {
+                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current}`);
+                }
+                current = current[segment.name];
+            } else if (segment.type === 'index') {
+                // Array index access: [index]
+                if (!Array.isArray(current)) {
+                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                }
+                if (segment.index < 0 || segment.index >= current.length) {
+                    return null; // Out of bounds returns null
+                }
+                current = current[segment.index];
+            }
+        }
+        
+        return current;
     }
 
     private valueToJS(val: Value): string {
@@ -2346,7 +2579,7 @@ Examples:
             case 'lastValue':
                 return frame.lastValue;
             case 'var':
-                return this.resolveVariable(arg.name);
+                return this.resolveVariable(arg.name, arg.path);
             case 'number':
                 return arg.value;
             case 'string':
@@ -2394,7 +2627,7 @@ Examples:
         }
     }
 
-    private resolveVariable(name: string): Value {
+    private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
         const frame = this.getCurrentFrame();
         
         // Variable resolution follows JavaScript scoping rules:
@@ -2403,17 +2636,50 @@ Examples:
         // This allows functions to read global variables but ensures local variables
         // shadow globals with the same name.
         
+        let baseValue: Value;
+        
         // Check locals first (function scope)
         if (frame.locals.has(name)) {
-            return frame.locals.get(name)!;
+            baseValue = frame.locals.get(name)!;
+        } else if (this.environment.variables.has(name)) {
+            // Check globals (outer scope)
+            baseValue = this.environment.variables.get(name)!;
+        } else {
+            return null;
         }
         
-        // Check globals (outer scope)
-        if (this.environment.variables.has(name)) {
-            return this.environment.variables.get(name)!;
+        // If no path, return the base value
+        if (!path || path.length === 0) {
+            return baseValue;
         }
         
-        return null;
+        // Traverse the path segments
+        let current: any = baseValue;
+        for (let i = 0; i < path.length; i++) {
+            const segment = path[i];
+            
+            if (segment.type === 'property') {
+                // Property access: .propertyName
+                if (current === null || current === undefined) {
+                    throw new Error(`Cannot access property '${segment.name}' of null`);
+                }
+                if (typeof current !== 'object') {
+                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current}`);
+                }
+                current = current[segment.name];
+            } else if (segment.type === 'index') {
+                // Array index access: [index]
+                if (!Array.isArray(current)) {
+                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                }
+                if (segment.index < 0 || segment.index >= current.length) {
+                    return null; // Out of bounds returns null
+                }
+                current = current[segment.index];
+            }
+        }
+        
+        return current;
     }
 
     private setVariable(name: string, value: Value): void {
@@ -2830,7 +3096,7 @@ export class RobinPathThread {
             case 'subexpr':
                 return { type: 'subexpr', code: arg.code };
             case 'var':
-                return { type: 'var', name: arg.name };
+                return { type: 'var', name: arg.name, path: arg.path };
             case 'lastValue':
                 return { type: 'lastValue' };
             case 'number':
@@ -3683,7 +3949,7 @@ export class RobinPath {
             case 'subexpr':
                 return { type: 'subexpr', code: arg.code };
             case 'var':
-                return { type: 'var', name: arg.name };
+                return { type: 'var', name: arg.name, path: arg.path };
             case 'lastValue':
                 return { type: 'lastValue' };
             case 'number':

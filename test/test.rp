@@ -805,5 +805,73 @@ test.assertEqual $testVar 42 "Variable assignment in subexpression should modify
 
 log "Test 32 - Subexpressions $( ): All passed"
 
+# Test 33: Attribute access and array indexing
+# Test basic property access
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC", "zip": 10001}}'
+$user = $
+test.assertEqual $user.name "John" "Basic property access failed"
+test.assertEqual $user.age 30 "Basic property access with number failed"
+test.assertEqual $user.address.city "NYC" "Nested property access failed"
+test.assertEqual $user.address.zip 10001 "Nested property access with number failed"
+
+# Test array indexing
+$arr = range 10 15
+test.assertEqual $arr[0] 10 "Array index 0 failed"
+test.assertEqual $arr[2] 12 "Array index 2 failed"
+test.assertEqual $arr[5] 15 "Array index 5 failed"
+test.assertEqual $arr[10] null "Out of bounds array access should return null"
+
+# Test combined property and array access
+json.parse '{"items": [{"name": "item1", "price": 10}, {"name": "item2", "price": 20}]}'
+$data = $
+test.assertEqual $data.items[0].name "item1" "Combined property and array access failed"
+test.assertEqual $data.items[0].price 10 "Combined property and array access with number failed"
+test.assertEqual $data.items[1].name "item2" "Combined property and array access second item failed"
+
+# Test property access in expressions
+if $user.age >= 30
+  $isAdult = true
+else
+  $isAdult = false
+endif
+test.assertEqual $isAdult true "Property access in conditional expression failed"
+
+# Test array access in expressions
+if $arr[0] == 10
+  $firstIsTen = true
+else
+  $firstIsTen = false
+endif
+test.assertEqual $firstIsTen true "Array access in conditional expression failed"
+
+# Test property access in function calls
+math.add $user.age 5
+test.assertEqual $ 35 "Property access as function argument failed"
+
+# Test array access in function calls
+math.add $arr[0] $arr[1]
+test.assertEqual $ 21 "Array access as function arguments failed"
+
+# Note: Error cases (accessing property of null, indexing non-array, etc.) are tested manually
+# as they throw exceptions that would terminate test execution
+
+# Test property access in variable assignment
+$name = $user.name
+test.assertEqual $name "John" "Property access in variable assignment failed"
+
+# Test array access in variable assignment
+$firstItem = $arr[0]
+test.assertEqual $firstItem 10 "Array access in variable assignment failed"
+
+# Test nested property access in variable assignment
+$city = $user.address.city
+test.assertEqual $city "NYC" "Nested property access in variable assignment failed"
+
+# Test combined access in variable assignment
+$itemName = $data.items[0].name
+test.assertEqual $itemName "item1" "Combined access in variable assignment failed"
+
+log "Test 33 - Attribute access and array indexing: All passed"
+
 log "All tests completed!"
 

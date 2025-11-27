@@ -363,6 +363,71 @@ $number2 = $number1  # Copies 42 to $number2
 $number3 = $number2  # Can chain assignments
 ```
 
+### Attribute Access and Array Indexing
+
+RobinPath supports accessing object properties and array elements directly using dot notation and bracket notation:
+
+**Property Access:**
+```robinpath
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC"}}'
+$user = $
+
+# Access properties using dot notation
+log $user.name           # Prints "John"
+log $user.age            # Prints 30
+log $user.address.city   # Prints "NYC" (nested property access)
+
+# Use in expressions
+if $user.age >= 18
+  log "Adult"
+endif
+
+# Use as function arguments
+math.add $user.age 5     # Adds 30 + 5 = 35
+```
+
+**Array Indexing:**
+```robinpath
+$arr = range 10 15
+log $arr[0]              # Prints 10 (first element)
+log $arr[2]              # Prints 12 (third element)
+log $arr[5]              # Prints 15 (last element)
+
+# Out of bounds access returns null
+log $arr[10]             # Prints null
+
+# Use in expressions
+if $arr[0] == 10
+  log "First is 10"
+endif
+```
+
+**Combined Access:**
+You can combine property access and array indexing:
+```robinpath
+json.parse '{"items": [{"name": "item1", "price": 10}, {"name": "item2", "price": 20}]}'
+$data = $
+
+log $data.items[0].name   # Prints "item1"
+log $data.items[0].price  # Prints 10
+log $data.items[1].name   # Prints "item2"
+
+# Assign to variables
+$firstItem = $data.items[0].name
+log $firstItem            # Prints "item1"
+```
+
+**Error Handling:**
+- Accessing a property of `null` or `undefined` throws an error: `Cannot access property 'propertyName' of null`
+- Accessing a property of a non-object throws an error: `Cannot access property 'propertyName' of <type>`
+- Array indexing on a non-array throws an error: `Cannot access index X of non-array value`
+- Out-of-bounds array access returns `null` (doesn't throw)
+
+**Note:** Assignment targets must be simple variable names. You cannot assign directly to attributes (e.g., `$user.name = "Jane"` is not supported). Use the `set` function from the Object module instead:
+```robinpath
+set $user "name" "Jane"   # Use Object.set for attribute assignment
+```
+
 ### Native Reserved Methods
 
 RobinPath includes several built-in reserved methods:
@@ -568,6 +633,10 @@ $user = $
 # Get a value using dot-notation path
 get $user "name"          # Returns "John"
 get $user "age"           # Returns 30
+
+# Alternative: Use attribute access syntax (see Attribute Access section)
+# $user.name              # Also returns "John"
+# $user.age               # Also returns 30
 
 # Set a value using dot-notation path
 set $user "city" "NYC"    # Sets user.city = "NYC"
@@ -1057,6 +1126,31 @@ $arr = range 1 5
 for $num in $arr
   log "Number:" $num
 endfor
+```
+
+### Working with Objects and Attribute Access
+
+```robinpath
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC"}, "scores": [85, 90, 95]}'
+$user = $
+
+# Access properties using dot notation
+log "Name:" $user.name
+log "Age:" $user.age
+log "City:" $user.address.city
+
+# Access array elements
+log "First score:" $user.scores[0]
+log "Last score:" $user.scores[2]
+
+# Use in conditionals
+if $user.age >= 18
+  log "Adult user"
+endif
+
+# Use in calculations
+math.add $user.scores[0] $user.scores[1]
+log "Sum of first two scores:" $
 ```
 
 ### Function with Return Value
