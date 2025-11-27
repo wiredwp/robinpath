@@ -238,12 +238,19 @@ function splitIntoLogicalLines(script: string): string[] {
         }
 
         // Handle line separators (only at top level, not inside $())
-        if (char === '\n' || (char === ';' && subexprDepth === 0)) {
+        if ((char === '\n' && subexprDepth === 0) || (char === ';' && subexprDepth === 0)) {
             // End of logical line
             if (current.trim()) {
                 lines.push(current.trim());
             }
             current = '';
+            i++;
+            continue;
+        }
+        
+        // If we're inside a subexpression and encounter a newline, preserve it
+        if (char === '\n' && subexprDepth > 0) {
+            current += char;
             i++;
             continue;
         }
@@ -627,6 +634,33 @@ class Parser {
                 }
             }
             
+            // Check if the assignment value is a subexpression $(...)
+            // We need to check the original line because tokenization may have split $() incorrectly
+            const line = this.lines[this.currentLine];
+            const equalsIndex = line.indexOf('=');
+            if (equalsIndex !== -1) {
+                let pos = equalsIndex + 1;
+                // Skip whitespace after "="
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+                // Check if we're at a $( subexpression
+                if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
+                    // Extract the subexpression code
+                    const subexprCode = this.extractSubexpression(line, pos);
+                    this.currentLine++;
+                    return {
+                        type: 'assignment',
+                        targetName,
+                        command: {
+                            type: 'command',
+                            name: '_subexpr', // Special internal command name for subexpressions
+                            args: [{ type: 'subexpr', code: subexprCode.code }]
+                        }
+                    };
+                }
+            }
+            
             // Otherwise, treat as command
             const command = this.parseCommandFromTokens(restTokens);
             this.currentLine++;
@@ -644,6 +678,13 @@ class Parser {
                 // They're used for documentation/clarity in function definitions
                 this.currentLine++;
                 return { type: 'shorthand', targetName: tokens[0].slice(1) };
+            } else if (Lexer.isLastValue(tokens[0])) {
+                // Just $ on a line is a no-op (just references the last value, doesn't assign)
+                // This is useful in subexpressions or for clarity
+                // We'll create a no-op statement by using a comment-like approach
+                // Actually, we can just skip it - it's effectively a no-op
+                this.currentLine++;
+                return null; // No-op statement
             }
         }
 
@@ -851,12 +892,19 @@ class Parser {
 
     private parseIfBlock(): IfBlock {
         const line = this.lines[this.currentLine].trim();
-        const tokens = Lexer.tokenize(line);
         
         // Extract condition (everything after 'if')
-        const ifIndex = tokens.indexOf('if');
-        const conditionTokens = tokens.slice(ifIndex + 1);
-        const conditionExpr = conditionTokens.join(' ');
+        // Use the original line string to preserve subexpressions $(...)
+        const ifIndex = line.indexOf('if');
+        if (ifIndex === -1) {
+            throw this.createError('if statement must start with "if"', this.currentLine);
+        }
+        // Find the position after "if" and any whitespace
+        let conditionStart = ifIndex + 2; // "if" is 2 characters
+        while (conditionStart < line.length && /\s/.test(line[conditionStart])) {
+            conditionStart++;
+        }
+        const conditionExpr = line.slice(conditionStart).trim();
 
         this.currentLine++;
 
@@ -890,9 +938,17 @@ class Parser {
 
             // Handle elseif - switch to new branch
             if (tokens[0] === 'elseif') {
-                const elseifIndex = tokens.indexOf('elseif');
-                const conditionTokens = tokens.slice(elseifIndex + 1);
-                const condition = conditionTokens.join(' ');
+                // Extract condition from original line string to preserve subexpressions $(...)
+                const elseifIndex = line.indexOf('elseif');
+                if (elseifIndex === -1) {
+                    throw this.createError('elseif statement must contain "elseif"', this.currentLine);
+                }
+                // Find the position after "elseif" and any whitespace
+                let conditionStart = elseifIndex + 6; // "elseif" is 6 characters
+                while (conditionStart < line.length && /\s/.test(line[conditionStart])) {
+                    conditionStart++;
+                }
+                const condition = line.slice(conditionStart).trim();
                 
                 elseifBranches.push({ condition, body: [] });
                 currentBranch = elseifBranches[elseifBranches.length - 1].body;
@@ -1013,8 +1069,8 @@ class Parser {
 
         const name = tokens[0];
         
-        // Validate that the first token is not a literal number, string, or variable
-        // (strings should be quoted, numbers should not be command names, variables are not commands)
+        // Validate that the first token is not a literal number, string, variable, or last value reference
+        // (strings should be quoted, numbers should not be command names, variables are not commands, $ is not a command)
         if (Lexer.isNumber(name)) {
             throw this.createError(`expected command name, got number: ${name}`, this.currentLine);
         }
@@ -1023,6 +1079,9 @@ class Parser {
         }
         if (Lexer.isVariable(name) || Lexer.isPositionalParam(name)) {
             throw this.createError(`expected command name, got variable: ${name}`, this.currentLine);
+        }
+        if (Lexer.isLastValue(name)) {
+            throw this.createError(`expected command name, got last value reference: ${name}`, this.currentLine);
         }
         
         const args: Arg[] = [];
@@ -1112,6 +1171,7 @@ class Parser {
     /**
      * Extract a $(...) subexpression from a line, starting at the given position.
      * Returns the inner code and the end position.
+     * Handles multi-line subexpressions (newlines are preserved in the code).
      */
     private extractSubexpression(line: string, startPos: number): { code: string; endPos: number } {
         // Skip past "$("
@@ -1142,7 +1202,7 @@ class Parser {
                 continue;
             }
             
-            // Handle nested parentheses
+            // Handle nested $() subexpressions
             if (char === '$' && pos + 1 < line.length && line[pos + 1] === '(') {
                 depth++;
                 code.push(char);
@@ -1161,8 +1221,18 @@ class Parser {
                 continue;
             }
             
+            // Preserve all characters including newlines, spaces, tabs, etc.
             code.push(char);
             pos++;
+        }
+        
+        // If we exited because we reached the end of the line but depth > 0,
+        // that means the subexpression spans multiple lines (which should be handled by splitIntoLogicalLines)
+        // But if it somehow didn't, we should still return what we have
+        if (depth > 0 && pos >= line.length) {
+            // This shouldn't happen if splitIntoLogicalLines is working correctly,
+            // but we'll handle it gracefully
+            throw this.createError(`unclosed subexpression starting at position ${startPos}`, this.currentLine);
         }
         
         return {
@@ -1192,11 +1262,12 @@ class ExpressionEvaluator {
         // Replace $ and $var references with actual values
         let jsExpr = expr.trim();
 
-        // First, check if the entire expression is a function call (like "isBigger $value 5")
+        // First, check if the entire expression is a function call (like "isBigger $value 5" or "test.isBigger $value 5")
         // This handles simple cases where the expression is just a function call
         if (this.executor) {
             const trimmedExpr = expr.trim();
-            const funcCallMatch = trimmedExpr.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+(.+)$/);
+            // Match function names with optional module prefix: "functionName" or "module.functionName"
+            const funcCallMatch = trimmedExpr.match(/^([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)\s+(.+)$/);
             
             if (funcCallMatch) {
                 const funcName = funcCallMatch[1];
@@ -1211,8 +1282,13 @@ class ExpressionEvaluator {
             }
         }
 
+        // Evaluate and replace subexpressions $(...) first
+        if (this.executor) {
+            jsExpr = await this.replaceSubexpressions(jsExpr);
+        }
+
         // Replace $name variables first (before bare $)
-        jsExpr = expr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
+        jsExpr = jsExpr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
             const val = this.resolveVariable(name);
             return this.valueToJS(val);
         });
@@ -1237,6 +1313,128 @@ class ExpressionEvaluator {
         } catch (error) {
             throw new Error(`Expression evaluation error: ${expr} - ${error}`);
         }
+    }
+
+    /**
+     * Replace all subexpressions $(...) in an expression string with their evaluated values
+     */
+    private async replaceSubexpressions(expr: string): Promise<string> {
+        if (!this.executor) {
+            return expr;
+        }
+
+        let result = expr;
+        let pos = 0;
+        
+        while (pos < result.length - 1) {
+            // Look for $( pattern
+            if (result[pos] === '$' && result[pos + 1] === '(') {
+                // Extract the subexpression
+                const subexprInfo = this.extractSubexpressionFromString(result, pos);
+                if (subexprInfo) {
+                    // Evaluate the subexpression
+                    const subexprValue = await this.executor.executeSubexpression(subexprInfo.code);
+                    const jsValue = this.valueToJS(subexprValue);
+                    
+                    // Replace the subexpression with its evaluated value
+                    result = result.slice(0, pos) + jsValue + result.slice(subexprInfo.endPos);
+                    // Continue from after the replacement
+                    pos += jsValue.length;
+                } else {
+                    pos++;
+                }
+            } else {
+                pos++;
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * Extract a subexpression $(...) from a string, starting at the given position
+     * Returns null if no valid subexpression is found
+     */
+    private extractSubexpressionFromString(str: string, startPos: number): { code: string; endPos: number } | null {
+        if (startPos >= str.length - 1 || str[startPos] !== '$' || str[startPos + 1] !== '(') {
+            return null;
+        }
+
+        let depth = 0;
+        let i = startPos + 2; // Start after "$("
+        const code: string[] = [];
+        let inString: false | '"' | "'" | '`' = false;
+        let escapeNext = false;
+
+        while (i < str.length) {
+            const char = str[i];
+            
+            if (escapeNext) {
+                code.push(char);
+                escapeNext = false;
+                i++;
+                continue;
+            }
+
+            if (char === '\\' && inString) {
+                escapeNext = true;
+                code.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle string literals
+            if (!inString && (char === '"' || char === "'" || char === '`')) {
+                inString = char;
+                code.push(char);
+                i++;
+                continue;
+            }
+
+            if (inString && char === inString) {
+                inString = false;
+                code.push(char);
+                i++;
+                continue;
+            }
+
+            if (inString) {
+                code.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle nested $(
+            if (char === '$' && i + 1 < str.length && str[i + 1] === '(') {
+                depth++;
+                code.push(char);
+                i++;
+                continue;
+            }
+
+            // Handle closing )
+            if (char === ')') {
+                if (depth > 0) {
+                    // This is a closing paren for a nested subexpr
+                    depth--;
+                    code.push(char);
+                    i++;
+                    continue;
+                } else {
+                    // This is the closing paren for our subexpression
+                    return {
+                        code: code.join(''),
+                        endPos: i + 1
+                    };
+                }
+            }
+
+            code.push(char);
+            i++;
+        }
+
+        // If we reach here, the subexpression is unclosed
+        return null;
     }
 
     private async executeFunctionCall(funcName: string, argsStr: string): Promise<Value> {
@@ -1460,6 +1658,16 @@ class Executor {
     private async executeCommand(cmd: CommandCall): Promise<void> {
         const frame = this.getCurrentFrame();
         const args = await Promise.all(cmd.args.map(arg => this.evaluateArg(arg)));
+
+        // Special handling for "_subexpr" command - internal command to execute subexpression
+        if (cmd.name === '_subexpr') {
+            if (args.length === 0) {
+                throw new Error('_subexpr command requires a subexpression argument');
+            }
+            // The subexpression result is already evaluated by evaluateArg, so just return it
+            frame.lastValue = args[0];
+            return;
+        }
 
         // Special handling for "_var" command - internal command to return variable value
         if (cmd.name === '_var') {
@@ -2149,7 +2357,7 @@ Examples:
      * Execute a subexpression $(code) in its own frame.
      * Returns the final $ value from the subexpression.
      */
-    private async executeSubexpression(code: string): Promise<Value> {
+    async executeSubexpression(code: string): Promise<Value> {
         // Split into logical lines (handles ; inside $())
         const lines = splitIntoLogicalLines(code);
         
@@ -2185,12 +2393,18 @@ Examples:
     private resolveVariable(name: string): Value {
         const frame = this.getCurrentFrame();
         
-        // Check positional params first
+        // Variable resolution follows JavaScript scoping rules:
+        // 1. Check current frame's locals first (function parameters and local variables)
+        // 2. If not found in locals, check globals (outer scope)
+        // This allows functions to read global variables but ensures local variables
+        // shadow globals with the same name.
+        
+        // Check locals first (function scope)
         if (frame.locals.has(name)) {
             return frame.locals.get(name)!;
         }
         
-        // Check globals
+        // Check globals (outer scope)
         if (this.environment.variables.has(name)) {
             return this.environment.variables.get(name)!;
         }
@@ -2199,12 +2413,18 @@ Examples:
     }
 
     private setVariable(name: string, value: Value): void {
-        // Proper scoping: globals at top level, locals in functions
+        // Proper scoping following JavaScript rules:
+        // - In global scope (callStack.length === 1): write to environment.variables
+        // - In function scope (callStack.length > 1): write to frame.locals (function-local)
+        // Variables set inside a function are scoped to that function and do not affect
+        // global variables with the same name. When the function returns, the frame is
+        // popped and local variables are discarded.
         if (this.callStack.length === 1) {
             // Global scope - write to environment
             this.environment.variables.set(name, value);
         } else {
             // Function scope - write to current frame locals only
+            // This ensures variables declared within def stay within def
             const frame = this.getCurrentFrame();
             frame.locals.set(name, value);
         }
@@ -2283,10 +2503,10 @@ export class RobinPathThread {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'subexpr' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'subexpr' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -2304,6 +2524,11 @@ export class RobinPathThread {
             }
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
+            }
+            
+            // NEW: unclosed $( ... ) subexpression – keep reading lines
+            if (errorMessage.includes('unclosed subexpression')) {
+                return { needsMore: true, waitingFor: 'subexpr' };
             }
             
             // If it's a different error, the script is malformed but complete
@@ -2746,6 +2971,9 @@ export class RobinPath {
     private threads: Map<string, RobinPathThread> = new Map();
     public currentThread: RobinPathThread | null = null;
     private threadControl: boolean;
+    
+    // REPL multi-line input buffer
+    private replBuffer: string = '';
 
     constructor(options?: { threadControl?: boolean }) {
         this.threadControl = options?.threadControl ?? false;
@@ -3268,7 +3496,7 @@ export class RobinPath {
      * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'subexpr' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -3286,6 +3514,11 @@ export class RobinPath {
             }
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
+            }
+            
+            // NEW: unclosed $( ... ) subexpression – keep reading lines
+            if (errorMessage.includes('unclosed subexpression')) {
+                return { needsMore: true, waitingFor: 'subexpr' };
             }
             
             // If it's a different error, the script is malformed but complete
@@ -3338,6 +3571,37 @@ export class RobinPath {
             return this.lastExecutor.getCurrentFrame().lastValue;
         }
         return null;
+    }
+
+    /**
+     * REPL-friendly execution that supports multi-line blocks (if/def/for and $( ... )).
+     * 
+     * Usage pattern:
+     *  - Call this for every user-entered line.
+     *  - If done === false, keep collecting lines.
+     *  - When done === true, value is the execution result and the buffer is cleared.
+     */
+    async executeReplLine(line: string): Promise<{ done: boolean; value: Value | null; waitingFor?: string }> {
+        // Append the new line to the buffer (with newline if needed)
+        this.replBuffer = this.replBuffer
+            ? this.replBuffer + '\n' + line
+            : line;
+
+        // Ask if the accumulated buffer is syntactically complete
+        const more = this.needsMoreInput(this.replBuffer);
+
+        if (more.needsMore) {
+            // Not ready yet – tell caller to keep reading input
+            return { done: false, value: null, waitingFor: more.waitingFor };
+        }
+
+        // The block is complete – execute it as a script
+        const result = await this.executeScript(this.replBuffer);
+
+        // Clear buffer for the next block
+        this.replBuffer = '';
+
+        return { done: true, value: result };
     }
 
     /**

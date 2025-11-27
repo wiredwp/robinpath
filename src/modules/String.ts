@@ -120,6 +120,10 @@ export const StringFunctions: Record<string, BuiltinHandler> = {
         const str = String(args[0] ?? '');
         const count = Number(args[1]) || 0;
         return str.repeat(Math.max(0, count));
+    },
+
+    concat: (args) => {
+        return args.map(arg => String(arg ?? '')).join('');
     }
 };
 
@@ -546,6 +550,22 @@ export const StringFunctionMetadata: Record<string, FunctionMetadata> = {
         returnType: 'string',
         returnDescription: 'Repeated string',
         example: 'repeat "ha" 3  # Returns "hahaha"'
+    },
+
+    concat: {
+        description: 'Concatenates multiple strings together',
+        parameters: [
+            {
+                name: 'strings',
+                dataType: 'string',
+                description: 'Strings to concatenate (can be multiple arguments)',
+                formInputType: 'text',
+                required: true
+            }
+        ],
+        returnType: 'string',
+        returnDescription: 'Concatenated string',
+        example: 'concat "hello" " " "world"  # Returns "hello world"'
     }
 };
 
@@ -569,7 +589,8 @@ export const StringModuleMetadata: ModuleMetadata = {
         'charAt',
         'padStart',
         'padEnd',
-        'repeat'
+        'repeat',
+        'concat'
     ]
 };
 
@@ -579,7 +600,7 @@ const StringModule: ModuleAdapter = {
     functions: StringFunctions,
     functionMetadata: StringFunctionMetadata,
     moduleMetadata: StringModuleMetadata,
-    global: false
+    global: true 
 };
 
 export default StringModule;

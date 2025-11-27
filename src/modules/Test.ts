@@ -16,7 +16,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
             throw new Error('assert requires at least one argument');
         }
         const value = args[0];
-        const message = args.length > 1 ? String(args[1]) : 'Assertion failed';
+        const expectedGot = `Expected truthy value, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
         
         if (!isTruthy(value)) {
             throw new Error(message);
@@ -30,7 +31,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = args[0];
         const expected = args[1];
-        const message = args.length > 2 ? String(args[2]) : `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`;
+        const expectedGot = `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (!deepEqual(actual, expected)) {
             throw new Error(message);
@@ -44,7 +46,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = args[0];
         const expected = args[1];
-        const message = args.length > 2 ? String(args[2]) : `Expected values to be different, but both were ${JSON.stringify(actual)}`;
+        const expectedGot = `Expected values to be different, but both were ${JSON.stringify(actual)}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (deepEqual(actual, expected)) {
             throw new Error(message);
@@ -57,7 +60,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
             throw new Error('assertTrue requires one argument');
         }
         const value = args[0];
-        const message = args.length > 1 ? String(args[1]) : `Expected true, got ${JSON.stringify(value)}`;
+        const expectedGot = `Expected true, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
         
         if (value !== true) {
             throw new Error(message);
@@ -70,7 +74,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
             throw new Error('assertFalse requires one argument');
         }
         const value = args[0];
-        const message = args.length > 1 ? String(args[1]) : `Expected false, got ${JSON.stringify(value)}`;
+        const expectedGot = `Expected false, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
         
         if (value !== false) {
             throw new Error(message);
@@ -83,7 +88,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
             throw new Error('assertNull requires one argument');
         }
         const value = args[0];
-        const message = args.length > 1 ? String(args[1]) : `Expected null, got ${JSON.stringify(value)}`;
+        const expectedGot = `Expected null, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
         
         if (value !== null) {
             throw new Error(message);
@@ -96,7 +102,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
             throw new Error('assertNotNull requires one argument');
         }
         const value = args[0];
-        const message = args.length > 1 ? String(args[1]) : `Expected non-null value, got null`;
+        const expectedGot = `Expected non-null value, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
         
         if (value === null) {
             throw new Error(message);
@@ -110,7 +117,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = Number(args[0]) || 0;
         const expected = Number(args[1]) || 0;
-        const message = args.length > 2 ? String(args[2]) : `Expected ${actual} to be greater than ${expected}`;
+        const expectedGot = `Expected value greater than ${expected}, got ${actual}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (actual <= expected) {
             throw new Error(message);
@@ -124,7 +132,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = Number(args[0]) || 0;
         const expected = Number(args[1]) || 0;
-        const message = args.length > 2 ? String(args[2]) : `Expected ${actual} to be greater than or equal to ${expected}`;
+        const expectedGot = `Expected value greater than or equal to ${expected}, got ${actual}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (actual < expected) {
             throw new Error(message);
@@ -138,7 +147,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = Number(args[0]) || 0;
         const expected = Number(args[1]) || 0;
-        const message = args.length > 2 ? String(args[2]) : `Expected ${actual} to be less than ${expected}`;
+        const expectedGot = `Expected value less than ${expected}, got ${actual}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (actual >= expected) {
             throw new Error(message);
@@ -152,7 +162,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const actual = Number(args[0]) || 0;
         const expected = Number(args[1]) || 0;
-        const message = args.length > 2 ? String(args[2]) : `Expected ${actual} to be less than or equal to ${expected}`;
+        const expectedGot = `Expected value less than or equal to ${expected}, got ${actual}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (actual > expected) {
             throw new Error(message);
@@ -166,7 +177,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const container = args[0];
         const item = args[1];
-        const message = args.length > 2 ? String(args[2]) : `Expected ${JSON.stringify(container)} to contain ${JSON.stringify(item)}`;
+        const expectedGot = `Expected ${JSON.stringify(container)} to contain ${JSON.stringify(item)}, but it does not`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (Array.isArray(container)) {
             if (!container.includes(item)) {
@@ -188,7 +200,8 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const container = args[0];
         const item = args[1];
-        const message = args.length > 2 ? String(args[2]) : `Expected ${JSON.stringify(container)} not to contain ${JSON.stringify(item)}`;
+        const expectedGot = `Expected ${JSON.stringify(container)} not to contain ${JSON.stringify(item)}, but it does`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
         
         if (Array.isArray(container)) {
             if (container.includes(item)) {
@@ -210,9 +223,10 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         }
         const value = args[0];
         const expectedType = String(args[1]);
-        const message = args.length > 2 ? String(args[2]) : `Expected type ${expectedType}, got ${getType(value)}`;
-        
         const actualType = getType(value);
+        const expectedGot = `Expected type ${expectedType}, got ${actualType}`;
+        const message = args.length > 2 ? `${String(args[2])} (${expectedGot})` : expectedGot;
+        
         if (actualType !== expectedType) {
             throw new Error(message);
         }

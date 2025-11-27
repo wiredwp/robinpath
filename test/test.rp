@@ -707,5 +707,96 @@ log "Test 31f - Comparison functions in conditionals: All passed"
 
 log "Test 31 - Comparison functions: All passed"
 
+# Test 32: Subexpressions $( )
+# Test basic single-line subexpression
+$test1 = $(math.add 5 3)
+test.assertEqual $test1 8 "Basic subexpression failed"
+
+# Test subexpression with multiple operations
+$test2 = $(math.add 10 5)
+$test3 = $(math.multiply $test2 2)
+test.assertEqual $test3 30 "Subexpression with variable reference failed"
+
+# Test nested subexpressions
+$test4 = $(math.add $(math.multiply 2 3) $(math.add 1 1))
+test.assertEqual $test4 8 "Nested subexpression failed"
+
+# Test multi-line subexpression
+$test5 = $(
+  math.add 10 20
+)
+test.assertEqual $test5 30 "Multi-line subexpression failed"
+
+# Test multi-line subexpression with nested subexpression
+# Note: $test2 is 15 at this point. The nested subexpression $(assign $test2 1) 
+# sets $test2 to 1 and returns 1, but $test2 is evaluated first (as 15) before 
+# the nested subexpression runs, so result is 15 * 1 = 15
+$test6 = $(
+  math.multiply $test2 $(assign $test2 1)
+)
+
+test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed"
+test.assertEqual $test2 15 "Nested assign in subexpression failed"
+
+# Test complex multi-line subexpression
+$test7 = $(
+  math.add 5 5
+  math.multiply $ 3
+)
+test.assertEqual $test7 30 "Complex multi-line subexpression failed"
+
+# Test subexpression in function call
+math.add $(math.multiply 2 5) $(math.add 3 2)
+test.assertEqual $ 15 "Subexpression in function call failed"
+
+# Test subexpression in conditional
+if $(math.add 5 5) == 10
+  $test8 = "passed"
+else
+  $test8 = "failed"
+endif
+
+test.assertEqual $test8 "passed" "Subexpression in conditional failed"
+
+# Test subexpression with string operations
+$test9 = $(string.concat "hello" " " "world")
+test.assertEqual $test9 "hello world" "Subexpression with string operations failed"
+
+# Test subexpression with array operations
+$test10 = $(array.create 1 2 3)
+array.length $test10
+test.assertEqual $ 3 "Subexpression with array operations failed"
+
+# Test deeply nested subexpressions
+$test11 = $(math.add $(math.multiply $(math.add 1 1) 2) $(math.add 1 1))
+test.assertEqual $test11 6 "Deeply nested subexpression failed"
+
+# Test subexpression with return value
+def test_subexpr_return
+  return $(math.add 10 20)
+enddef
+test_subexpr_return
+test.assertEqual $ 30 "Subexpression in return statement failed"
+
+# Test multi-line subexpression with multiple statements
+$test12 = $(
+  math.add 1 2
+  math.multiply $ 2
+  math.add $ 1
+)
+test.assertEqual $test12 7 "Multi-line subexpression with multiple statements failed"
+
+# Test subexpression with variable assignment inside
+$test13 = $(
+  assign $testVar2 42
+  log $testVar2
+  math.add $testVar2 8
+)
+
+test.assertEqual $test13 50 "Subexpression with variable assignment failed"
+test.assertEqual $testVar2 42 "Variable assignment in subexpression scope failed"
+
+log "Test 32 - Subexpressions $( ): All passed"
+
 log "All tests completed!"
 

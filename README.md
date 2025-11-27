@@ -559,10 +559,54 @@ string.toUpperCase "world"
 
 ### Inline Subexpressions
 
-Use `$( ... )` for inline subexpressions:
+Use `$( ... )` for inline subexpressions to evaluate code and use its result:
 
 ```robinpath
+# Single-line subexpression
 log "Result:" $(add 10 20)
+
+# Multi-line subexpression
+$result = $(
+  add 5 5
+  multiply $ 2
+)
+log $result  # Prints 20
+
+# Nested subexpressions
+$value = $(add $(multiply 2 3) $(add 1 1))
+log $value  # Prints 8
+
+# Subexpression in conditionals
+if $(add 5 5) == 10
+  log "Equal to 10"
+endif
+```
+
+**Variable Scope in Subexpressions:**
+Variables declared within a subexpression `$( ... )` are scoped to that subexpression. They can be used inside the subexpression but do not affect variables with the same name outside:
+
+```robinpath
+$testVar = 10
+
+$result = $(
+  assign $testVar 42  # This modifies $testVar within the subexpression
+  add $testVar 8      # Uses 42, returns 50
+)
+
+log $result    # Prints 50
+log $testVar   # Prints 10 (original value, not affected by subexpression)
+```
+
+However, if you want to modify a variable from outside the subexpression, you can use the `assign` command:
+
+```robinpath
+$outerVar = 0
+$result = $(
+  assign $outerVar 100  # This modifies the outer $outerVar
+  add 1 2
+)
+log $result     # Prints 3
+log $outerVar   # Prints 100 (modified by subexpression)
 ```
 
 ### String Literals
