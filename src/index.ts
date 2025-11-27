@@ -1691,6 +1691,47 @@ Examples:
             return;
         }
 
+        // Special handling for "assign" command - assigns a value to a variable
+        if (cmd.name === 'assign') {
+            if (cmd.args.length < 2) {
+                throw new Error('assign requires 2 arguments: variable name and value');
+            }
+            
+            // Get variable name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('assign first argument must be a variable (e.g., $myVar)');
+            }
+            const varName = varArg.name;
+            
+            // Evaluate the second arg as the value to assign
+            const value = await this.evaluateArg(cmd.args[1]);
+            
+            // Set the variable
+            this.setVariable(varName, value);
+            frame.lastValue = value;
+            return;
+        }
+
+        // Special handling for "empty" command - clears/empties a variable
+        if (cmd.name === 'empty') {
+            if (cmd.args.length < 1) {
+                throw new Error('empty requires 1 argument: variable name');
+            }
+            
+            // Get variable name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('empty first argument must be a variable (e.g., $myVar)');
+            }
+            const varName = varArg.name;
+            
+            // Set the variable to null (empty)
+            this.setVariable(varName, null);
+            frame.lastValue = null;
+            return;
+        }
+
         // Special handling: if "json" is called with arguments, always treat as builtin function
         // (not as module, even if json module exists)
         if (cmd.name === 'json' && args.length > 0) {
@@ -3291,5 +3332,108 @@ export class RobinPath {
      */
     setVariable(name: string, value: Value): void {
         this.environment.variables.set(name, value);
+    }
+
+    /**
+     * Get the next statement index that would execute after a given statement.
+     * This method analyzes the AST structure to determine execution flow.
+     * 
+     * @param statements The array of all statements
+     * @param currentIndex The index of the current statement
+     * @param context Optional context for conditional branches (which branch was taken)
+     * @returns The index of the next statement to execute, or -1 if execution ends
+     */
+    getNextStatementIndex(
+        statements: Statement[],
+        currentIndex: number,
+        context?: { ifBlockBranch?: 'then' | 'elseif' | 'else' | null; forLoopIteration?: number }
+    ): number {
+        if (currentIndex < 0 || currentIndex >= statements.length) {
+            return -1;
+        }
+
+        const currentStmt = statements[currentIndex];
+
+        // Handle return statements - execution stops
+        if (currentStmt.type === 'return') {
+            return -1;
+        }
+
+        // Handle comments - next is the next statement
+        if (currentStmt.type === 'comment') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle ifBlock - next depends on which branch executes
+        if (currentStmt.type === 'ifBlock') {
+            const branch = context?.ifBlockBranch;
+            
+            // If we know which branch was taken, find the last statement in that branch
+            if (branch === 'then' && currentStmt.thenBranch && currentStmt.thenBranch.length > 0) {
+                // After then branch, next is the statement after the ifBlock
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            if (branch === 'elseif' && currentStmt.elseifBranches) {
+                // After elseif branch, next is the statement after the ifBlock
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            if (branch === 'else' && currentStmt.elseBranch && currentStmt.elseBranch.length > 0) {
+                // After else branch, next is the statement after the ifBlock
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            // If no branch was taken (condition was false and no else), next is after ifBlock
+            if (branch === null) {
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            // Default: if we don't know which branch, assume then branch
+            if (currentStmt.thenBranch && currentStmt.thenBranch.length > 0) {
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            // No then branch, check elseif or else
+            if (currentStmt.elseifBranches && currentStmt.elseifBranches.length > 0) {
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            if (currentStmt.elseBranch && currentStmt.elseBranch.length > 0) {
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            
+            // No branches, next is after ifBlock
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle forLoop - next is first statement in body, then after loop completes, next is after the loop
+        if (currentStmt.type === 'forLoop') {
+            // If we're at the start of the loop, next is first statement in body
+            if (currentStmt.body && currentStmt.body.length > 0) {
+                // The body statements are nested, so we need to handle them differently
+                // For now, after loop completes, next is after the loop
+                return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+            }
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle define - next is after the define (define doesn't execute, just registers)
+        if (currentStmt.type === 'define') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle inlineIf - next is after the inlineIf
+        if (currentStmt.type === 'inlineIf') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle ifTrue/ifFalse - next is after the statement
+        if (currentStmt.type === 'ifTrue' || currentStmt.type === 'ifFalse') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Default: next statement in sequence
+        return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
     }
 }

@@ -219,6 +219,51 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         return true;
     },
 
+    isEqual: (args) => {
+        if (args.length < 2) {
+            throw new Error('isEqual requires two arguments');
+        }
+        const a = args[0];
+        const b = args[1];
+        return deepEqual(a, b);
+    },
+
+    isBigger: (args) => {
+        if (args.length < 2) {
+            throw new Error('isBigger requires two arguments');
+        }
+        const a = Number(args[0]) || 0;
+        const b = Number(args[1]) || 0;
+        return a > b;
+    },
+
+    isSmaller: (args) => {
+        if (args.length < 2) {
+            throw new Error('isSmaller requires two arguments');
+        }
+        const a = Number(args[0]) || 0;
+        const b = Number(args[1]) || 0;
+        return a < b;
+    },
+
+    isEqualOrBigger: (args) => {
+        if (args.length < 2) {
+            throw new Error('isEqualOrBigger requires two arguments');
+        }
+        const a = Number(args[0]) || 0;
+        const b = Number(args[1]) || 0;
+        return a >= b;
+    },
+
+    isEqualOrSmaller: (args) => {
+        if (args.length < 2) {
+            throw new Error('isEqualOrSmaller requires two arguments');
+        }
+        const a = Number(args[0]) || 0;
+        const b = Number(args[1]) || 0;
+        return a <= b;
+    },
+
     fail: (args) => {
         const message = args.length > 0 ? String(args[0]) : 'Test failed';
         throw new Error(message);
@@ -676,6 +721,121 @@ export const TestFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'assertType "hello" "string"  # Passes if value is a string'
     },
 
+    isEqual: {
+        description: 'Returns true if two values are equal (deep comparison)',
+        parameters: [
+            {
+                name: 'a',
+                dataType: 'any',
+                description: 'First value to compare',
+                formInputType: 'json',
+                required: true
+            },
+            {
+                name: 'b',
+                dataType: 'any',
+                description: 'Second value to compare',
+                formInputType: 'json',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if values are equal, false otherwise',
+        example: 'isEqual add 5 5 10  # Returns true if 5+5 equals 10'
+    },
+
+    isBigger: {
+        description: 'Returns true if the first number is greater than the second',
+        parameters: [
+            {
+                name: 'a',
+                dataType: 'number',
+                description: 'First number',
+                formInputType: 'number',
+                required: true
+            },
+            {
+                name: 'b',
+                dataType: 'number',
+                description: 'Second number',
+                formInputType: 'number',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if a > b, false otherwise',
+        example: 'isBigger 10 5  # Returns true'
+    },
+
+    isSmaller: {
+        description: 'Returns true if the first number is less than the second',
+        parameters: [
+            {
+                name: 'a',
+                dataType: 'number',
+                description: 'First number',
+                formInputType: 'number',
+                required: true
+            },
+            {
+                name: 'b',
+                dataType: 'number',
+                description: 'Second number',
+                formInputType: 'number',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if a < b, false otherwise',
+        example: 'isSmaller 3 5  # Returns true'
+    },
+
+    isEqualOrBigger: {
+        description: 'Returns true if the first number is greater than or equal to the second',
+        parameters: [
+            {
+                name: 'a',
+                dataType: 'number',
+                description: 'First number',
+                formInputType: 'number',
+                required: true
+            },
+            {
+                name: 'b',
+                dataType: 'number',
+                description: 'Second number',
+                formInputType: 'number',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if a >= b, false otherwise',
+        example: 'isEqualOrBigger 10 10  # Returns true'
+    },
+
+    isEqualOrSmaller: {
+        description: 'Returns true if the first number is less than or equal to the second',
+        parameters: [
+            {
+                name: 'a',
+                dataType: 'number',
+                description: 'First number',
+                formInputType: 'number',
+                required: true
+            },
+            {
+                name: 'b',
+                dataType: 'number',
+                description: 'Second number',
+                formInputType: 'number',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if a <= b, false otherwise',
+        example: 'isEqualOrSmaller 5 5  # Returns true'
+    },
+
     fail: {
         description: 'Explicitly fails a test with an optional message',
         parameters: [
@@ -710,6 +870,11 @@ export const TestModuleMetadata: ModuleMetadata = {
         'assertContains',
         'assertNotContains',
         'assertType',
+        'isEqual',
+        'isBigger',
+        'isSmaller',
+        'isEqualOrBigger',
+        'isEqualOrSmaller',
         'fail'
     ]
 };

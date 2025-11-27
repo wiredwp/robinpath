@@ -467,5 +467,144 @@ length $arr2
 assertEqual $ 3 "Array variable assignment failed"
 log "Test 28 - Complex variable assignments: All passed"
 
+# Test 29: assign command
+$testVar = "original"
+assertEqual $testVar "original" "Initial assignment failed"
+assign $testVar "assigned"
+assertEqual $testVar "assigned" "assign command failed"
+assign $testVar 42
+assertEqual $testVar 42 "assign command with number failed"
+assign $testVar true
+assertEqual $testVar true "assign command with boolean failed"
+$sourceVar = "source value"
+assign $testVar $sourceVar
+assertEqual $testVar "source value" "assign command with variable failed"
+add 10 20
+assign $testVar $
+assertEqual $testVar 30 "assign command with last value failed"
+log "Test 29 - assign command: All passed"
+
+# Test 30: empty command
+$toEmpty = "not empty"
+assertEqual $toEmpty "not empty" "Variable before empty failed"
+empty $toEmpty
+assertEqual $toEmpty null "empty command failed"
+$toEmpty = 42
+assertEqual $toEmpty 42 "Variable reassignment after empty failed"
+empty $toEmpty
+assertEqual $toEmpty null "empty command second time failed"
+$toEmpty = range 1 5
+length $toEmpty
+assertEqual $ 5 "Array before empty failed"
+empty $toEmpty
+assertEqual $toEmpty null "empty command with array failed"
+log "Test 30 - empty command: All passed"
+
+# Test 31: Comparison functions (isEqual, isBigger, isSmaller, isEqualOrBigger, isEqualOrSmaller)
+# Test isEqual
+isEqual 5 5
+assertTrue $ "isEqual with equal numbers failed"
+isEqual 5 3
+assertFalse $ "isEqual with different numbers failed"
+isEqual "hello" "hello"
+assertTrue $ "isEqual with equal strings failed"
+isEqual "hello" "world"
+assertFalse $ "isEqual with different strings failed"
+isEqual true true
+assertTrue $ "isEqual with equal booleans failed"
+isEqual true false
+assertFalse $ "isEqual with different booleans failed"
+isEqual null null
+assertTrue $ "isEqual with null values failed"
+$arr1 = range 1 3
+$arr2 = range 1 3
+isEqual $arr1 $arr2
+assertTrue $ "isEqual with equal arrays failed"
+log "Test 31a - isEqual: All passed"
+
+# Test isBigger
+isBigger 10 5
+assertTrue $ "isBigger with 10 > 5 failed"
+isBigger 5 10
+assertFalse $ "isBigger with 5 > 10 failed"
+isBigger 5 5
+assertFalse $ "isBigger with 5 > 5 failed"
+isBigger -5 -10
+assertTrue $ "isBigger with negative numbers failed"
+log "Test 31b - isBigger: All passed"
+
+# Test isSmaller
+isSmaller 3 5
+assertTrue $ "isSmaller with 3 < 5 failed"
+isSmaller 5 3
+assertFalse $ "isSmaller with 5 < 3 failed"
+isSmaller 5 5
+assertFalse $ "isSmaller with 5 < 5 failed"
+isSmaller -10 -5
+assertTrue $ "isSmaller with negative numbers failed"
+log "Test 31c - isSmaller: All passed"
+
+# Test isEqualOrBigger
+isEqualOrBigger 10 5
+assertTrue $ "isEqualOrBigger with 10 >= 5 failed"
+isEqualOrBigger 5 5
+assertTrue $ "isEqualOrBigger with 5 >= 5 failed"
+isEqualOrBigger 3 5
+assertFalse $ "isEqualOrBigger with 3 >= 5 failed"
+isEqualOrBigger -5 -10
+assertTrue $ "isEqualOrBigger with negative numbers failed"
+log "Test 31d - isEqualOrBigger: All passed"
+
+# Test isEqualOrSmaller
+isEqualOrSmaller 3 5
+assertTrue $ "isEqualOrSmaller with 3 <= 5 failed"
+isEqualOrSmaller 5 5
+assertTrue $ "isEqualOrSmaller with 5 <= 5 failed"
+isEqualOrSmaller 10 5
+assertFalse $ "isEqualOrSmaller with 10 <= 5 failed"
+isEqualOrSmaller -10 -5
+assertTrue $ "isEqualOrSmaller with negative numbers failed"
+log "Test 31e - isEqualOrSmaller: All passed"
+
+# Test comparison functions in conditionals
+$value = 10
+if isBigger $value 5
+  $result = "bigger"
+else
+  $result = "not bigger"
+endif
+assertEqual $result "bigger" "isBigger in conditional failed"
+
+if isSmaller $value 5
+  $result = "smaller"
+else
+  $result = "not smaller"
+endif
+assertEqual $result "not smaller" "isSmaller in conditional failed"
+
+if isEqual $value 10
+  $result = "equal"
+else
+  $result = "not equal"
+endif
+assertEqual $result "equal" "isEqual in conditional failed"
+
+if isEqualOrBigger $value 10
+  $result = "equal or bigger"
+else
+  $result = "not equal or bigger"
+endif
+assertEqual $result "equal or bigger" "isEqualOrBigger in conditional failed"
+
+if isEqualOrSmaller $value 10
+  $result = "equal or smaller"
+else
+  $result = "not equal or smaller"
+endif
+assertEqual $result "equal or smaller" "isEqualOrSmaller in conditional failed"
+log "Test 31f - Comparison functions in conditionals: All passed"
+
+log "Test 31 - Comparison functions: All passed"
+
 log "All tests completed!"
 
