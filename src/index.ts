@@ -2598,6 +2598,26 @@ export class RobinPathThread {
     }
 
     /**
+     * Get the AST without execution state
+     * Returns a JSON-serializable AST array
+     * 
+     * Note: This method only parses the script, it does not execute it.
+     */
+    getAST(script: string): any[] {
+        // Parse the script to get AST
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+
+        // Serialize AST without execution state
+        const ast = statements.map((stmt) => {
+            return this.serializeStatement(stmt);
+        });
+
+        return ast;
+    }
+
+    /**
      * Get the AST with execution state for the current thread
      * Returns a JSON-serializable object with:
      * - AST nodes with execution state ($ lastValue at each node)
@@ -3524,6 +3544,129 @@ export class RobinPath {
             // If it's a different error, the script is malformed but complete
             // (we'll let executeScript handle the actual error)
             return { needsMore: false };
+        }
+    }
+
+    /**
+     * Get the AST without execution state
+     * Returns a JSON-serializable AST array
+     * 
+     * Note: This method only parses the script, it does not execute it.
+     */
+    getAST(script: string): any[] {
+        // Parse the script to get AST
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        const statements = parser.parse();
+
+        // Serialize AST without execution state
+        const ast = statements.map((stmt) => {
+            return this.serializeStatement(stmt);
+        });
+
+        return ast;
+    }
+
+    /**
+     * Serialize a statement to JSON without execution state
+     */
+    private serializeStatement(stmt: Statement): any {
+        const base: any = {
+            type: stmt.type,
+            lastValue: null
+        };
+
+        switch (stmt.type) {
+            case 'command':
+                return {
+                    ...base,
+                    name: stmt.name,
+                    args: stmt.args.map(arg => this.serializeArg(arg))
+                };
+            case 'assignment':
+                return {
+                    ...base,
+                    targetName: stmt.targetName,
+                    command: stmt.command ? this.serializeStatement(stmt.command) : undefined,
+                    literalValue: stmt.literalValue,
+                    isLastValue: stmt.isLastValue
+                };
+            case 'shorthand':
+                return {
+                    ...base,
+                    targetName: stmt.targetName
+                };
+            case 'inlineIf':
+                return {
+                    ...base,
+                    conditionExpr: stmt.conditionExpr,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'ifBlock':
+                return {
+                    ...base,
+                    conditionExpr: stmt.conditionExpr,
+                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s)),
+                    elseifBranches: stmt.elseifBranches?.map(branch => ({
+                        condition: branch.condition,
+                        body: branch.body.map(s => this.serializeStatement(s))
+                    })),
+                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s))
+                };
+            case 'ifTrue':
+                return {
+                    ...base,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'ifFalse':
+                return {
+                    ...base,
+                    command: this.serializeStatement(stmt.command)
+                };
+            case 'define':
+                return {
+                    ...base,
+                    name: stmt.name,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'forLoop':
+                return {
+                    ...base,
+                    varName: stmt.varName,
+                    iterableExpr: stmt.iterableExpr,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'return':
+                return {
+                    ...base,
+                    value: stmt.value ? this.serializeArg(stmt.value) : undefined
+                };
+            case 'comment':
+                return {
+                    ...base,
+                    text: stmt.text,
+                    lineNumber: stmt.lineNumber
+                };
+        }
+    }
+
+    /**
+     * Serialize an argument to JSON
+     */
+    private serializeArg(arg: Arg): any {
+        switch (arg.type) {
+            case 'subexpr':
+                return { type: 'subexpr', code: arg.code };
+            case 'var':
+                return { type: 'var', name: arg.name };
+            case 'lastValue':
+                return { type: 'lastValue' };
+            case 'number':
+                return { type: 'number', value: arg.value };
+            case 'string':
+                return { type: 'string', value: arg.value };
+            case 'literal':
+                return { type: 'literal', value: arg.value };
         }
     }
 
