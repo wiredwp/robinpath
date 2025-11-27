@@ -2,11 +2,11 @@
 # This script tests various features of the RobinPath interpreter
 
 # Test 1: Basic math operations
-add 10 20
+math.add 10 20
 $result
 log "Test 1 - Addition result:" $result
 
-multiply $result 5
+math.multiply $result 5
 log "Test 1 - Multiplication result:" $
 
 # Test 2: Variable assignment
@@ -34,7 +34,7 @@ $1
 $2
 log "Test 5 - Hello" $1
 log "Test 5 - Your age is" $2
-add $2 1
+math.add $2 1
 enddef
 
 greet "Alice" 25
@@ -42,8 +42,8 @@ log "Test 5 - Next year age:" $
 
 # Test 6: Function with return value
 def sum_and_double
-add $1 $2
-multiply $ 2
+math.add $1 $2
+math.multiply $ 2
 enddef
 
 sum_and_double 10 20
@@ -62,13 +62,13 @@ else
 endif
 
 # Test 8: Shorthand assignment
-add 5 3
+math.add 5 3
 $sum
 log "Test 8 - Shorthand assignment result:" $sum
 
 # Test 9: Using last value ($)
-add 7 8
-multiply $ 2
+math.add 7 8
+math.multiply $ 2
 log "Test 9 - Chained operations result:" $
 
 # Test 10: Complex expression
@@ -110,130 +110,154 @@ for $i in range 1 5
 endfor
 
 # Test 16: Math module tests
-add 5 10
-assertEqual $ 15 "Math.add failed"
-add 1 2 3 4
-assertEqual $ 10 "Math.add multiple args failed"
-multiply 5 3
-assertEqual $ 15 "Math.multiply failed"
-multiply 2 3 4
-assertEqual $ 24 "Math.multiply multiple args failed"
-subtract 10 3
-assertEqual $ 7 "Math.subtract failed"
-divide 15 3
-assertEqual $ 5 "Math.divide failed"
-modulo 17 5
-assertEqual $ 2 "Math.modulo failed"
-power 2 8
-assertEqual $ 256 "Math.power failed"
-sqrt 16
-assertEqual $ 4 "Math.sqrt failed"
-abs -5
-assertEqual $ 5 "Math.abs failed"
-round 3.7
-assertEqual $ 4 "Math.round failed"
-floor 3.7
-assertEqual $ 3 "Math.floor failed"
-ceil 3.2
-assertEqual $ 4 "Math.ceil failed"
-min 5 2 8 1
-assertEqual $ 1 "Math.min failed"
-max 5 2 8 1
-assertEqual $ 8 "Math.max failed"
+math.add 5 10
+test.assertEqual $ 15 "Math.add failed"
+math.add 1 2 3 4
+test.assertEqual $ 10 "Math.add multiple args failed"
+math.multiply 5 3
+test.assertEqual $ 15 "Math.multiply failed"
+math.multiply 2 3 4
+test.assertEqual $ 24 "Math.multiply multiple args failed"
+math.subtract 10 3
+test.assertEqual $ 7 "Math.subtract failed"
+math.divide 15 3
+test.assertEqual $ 5 "Math.divide failed"
+math.modulo 17 5
+test.assertEqual $ 2 "Math.modulo failed"
+math.power 2 8
+test.assertEqual $ 256 "Math.power failed"
+math.sqrt 16
+test.assertEqual $ 4 "Math.sqrt failed"
+math.abs -5
+test.assertEqual $ 5 "Math.abs failed"
+math.round 3.7
+test.assertEqual $ 4 "Math.round failed"
+math.floor 3.7
+test.assertEqual $ 3 "Math.floor failed"
+math.ceil 3.2
+test.assertEqual $ 4 "Math.ceil failed"
+math.min 5 2 8 1
+test.assertEqual $ 1 "Math.min failed"
+math.max 5 2 8 1
+test.assertEqual $ 8 "Math.max failed"
 log "Test 16 - Math module: All passed"
 
 # Test 17: String module tests
-length "hello"
-assertEqual $ 5 "String.length failed"
-substring "hello" 1 4
-assertEqual $ "ell" "String.substring failed"
-toUpperCase "hello"
-assertEqual $ "HELLO" "String.toUpperCase failed"
-toLowerCase "HELLO"
-assertEqual $ "hello" "String.toLowerCase failed"
-trim "  hello  "
-assertEqual $ "hello" "String.trim failed"
-replace "hello world" "world" "universe"
-assertEqual $ "hello universe" "String.replace failed"
-replaceAll "a b a" "a" "x"
-assertEqual $ "x b x" "String.replaceAll failed"
-split "a,b,c" ","
+string.length "hello"
+test.assertEqual $ 5 "String.length failed"
+string.substring "hello" 1 4
+test.assertEqual $ "ell" "String.substring failed"
+string.toUpperCase "hello"
+test.assertEqual $ "HELLO" "String.toUpperCase failed"
+string.toLowerCase "HELLO"
+test.assertEqual $ "hello" "String.toLowerCase failed"
+string.trim "  hello  "
+test.assertEqual $ "hello" "String.trim failed"
+string.replace "hello world" "world" "universe"
+test.assertEqual $ "hello universe" "String.replace failed"
+string.replaceAll "a b a" "a" "x"
+test.assertEqual $ "x b x" "String.replaceAll failed"
+string.split "a,b,c" ","
 $splitArr = $
-get $splitArr 0
-assertEqual $ "a" "String.split first element failed"
-startsWith "hello" "he"
-assertTrue $ "String.startsWith failed"
-endsWith "hello" "lo"
-assertTrue $ "String.endsWith failed"
-contains "hello" "ell"
-assertTrue $ "String.contains failed"
-indexOf "hello" "l"
-assertEqual $ 2 "String.indexOf failed"
-lastIndexOf "hello" "l"
-assertEqual $ 3 "String.lastIndexOf failed"
-charAt "hello" 1
-assertEqual $ "e" "String.charAt failed"
-padStart "5" 3 "0"
-assertEqual $ "005" "String.padStart failed"
-padEnd "5" 3 "0"
-assertEqual $ "500" "String.padEnd failed"
-repeat "ha" 3
-assertEqual $ "hahaha" "String.repeat failed"
+array.get $splitArr 0
+test.assertEqual $ "a" "String.split first element failed"
+string.startsWith "hello" "he"
+test.assertTrue $ "String.startsWith failed"
+string.endsWith "hello" "lo"
+test.assertTrue $ "String.endsWith failed"
+string.contains "hello" "ell"
+test.assertTrue $ "String.contains failed"
+string.indexOf "hello" "l"
+test.assertEqual $ 2 "String.indexOf failed"
+string.lastIndexOf "hello" "l"
+test.assertEqual $ 3 "String.lastIndexOf failed"
+string.charAt "hello" 1
+test.assertEqual $ "e" "String.charAt failed"
+string.padStart "5" 3 "0"
+test.assertEqual $ "005" "String.padStart failed"
+string.padEnd "5" 3 "0"
+test.assertEqual $ "500" "String.padEnd failed"
+string.repeat "ha" 3
+test.assertEqual $ "hahaha" "String.repeat failed"
 log "Test 17 - String module: All passed"
 
 # Test 18: Array module tests
 $arr = range 1 5
-length $arr
-assertEqual $ 5 "Array.length failed"
-get $arr 2
-assertEqual $ 3 "Array.get failed"
-slice $arr 1 4
+array.length $arr
+test.assertEqual $ 5 "Array.length failed"
+array.get $arr 2
+test.assertEqual $ 3 "Array.get failed"
+array.slice $arr 1 4
 $sliced = $
-length $sliced
-assertEqual $ 3 "Array.slice length failed"
-get $sliced 0
-assertEqual $ 2 "Array.slice content failed"
-push $arr 6
+array.length $sliced
+test.assertEqual $ 3 "Array.slice length failed"
+array.get $sliced 0
+test.assertEqual $ 2 "Array.slice content failed"
+array.push $arr 6
 $pushed = $
-length $pushed
-assertEqual $ 6 "Array.push length failed"
-get $pushed 5
-assertEqual $ 6 "Array.push content failed"
+array.length $pushed
+test.assertEqual $ 6 "Array.push length failed"
+array.get $pushed 5
+test.assertEqual $ 6 "Array.push content failed"
 $arr1 = range 1 2
 $arr2 = range 3 4
-concat $arr1 $arr2
+array.concat $arr1 $arr2
 $concatted = $
-length $concatted
-assertEqual $ 4 "Array.concat length failed"
-get $concatted 0
-assertEqual $ 1 "Array.concat content failed"
-join $arr ","
-assertEqual $ "1,2,3,4,5" "Array.join failed"
+array.length $concatted
+test.assertEqual $ 4 "Array.concat length failed"
+array.get $concatted 0
+test.assertEqual $ 1 "Array.concat content failed"
+array.join $arr ","
+test.assertEqual $ "1,2,3,4,5" "Array.join failed"
+array.create 1 2 3
+$created = $
+array.length $created
+test.assertEqual $ 3 "Array.create length failed"
+array.get $created 0
+test.assertEqual $ 1 "Array.create first element failed"
+array.get $created 1
+test.assertEqual $ 2 "Array.create second element failed"
+array.get $created 2
+test.assertEqual $ 3 "Array.create third element failed"
+array.create "hello" "world" 42 true
+$mixed = $
+array.length $mixed
+test.assertEqual $ 4 "Array.create mixed types length failed"
+array.get $mixed 0
+test.assertEqual $ "hello" "Array.create string element failed"
+array.get $mixed 2
+test.assertEqual $ 42 "Array.create number element failed"
+array.get $mixed 3
+test.assertEqual $ true "Array.create boolean element failed"
+array.create
+$emptyCreated = $
+array.length $emptyCreated
+test.assertEqual $ 0 "Array.create empty array failed"
 log "Test 18 - Array module: All passed"
 
 # Test 19: Json module tests
 $jsonStr = '{"name": "John", "age": 30}'
 json.parse $jsonStr
 $parsed = $
-assertNotNull $parsed "Json.parse failed"
+test.assertNotNull $parsed "Json.parse failed"
 json.get $parsed "name"
-assertEqual $ "John" "Json.get failed"
+test.assertEqual $ "John" "Json.get failed"
 json.set $parsed "city" "NYC"
 $setObj = $
 json.get $setObj "city"
-assertEqual $ "NYC" "Json.set failed"
+test.assertEqual $ "NYC" "Json.set failed"
 json.stringify $parsed
 $stringified = $
-contains $stringified "John"
-assertTrue $ "Json.stringify failed"
+string.contains $stringified "John"
+test.assertTrue $ "Json.stringify failed"
 json.isValid $jsonStr
-assertTrue $ "Json.isValid failed"
+test.assertTrue $ "Json.isValid failed"
 json.keys $parsed
 $keys = $
-assertContains $keys "name" "Json.keys failed"
+test.assertContains $keys "name" "Json.keys failed"
 json.values $parsed
 $values = $
-assertContains $values "John" "Json.values failed"
+test.assertContains $values "John" "Json.values failed"
 json.parse '{"a": 1}'
 $obj1 = $
 json.parse '{"b": 2}'
@@ -241,66 +265,66 @@ $obj2 = $
 json.merge $obj1 $obj2
 $merged = $
 json.get $merged "a"
-assertEqual $ 1 "Json.merge failed"
+test.assertEqual $ 1 "Json.merge failed"
 json.get $merged "b"
-assertEqual $ 2 "Json.merge failed"
+test.assertEqual $ 2 "Json.merge failed"
 json.clone $parsed
 $cloned = $
 json.get $cloned "name"
-assertEqual $ "John" "Json.clone failed"
+test.assertEqual $ "John" "Json.clone failed"
 log "Test 19 - Json module: All passed"
 
 # Test 20: Time module tests
 time.now
 $now = $
-assertNotNull $now "Time.now failed"
-assertType $now "string" "Time.now type failed"
+test.assertNotNull $now "Time.now failed"
+test.assertType $now "string" "Time.now type failed"
 time.timestamp
 $ts = $
-assertType $ts "number" "Time.timestamp type failed"
-assertGreater $ts 0 "Time.timestamp value failed"
+test.assertType $ts "number" "Time.timestamp type failed"
+test.assertGreater $ts 0 "Time.timestamp value failed"
 time.format "2024-01-15"
 $formatted = $
-assertType $formatted "string" "Time.format type failed"
+test.assertType $formatted "string" "Time.format type failed"
 time.addDays "2024-01-15T00:00:00.000Z" 7
 $added = $
-assertNotNull $added "Time.addDays failed"
+test.assertNotNull $added "Time.addDays failed"
 time.diffDays "2024-01-01" "2024-01-08"
-assertEqual $ 7 "Time.diffDays failed"
+test.assertEqual $ 7 "Time.diffDays failed"
 log "Test 20 - Time module: All passed"
 
 # Test 21: Random module tests
 random.int 1 10
 $randInt = $
-assertGreaterOrEqual $randInt 1 "Random.int min failed"
-assertLessOrEqual $randInt 10 "Random.int max failed"
+test.assertGreaterOrEqual $randInt 1 "Random.int min failed"
+test.assertLessOrEqual $randInt 10 "Random.int max failed"
 random.float
 $randFloat = $
-assertGreaterOrEqual $randFloat 0 "Random.float min failed"
-assertLess $randFloat 1 "Random.float max failed"
+test.assertGreaterOrEqual $randFloat 0 "Random.float min failed"
+test.assertLess $randFloat 1 "Random.float max failed"
 random.uuid
 $uuid = $
-assertType $uuid "string" "Random.uuid type failed"
-length $uuid
-assertGreater $ 30 "Random.uuid length failed"
+test.assertType $uuid "string" "Random.uuid type failed"
+string.length $uuid
+test.assertGreater $ 30 "Random.uuid length failed"
 $arr = range 1 5
 random.choice $arr
 $choice = $
-assertContains $arr $choice "Random.choice failed"
+test.assertContains $arr $choice "Random.choice failed"
 log "Test 21 - Random module: All passed"
 
 # Test 22: Variable-to-variable assignment
 $city = "New York"
 log "Test 22 - Original city:" $city
 $city2 = $city
-assertEqual $city2 "New York" "Variable-to-variable assignment failed"
+test.assertEqual $city2 "New York" "Variable-to-variable assignment failed"
 log "Test 22 - Assigned city:" $city2
 $number1 = 42
 $number2 = $number1
-assertEqual $number2 42 "Number variable assignment failed"
+test.assertEqual $number2 42 "Number variable assignment failed"
 $bool1 = true
 $bool2 = $bool1
-assertEqual $bool2 true "Boolean variable assignment failed"
+test.assertEqual $bool2 true "Boolean variable assignment failed"
 log "Test 22 - Variable assignment: All passed"
 
 # Test 23: Return statement in functions
@@ -310,7 +334,7 @@ def return_value
 enddef
 
 return_value
-assertEqual $ 100 "Function return value failed"
+test.assertEqual $ 100 "Function return value failed"
 
 def return_variable
   $result = 200
@@ -319,16 +343,16 @@ def return_variable
 enddef
 
 return_variable
-assertEqual $ 200 "Function return variable failed"
+test.assertEqual $ 200 "Function return variable failed"
 
 def return_expression
-  add 10 20
+  math.add 10 20
   return $
   log "This should not execute"
 enddef
 
 return_expression
-assertEqual $ 30 "Function return expression failed"
+test.assertEqual $ 30 "Function return expression failed"
 
 def return_early
   if true
@@ -338,7 +362,7 @@ def return_early
 enddef
 
 return_early
-assertEqual $ "early" "Function early return failed"
+test.assertEqual $ "early" "Function early return failed"
 
 def return_no_value
   $temp = 50
@@ -347,7 +371,7 @@ def return_no_value
 enddef
 
 return_no_value
-assertEqual $ 50 "Function return last value failed"
+test.assertEqual $ 50 "Function return last value failed"
 log "Test 23 - Return in functions: All passed"
 
 # Test 24: Return statement in global scope
@@ -370,7 +394,7 @@ def outer_func
 enddef
 
 outer_func
-assertEqual $ "inner" "Nested function return failed"
+test.assertEqual $ "inner" "Nested function return failed"
 log "Test 24 - Return in nested contexts: All passed"
 
 # Test 25: Return with different value types
@@ -379,35 +403,35 @@ def return_string
 enddef
 
 return_string
-assertEqual $ "hello" "Return string failed"
+test.assertEqual $ "hello" "Return string failed"
 
 def return_number
   return 42
 enddef
 
 return_number
-assertEqual $ 42 "Return number failed"
+test.assertEqual $ 42 "Return number failed"
 
 def return_boolean
   return true
 enddef
 
 return_boolean
-assertEqual $ true "Return boolean failed"
+test.assertEqual $ true "Return boolean failed"
 
 def return_null
   return null
 enddef
 
 return_null
-assertEqual $ null "Return null failed"
+test.assertEqual $ null "Return null failed"
 
 def return_subexpression
-  return $(add 5 5)
+  return $(math.add 5 5)
 enddef
 
 return_subexpression
-assertEqual $ 10 "Return subexpression failed"
+test.assertEqual $ 10 "Return subexpression failed"
 log "Test 25 - Return with different types: All passed"
 
 # Test 26: Return in conditional blocks
@@ -419,7 +443,7 @@ def return_in_if
 enddef
 
 return_in_if
-assertEqual $ "if_return" "Return in if block failed"
+test.assertEqual $ "if_return" "Return in if block failed"
 
 def return_in_else
   if false
@@ -431,7 +455,7 @@ def return_in_else
 enddef
 
 return_in_else
-assertEqual $ "else_return" "Return in else block failed"
+test.assertEqual $ "else_return" "Return in else block failed"
 log "Test 26 - Return in conditionals: All passed"
 
 # Test 27: Return in loops
@@ -445,163 +469,240 @@ def return_in_for
 enddef
 
 return_in_for
-assertEqual $ 3 "Return in for loop failed"
+test.assertEqual $ 3 "Return in for loop failed"
 log "Test 27 - Return in loops: All passed"
 
 # Test 28: Complex variable assignment scenarios
 $original = "test"
 $copy1 = $original
 $copy2 = $copy1
-assertEqual $copy2 "test" "Chained variable assignment failed"
+test.assertEqual $copy2 "test" "Chained variable assignment failed"
 
 $num1 = 10
 $num2 = $num1
 $num3 = $num2
-add $num3 5
+math.add $num3 5
 $result = $
-assertEqual $result 15 "Variable assignment in expressions failed"
+test.assertEqual $result 15 "Variable assignment in expressions failed"
 
 $arr1 = range 1 3
 $arr2 = $arr1
-length $arr2
-assertEqual $ 3 "Array variable assignment failed"
+array.length $arr2
+test.assertEqual $ 3 "Array variable assignment failed"
 log "Test 28 - Complex variable assignments: All passed"
 
 # Test 29: assign command
 $testVar = "original"
-assertEqual $testVar "original" "Initial assignment failed"
+test.assertEqual $testVar "original" "Initial assignment failed"
 assign $testVar "assigned"
-assertEqual $testVar "assigned" "assign command failed"
+test.assertEqual $testVar "assigned" "assign command failed"
 assign $testVar 42
-assertEqual $testVar 42 "assign command with number failed"
+test.assertEqual $testVar 42 "assign command with number failed"
 assign $testVar true
-assertEqual $testVar true "assign command with boolean failed"
+test.assertEqual $testVar true "assign command with boolean failed"
 $sourceVar = "source value"
 assign $testVar $sourceVar
-assertEqual $testVar "source value" "assign command with variable failed"
-add 10 20
+test.assertEqual $testVar "source value" "assign command with variable failed"
+math.add 10 20
 assign $testVar $
-assertEqual $testVar 30 "assign command with last value failed"
+test.assertEqual $testVar 30 "assign command with last value failed"
+
+# Test assign with fallback (3rd parameter)
+$emptyVar = null
+assign $testVar $emptyVar "fallback value"
+test.assertEqual $testVar "fallback value" "assign with fallback for null failed"
+
+$emptyVar = ""
+assign $testVar $emptyVar "fallback string"
+test.assertEqual $testVar "fallback string" "assign with fallback for empty string failed"
+
+$emptyVar = null
+assign $testVar $emptyVar 42
+test.assertEqual $testVar 42 "assign with fallback number failed"
+
+$emptyVar = null
+assign $testVar $emptyVar true
+test.assertEqual $testVar true "assign with fallback boolean failed"
+
+json.parse '[]'
+$emptyVar = $
+assign $testVar $emptyVar "fallback for empty array"
+test.assertEqual $testVar "fallback for empty array" "assign with fallback for empty array failed"
+
+$emptyVar = "not empty"
+assign $testVar $emptyVar "fallback"
+test.assertEqual $testVar "not empty" "assign should not use fallback when value is not empty"
+
+$emptyVar = 0
+assign $testVar $emptyVar "fallback"
+test.assertEqual $testVar 0 "assign should not use fallback for zero"
+
+$emptyVar = false
+assign $testVar $emptyVar "fallback"
+test.assertEqual $testVar false "assign should not use fallback for false"
 log "Test 29 - assign command: All passed"
 
 # Test 30: empty command
 $toEmpty = "not empty"
-assertEqual $toEmpty "not empty" "Variable before empty failed"
+test.assertEqual $toEmpty "not empty" "Variable before empty failed"
 empty $toEmpty
-assertEqual $toEmpty null "empty command failed"
+test.assertEqual $toEmpty null "empty command failed"
 $toEmpty = 42
-assertEqual $toEmpty 42 "Variable reassignment after empty failed"
+test.assertEqual $toEmpty 42 "Variable reassignment after empty failed"
 empty $toEmpty
-assertEqual $toEmpty null "empty command second time failed"
+test.assertEqual $toEmpty null "empty command second time failed"
 $toEmpty = range 1 5
-length $toEmpty
-assertEqual $ 5 "Array before empty failed"
+array.length $toEmpty
+test.assertEqual $ 5 "Array before empty failed"
 empty $toEmpty
-assertEqual $toEmpty null "empty command with array failed"
+test.assertEqual $toEmpty null "empty command with array failed"
 log "Test 30 - empty command: All passed"
+
+# Test 30b: fallback command
+$maybeEmpty = null
+fallback $maybeEmpty "default value"
+test.assertEqual $ "default value" "fallback with null failed"
+
+$maybeEmpty = ""
+fallback $maybeEmpty "default string"
+test.assertEqual $ "default string" "fallback with empty string failed"
+
+$maybeEmpty = null
+fallback $maybeEmpty 42
+test.assertEqual $ 42 "fallback with number failed"
+
+$maybeEmpty = null
+fallback $maybeEmpty true
+test.assertEqual $ true "fallback with boolean failed"
+
+json.parse '[]'
+$maybeEmpty = $
+fallback $maybeEmpty "fallback for empty array"
+test.assertEqual $ "fallback for empty array" "fallback with empty array failed"
+
+$maybeEmpty = "not empty"
+fallback $maybeEmpty "fallback"
+test.assertEqual $ "not empty" "fallback should not use fallback when value is not empty"
+
+$maybeEmpty = 0
+fallback $maybeEmpty "fallback"
+test.assertEqual $ 0 "fallback should not use fallback for zero"
+
+$maybeEmpty = false
+fallback $maybeEmpty "fallback"
+test.assertEqual $ false "fallback should not use fallback for false"
+
+$maybeEmpty = null
+fallback $maybeEmpty
+test.assertEqual $ null "fallback without fallback value should return null"
+
+$hasValue = "Alice"
+fallback $hasValue "Unknown"
+test.assertEqual $ "Alice" "fallback should return variable value when not empty"
+log "Test 30b - fallback command: All passed"
 
 # Test 31: Comparison functions (isEqual, isBigger, isSmaller, isEqualOrBigger, isEqualOrSmaller)
 # Test isEqual
-isEqual 5 5
-assertTrue $ "isEqual with equal numbers failed"
-isEqual 5 3
-assertFalse $ "isEqual with different numbers failed"
-isEqual "hello" "hello"
-assertTrue $ "isEqual with equal strings failed"
-isEqual "hello" "world"
-assertFalse $ "isEqual with different strings failed"
-isEqual true true
-assertTrue $ "isEqual with equal booleans failed"
-isEqual true false
-assertFalse $ "isEqual with different booleans failed"
-isEqual null null
-assertTrue $ "isEqual with null values failed"
+test.isEqual 5 5
+test.assertTrue $ "isEqual with equal numbers failed"
+test.isEqual 5 3
+test.assertFalse $ "isEqual with different numbers failed"
+test.isEqual "hello" "hello"
+test.assertTrue $ "isEqual with equal strings failed"
+test.isEqual "hello" "world"
+test.assertFalse $ "isEqual with different strings failed"
+test.isEqual true true
+test.assertTrue $ "isEqual with equal booleans failed"
+test.isEqual true false
+test.assertFalse $ "isEqual with different booleans failed"
+test.isEqual null null
+test.assertTrue $ "isEqual with null values failed"
 $arr1 = range 1 3
 $arr2 = range 1 3
-isEqual $arr1 $arr2
-assertTrue $ "isEqual with equal arrays failed"
+test.isEqual $arr1 $arr2
+test.assertTrue $ "isEqual with equal arrays failed"
 log "Test 31a - isEqual: All passed"
 
 # Test isBigger
-isBigger 10 5
-assertTrue $ "isBigger with 10 > 5 failed"
-isBigger 5 10
-assertFalse $ "isBigger with 5 > 10 failed"
-isBigger 5 5
-assertFalse $ "isBigger with 5 > 5 failed"
-isBigger -5 -10
-assertTrue $ "isBigger with negative numbers failed"
+test.isBigger 10 5
+test.assertTrue $ "isBigger with 10 > 5 failed"
+test.isBigger 5 10
+test.assertFalse $ "isBigger with 5 > 10 failed"
+test.isBigger 5 5
+test.assertFalse $ "isBigger with 5 > 5 failed"
+test.isBigger -5 -10
+test.assertTrue $ "isBigger with negative numbers failed"
 log "Test 31b - isBigger: All passed"
 
 # Test isSmaller
-isSmaller 3 5
-assertTrue $ "isSmaller with 3 < 5 failed"
-isSmaller 5 3
-assertFalse $ "isSmaller with 5 < 3 failed"
-isSmaller 5 5
-assertFalse $ "isSmaller with 5 < 5 failed"
-isSmaller -10 -5
-assertTrue $ "isSmaller with negative numbers failed"
+test.isSmaller 3 5
+test.assertTrue $ "isSmaller with 3 < 5 failed"
+test.isSmaller 5 3
+test.assertFalse $ "isSmaller with 5 < 3 failed"
+test.isSmaller 5 5
+test.assertFalse $ "isSmaller with 5 < 5 failed"
+test.isSmaller -10 -5
+test.assertTrue $ "isSmaller with negative numbers failed"
 log "Test 31c - isSmaller: All passed"
 
 # Test isEqualOrBigger
-isEqualOrBigger 10 5
-assertTrue $ "isEqualOrBigger with 10 >= 5 failed"
-isEqualOrBigger 5 5
-assertTrue $ "isEqualOrBigger with 5 >= 5 failed"
-isEqualOrBigger 3 5
-assertFalse $ "isEqualOrBigger with 3 >= 5 failed"
-isEqualOrBigger -5 -10
-assertTrue $ "isEqualOrBigger with negative numbers failed"
+test.isEqualOrBigger 10 5
+test.assertTrue $ "isEqualOrBigger with 10 >= 5 failed"
+test.isEqualOrBigger 5 5
+test.assertTrue $ "isEqualOrBigger with 5 >= 5 failed"
+test.isEqualOrBigger 3 5
+test.assertFalse $ "isEqualOrBigger with 3 >= 5 failed"
+test.isEqualOrBigger -5 -10
+test.assertTrue $ "isEqualOrBigger with negative numbers failed"
 log "Test 31d - isEqualOrBigger: All passed"
 
 # Test isEqualOrSmaller
-isEqualOrSmaller 3 5
-assertTrue $ "isEqualOrSmaller with 3 <= 5 failed"
-isEqualOrSmaller 5 5
-assertTrue $ "isEqualOrSmaller with 5 <= 5 failed"
-isEqualOrSmaller 10 5
-assertFalse $ "isEqualOrSmaller with 10 <= 5 failed"
-isEqualOrSmaller -10 -5
-assertTrue $ "isEqualOrSmaller with negative numbers failed"
+test.isEqualOrSmaller 3 5
+test.assertTrue $ "isEqualOrSmaller with 3 <= 5 failed"
+test.isEqualOrSmaller 5 5
+test.assertTrue $ "isEqualOrSmaller with 5 <= 5 failed"
+test.isEqualOrSmaller 10 5
+test.assertFalse $ "isEqualOrSmaller with 10 <= 5 failed"
+test.isEqualOrSmaller -10 -5
+test.assertTrue $ "isEqualOrSmaller with negative numbers failed"
 log "Test 31e - isEqualOrSmaller: All passed"
 
 # Test comparison functions in conditionals
 $value = 10
-if isBigger $value 5
+if test.isBigger $value 5
   $result = "bigger"
 else
   $result = "not bigger"
 endif
-assertEqual $result "bigger" "isBigger in conditional failed"
+test.assertEqual $result "bigger" "isBigger in conditional failed"
 
-if isSmaller $value 5
+if test.isSmaller $value 5
   $result = "smaller"
 else
   $result = "not smaller"
 endif
-assertEqual $result "not smaller" "isSmaller in conditional failed"
+test.assertEqual $result "not smaller" "isSmaller in conditional failed"
 
-if isEqual $value 10
+if test.isEqual $value 10
   $result = "equal"
 else
   $result = "not equal"
 endif
-assertEqual $result "equal" "isEqual in conditional failed"
+test.assertEqual $result "equal" "isEqual in conditional failed"
 
-if isEqualOrBigger $value 10
+if test.isEqualOrBigger $value 10
   $result = "equal or bigger"
 else
   $result = "not equal or bigger"
 endif
-assertEqual $result "equal or bigger" "isEqualOrBigger in conditional failed"
+test.assertEqual $result "equal or bigger" "isEqualOrBigger in conditional failed"
 
-if isEqualOrSmaller $value 10
+if test.isEqualOrSmaller $value 10
   $result = "equal or smaller"
 else
   $result = "not equal or smaller"
 endif
-assertEqual $result "equal or smaller" "isEqualOrSmaller in conditional failed"
+test.assertEqual $result "equal or smaller" "isEqualOrSmaller in conditional failed"
 log "Test 31f - Comparison functions in conditionals: All passed"
 
 log "Test 31 - Comparison functions: All passed"

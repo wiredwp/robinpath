@@ -12,6 +12,7 @@ export interface ModuleAdapter {
     functions: Record<string, BuiltinHandler>;
     functionMetadata: Record<string, FunctionMetadata>;
     moduleMetadata: ModuleMetadata;
+    global?: boolean; // If true, register functions globally (without module prefix)
 }
 
 import JSON5 from 'json5';
@@ -1178,19 +1179,40 @@ class Parser {
 class ExpressionEvaluator {
     private frame: Frame;
     private globals: Environment;
+    private executor: Executor | null;
 
-    constructor(frame: Frame, globals: Environment) {
+    constructor(frame: Frame, globals: Environment, executor?: Executor | null) {
         this.frame = frame;
         this.globals = globals;
+        this.executor = executor || null;
     }
 
-    evaluate(expr: string): boolean {
+    async evaluate(expr: string): Promise<boolean> {
         // Simple expression evaluator using JS delegation
         // Replace $ and $var references with actual values
-        let jsExpr = expr;
+        let jsExpr = expr.trim();
+
+        // First, check if the entire expression is a function call (like "isBigger $value 5")
+        // This handles simple cases where the expression is just a function call
+        if (this.executor) {
+            const trimmedExpr = expr.trim();
+            const funcCallMatch = trimmedExpr.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+(.+)$/);
+            
+            if (funcCallMatch) {
+                const funcName = funcCallMatch[1];
+                const argsStr = funcCallMatch[2];
+                
+                // Check if this is a known function (builtin or user-defined)
+                if (this.globals.builtins.has(funcName) || this.globals.functions.has(funcName)) {
+                    // Execute the function call and return its truthiness
+                    const funcResult = await this.executeFunctionCall(funcName, argsStr);
+                    return this.isTruthy(funcResult);
+                }
+            }
+        }
 
         // Replace $name variables first (before bare $)
-        jsExpr = jsExpr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
+        jsExpr = expr.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (_match, name) => {
             const val = this.resolveVariable(name);
             return this.valueToJS(val);
         });
@@ -1215,6 +1237,42 @@ class ExpressionEvaluator {
         } catch (error) {
             throw new Error(`Expression evaluation error: ${expr} - ${error}`);
         }
+    }
+
+    private async executeFunctionCall(funcName: string, argsStr: string): Promise<Value> {
+        if (!this.executor) {
+            throw new Error('Executor not available for function call evaluation');
+        }
+        
+        // Parse arguments from the string
+        const argTokens = argsStr.trim().split(/\s+/);
+        const args: Arg[] = [];
+        
+        for (const token of argTokens) {
+            if (token === '$') {
+                args.push({ type: 'lastValue' });
+            } else if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
+                args.push({ type: 'var', name: token.slice(1) });
+            } else if (/^\$[0-9]+$/.test(token)) {
+                args.push({ type: 'var', name: token.slice(1) });
+            } else if (token === 'true') {
+                args.push({ type: 'literal', value: true });
+            } else if (token === 'false') {
+                args.push({ type: 'literal', value: false });
+            } else if (token === 'null') {
+                args.push({ type: 'literal', value: null });
+            } else if (/^-?\d+$/.test(token)) {
+                args.push({ type: 'number', value: parseInt(token, 10) });
+            } else if ((token.startsWith('"') && token.endsWith('"')) || 
+                       (token.startsWith("'") && token.endsWith("'"))) {
+                args.push({ type: 'string', value: token.slice(1, -1) });
+            } else {
+                args.push({ type: 'literal', value: token });
+            }
+        }
+        
+        // Execute the function call using the executor's public method
+        return await this.executor.executeFunctionCall(funcName, args);
     }
 
     private resolveVariable(name: string): Value {
@@ -1322,6 +1380,28 @@ class Executor {
      */
     async executeStatementPublic(stmt: Statement): Promise<void> {
         await this.executeStatement(stmt);
+    }
+
+    /**
+     * Execute a function call and return the result (public method for expression evaluation)
+     */
+    async executeFunctionCall(funcName: string, args: Arg[]): Promise<Value> {
+        const evaluatedArgs = await Promise.all(args.map(arg => this.evaluateArg(arg)));
+        
+        // Check if it's a builtin function
+        if (this.environment.builtins.has(funcName)) {
+            const handler = this.environment.builtins.get(funcName)!;
+            const result = await Promise.resolve(handler(evaluatedArgs));
+            return result !== undefined ? result : null;
+        }
+        
+        // Check if it's a user-defined function
+        if (this.environment.functions.has(funcName)) {
+            const func = this.environment.functions.get(funcName)!;
+            return await this.callFunction(func, evaluatedArgs);
+        }
+        
+        throw new Error(`Unknown function: ${funcName}`);
     }
 
     async execute(statements: Statement[]): Promise<Value> {
@@ -1694,7 +1774,7 @@ Examples:
         // Special handling for "assign" command - assigns a value to a variable
         if (cmd.name === 'assign') {
             if (cmd.args.length < 2) {
-                throw new Error('assign requires 2 arguments: variable name and value');
+                throw new Error('assign requires at least 2 arguments: variable name and value (optional fallback as 3rd arg)');
             }
             
             // Get variable name from first arg (must be a variable reference)
@@ -1705,7 +1785,18 @@ Examples:
             const varName = varArg.name;
             
             // Evaluate the second arg as the value to assign
-            const value = await this.evaluateArg(cmd.args[1]);
+            let value = await this.evaluateArg(cmd.args[1]);
+            
+            // Check if value is empty or null, and if so, use fallback (3rd arg) if provided
+            const isEmpty = value === null || value === undefined || 
+                          (typeof value === 'string' && value.trim() === '') ||
+                          (Array.isArray(value) && value.length === 0) ||
+                          (typeof value === 'object' && Object.keys(value).length === 0);
+            
+            if (isEmpty && cmd.args.length >= 3) {
+                // Use fallback value (3rd argument)
+                value = await this.evaluateArg(cmd.args[2]);
+            }
             
             // Set the variable
             this.setVariable(varName, value);
@@ -1729,6 +1820,39 @@ Examples:
             // Set the variable to null (empty)
             this.setVariable(varName, null);
             frame.lastValue = null;
+            return;
+        }
+
+        // Special handling for "fallback" command - returns variable value or fallback if empty/null
+        if (cmd.name === 'fallback') {
+            if (cmd.args.length < 1) {
+                throw new Error('fallback requires at least 1 argument: variable name (optional fallback as 2nd arg)');
+            }
+            
+            // Get variable name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('fallback first argument must be a variable (e.g., $myVar)');
+            }
+            
+            // Evaluate the variable to get its value
+            const varValue = await this.evaluateArg(varArg);
+            
+            // Check if value is empty or null
+            const isEmpty = varValue === null || varValue === undefined || 
+                          (typeof varValue === 'string' && varValue.trim() === '') ||
+                          (Array.isArray(varValue) && varValue.length === 0) ||
+                          (typeof varValue === 'object' && Object.keys(varValue).length === 0);
+            
+            // If empty and fallback is provided, use fallback; otherwise use variable value
+            if (isEmpty && cmd.args.length >= 2) {
+                const fallbackValue = await this.evaluateArg(cmd.args[1]);
+                frame.lastValue = fallbackValue;
+                return;
+            }
+            
+            // Return the variable value (even if null/empty if no fallback provided)
+            frame.lastValue = varValue;
             return;
         }
 
@@ -1874,8 +1998,8 @@ Examples:
 
     private async executeInlineIf(ifStmt: InlineIf): Promise<void> {
         const frame = this.getCurrentFrame();
-        const evaluator = new ExpressionEvaluator(frame, this.environment);
-        const condition = evaluator.evaluate(ifStmt.conditionExpr);
+        const evaluator = new ExpressionEvaluator(frame, this.environment, this);
+        const condition = await evaluator.evaluate(ifStmt.conditionExpr);
         
         if (condition) {
             await this.executeStatement(ifStmt.command);
@@ -1884,10 +2008,10 @@ Examples:
 
     private async executeIfBlock(ifStmt: IfBlock): Promise<void> {
         const frame = this.getCurrentFrame();
-        const evaluator = new ExpressionEvaluator(frame, this.environment);
+        const evaluator = new ExpressionEvaluator(frame, this.environment, this);
         
         // Check main condition
-        if (evaluator.evaluate(ifStmt.conditionExpr)) {
+        if (await evaluator.evaluate(ifStmt.conditionExpr)) {
             for (const stmt of ifStmt.thenBranch) {
                 await this.executeStatement(stmt);
             }
@@ -1897,7 +2021,7 @@ Examples:
         // Check elseif branches
         if (ifStmt.elseifBranches) {
             for (const branch of ifStmt.elseifBranches) {
-                if (evaluator.evaluate(branch.condition)) {
+                if (await evaluator.evaluate(branch.condition)) {
                     for (const stmt of branch.body) {
                         await this.executeStatement(stmt);
                     }
@@ -2793,11 +2917,9 @@ export class RobinPath {
         // Register module-level metadata
         this.registerModuleInfo(module.name, module.moduleMetadata);
         
-        // For core modules, also register functions as builtins (without module prefix)
+        // If global is true, also register functions as builtins (without module prefix)
         // This allows calling them directly: add 5 5 instead of math.add 5 5
-        const coreModuleNames = ['math', 'string', 'json', 'time', 'random', 'array', 'test'];
-        const isCoreModule = coreModuleNames.includes(module.name.toLowerCase());
-        if (isCoreModule) {
+        if (module.global === true) {
             for (const [funcName, funcHandler] of Object.entries(module.functions)) {
                 // Only register if not already registered (avoid conflicts with existing builtins)
                 if (!this.environment.builtins.has(funcName)) {

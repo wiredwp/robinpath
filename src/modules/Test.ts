@@ -884,7 +884,8 @@ const TestModule: ModuleAdapter = {
     name: 'test',
     functions: TestFunctions,
     functionMetadata: TestFunctionMetadata,
-    moduleMetadata: TestModuleMetadata
+    moduleMetadata: TestModuleMetadata,
+    global: true
 };
 
 export default TestModule;

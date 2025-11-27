@@ -578,7 +578,8 @@ const StringModule: ModuleAdapter = {
     name: 'string',
     functions: StringFunctions,
     functionMetadata: StringFunctionMetadata,
-    moduleMetadata: StringModuleMetadata
+    moduleMetadata: StringModuleMetadata,
+    global: false
 };
 
 export default StringModule;

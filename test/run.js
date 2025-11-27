@@ -21,13 +21,21 @@ const rp = new RobinPath();
 
 (async () => {
     try {
+        // Record start time
+        const startTime = Date.now();
+        
         // Execute the test script
         const result = await rp.executeScript(testScript);
+        
+        // Calculate execution time
+        const endTime = Date.now();
+        const executionTime = endTime - startTime;
         
         console.log();
         console.log('='.repeat(60));
         console.log('Test execution completed successfully!');
         console.log('Final result ($):', result);
+        console.log(`Total execution time: ${executionTime}ms (${(executionTime / 1000).toFixed(3)}s)`);
         console.log('='.repeat(60));
         
         // Test getASTWithState

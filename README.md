@@ -363,6 +363,70 @@ $number2 = $number1  # Copies 42 to $number2
 $number3 = $number2  # Can chain assignments
 ```
 
+### Native Reserved Methods
+
+RobinPath includes several built-in reserved methods:
+
+**`log` - Output values:**
+```robinpath
+log "Hello, World!"
+log $name $age
+log "Result:" $(add 5 5)
+```
+
+**`assign` - Assign a value to a variable (with optional fallback):**
+```robinpath
+# Basic assignment
+assign $myVar "hello"
+assign $myVar 42
+assign $myVar $sourceVar
+
+# Assignment with fallback (3rd parameter used if 2nd is empty/null)
+assign $result $maybeEmpty "default value"
+assign $count $maybeNull 0
+assign $name $maybeEmpty "Unknown"
+
+# Fallback is only used when the value is:
+# - null or undefined
+# - empty string (after trimming)
+# - empty array
+# - empty object
+```
+
+**`empty` - Clear/empty a variable:**
+```robinpath
+$myVar = "some value"
+empty $myVar
+log $myVar  # Prints null
+
+$arr = range 1 5
+empty $arr
+log $arr  # Prints null
+```
+
+**`fallback` - Return variable value or fallback if empty/null:**
+```robinpath
+# Return variable value or fallback
+$maybeEmpty = null
+fallback $maybeEmpty "default value"  # Returns "default value"
+
+$maybeEmpty = ""
+fallback $maybeEmpty "Unknown"         # Returns "Unknown"
+
+$hasValue = "Alice"
+fallback $hasValue "Unknown"           # Returns "Alice" (fallback not used)
+
+# Without fallback, returns the variable value (even if null)
+$maybeEmpty = null
+fallback $maybeEmpty                   # Returns null
+```
+
+The `fallback` command checks if a variable is empty/null and returns the fallback value if provided. A value is considered empty if it is:
+- `null` or `undefined`
+- Empty string (after trimming)
+- Empty array
+- Empty object
+
 ### Comments
 
 Lines starting with `#` are comments:
@@ -853,6 +917,52 @@ $copy2 = $copy1
 
 log $name2 $age2  # Prints "Alice" 25
 log $copy2        # Prints 100
+```
+
+### Using assign and empty Commands
+
+**assign command:**
+```robinpath
+# Basic assignment
+assign $result "success"
+assign $count 42
+
+# Assignment with fallback
+$maybeEmpty = null
+assign $result $maybeEmpty "default"  # $result = "default"
+
+$maybeEmpty = ""
+assign $name $maybeEmpty "Unknown"   # $name = "Unknown"
+
+$hasValue = "Alice"
+assign $name $hasValue "Unknown"     # $name = "Alice" (fallback not used)
+```
+
+**empty command:**
+```robinpath
+$data = "some data"
+empty $data
+log $data  # Prints null
+
+$arr = range 1 5
+empty $arr
+log $arr  # Prints null
+```
+
+**fallback command:**
+```robinpath
+# Use fallback when variable might be empty
+$name = null
+$displayName = fallback $name "Guest"
+log $displayName  # Prints "Guest"
+
+$name = "Alice"
+$displayName = fallback $name "Guest"
+log $displayName  # Prints "Alice"
+
+# Chain with other operations
+$count = null
+add fallback $count 0 10  # Adds 0 + 10 = 10
 ```
 
 ### Conditional Logic

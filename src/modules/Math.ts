@@ -445,7 +445,8 @@ const MathModule: ModuleAdapter = {
     name: 'math',
     functions: MathFunctions,
     functionMetadata: MathFunctionMetadata,
-    moduleMetadata: MathModuleMetadata
+    moduleMetadata: MathModuleMetadata,
+    global: true
 };
 
 export default MathModule;

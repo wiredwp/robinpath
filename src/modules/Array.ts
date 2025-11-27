@@ -86,6 +86,11 @@ export const ArrayFunctions: Record<string, BuiltinHandler> = {
         }
         
         return arr.map(item => String(item ?? '')).join(delimiter);
+    },
+
+    create: (args) => {
+        // Return all arguments as an array
+        return [...args];
     }
 };
 
@@ -227,6 +232,22 @@ export const ArrayFunctionMetadata: Record<string, FunctionMetadata> = {
         returnType: 'string',
         returnDescription: 'Joined string',
         example: 'join range 1 3 ","  # Returns "1,2,3"'
+    },
+
+    create: {
+        description: 'Creates an array from the given arguments',
+        parameters: [
+            {
+                name: '...values',
+                dataType: 'any',
+                description: 'Values to include in the array (any number of arguments)',
+                formInputType: 'json',
+                required: false
+            }
+        ],
+        returnType: 'array',
+        returnDescription: 'New array containing all provided values',
+        example: 'array.create 1 2 3 "hello"  # Returns [1, 2, 3, "hello"]'
     }
 };
 
@@ -238,7 +259,8 @@ export const ArrayModuleMetadata: ModuleMetadata = {
         'slice',
         'push',
         'concat',
-        'join'
+        'join',
+        'create'
     ]
 };
 
@@ -247,7 +269,8 @@ const ArrayModule: ModuleAdapter = {
     name: 'array',
     functions: ArrayFunctions,
     functionMetadata: ArrayFunctionMetadata,
-    moduleMetadata: ArrayModuleMetadata
+    moduleMetadata: ArrayModuleMetadata,
+    global: false
 };
 
 export default ArrayModule;

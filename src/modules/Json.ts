@@ -353,7 +353,8 @@ const JsonModule: ModuleAdapter = {
     name: 'json',
     functions: JsonFunctions,
     functionMetadata: JsonFunctionMetadata,
-    moduleMetadata: JsonModuleMetadata
+    moduleMetadata: JsonModuleMetadata,
+    global: false
 };
 
 export default JsonModule;

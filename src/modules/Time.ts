@@ -200,7 +200,8 @@ const TimeModule: ModuleAdapter = {
     name: 'time',
     functions: TimeFunctions,
     functionMetadata: TimeFunctionMetadata,
-    moduleMetadata: TimeModuleMetadata
+    moduleMetadata: TimeModuleMetadata,
+    global: false
 };
 
 export default TimeModule;

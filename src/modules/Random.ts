@@ -124,7 +124,8 @@ const RandomModule: ModuleAdapter = {
     name: 'random',
     functions: RandomFunctions,
     functionMetadata: RandomFunctionMetadata,
-    moduleMetadata: RandomModuleMetadata
+    moduleMetadata: RandomModuleMetadata,
+    global: false
 };
 
 export default RandomModule;
