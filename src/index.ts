@@ -113,6 +113,7 @@ interface CommandCall {
 interface Assignment {
     type: 'assignment';
     targetName: string;
+    targetPath?: AttributePathSegment[]; // Path for attribute access assignment (e.g., $animal.cat)
     command?: CommandCall;
     literalValue?: Value;
     isLastValue?: boolean; // True if assignment is from $ (last value)
@@ -153,6 +154,11 @@ interface DefineFunction {
     body: Statement[];
 }
 
+interface ScopeBlock {
+    type: 'scope';
+    body: Statement[];
+}
+
 interface ForLoop {
     type: 'forLoop';
     varName: string;
@@ -180,6 +186,7 @@ type Statement =
     | IfTrue 
     | IfFalse 
     | DefineFunction
+    | ScopeBlock
     | ForLoop
     | ReturnStatement
     | CommentStatement;
@@ -510,13 +517,26 @@ class Lexer {
     }
 
     static isVariable(token: string): boolean {
-        // Match: $var, $var.property, $var[0], $var.property[0], $var.property.subproperty, etc.
+        // Match: 
+        // - $var, $var.property, $var[0], $var.property[0], $var.property.subproperty, etc.
+        // - $.property, $[0], $.property[0] (last value with attributes)
+        if (!token.startsWith('$')) return false;
+        
+        // Handle $.property or $[index] (last value with attributes)
+        if (token.startsWith('$.') || token.startsWith('$[')) {
+            // Validate the rest is valid attribute path
+            const rest = token.slice(1); // Remove $
+            return /^(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*$/.test(rest);
+        }
+        
+        // Handle regular variables: $var with optional attributes
         return /^\$[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*$/.test(token);
     }
 
     /**
      * Parse attribute access path from a variable token
      * Returns the base variable name and path segments
+     * If name is empty string, it means the last value ($) with attributes
      */
     static parseVariablePath(token: string): { name: string; path: AttributePathSegment[] } {
         if (!token.startsWith('$')) {
@@ -526,6 +546,38 @@ class Lexer {
         const name = token.slice(1); // Remove $
         const path: AttributePathSegment[] = [];
         
+        // Handle $.property or $[index] (last value with attributes)
+        if (name.startsWith('.') || name.startsWith('[')) {
+            // This is last value with attributes - base name is empty
+            let remaining = name;
+            
+            // Parse path segments (.property or [index])
+            while (remaining.length > 0) {
+                if (remaining.startsWith('.')) {
+                    // Property access: .propertyName
+                    const propMatch = remaining.match(/^\.([A-Za-z_][A-Za-z0-9_]*)/);
+                    if (!propMatch) {
+                        throw new Error(`Invalid property access: ${remaining}`);
+                    }
+                    path.push({ type: 'property', name: propMatch[1] });
+                    remaining = remaining.slice(propMatch[0].length);
+                } else if (remaining.startsWith('[')) {
+                    // Array index: [number]
+                    const indexMatch = remaining.match(/^\[(\d+)\]/);
+                    if (!indexMatch) {
+                        throw new Error(`Invalid array index: ${remaining}`);
+                    }
+                    path.push({ type: 'index', index: parseInt(indexMatch[1], 10) });
+                    remaining = remaining.slice(indexMatch[0].length);
+                } else {
+                    throw new Error(`Unexpected character in variable path: ${remaining}`);
+                }
+            }
+            
+            return { name: '', path }; // Empty name means last value
+        }
+        
+        // Handle regular variables: $var with optional attributes
         // Extract base variable name (everything before first . or [)
         const baseMatch = name.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
         if (!baseMatch) {
@@ -562,7 +614,8 @@ class Lexer {
     }
 
     static isLastValue(token: string): boolean {
-        return token === '$';
+        // Match: $, $.property, $[index]
+        return token === '$' || token.startsWith('$.') || token.startsWith('$[');
     }
 
     static isPositionalParam(token: string): boolean {
@@ -649,6 +702,11 @@ class Parser {
             return this.parseDefine();
         }
 
+        // Check for scope block
+        if (tokens[0] === 'scope') {
+            return this.parseScope();
+        }
+
         // Check for for loop
         if (tokens[0] === 'for') {
             return this.parseForLoop();
@@ -685,15 +743,10 @@ class Parser {
         }
 
         // Check for assignment
-        // Only allow simple variable names as assignment targets (no attribute paths)
         if (tokens.length >= 3 && Lexer.isVariable(tokens[0]) && tokens[1] === '=') {
-            // Parse the target variable name (only base name, no paths for assignment targets)
+            // Parse the target variable name (can include attribute paths like $animal.cat)
             const targetVar = tokens[0];
-            // Check if it's a simple variable (no paths)
-            if (!/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(targetVar)) {
-                throw this.createError('Assignment target must be a simple variable name (attribute access not supported)', this.currentLine);
-            }
-            const targetName = targetVar.slice(1);
+            const { name: targetName, path: targetPath } = Lexer.parseVariablePath(targetVar);
             const restTokens = tokens.slice(2);
             
             // Check if it's a literal value (number, string, boolean, null, or $)
@@ -705,7 +758,8 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: null, // Will be resolved at execution time from frame.lastValue
                         isLastValue: true
                     };
@@ -714,7 +768,8 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: true 
                     };
                 } else if (token === 'false') {
@@ -722,7 +777,8 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: false 
                     };
                 } else if (token === 'null') {
@@ -730,7 +786,8 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: null 
                     };
                 } else if (Lexer.isPositionalParam(token)) {
@@ -740,6 +797,7 @@ class Parser {
                     return {
                         type: 'assignment',
                         targetName,
+                        targetPath,
                         command: {
                             type: 'command',
                             name: '_var', // Special internal command name
@@ -754,6 +812,7 @@ class Parser {
                     return {
                         type: 'assignment',
                         targetName,
+                        targetPath,
                         command: {
                             type: 'command',
                             name: '_var', // Special internal command name
@@ -764,14 +823,16 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: parseFloat(token) 
                     };
                 } else if (Lexer.isString(token)) {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: Lexer.parseString(token) 
                     };
                 }
@@ -795,6 +856,7 @@ class Parser {
                     return {
                         type: 'assignment',
                         targetName,
+                        targetPath,
                         command: {
                             type: 'command',
                             name: '_subexpr', // Special internal command name for subexpressions
@@ -807,7 +869,7 @@ class Parser {
             // Otherwise, treat as command
             const command = this.parseCommandFromTokens(restTokens);
             this.currentLine++;
-            return { type: 'assignment', targetName, command };
+            return { type: 'assignment', targetName, targetPath, command };
         }
 
         // Check for shorthand assignment or positional param reference
@@ -903,6 +965,55 @@ class Parser {
         }
 
         return { type: 'define', name, body };
+    }
+
+    private parseScope(): ScopeBlock {
+        this.currentLine++;
+
+        const body: Statement[] = [];
+        let closed = false;
+
+        while (this.currentLine < this.lines.length) {
+            const line = this.lines[this.currentLine].trim();
+            
+            if (!line) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comments
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim();
+                body.push({
+                    type: 'comment',
+                    text: commentText,
+                    lineNumber: this.currentLine
+                });
+                this.currentLine++;
+                continue;
+            }
+
+            const tokens = Lexer.tokenize(line);
+            
+            // If this is our closing endscope, consume it and stop
+            if (tokens[0] === 'endscope') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            // Otherwise, let parseStatement handle it (including nested blocks)
+            const stmt = this.parseStatement();
+            if (stmt) {
+                body.push(stmt);
+            }
+        }
+
+        if (!closed) {
+            throw this.createError('missing endscope', this.currentLine);
+        }
+
+        return { type: 'scope', body };
     }
 
     private parseForLoop(): ForLoop {
@@ -1024,8 +1135,17 @@ class Parser {
         // Otherwise, parse the first token
         const token = tokens[0].trim(); // Ensure token is trimmed
         
-        if (Lexer.isLastValue(token)) {
+        // Check if it's exactly $ (last value without attributes)
+        if (token === '$') {
             return { type: 'lastValue' };
+        } else if (Lexer.isVariable(token)) {
+            // This includes $.property, $[index], $var, $var.property, etc.
+            const { name, path } = Lexer.parseVariablePath(token);
+            // If name is empty, it means last value with attributes (e.g., $.name)
+            if (name === '') {
+                return { type: 'var', name: '', path };
+            }
+            return { type: 'var', name, path };
         } else if (token === 'true') {
             return { type: 'literal', value: true };
         } else if (token === 'false') {
@@ -1034,9 +1154,6 @@ class Parser {
             return { type: 'literal', value: null };
         } else if (Lexer.isPositionalParam(token)) {
             return { type: 'var', name: token.slice(1) };
-        } else if (Lexer.isVariable(token)) {
-            const { name, path } = Lexer.parseVariablePath(token);
-            return { type: 'var', name, path };
         } else if (Lexer.isString(token)) {
             return { type: 'string', value: Lexer.parseString(token) };
         } else if (Lexer.isNumber(token)) {
@@ -1165,8 +1282,9 @@ class Parser {
         // Check if this is an assignment FIRST, before trying to parse as command
         let finalCommand: Statement;
         if (commandTokens.length >= 3 && Lexer.isVariable(commandTokens[0]) && commandTokens[1] === '=') {
-            // This is an assignment
-            const targetName = commandTokens[0].slice(1);
+            // This is an assignment - parse target with possible attribute path
+            const targetVar = commandTokens[0];
+            const { name: targetName, path: targetPath } = Lexer.parseVariablePath(targetVar);
             const restTokens = commandTokens.slice(2);
             
             // Check if it's a literal value
@@ -1175,40 +1293,45 @@ class Parser {
                 if (Lexer.isNumber(token)) {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: parseFloat(token) 
                     };
                 } else if (Lexer.isString(token)) {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: Lexer.parseString(token) 
                     };
                 } else if (token === 'true') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: true 
                     };
                 } else if (token === 'false') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: false 
                     };
                 } else if (token === 'null') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName, 
+                        targetName,
+                        targetPath,
                         literalValue: null 
                     };
                 } else {
                     const cmd = this.parseCommandFromTokens(restTokens);
-                    finalCommand = { type: 'assignment', targetName, command: cmd };
+                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd };
                 }
             } else {
                 const cmd = this.parseCommandFromTokens(restTokens);
-                finalCommand = { type: 'assignment', targetName, command: cmd };
+                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd };
             }
         } else {
             // Not an assignment, parse as regular command
@@ -1324,8 +1447,14 @@ class Parser {
             
             const token = tokens[i];
             
-            if (Lexer.isLastValue(token)) {
+            // Check if it's exactly $ (last value without attributes)
+            if (token === '$') {
                 args.push({ type: 'lastValue' });
+            } else if (Lexer.isVariable(token)) {
+                // This includes $.property, $[index], $var, $var.property, etc.
+                const { name, path } = Lexer.parseVariablePath(token);
+                // If name is empty, it means last value with attributes (e.g., $.name)
+                args.push({ type: 'var', name, path });
             } else if (token === 'true') {
                 args.push({ type: 'literal', value: true });
             } else if (token === 'false') {
@@ -1334,9 +1463,6 @@ class Parser {
                 args.push({ type: 'literal', value: null });
             } else if (Lexer.isPositionalParam(token)) {
                 args.push({ type: 'var', name: token.slice(1) });
-            } else if (Lexer.isVariable(token)) {
-                const { name, path } = Lexer.parseVariablePath(token);
-                args.push({ type: 'var', name, path });
             } else if (Lexer.isString(token)) {
                 args.push({ type: 'string', value: Lexer.parseString(token) });
             } else if (Lexer.isNumber(token)) {
@@ -1675,15 +1801,20 @@ class ExpressionEvaluator {
     }
 
     private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
-        // Check locals first
+        // If name is empty, it means last value ($) with attributes
         let baseValue: Value;
-        if (this.frame.locals.has(name)) {
-            baseValue = this.frame.locals.get(name)!;
-        } else if (this.globals.variables.has(name)) {
-            // Check globals
-            baseValue = this.globals.variables.get(name)!;
+        if (name === '') {
+            baseValue = this.frame.lastValue;
         } else {
-            return null;
+            // Check locals first
+            if (this.frame.locals.has(name)) {
+                baseValue = this.frame.locals.get(name)!;
+            } else if (this.globals.variables.has(name)) {
+                // Check globals
+                baseValue = this.globals.variables.get(name)!;
+            } else {
+                return null;
+            }
         }
         
         // If no path, return the base value
@@ -1699,16 +1830,16 @@ class ExpressionEvaluator {
             if (segment.type === 'property') {
                 // Property access: .propertyName
                 if (current === null || current === undefined) {
-                    throw new Error(`Cannot access property '${segment.name}' of null`);
+                    return null; // Accessing property on null/undefined returns null
                 }
                 if (typeof current !== 'object') {
-                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current}`);
+                    return null; // Accessing property on primitive returns null (consistent with out-of-bounds array access)
                 }
                 current = current[segment.name];
             } else if (segment.type === 'index') {
                 // Array index access: [index]
                 if (!Array.isArray(current)) {
-                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                    return null; // Accessing index on non-array returns null (consistent with property access on primitives)
                 }
                 if (segment.index < 0 || segment.index >= current.length) {
                     return null; // Out of bounds returns null
@@ -1877,6 +2008,9 @@ class Executor {
                 break;
             case 'define':
                 this.registerFunction(stmt);
+                break;
+            case 'scope':
+                await this.executeScope(stmt);
                 break;
             case 'forLoop':
                 await this.executeForLoop(stmt);
@@ -2220,12 +2354,16 @@ Examples:
                 throw new Error('assign requires at least 2 arguments: variable name and value (optional fallback as 3rd arg)');
             }
             
+            // Preserve the last value - assign should not affect $
+            const previousLastValue = frame.lastValue;
+            
             // Get variable name from first arg (must be a variable reference)
             const varArg = cmd.args[0];
             if (varArg.type !== 'var') {
                 throw new Error('assign first argument must be a variable (e.g., $myVar)');
             }
             const varName = varArg.name;
+            const varPath = varArg.path; // Support attribute paths (e.g., $user.city)
             
             // Evaluate the second arg as the value to assign
             let value = await this.evaluateArg(cmd.args[1]);
@@ -2241,9 +2379,15 @@ Examples:
                 value = await this.evaluateArg(cmd.args[2]);
             }
             
-            // Set the variable
-            this.setVariable(varName, value);
-            frame.lastValue = value;
+            // Set the variable (with path support)
+            if (varPath && varPath.length > 0) {
+                this.setVariableAtPath(varName, varPath, value);
+            } else {
+                this.setVariable(varName, value);
+            }
+            
+            // Restore the last value - assign command should not affect $
+            frame.lastValue = previousLastValue;
             return;
         }
 
@@ -2253,16 +2397,26 @@ Examples:
                 throw new Error('empty requires 1 argument: variable name');
             }
             
+            // Preserve the last value - empty should not affect $
+            const previousLastValue = frame.lastValue;
+            
             // Get variable name from first arg (must be a variable reference)
             const varArg = cmd.args[0];
             if (varArg.type !== 'var') {
                 throw new Error('empty first argument must be a variable (e.g., $myVar)');
             }
             const varName = varArg.name;
+            const varPath = varArg.path; // Support attribute paths (e.g., $user.city)
             
             // Set the variable to null (empty)
-            this.setVariable(varName, null);
-            frame.lastValue = null;
+            if (varPath && varPath.length > 0) {
+                this.setVariableAtPath(varName, varPath, null);
+            } else {
+                this.setVariable(varName, null);
+            }
+            
+            // Restore the last value - empty command should not affect $
+            frame.lastValue = previousLastValue;
             return;
         }
 
@@ -2352,17 +2506,29 @@ Examples:
         // Check if it's a builtin (try module-prefixed name first, then original)
         if (this.environment.builtins.has(functionName)) {
             const handler = this.environment.builtins.get(functionName)!;
+            const previousLastValue = frame.lastValue; // Preserve last value for log
             const result = await Promise.resolve(handler(args));
-            // Ensure lastValue is set (even if result is undefined, preserve it)
-            frame.lastValue = result !== undefined ? result : null;
+            // log function should not affect the last value
+            if (functionName === 'log') {
+                frame.lastValue = previousLastValue;
+            } else {
+                // Ensure lastValue is set (even if result is undefined, preserve it)
+                frame.lastValue = result !== undefined ? result : null;
+            }
             return;
         }
 
         // If module-prefixed lookup failed, try original name as fallback
         if (functionName !== cmd.name && this.environment.builtins.has(cmd.name)) {
             const handler = this.environment.builtins.get(cmd.name)!;
+            const previousLastValue = frame.lastValue; // Preserve last value for log
             const result = await Promise.resolve(handler(args));
-            frame.lastValue = result !== undefined ? result : null;
+            // log function should not affect the last value
+            if (cmd.name === 'log') {
+                frame.lastValue = previousLastValue;
+            } else {
+                frame.lastValue = result !== undefined ? result : null;
+            }
             return;
         }
 
@@ -2405,22 +2571,31 @@ Examples:
     private async executeAssignment(assign: Assignment): Promise<void> {
         const frame = this.getCurrentFrame();
         
+        let value: Value;
         if (assign.isLastValue) {
             // Special case: $var = $ means assign last value
-            const value = frame.lastValue;
-            frame.lastValue = value;
-            this.setVariable(assign.targetName, value);
+            value = frame.lastValue;
         } else if (assign.literalValue !== undefined) {
             // Direct literal assignment
-            frame.lastValue = assign.literalValue;
-            this.setVariable(assign.targetName, assign.literalValue);
+            value = assign.literalValue;
         } else if (assign.command) {
             // Command-based assignment
+            const previousLastValue = frame.lastValue; // Preserve last value
             await this.executeCommand(assign.command);
-            const value = frame.lastValue;
-            this.setVariable(assign.targetName, value);
+            value = frame.lastValue;
+            frame.lastValue = previousLastValue; // Restore last value (assignments don't affect $)
         } else {
             throw new Error('Assignment must have either literalValue or command');
+        }
+        
+        // Assignments should not affect the last value ($)
+        // frame.lastValue is not updated here
+        
+        // If there's a targetPath, set value at attribute path; otherwise set variable directly
+        if (assign.targetPath && assign.targetPath.length > 0) {
+            this.setVariableAtPath(assign.targetName, assign.targetPath, value);
+        } else {
+            this.setVariable(assign.targetName, value);
         }
     }
 
@@ -2513,6 +2688,34 @@ Examples:
         this.environment.functions.set(func.name, func);
     }
 
+    private async executeScope(scope: ScopeBlock): Promise<void> {
+        const parentFrame = this.getCurrentFrame();
+        const originalLastValue = parentFrame.lastValue; // Preserve parent's $
+        
+        // Create a new frame with function-like scoping (isFunctionFrame: true)
+        // This means variables created inside stay local to the scope
+        const frame: Frame = {
+            locals: new Map(),
+            lastValue: parentFrame.lastValue, // Start with parent's $ (will be overwritten)
+            isFunctionFrame: true // Scope uses function-like scoping rules
+        };
+
+        this.callStack.push(frame);
+
+        try {
+            // Execute scope body
+            for (const stmt of scope.body) {
+                await this.executeStatement(stmt);
+            }
+
+            // Scope's lastValue should not affect parent's $ - restore original value
+            parentFrame.lastValue = originalLastValue;
+        } finally {
+            // Pop the scope frame
+            this.callStack.pop();
+        }
+    }
+
     private async executeForLoop(forLoop: ForLoop): Promise<void> {
         const frame = this.getCurrentFrame();
         
@@ -2550,8 +2753,17 @@ Examples:
     }
     
     private async evaluateIterableExpr(expr: string): Promise<Value> {
+        const exprTrimmed = expr.trim();
+        
+        // Special case: if the expression is just a variable reference, resolve it directly
+        // This avoids treating it as a shorthand assignment
+        if (Lexer.isVariable(exprTrimmed)) {
+            const { name, path } = Lexer.parseVariablePath(exprTrimmed);
+            return this.resolveVariable(name, path);
+        }
+        
         // Parse the expression as if it were a command/statement
-        // This handles: $list, range 1 10, db.query ..., etc.
+        // This handles: range 1 10, db.query ..., etc.
         const lines = [expr];
         const parser = new Parser(lines);
         const statements = parser.parse();
@@ -2638,14 +2850,19 @@ Examples:
         
         let baseValue: Value;
         
-        // Check locals first (function scope)
-        if (frame.locals.has(name)) {
-            baseValue = frame.locals.get(name)!;
-        } else if (this.environment.variables.has(name)) {
-            // Check globals (outer scope)
-            baseValue = this.environment.variables.get(name)!;
+        // If name is empty, it means last value ($) with attributes
+        if (name === '') {
+            baseValue = frame.lastValue;
         } else {
-            return null;
+            // Check locals first (function scope)
+            if (frame.locals.has(name)) {
+                baseValue = frame.locals.get(name)!;
+            } else if (this.environment.variables.has(name)) {
+                // Check globals (outer scope)
+                baseValue = this.environment.variables.get(name)!;
+            } else {
+                return null;
+            }
         }
         
         // If no path, return the base value
@@ -2661,16 +2878,16 @@ Examples:
             if (segment.type === 'property') {
                 // Property access: .propertyName
                 if (current === null || current === undefined) {
-                    throw new Error(`Cannot access property '${segment.name}' of null`);
+                    return null; // Accessing property on null/undefined returns null
                 }
                 if (typeof current !== 'object') {
-                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current}`);
+                    return null; // Accessing property on primitive returns null (consistent with out-of-bounds array access)
                 }
                 current = current[segment.name];
             } else if (segment.type === 'index') {
                 // Array index access: [index]
                 if (!Array.isArray(current)) {
-                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                    return null; // Accessing index on non-array returns null (consistent with property access on primitives)
                 }
                 if (segment.index < 0 || segment.index >= current.length) {
                     return null; // Out of bounds returns null
@@ -2717,6 +2934,142 @@ Examples:
             // This ensures variables created in subexpressions are accessible after the subexpression
             // and allows subexpressions to modify parent variables if they exist (checked above)
             this.environment.variables.set(name, value);
+        }
+    }
+
+    /**
+     * Set a value at an attribute path (e.g., $animal.cat = 5 or $.property = value)
+     */
+    private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value): void {
+        const frame = this.getCurrentFrame();
+        
+        // Get the base variable value
+        let baseValue: Value;
+        
+        // If name is empty, it means last value ($) with attributes
+        if (name === '') {
+            baseValue = frame.lastValue;
+            if (baseValue === null || baseValue === undefined || typeof baseValue !== 'object') {
+                // Last value is null/undefined/primitive - create object or array based on first path segment
+                if (path[0].type === 'index') {
+                    baseValue = [];
+                } else {
+                    baseValue = {};
+                }
+                frame.lastValue = baseValue;
+            }
+        } else {
+            // Check locals first (function scope)
+            if (frame.locals.has(name)) {
+                baseValue = frame.locals.get(name)!;
+            } else if (this.environment.variables.has(name)) {
+                // Check globals (outer scope)
+                baseValue = this.environment.variables.get(name)!;
+            } else {
+                // Variable doesn't exist - create it as an object or array based on first path segment
+                if (path[0].type === 'index') {
+                    baseValue = [];
+                } else {
+                    baseValue = {};
+                }
+                // Set it in the appropriate scope
+                if (this.callStack.length === 1) {
+                    this.environment.variables.set(name, baseValue);
+                } else {
+                    const currentFrame = this.getCurrentFrame();
+                    const isFunctionFrame = currentFrame.isFunctionFrame === true;
+                    if (isFunctionFrame) {
+                        currentFrame.locals.set(name, baseValue);
+                    } else {
+                        this.environment.variables.set(name, baseValue);
+                    }
+                }
+            }
+            
+            // If variable exists but is a primitive, convert it to object/array
+            if (baseValue !== null && baseValue !== undefined && typeof baseValue !== 'object') {
+                // Convert primitive to object or array based on first path segment
+                if (path[0].type === 'index') {
+                    baseValue = [];
+                } else {
+                    baseValue = {};
+                }
+                // Update the variable in the appropriate scope
+                if (frame.locals.has(name)) {
+                    frame.locals.set(name, baseValue);
+                } else {
+                    this.environment.variables.set(name, baseValue);
+                }
+            }
+        }
+        
+        // Ensure baseValue is an object (not null, not primitive)
+        if (baseValue === null || baseValue === undefined) {
+            throw new Error(`Cannot set property on null or undefined`);
+        }
+        if (typeof baseValue !== 'object') {
+            throw new Error(`Cannot set property on ${typeof baseValue}`);
+        }
+        
+        // Traverse the path to the parent of the target property/index
+        let current: any = baseValue;
+        for (let i = 0; i < path.length - 1; i++) {
+            const segment = path[i];
+            const nextSegment = path[i + 1];
+            
+            if (segment.type === 'property') {
+                // Property access: .propertyName
+                if (current[segment.name] === null || current[segment.name] === undefined) {
+                    // Create intermediate object or array based on next segment
+                    if (nextSegment.type === 'index') {
+                        current[segment.name] = [];
+                    } else {
+                        current[segment.name] = {};
+                    }
+                } else if (typeof current[segment.name] !== 'object') {
+                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current[segment.name]}`);
+                }
+                current = current[segment.name];
+            } else if (segment.type === 'index') {
+                // Array index access: [index]
+                if (!Array.isArray(current)) {
+                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                }
+                if (segment.index < 0) {
+                    throw new Error(`Index ${segment.index} must be non-negative`);
+                }
+                // Extend array if needed
+                while (current.length <= segment.index) {
+                    current.push(null);
+                }
+                if (current[segment.index] === null || current[segment.index] === undefined) {
+                    // Create intermediate object or array based on next segment
+                    if (nextSegment.type === 'index') {
+                        current[segment.index] = [];
+                    } else {
+                        current[segment.index] = {};
+                    }
+                }
+                current = current[segment.index];
+            }
+        }
+        
+        // Set the value at the final path segment
+        const finalSegment = path[path.length - 1];
+        if (finalSegment.type === 'property') {
+            current[finalSegment.name] = value;
+        } else if (finalSegment.type === 'index') {
+            if (!Array.isArray(current)) {
+                throw new Error(`Cannot set index ${finalSegment.index} on non-array value`);
+            }
+            if (finalSegment.index < 0) {
+                throw new Error(`Index ${finalSegment.index} must be non-negative`);
+            }
+            // Extend array if index is beyond current length
+            while (current.length <= finalSegment.index) {
+                current.push(null);
+            }
+            current[finalSegment.index] = value;
         }
     }
 
@@ -3025,6 +3378,7 @@ export class RobinPathThread {
                 return {
                     ...base,
                     targetName: stmt.targetName,
+                    targetPath: stmt.targetPath,
                     command: stmt.command ? this.serializeStatement(stmt.command) : undefined,
                     literalValue: stmt.literalValue,
                     isLastValue: stmt.isLastValue
@@ -3065,6 +3419,11 @@ export class RobinPathThread {
                 return {
                     ...base,
                     name: stmt.name,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'scope':
+                return {
+                    ...base,
                     body: stmt.body.map(s => this.serializeStatement(s))
                 };
             case 'forLoop':
@@ -3171,7 +3530,7 @@ export class RobinPathThread {
             }));
             
             if (syntaxCtx.canUseBlockKeywords) {
-                filteredNative.push(...allNative.filter(n => n.name === 'if' || n.name === 'def'));
+                filteredNative.push(...allNative.filter(n => n.name === 'if' || n.name === 'def' || n.name === 'scope'));
             }
             if (syntaxCtx.canUseConditionalKeywords) {
                 filteredNative.push(...allNative.filter(n => n.name === 'elseif' || n.name === 'else'));
@@ -3183,6 +3542,9 @@ export class RobinPathThread {
                 if (ctx.inDefBlock) {
                     filteredNative.push(...allNative.filter(n => n.name === 'enddef'));
                 }
+                // Note: endscope is handled by checking if we're in a scope block
+                // For now, we'll include it if we can use end keywords
+                filteredNative.push(...allNative.filter(n => n.name === 'endscope'));
             }
             if (syntaxCtx.canStartStatement) {
                 filteredNative.push(...allNative.filter(n => n.name === 'iftrue' || n.name === 'iffalse'));
@@ -3302,7 +3664,7 @@ export class RobinPath {
         // Register some basic builtins
         this.registerBuiltin('log', (args) => {
             console.log(...args);
-            return args.length > 0 ? args[args.length - 1] : null;
+            return null; // log should not affect the last value
         });
 
         this.registerBuiltin('json', (args) => {
@@ -3702,6 +4064,9 @@ export class RobinPath {
             if (allNativeCommands['def']) {
                 native.push({ name: 'def', type: 'native', description: allNativeCommands['def'] });
             }
+            if (allNativeCommands['scope']) {
+                native.push({ name: 'scope', type: 'native', description: allNativeCommands['scope'] });
+            }
         }
         
         // Add conditional keywords if in if block
@@ -3721,6 +4086,10 @@ export class RobinPath {
             }
             if (context?.inDefBlock && allNativeCommands['enddef']) {
                 native.push({ name: 'enddef', type: 'native', description: allNativeCommands['enddef'] });
+            }
+            // endscope can be used to close a scope block
+            if (allNativeCommands['endscope']) {
+                native.push({ name: 'endscope', type: 'native', description: allNativeCommands['endscope'] });
             }
         }
         
@@ -3878,6 +4247,7 @@ export class RobinPath {
                 return {
                     ...base,
                     targetName: stmt.targetName,
+                    targetPath: stmt.targetPath,
                     command: stmt.command ? this.serializeStatement(stmt.command) : undefined,
                     literalValue: stmt.literalValue,
                     isLastValue: stmt.isLastValue
@@ -3918,6 +4288,11 @@ export class RobinPath {
                 return {
                     ...base,
                     name: stmt.name,
+                    body: stmt.body.map(s => this.serializeStatement(s))
+                };
+            case 'scope':
+                return {
+                    ...base,
                     body: stmt.body.map(s => this.serializeStatement(s))
                 };
             case 'forLoop':
@@ -4240,6 +4615,11 @@ export class RobinPath {
 
         // Handle define - next is after the define (define doesn't execute, just registers)
         if (currentStmt.type === 'define') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle scope - next is after the scope (scope executes immediately)
+        if (currentStmt.type === 'scope') {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 

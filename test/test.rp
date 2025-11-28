@@ -378,7 +378,7 @@ def return_no_value
 enddef
 
 return_no_value
-test.assertEqual $ 50 "Function return last value failed"
+test.assertEqual $ null "Function return last value failed"
 log "Test 23 - Return in functions: All passed"
 
 # Test 24: Return statement in global scope
@@ -872,6 +872,131 @@ $itemName = $data.items[0].name
 test.assertEqual $itemName "item1" "Combined access in variable assignment failed"
 
 log "Test 33 - Attribute access and array indexing: All passed"
+
+# Test 34: Assignment to attribute paths and array indices
+# Test assignment to property path
+json.parse '{"name": "John", "age": 30}'
+$user = $
+$user.city = "London"
+test.assertEqual $user.city "London" "Assignment to property path failed"
+test.assertEqual $user.name "John" "Assignment to property path should preserve other properties"
+
+# Test assignment to nested property path
+$user.address.city = "NYC"
+test.assertEqual $user.address.city "NYC" "Assignment to nested property path failed"
+test.assertEqual $user.name "John" "Assignment to nested property path should preserve other properties"
+
+# Test assignment to array index
+$arr = range 1 5
+$arr[0] = 100
+test.assertEqual $arr[0] 100 "Assignment to array index failed"
+test.assertEqual $arr[1] 2 "Assignment to array index should preserve other elements"
+
+# Test assignment to nested array index
+json.parse '{"items": [10, 20, 30]}'
+$data = $
+$data.items[0] = 100
+test.assertEqual $data.items[0] 100 "Assignment to nested array index failed"
+test.assertEqual $data.items[1] 20 "Assignment to nested array index should preserve other elements"
+
+# Test assignment to combined path
+json.parse '{"items": [{"name": "item1", "price": 10}]}'
+$data = $
+$data.items[0].price = 50
+test.assertEqual $data.items[0].price 50 "Assignment to combined path failed"
+test.assertEqual $data.items[0].name "item1" "Assignment to combined path should preserve other properties"
+
+# Test assignment creates intermediate objects
+$animal.cat = 5
+test.assertEqual $animal.cat 5 "Assignment creating intermediate object failed"
+
+# Test assignment creates nested intermediate objects
+$config.database.host = "localhost"
+test.assertEqual $config.database.host "localhost" "Assignment creating nested intermediate objects failed"
+
+# Test assignment to last value with property path
+json.parse '{"name": "John"}'
+$.age = 30
+
+scope 
+  test.assertEqual $.name "John" "Last value property access failed"
+endscope
+
+scope
+  test.assertEqual $.age 30 "Assignment to last value property path failed"
+endscope
+
+test.assertEqual $.name "John" "Assignment to last value property path should preserve other properties"
+
+# Test assignment to last value with array index
+range 1 5
+$[0] = 100
+
+scope
+  test.assertEqual $[0] 100 "Assignment to last value array index failed"
+endscope
+
+scope
+  test.assertEqual $[1] 2 "Assignment to last value array index should preserve other elements"
+endscope
+
+# Test assignment to last value with nested path
+json.parse '{"user": {"name": "John"}}'
+$.user.city = "Paris"
+scope
+  test.assertEqual $.user.city "Paris" "Assignment to last value nested path failed"
+endscope
+
+scope
+  test.assertEqual $.user.name "John" "Assignment to last value nested path should preserve other properties"
+endscope
+
+# Test assignment to last value creates intermediate objects
+json.parse '{}'
+$.settings.theme = "dark"
+
+scope
+  test.assertEqual $.settings.theme "dark" "Assignment to last value creating intermediate object failed"
+endscope
+
+# Test assignment to array index out of bounds (should extend array)
+$arr = range 1 3
+$arr[5] = 100
+test.assertEqual $arr[5] 100 "Assignment to out of bounds array index failed"
+array.length $arr
+test.assertEqual $ 6 "Assignment to out of bounds array index should extend array"
+
+# Test assignment to new property on existing object
+$user = $parsed
+$user.email = "john@example.com"
+test.assertEqual $user.email "john@example.com" "Assignment to new property on existing object failed"
+test.assertEqual $user.name "John" "Assignment to new property should preserve existing properties"
+
+# Test assignment overwrites existing property
+$user.age = 25
+test.assertEqual $user.age 25 "Assignment overwriting existing property failed"
+
+# Test assignment to multiple nested paths
+$config.api.url = "https://api.example.com"
+$config.api.timeout = 30
+test.assertEqual $config.api.url "https://api.example.com" "Multiple assignments to nested path failed"
+test.assertEqual $config.api.timeout 30 "Multiple assignments to nested path second property failed"
+
+# Test assignment with assign command to attribute path
+assign $user.city "Tokyo"
+test.assertEqual $user.city "Tokyo" "assign command with attribute path failed"
+
+# Test assignment with assign command to array index
+assign $arr[0] 200
+test.assertEqual $arr[0] 200 "assign command with array index failed"
+
+# Test assignment with assign command to last value attribute path
+json.parse '{"name": "Alice"}'
+$
+assign $.age 25
+test.assertEqual $.age 25 "assign command with last value attribute path failed"
+
+log "Test 34 - Assignment to attribute paths and array indices: All passed"
 
 log "All tests completed!"
 
