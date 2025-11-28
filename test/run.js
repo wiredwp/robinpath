@@ -69,6 +69,46 @@ endif
         console.log('Call Stack:', astResult.callStack.length, 'frame(s)');
         console.log('='.repeat(60));
         
+        // Test "end" command
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing "end" command');
+        console.log('='.repeat(60));
+        
+        const endTestScript = `
+log "Before end"
+$beforeEnd = 100
+math.add 5 10
+end
+log "This should not execute"
+$afterEnd = 200
+`;
+        
+        const endTestRp = new RobinPath();
+        const endResult = await endTestRp.executeScript(endTestScript);
+        
+        console.log('Script executed with "end" command');
+        console.log('Final result ($):', endResult);
+        console.log('Variable $beforeEnd:', endTestRp.getVariable('beforeEnd'));
+        console.log('Variable $afterEnd:', endTestRp.getVariable('afterEnd'));
+        
+        // Verify that execution stopped and last value is preserved
+        const beforeEndSet = endTestRp.getVariable('beforeEnd') === 100;
+        const afterEndNotSet = endTestRp.getVariable('afterEnd') === null;
+        const lastValuePreserved = endResult === 15; // math.add 5 10 = 15
+        
+        if (beforeEndSet && afterEndNotSet && lastValuePreserved) {
+            console.log('✓ "end" command test PASSED - script stopped correctly and last value preserved');
+        } else {
+            console.log('✗ "end" command test FAILED');
+            console.log('  beforeEnd set:', beforeEndSet);
+            console.log('  afterEnd not set:', afterEndNotSet);
+            console.log('  last value preserved:', lastValuePreserved);
+            throw new Error('end command did not work correctly');
+        }
+        
+        console.log('='.repeat(60));
+        
     } catch (error) {
         console.error();
         console.error('='.repeat(60));

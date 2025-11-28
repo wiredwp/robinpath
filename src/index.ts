@@ -171,6 +171,10 @@ interface ReturnStatement {
     value?: Arg; // Optional value to return (if not provided, returns $)
 }
 
+interface BreakStatement {
+    type: 'break';
+}
+
 interface CommentStatement {
     type: 'comment';
     text: string; // Comment text without the #
@@ -189,6 +193,7 @@ type Statement =
     | ScopeBlock
     | ForLoop
     | ReturnStatement
+    | BreakStatement
     | CommentStatement;
 
 // ============================================================================
@@ -715,6 +720,12 @@ class Parser {
         // Check for return statement
         if (tokens[0] === 'return') {
             return this.parseReturn();
+        }
+
+        // Check for break statement
+        if (tokens[0] === 'break') {
+            this.currentLine++;
+            return { type: 'break' };
         }
 
         // Check for block if
@@ -1334,8 +1345,22 @@ class Parser {
                 finalCommand = { type: 'assignment', targetName, targetPath, command: cmd };
             }
         } else {
-            // Not an assignment, parse as regular command
-            finalCommand = this.parseCommandFromTokens(commandTokens);
+            // Check if it's a break or return statement
+            if (commandTokens.length === 1 && commandTokens[0] === 'break') {
+                finalCommand = { type: 'break' };
+            } else if (commandTokens.length >= 1 && commandTokens[0] === 'return') {
+                // Parse return statement
+                const returnValueTokens = commandTokens.slice(1);
+                if (returnValueTokens.length === 0) {
+                    finalCommand = { type: 'return' };
+                } else {
+                    const returnValue = this.parseReturnValue(returnValueTokens);
+                    finalCommand = { type: 'return', value: returnValue };
+                }
+            } else {
+                // Not an assignment, parse as regular command
+                finalCommand = this.parseCommandFromTokens(commandTokens);
+            }
         }
 
         this.currentLine++;
@@ -1912,6 +1937,26 @@ class ReturnException extends Error {
     }
 }
 
+/**
+ * Special exception used to signal break from loops
+ */
+class BreakException extends Error {
+    constructor() {
+        super('Break');
+        this.name = 'BreakException';
+    }
+}
+
+/**
+ * Special exception used to signal end of script execution
+ */
+class EndException extends Error {
+    constructor() {
+        super('End');
+        this.name = 'EndException';
+    }
+}
+
 class Executor {
     private environment: Environment;
     private callStack: Frame[] = [];
@@ -1979,6 +2024,14 @@ class Executor {
                 // Return statement was executed - return the value and stop execution
                 return error.value;
             }
+            if (error instanceof BreakException) {
+                // Break statement used outside a loop - this is an error
+                throw new Error('break statement can only be used inside a for loop');
+            }
+            if (error instanceof EndException) {
+                // End statement was executed - stop execution and return current last value
+                return this.getCurrentFrame().lastValue;
+            }
             throw error;
         }
     }
@@ -2017,6 +2070,9 @@ class Executor {
                 break;
             case 'return':
                 await this.executeReturn(stmt);
+                break;
+            case 'break':
+                await this.executeBreak(stmt);
                 break;
             case 'comment':
                 // Comments are no-ops during execution
@@ -2420,6 +2476,12 @@ Examples:
             return;
         }
 
+        // Special handling for "end" command - ends script execution
+        if (cmd.name === 'end') {
+            // Throw EndException to stop script execution
+            throw new EndException();
+        }
+
         // Special handling for "fallback" command - returns variable value or fallback if empty/null
         if (cmd.name === 'fallback') {
             if (cmd.args.length < 1) {
@@ -2684,6 +2746,12 @@ Examples:
         }
     }
 
+    private async executeBreak(_breakStmt: BreakStatement): Promise<void> {
+        // Throw BreakException to exit the current loop
+        // This will be caught by executeForLoop
+        throw new BreakException();
+    }
+
     private registerFunction(func: DefineFunction): void {
         this.environment.functions.set(func.name, func);
     }
@@ -2739,8 +2807,17 @@ Examples:
             frame.lastValue = element;
             
             // Execute body
-            for (const stmt of forLoop.body) {
-                await this.executeStatement(stmt);
+            try {
+                for (const stmt of forLoop.body) {
+                    await this.executeStatement(stmt);
+                }
+            } catch (error) {
+                if (error instanceof BreakException) {
+                    // Break statement encountered - exit the loop
+                    break;
+                }
+                // Re-throw other errors
+                throw error;
             }
         }
         
@@ -3438,6 +3515,10 @@ export class RobinPathThread {
                     ...base,
                     value: stmt.value ? this.serializeArg(stmt.value) : undefined
                 };
+            case 'break':
+                return {
+                    ...base
+                };
             case 'comment':
                 return {
                     ...base,
@@ -3683,16 +3764,40 @@ export class RobinPath {
         this.registerBuiltin('range', (args) => {
             const start = Number(args[0]) || 0;
             const end = Number(args[1]) || 0;
+            const step = args.length >= 3 ? Number(args[2]) : undefined;
             const result: number[] = [];
             
-            if (start <= end) {
-                for (let i = start; i <= end; i++) {
-                    result.push(i);
+            // If step is provided, use it
+            if (step !== undefined) {
+                if (step === 0) {
+                    throw new Error('range step cannot be zero');
+                }
+                
+                // Determine direction based on step sign and start/end relationship
+                if (step > 0) {
+                    // Positive step: count up from start to end
+                    // If start > end, this will produce empty array (correct behavior)
+                    for (let i = start; i <= end; i += step) {
+                        result.push(i);
+                    }
+                } else {
+                    // Negative step: count down from start to end
+                    // If start < end, this will produce empty array (correct behavior)
+                    for (let i = start; i >= end; i += step) {
+                        result.push(i);
+                    }
                 }
             } else {
-                // Reverse range
-                for (let i = start; i >= end; i--) {
-                    result.push(i);
+                // No step provided: use default behavior (step of 1 or -1)
+                if (start <= end) {
+                    for (let i = start; i <= end; i++) {
+                        result.push(i);
+                    }
+                } else {
+                    // Reverse range
+                    for (let i = start; i >= end; i--) {
+                        result.push(i);
+                    }
                 }
             }
             
@@ -4306,6 +4411,10 @@ export class RobinPath {
                 return {
                     ...base,
                     value: stmt.value ? this.serializeArg(stmt.value) : undefined
+                };
+            case 'break':
+                return {
+                    ...base
                 };
             case 'comment':
                 return {

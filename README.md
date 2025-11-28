@@ -536,6 +536,38 @@ for $num in $numbers
 endfor
 ```
 
+**Break statement:**
+Use `break` to exit a for loop early:
+```robinpath
+for $i in range 1 10
+  if $i == 5
+    break  # Exits the loop when $i equals 5
+  endif
+  log "Iteration:" $i
+endfor
+# This will only log iterations 1-4
+```
+
+The `break` statement:
+- Exits the innermost loop immediately
+- Can only be used inside a `for` loop (will throw an error if used outside)
+- Preserves the last value (`$`) from the iteration where `break` was executed
+- Works with nested loops (only breaks the innermost loop)
+
+**Example with nested loops:**
+```robinpath
+for $i in range 1 3
+  log "Outer:" $i
+  for $j in range 1 5
+    if $j == 3
+      break  # Only breaks the inner loop
+    endif
+    log "Inner:" $j
+  endfor
+endfor
+# Outer loop continues, inner loop breaks at $j == 3
+```
+
 ### Functions
 
 Define custom functions:

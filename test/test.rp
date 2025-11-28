@@ -998,5 +998,137 @@ test.assertEqual $.age 25 "assign command with last value attribute path failed"
 
 log "Test 34 - Assignment to attribute paths and array indices: All passed"
 
+# Test 35: Break statement in for loops
+# Test basic break
+$breakTest = 0
+for $i in range 1 10
+  if $i == 5
+    break
+  endif
+  assign $breakTest $i
+endfor
+test.assertEqual $breakTest 4 "Basic break statement failed"
+
+# Test break in nested loops (should only break inner loop)
+$outerCount = 0
+$innerCount = 0
+for $i in range 1 3
+  assign $outerCount $i
+  for $j in range 1 5
+    if $j == 3
+      break
+    endif
+    assign $innerCount $j
+  endfor
+endfor
+test.assertEqual $outerCount 3 "Break in nested loop - outer loop failed"
+test.assertEqual $innerCount 2 "Break in nested loop - inner loop failed"
+
+# Test break with condition
+$found = false
+for $i in range 1 10
+  if $i == 7
+    assign $found true
+    break
+  endif
+endfor
+test.assertEqual $found true "Break with condition failed"
+
+# Test break early in loop
+$earlyBreak = 0
+for $i in range 1 10
+  if $i == 1
+    break
+  endif
+  assign $earlyBreak $i
+endfor
+test.assertEqual $earlyBreak 0 "Early break failed"
+
+# Test break after some iterations
+$iterations = 0
+for $i in range 1 10
+  assign $iterations $i
+  if $i == 3
+    break
+  endif
+endfor
+test.assertEqual $iterations 3 "Break after iterations failed"
+
+# Test break preserves last value
+for $i in range 1 5
+  if $i == 3
+    break
+  endif
+endfor
+test.assertEqual $ 3 "Break preserves last value failed"
+
+log "Test 35 - Break statement: All passed"
+
+# Test 36: Range with step parameter
+# Test positive step counting up
+range 0 5 1
+$range1 = $
+test.assertEqual $range1[0] 0 "Range with step 1 - first element failed"
+test.assertEqual $range1[5] 5 "Range with step 1 - last element failed"
+array.length $range1
+test.assertEqual $ 6 "Range with step 1 - length failed"
+
+# Test positive step counting up with larger step
+range 0 10 2
+$range2 = $
+test.assertEqual $range2[0] 0 "Range with step 2 - first element failed"
+test.assertEqual $range2[1] 2 "Range with step 2 - second element failed"
+test.assertEqual $range2[5] 10 "Range with step 2 - last element failed"
+array.length $range2
+test.assertEqual $ 6 "Range with step 2 - length failed"
+
+# Test negative step counting down
+range 5 0 -1
+$range3 = $
+test.assertEqual $range3[0] 5 "Range with step -1 - first element failed"
+test.assertEqual $range3[5] 0 "Range with step -1 - last element failed"
+array.length $range3
+test.assertEqual $ 6 "Range with step -1 - length failed"
+
+# Test negative step counting down with larger step
+range 10 0 -2
+$range4 = $
+test.assertEqual $range4[0] 10 "Range with step -2 - first element failed"
+test.assertEqual $range4[1] 8 "Range with step -2 - second element failed"
+test.assertEqual $range4[5] 0 "Range with step -2 - last element failed"
+array.length $range4
+test.assertEqual $ 6 "Range with step -2 - length failed"
+
+# Test range with step when start > end (positive step should produce empty or count down)
+# Note: With positive step and start > end, the loop condition i <= end is false from start, so empty array
+range 5 0 1
+$range5 = $
+array.length $range5
+test.assertEqual $ 0 "Range 5 0 1 should produce empty array (positive step can't count down)"
+
+# Test range with step when start < end (negative step should produce empty)
+range 0 5 -1
+$range6 = $
+array.length $range6
+test.assertEqual $ 0 "Range 0 5 -1 should produce empty array (negative step can't count up)"
+
+# Test range with negative numbers
+range -5 0 1
+$range7 = $
+test.assertEqual $range7[0] -5 "Range -5 0 1 - first element failed"
+test.assertEqual $range7[5] 0 "Range -5 0 1 - last element failed"
+array.length $range7
+test.assertEqual $ 6 "Range -5 0 1 - length failed"
+
+# Test range with negative step and negative numbers
+range 0 -5 -1
+$range8 = $
+test.assertEqual $range8[0] 0 "Range 0 -5 -1 - first element failed"
+test.assertEqual $range8[5] -5 "Range 0 -5 -1 - last element failed"
+array.length $range8
+test.assertEqual $ 6 "Range 0 -5 -1 - length failed"
+
+log "Test 36 - Range with step parameter: All passed"
+
 log "All tests completed!"
 
