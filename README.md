@@ -277,6 +277,16 @@ The REPL automatically detects incomplete blocks and waits for completion:
 ... endif
 ```
 
+**Backslash Line Continuation:**
+Use `\` at the end of a line to continue the command on the next line:
+
+```robinpath
+> log "this is a very long message " \
+...     "that continues on the next line"
+```
+
+The backslash continuation works with any statement type and can be chained across multiple lines.
+
 **Thread Management:**
 When thread control is enabled, the prompt shows the current thread and module:
 
@@ -644,6 +654,110 @@ greet "Alice" 25
 log "Next year:" $  # Prints 26
 ```
 
+**Function Definition with Named Parameters:**
+You can define functions with named parameter aliases:
+
+```robinpath
+def greet $name $age
+log "Hello" $name
+log "Your age is" $age
+# $name is an alias for $1, $age is an alias for $2
+# You can still use $1, $2, etc.
+enddef
+
+greet "Alice" 25
+```
+
+**Function Call Syntax:**
+RobinPath supports two ways to call functions:
+
+**CLI-style (existing):**
+```robinpath
+greet "Alice" 25
+math.add 10 20 key1=value1 key2=value2
+```
+
+**Parenthesized style (new, recommended for complex calls):**
+```robinpath
+greet("Alice" 25)
+math.add(10 20 key1=value1 key2=value2)
+
+# Multi-line parenthesized calls (recommended for longer calls)
+greet(
+  "Alice"
+  25
+)
+
+math.add(
+  10
+  20
+  key1=value1
+  key2=value2
+)
+```
+
+Both forms are equivalent. The parenthesized form is optimized for readability, multiline usage, and IDE tooling.
+
+**Named Arguments:**
+Functions can accept named arguments using `key=value` syntax:
+
+```robinpath
+def process $data
+log "Data:" $data
+log "Retries:" $args.retries
+log "Timeout:" $args.timeout
+log "Verbose:" $args.verbose
+enddef
+
+# CLI-style with named arguments
+process $myData retries=3 timeout=30 verbose=true
+
+# Parenthesized style with named arguments
+process($myData retries=3 timeout=30 verbose=true)
+
+# Multi-line parenthesized call
+process(
+  $myData
+  retries=3
+  timeout=30
+  verbose=true
+)
+```
+
+**Accessing Arguments Inside Functions:**
+Inside a function, you can access arguments in three ways:
+
+1. **Numeric position variables:** `$1`, `$2`, `$3`, etc.
+2. **Named parameter aliases:** `$name`, `$age`, etc. (if defined in function signature)
+3. **Named argument map:** `$args.keyName` for named arguments
+
+```robinpath
+def example $a $b $c
+# Positional arguments
+log "First:" $1      # Same as $a
+log "Second:" $2     # Same as $b
+log "Third:" $3      # Same as $c
+
+# Named parameter aliases
+log "a:" $a          # Same as $1
+log "b:" $b          # Same as $2
+log "c:" $c          # Same as $3
+
+# Named arguments (from key=value in function call)
+log "key:" $args.key
+log "flag:" $args.flag
+enddef
+
+example("x" "y" "z" key=1 flag=true)
+```
+
+**Parameter Binding Rules:**
+- `$a`, `$b`, `$c` are aliases for `$1`, `$2`, `$3` respectively
+- If more positional args are passed than declared, they're still accessible as `$4`, `$5`, etc.
+- If fewer arguments are passed than declared, missing ones are treated as `null`
+- Named arguments are always accessible via `$args.<name>`
+- If a named argument has the same name as a parameter, the parameter variable refers to the positional argument, and `$args.<name>` refers to the named argument
+
 Functions can return values in two ways:
 
 **Implicit return (last value):**
@@ -817,6 +931,16 @@ $msg2 = 'World'
 $msg3 = `Template`
 ```
 
+**Automatic String Concatenation:**
+Adjacent string literals are automatically concatenated:
+
+```robinpath
+$long = "hello " "world " "from RobinPath"
+log $long  # Prints "hello world from RobinPath"
+```
+
+This is particularly useful with backslash line continuation (see below).
+
 ### Numbers
 
 Numbers can be integers or decimals:
@@ -825,6 +949,61 @@ Numbers can be integers or decimals:
 $int = 42
 $float = 3.14
 ```
+
+### Backslash Line Continuation
+
+The backslash (`\`) allows a single logical command to be written across multiple physical lines. If a line's last non-whitespace character is a backslash, that line is continued onto the next line.
+
+**Basic Usage:**
+```robinpath
+log "this is a very long message " \
+    "that continues on the next line"
+```
+
+**Multiple Continuations:**
+```robinpath
+do_something $a $b $c \
+             $d $e $f \
+             $g $h $i
+```
+
+**With String Concatenation:**
+```robinpath
+$long = "hello " \
+        "world " \
+        "from RobinPath"
+# Becomes: $long = "hello " "world " "from RobinPath"
+# Which is automatically concatenated to: "hello world from RobinPath"
+```
+
+**With Function Calls:**
+```robinpath
+fn($a $b $c \
+   key1=1 \
+   key2=2)
+```
+
+**With If Conditions:**
+```robinpath
+if $a > 0 && \
+   $b < 10 && \
+   $c == "ok"
+  log "conditions met"
+endif
+```
+
+**With Assignments:**
+```robinpath
+$query = "SELECT * FROM users " \
+         "WHERE active = 1 " \
+         "ORDER BY created_at DESC"
+```
+
+**Rules:**
+- The backslash must be the last non-whitespace character on the line
+- The newline and any leading whitespace on the next line are replaced with a single space
+- The continuation ends at the first line that doesn't end with `\`
+- Works with any statement type (assignments, function calls, conditionals, etc.)
 
 ## Creating Custom Modules
 
