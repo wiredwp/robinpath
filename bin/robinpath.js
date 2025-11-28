@@ -61,6 +61,7 @@ RobinPath REPL Commands:
   exit, quit, .exit, .quit  - Exit the REPL
   help, .help                - Show this help message
   clear, .clear              - Clear the screen
+  ..                         - Show all available commands as JSON
   
 Multi-line blocks:
   def <name> ... enddef  - Define a function
@@ -69,25 +70,6 @@ Multi-line blocks:
   scope ... endscope     - Scope block
   fn(...)                - Parenthesized function call (multi-line)
   <line> \\              - Backslash line continuation
-  
-Examples:
-  math.add 10 20
-  log $
-  
-  def greet
-  $1
-  $2
-  log "Hello" $1
-  enddef
-  
-  greet "Alice" 25
-  
-  for $i in range 1 5
-    log "i =" $i
-  endfor
-  
-  log "this is a long message " \\
-      "that continues on the next line"
         `);
         return;
     }

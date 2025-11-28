@@ -561,6 +561,131 @@ The `fallback` command checks if a variable is empty/null and returns the fallba
 - Empty array
 - Empty object
 
+**`meta` - Add metadata to variables or functions:**
+```robinpath
+# Add metadata to a variable
+$testVar = 100
+meta $testVar description "A variable to store test values"
+meta $testVar version 5
+meta $testVar author "Test Author"
+
+# Add metadata to a function
+def calculate
+  math.add $1 $2
+enddef
+
+meta calculate description "A function to calculate sum"
+meta calculate version 1
+meta calculate category "math"
+```
+
+The `meta` command stores arbitrary key-value metadata for variables or functions. The metadata is stored separately and does not affect the variable or function itself.
+
+**`getMeta` - Retrieve metadata from variables or functions:**
+```robinpath
+# Get all metadata for a variable
+$testVar = 100
+meta $testVar description "A variable"
+meta $testVar version 5
+
+getMeta $testVar
+$allMeta = $  # Returns {description: "A variable", version: 5}
+
+# Get specific metadata key
+getMeta $testVar description  # Returns "A variable"
+getMeta $testVar version      # Returns 5
+getMeta $testVar nonexistent  # Returns null
+
+# Get all metadata for a function
+def calculate
+  math.add $1 $2
+enddef
+
+meta calculate description "A function"
+meta calculate version 1
+
+getMeta calculate
+$funcMeta = $  # Returns {description: "A function", version: 1}
+
+# Get specific metadata key
+getMeta calculate description  # Returns "A function"
+getMeta calculate version      # Returns 1
+```
+
+The `getMeta` command retrieves metadata:
+- With one argument: returns all metadata as an object
+- With two arguments: returns the value for the specific key (or `null` if not found)
+- Returns an empty object `{}` if no metadata exists
+
+**`clear` - Clear the last return value ($):**
+```robinpath
+# Clear the last value
+math.add 10 20  # $ = 30
+clear           # $ = null
+
+# Clear after chained operations
+math.add 5 5
+math.multiply $ 2  # $ = 20
+clear              # $ = null
+
+# Clear doesn't affect variables
+$testVar = 42
+math.add 10 20
+clear
+log $testVar  # Still prints 42
+log $         # Prints null
+```
+
+The `clear` command sets the last return value (`$`) to `null`. It does not affect variables or any other state.
+
+**`forget` - Hide a variable or function in the current scope:**
+```robinpath
+# Forget a variable in current scope
+$testVar = 100
+scope
+  forget $testVar
+  log $testVar  # Prints null (variable is hidden)
+endscope
+log $testVar    # Prints 100 (variable accessible again after scope)
+
+# Forget a function in current scope
+def my_function
+  return 42
+enddef
+
+scope
+  forget my_function
+  my_function  # Error: Function is forgotten in current scope
+endscope
+my_function     # Works normally (function accessible after scope)
+
+# Forget a built-in command in current scope
+scope
+  forget log
+  log "test"  # Error: Built-in command is forgotten in current scope
+endscope
+log "test"     # Works normally (built-in accessible after scope)
+
+# Forget only affects the current scope
+$outerVar = 200
+scope
+  forget $outerVar
+  scope
+    log $outerVar  # Prints 200 (accessible in child scope)
+  endscope
+  log $outerVar    # Prints null (forgotten in current scope)
+endscope
+log $outerVar      # Prints 200 (accessible again after scope)
+```
+
+The `forget` command hides a variable or function **only in the current scope**:
+- When a variable is forgotten, accessing it returns `null`
+- When a function or built-in is forgotten, calling it throws an error
+- The forget effect only applies to the scope where `forget` was called
+- After the scope ends, the variable/function is accessible again
+- Child scopes can still access forgotten items from parent scopes
+- Useful for temporarily hiding variables or functions to avoid name conflicts
+
 ### Comments
 
 Lines starting with `#` are comments:
@@ -888,8 +1013,13 @@ $value = $(add $(multiply 2 3) $(add 1 1))
 log $value  # Prints 8
 
 # Subexpression in conditionals
-if $(add 5 5) == 10
+if $(math.add 5 5) == 10
   log "Equal to 10"
+endif
+
+# Function calls in subexpressions use parenthesized syntax
+if $(test.isBigger $value 5)
+  log "Value is bigger than 5"
 endif
 ```
 

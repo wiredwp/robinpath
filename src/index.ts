@@ -40,12 +40,15 @@ interface Environment {
     metadata: Map<string, FunctionMetadata>;
     moduleMetadata: Map<string, ModuleMetadata>;
     currentModule: string | null; // Current module context set by "use" command
+    variableMetadata: Map<string, Map<string, Value>>; // variable name -> (meta key -> value)
+    functionMetadata: Map<string, Map<string, Value>>; // function name -> (meta key -> value)
 }
 
 interface Frame {
     locals: Map<string, Value>;
     lastValue: Value;
     isFunctionFrame?: boolean; // True if this frame is from a function (def/enddef), false/undefined if from subexpression
+    forgotten?: Set<string>; // Names of variables/functions forgotten in this scope
 }
 
 export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
@@ -2251,6 +2254,12 @@ class ExpressionEvaluator {
     }
 
     private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
+        // Check if variable is forgotten in current scope
+        if (this.frame.forgotten && this.frame.forgotten.has(name)) {
+            // Variable is forgotten in this scope - return null (as if it doesn't exist)
+            return null;
+        }
+        
         // If name is empty, it means last value ($) with attributes
         let baseValue: Value;
         if (name === '') {
@@ -2420,12 +2429,22 @@ class Executor {
      * Execute a function call and return the result (public method for expression evaluation)
      */
     async executeFunctionCall(funcName: string, args: Arg[]): Promise<Value> {
+        const frame = this.getCurrentFrame();
+        
+        // Check if function is forgotten in current scope
+        if (frame.forgotten && frame.forgotten.has(funcName)) {
+            // Function is forgotten in this scope - throw error (as if it doesn't exist)
+            throw new Error(`Unknown function: ${funcName}`);
+        }
+        
         const evaluatedArgs = await Promise.all(args.map(arg => this.evaluateArg(arg)));
         
         // Check if it's a builtin function
         if (this.environment.builtins.has(funcName)) {
             const handler = this.environment.builtins.get(funcName)!;
-            const result = await Promise.resolve(handler(evaluatedArgs));
+            const result = await Promise.resolve(async () => {
+                return await handler(evaluatedArgs)
+            });
             return result !== undefined ? result : null;
         }
         
@@ -2503,6 +2522,56 @@ class Executor {
                 // Comments are no-ops during execution
                 break;
         }
+    }
+
+    /**
+     * Reconstructs the original input string from an Arg object.
+     * This is useful for commands that need to preserve the original input
+     * (e.g., variable/function names) rather than evaluating them.
+     * 
+     * Examples:
+     * - { type: 'var', name: 'a' } -> '$a'
+     * - { type: 'var', name: 'a', path: [{ type: 'property', name: 'b' }] } -> '$a.b'
+     * - { type: 'var', name: 'a', path: [{ type: 'index', index: 0 }] } -> '$a[0]'
+     * - { type: 'string', value: 'hello' } -> 'hello'
+     * 
+     * @param arg The Arg object to reconstruct
+     * @returns The original input string, or null if the arg type cannot be reconstructed
+     */
+    private reconstructOriginalInput(arg: Arg): string | null {
+        if (arg.type === 'var') {
+            // Reconstruct variable name from Arg object
+            // Start with the base variable name (e.g., '$a')
+            let varStr = '$' + arg.name;
+            
+            // Append path segments if present (e.g., '.property' or '[index]')
+            if (arg.path) {
+                for (const seg of arg.path) {
+                    if (seg.type === 'property') {
+                        varStr += '.' + seg.name;
+                    } else if (seg.type === 'index') {
+                        varStr += '[' + seg.index + ']';
+                    }
+                }
+            }
+            return varStr;
+        } else if (arg.type === 'string') {
+            // Return the string value directly
+            return arg.value;
+        } else if (arg.type === 'literal') {
+            // For literal values, try to convert back to string representation
+            // This handles cases where a function name or variable name was parsed as a literal
+            const value = arg.value;
+            if (typeof value === 'string') {
+                return value;
+            }
+            // For other literal types, we can't reconstruct the original
+            return null;
+        }
+        
+        // For other types (number, subexpr, lastValue, etc.), we cannot reconstruct
+        // the original input, so return null
+        return null;
     }
 
     private async executeCommand(cmd: CommandCall): Promise<void> {
@@ -2927,6 +2996,204 @@ Examples:
             throw new EndException();
         }
 
+        // Special handling for "meta" command - stores metadata for functions or variables
+        if (cmd.name === 'meta') {
+            if (cmd.args.length < 3) {
+                throw new Error('meta requires 3 arguments: target (fn/variable), meta key, and value');
+            }
+            
+            // Extract original input from cmd.args (before evaluation)
+            // For target: always use the original arg (never evaluate)
+            const targetArg = cmd.args[0];
+            const targetOriginal = this.reconstructOriginalInput(targetArg);
+            if (targetOriginal === null) {
+                throw new Error('meta target must be a variable or string literal');
+            }
+            const target: string = targetOriginal;
+            
+            // Extract metaKey from original arg
+            const metaKey = String(await this.evaluateArg(cmd.args[1]));
+            
+            // Evaluate metaValue (this should be evaluated)
+            const metaValue = await this.evaluateArg(cmd.args[2]);
+
+            // Check if target is a variable (starts with $)
+            if (target.startsWith('$')) {
+                // Variable metadata
+                const varName = target.slice(1); // Remove $
+                
+                // Get or create metadata map for this variable
+                if (!this.environment.variableMetadata.has(varName)) {
+                    this.environment.variableMetadata.set(varName, new Map());
+                }
+                const varMeta = this.environment.variableMetadata.get(varName)!;
+                varMeta.set(metaKey, metaValue);
+            } else {
+                // Function metadata
+                const funcName = target;
+                
+                // Get or create metadata map for this function
+                if (!this.environment.functionMetadata.has(funcName)) {
+                    this.environment.functionMetadata.set(funcName, new Map());
+                }
+                const funcMeta = this.environment.functionMetadata.get(funcName)!;
+                funcMeta.set(metaKey, metaValue);
+            }
+            
+            // meta command should not affect the last value
+            return;
+        }
+
+        // Special handling for "getMeta" command - retrieves metadata for functions or variables
+        if (cmd.name === 'getMeta') {
+            if (cmd.args.length < 1) {
+                throw new Error('getMeta requires at least 1 argument: target (fn/variable)');
+            }
+            
+            // Extract original input from cmd.args (before evaluation)
+            // For target: always use the original arg (never evaluate)
+            const targetArg = cmd.args[0];
+            const targetOriginal = this.reconstructOriginalInput(targetArg);
+            if (targetOriginal === null) {
+                throw new Error('getMeta target must be a variable or string literal');
+            }
+            const target: string = targetOriginal;
+            
+            // Check if target is a variable (starts with $)
+            if (target.startsWith('$')) {
+                // Variable metadata
+                const varName = target.slice(1); // Remove $
+                const varMeta = this.environment.variableMetadata?.get(varName);
+                
+                if (!varMeta || varMeta.size === 0) {
+                    // Return empty object if no metadata
+                    frame.lastValue = {};
+                    return;
+                }
+                
+                // If second argument provided, return specific key value
+                if (cmd.args.length >= 2) {
+                    const metaKey = String(await this.evaluateArg(cmd.args[1]));
+                    const value = varMeta.get(metaKey);
+                    frame.lastValue = value !== undefined ? value : null;
+                    return;
+                }
+                
+                // Return all metadata as an object
+                const metadataObj: Record<string, Value> = {};
+                for (const [key, value] of varMeta.entries()) {
+                    metadataObj[key] = value;
+                }
+                frame.lastValue = metadataObj;
+                return;
+            } else {
+                // Function metadata
+                const funcName = target;
+                const funcMeta = this.environment.functionMetadata?.get(funcName);
+                
+                if (!funcMeta || funcMeta.size === 0) {
+                    // Return empty object if no metadata
+                    frame.lastValue = {};
+                    return;
+                }
+                
+                // If second argument provided, return specific key value
+                if (cmd.args.length >= 2) {
+                    const metaKey = String(await this.evaluateArg(cmd.args[1]));
+                    const value = funcMeta.get(metaKey);
+                    frame.lastValue = value !== undefined ? value : null;
+                    return;
+                }
+                
+                // Return all metadata as an object
+                const metadataObj: Record<string, Value> = {};
+                for (const [key, value] of funcMeta.entries()) {
+                    metadataObj[key] = value;
+                }
+                frame.lastValue = metadataObj;
+                return;
+            }
+        }
+
+        // Special handling for "getType" command - returns the type of a variable
+        if (cmd.name === 'getType') {
+            if (cmd.args.length < 1) {
+                throw new Error('getType requires 1 argument: variable name');
+            }
+            
+            // Get variable name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('getType first argument must be a variable (e.g., $myVar)');
+            }
+            
+            // Evaluate the variable to get its value
+            const value = await this.evaluateArg(varArg);
+            
+            // Determine the type
+            let type: string;
+            if (value === null) {
+                type = 'null';
+            } else if (value === undefined) {
+                type = 'undefined';
+            } else if (typeof value === 'string') {
+                type = 'string';
+            } else if (typeof value === 'number') {
+                type = 'number';
+            } else if (typeof value === 'boolean') {
+                type = 'boolean';
+            } else if (Array.isArray(value)) {
+                type = 'array';
+            } else if (typeof value === 'object') {
+                type = 'object';
+            } else {
+                type = 'unknown';
+            }
+            
+            frame.lastValue = type;
+            return;
+        }
+
+        // Special handling for "clear" command - clears the last return value ($)
+        if (cmd.name === 'clear') {
+            // Clear the last value in the current frame
+            frame.lastValue = null;
+            // clear command should not affect the last value (it sets it to null)
+            return;
+        }
+
+        // Special handling for "forget" command - ignores a variable or function in current scope only
+        if (cmd.name === 'forget') {
+            if (cmd.args.length < 1) {
+                throw new Error('forget requires 1 argument: variable or function name');
+            }
+            
+            // Get the name from the first argument (must be a variable or string literal)
+            const nameArg = cmd.args[0];
+            let name: string;
+            
+            if (nameArg.type === 'var') {
+                // Variable reference: $var -> "var"
+                name = nameArg.name;
+            } else if (nameArg.type === 'string' || nameArg.type === 'literal') {
+                // String literal or literal: function name
+                name = String(await this.evaluateArg(nameArg));
+            } else {
+                throw new Error('forget argument must be a variable (e.g., $var) or function name (string)');
+            }
+            
+            // Initialize forgotten set if it doesn't exist
+            if (!frame.forgotten) {
+                frame.forgotten = new Set();
+            }
+            
+            // Add to forgotten set for this scope
+            frame.forgotten.add(name);
+            
+            // forget command should not affect the last value
+            return;
+        }
+
         // Special handling for "fallback" command - returns variable value or fallback if empty/null
         if (cmd.name === 'fallback') {
             if (cmd.args.length < 1) {
@@ -2976,6 +3243,15 @@ Examples:
         let functionName = cmd.name;
         if (!functionName.includes('.') && this.environment.currentModule) {
             functionName = `${this.environment.currentModule}.${functionName}`;
+        }
+
+        // Check if function is forgotten in current scope
+        // Check both the original name and the module-prefixed name
+        if (frame.forgotten) {
+            if (frame.forgotten.has(cmd.name) || frame.forgotten.has(functionName)) {
+                // Function is forgotten in this scope - throw error (as if it doesn't exist)
+                throw new Error(`Unknown function: ${cmd.name}`);
+            }
         }
 
         // Check if it's a user-defined function (check original name first, then module-prefixed)
@@ -3407,6 +3683,12 @@ Examples:
     private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
         const frame = this.getCurrentFrame();
         
+        // Check if variable is forgotten in current scope
+        if (frame.forgotten && frame.forgotten.has(name)) {
+            // Variable is forgotten in this scope - return null (as if it doesn't exist)
+            return null;
+        }
+        
         // Variable resolution follows JavaScript scoping rules:
         // 1. Check current frame's locals first (function parameters and local variables)
         // 2. If not found in locals, check globals (outer scope)
@@ -3703,7 +3985,9 @@ export class RobinPathThread {
             builtins: baseEnvironment.builtins,       // shared
             metadata: baseEnvironment.metadata,       // shared
             moduleMetadata: baseEnvironment.moduleMetadata, // shared
-            currentModule: null                       // per-thread module context
+            currentModule: null,                       // per-thread module context
+            variableMetadata: new Map(),              // per-thread variable metadata
+            functionMetadata: new Map()               // per-thread function metadata
         };
 
         this.executor = new Executor(this.environment, this);
@@ -3811,6 +4095,13 @@ export class RobinPathThread {
      */
     getParent(): RobinPath | null {
         return this.parent;
+    }
+
+    /**
+     * Get the environment for this thread (for CLI access to metadata)
+     */
+    getEnvironment(): Environment {
+        return this.environment;
     }
 
     /**
@@ -4239,7 +4530,9 @@ export class RobinPath {
             builtins: new Map(),
             metadata: new Map(),
             moduleMetadata: new Map(),
-            currentModule: null
+            currentModule: null,
+            variableMetadata: new Map(),
+            functionMetadata: new Map()
         };
 
         // Create persistent executor for REPL mode
@@ -4267,6 +4560,91 @@ export class RobinPath {
         this.registerBuiltin('array', (args) => {
             // Return all arguments as an array
             return [...args];
+        });
+
+        this.registerBuiltin('tag', (args) => {
+            // Tag command: tag [type] [name] [description]
+            // Used to declare meaningful info/metadata
+            // Does nothing (no-op) but accepts the arguments
+            if (args.length < 3) {
+                throw new Error('tag requires 3 arguments: type, name, and description');
+            }
+            // All arguments are accepted but not used
+            // This is a no-op command for declaring metadata
+            return null;
+        });
+
+        this.registerBuiltin('meta', (args) => {
+            // Meta command: meta [fn/variable] [meta key] [value]
+            // Used to add metadata for functions or variables
+            // Examples:
+            //   meta $a description "A variable to add number"
+            //   meta fn description "function to do something"
+            //   meta $a version 5
+            // Note: The actual implementation is in executeCommand for special handling
+            // This registration ensures it's recognized as a valid command
+            if (args.length < 3) {
+                throw new Error('meta requires 3 arguments: target (fn/variable), meta key, and value');
+            }
+            // The actual metadata storage is handled in executeCommand
+            return null;
+        });
+
+        this.registerBuiltin('getMeta', (args) => {
+            // getMeta command: getMeta [fn/variable] [key?]
+            // Used to retrieve metadata for functions or variables
+            // Examples:
+            //   getMeta $a           # Returns all metadata as object
+            //   getMeta $a description # Returns specific metadata value
+            //   getMeta fn description # Returns function metadata value
+            // Note: The actual implementation is in executeCommand for special handling
+            // This registration ensures it's recognized as a valid command
+            if (args.length < 1) {
+                throw new Error('getMeta requires at least 1 argument: target (fn/variable)');
+            }
+            // The actual metadata retrieval is handled in executeCommand
+            return null;
+        });
+
+        this.registerBuiltin('getType', (args) => {
+            // getType command: getType <variable>
+            // Returns the type of a variable as a string
+            // Examples:
+            //   getType $myVar  # Returns "string", "number", "boolean", "object", "array", or "null"
+            // Note: The actual implementation is in executeCommand for special handling
+            // This registration ensures it's recognized as a valid command
+            if (args.length < 1) {
+                throw new Error('getType requires 1 argument: variable name');
+            }
+            // The actual type detection is handled in executeCommand
+            return null;
+        });
+
+        this.registerBuiltin('clear', () => {
+            // clear command: clear
+            // Clears the last return value ($)
+            // Example:
+            //   math.add 10 20  # $ = 30
+            //   clear           # $ = null
+            // Note: The actual implementation is in executeCommand for special handling
+            // This registration ensures it's recognized as a valid command
+            // The actual clearing is handled in executeCommand
+            return null;
+        });
+
+        this.registerBuiltin('forget', () => {
+            // forget command: forget <variable|function>
+            // Ignores a variable or function in the current scope only
+            // Example:
+            //   $x = 10
+            //   scope
+            //     forget $x
+            //     $x  # Returns null (ignored in this scope)
+            //   endscope
+            //   $x  # Returns 10 (still exists in outer scope)
+            // Note: The actual implementation is in executeCommand for special handling
+            // This registration ensures it's recognized as a valid command
+            return null;
         });
 
         this.registerBuiltin('range', (args) => {

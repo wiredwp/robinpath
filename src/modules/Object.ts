@@ -62,6 +62,14 @@ export const ObjectFunctions: Record<string, BuiltinHandler> = {
         return obj;
     },
 
+    keyLength: (args) => {
+        const obj = args[0];
+        if (typeof obj !== 'object' || obj === null) {
+            return 0;
+        }
+        return Object.keys(obj).length;
+    },
+
     keys: (args) => {
         const obj = args[0];
         if (typeof obj !== 'object' || obj === null) {
