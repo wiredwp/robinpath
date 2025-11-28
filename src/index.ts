@@ -102,7 +102,8 @@ type Arg =
     | { type: 'lastValue' }
     | { type: 'literal'; value: Value }
     | { type: 'number'; value: number }
-    | { type: 'string'; value: string };
+    | { type: 'string'; value: string }
+    | { type: 'namedArgs'; args: Record<string, Arg> }; // Named arguments object (key=value pairs)
 
 interface CommandCall {
     type: 'command';
@@ -151,6 +152,7 @@ interface IfFalse {
 interface DefineFunction {
     type: 'define';
     name: string;
+    paramNames: string[]; // Parameter names (e.g., ['a', 'b', 'c']) - aliases for $1, $2, $3
     body: Statement[];
 }
 
@@ -201,20 +203,24 @@ type Statement =
 // ============================================================================
 
 /**
- * Split a script into logical lines, respecting strings and $() subexpressions.
+ * Split a script into logical lines, respecting strings, $() subexpressions, and backslash continuation.
  * Treats ; and \n as line separators, but only at the top level (not inside strings or $()).
+ * Handles backslash line continuation: lines ending with \ are joined with the next line.
  */
 function splitIntoLogicalLines(script: string): string[] {
+    // First pass: handle backslash continuation by joining lines
+    const processedScript = handleBackslashContinuation(script);
+    
     const lines: string[] = [];
     let current = '';
     let inString: false | '"' | "'" | '`' = false;
     let subexprDepth = 0;
     let i = 0;
 
-    while (i < script.length) {
-        const char = script[i];
-        const nextChar = i + 1 < script.length ? script[i + 1] : '';
-        const prevChar = i > 0 ? script[i - 1] : '';
+    while (i < processedScript.length) {
+        const char = processedScript[i];
+        const nextChar = i + 1 < processedScript.length ? processedScript[i + 1] : '';
+        const prevChar = i > 0 ? processedScript[i - 1] : '';
 
         // Handle strings
         if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
@@ -285,6 +291,54 @@ function splitIntoLogicalLines(script: string): string[] {
     }
 
     return lines.filter(line => line.length > 0);
+}
+
+/**
+ * Handle backslash line continuation.
+ * Lines ending with \ are joined with the next line, removing the backslash
+ * and replacing the newline + leading whitespace with a single space.
+ */
+function handleBackslashContinuation(script: string): string {
+    const lines = script.split('\n');
+    const result: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+        let currentLine = lines[i];
+        
+        // Check if this line ends with a backslash (ignoring trailing whitespace)
+        const trimmed = currentLine.trimEnd();
+        if (trimmed.endsWith('\\')) {
+            // Remove the trailing backslash and any trailing whitespace
+            currentLine = trimmed.slice(0, -1).trimEnd();
+            
+            // Continue joining next lines until we find one that doesn't end in a backslash
+            i++;
+            while (i < lines.length) {
+                const nextLine = lines[i];
+                const nextTrimmed = nextLine.trimEnd();
+                
+                if (nextTrimmed.endsWith('\\')) {
+                    // This line continues too - join it and continue
+                    currentLine += ' ' + nextTrimmed.slice(0, -1).trimEnd();
+                    i++;
+                } else {
+                    // This line doesn't end with backslash - join it and stop
+                    currentLine += ' ' + nextLine.trimStart();
+                    i++;
+                    break;
+                }
+            }
+            // i has already been incremented to point to the next unprocessed line
+        } else {
+            // Line doesn't end with backslash - just move to next line
+            i++;
+        }
+        
+        result.push(currentLine);
+    }
+
+    return result.join('\n');
 }
 
 // ============================================================================
@@ -849,6 +903,20 @@ class Parser {
                 }
             }
             
+            // Check if all remaining tokens are string literals (automatic concatenation)
+            // This handles cases like: $var = "hello " "world " "from RobinPath"
+            if (restTokens.length > 1 && restTokens.every(token => Lexer.isString(token))) {
+                // Concatenate all string literals
+                const concatenated = restTokens.map(token => Lexer.parseString(token)).join('');
+                this.currentLine++;
+                return {
+                    type: 'assignment',
+                    targetName,
+                    targetPath,
+                    literalValue: concatenated
+                };
+            }
+            
             // Check if the assignment value is a subexpression $(...)
             // We need to check the original line because tokenization may have split $() incorrectly
             const line = this.lines[this.currentLine];
@@ -915,10 +983,312 @@ class Parser {
             }
         }
 
+        // Check if this is a parenthesized function call: fn(...)
+        // Look for pattern: identifier followed by '('
+        if (tokens.length >= 2 && tokens[1] === '(') {
+            // This is a parenthesized call - parse it specially
+            const command = this.parseParenthesizedCall(tokens);
+            this.currentLine++;
+            return command;
+        }
+
         // Regular command
         const command = this.parseCommandFromTokens(tokens);
         this.currentLine++;
         return command;
+    }
+
+    /**
+     * Parse a parenthesized function call: fn(...)
+     * Supports both positional and named arguments (key=value)
+     * Handles multi-line calls
+     */
+    private parseParenthesizedCall(tokens: string[]): CommandCall {
+        // Get function name (handle module.function syntax)
+        let name: string;
+        if (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(') {
+            // Module function: math.add(...)
+            name = `${tokens[0]}.${tokens[2]}`;
+        } else if (tokens.length >= 2 && tokens[1] === '(') {
+            // Regular function: fn(...)
+            name = tokens[0];
+        } else {
+            throw this.createError('expected ( after function name', this.currentLine);
+        }
+
+        // Validate function name
+        if (Lexer.isNumber(name)) {
+            throw this.createError(`expected command name, got number: ${name}`, this.currentLine);
+        }
+        if (Lexer.isString(name)) {
+            throw this.createError(`expected command name, got string literal: ${name}`, this.currentLine);
+        }
+        if (Lexer.isVariable(name) || Lexer.isPositionalParam(name)) {
+            throw this.createError(`expected command name, got variable: ${name}`, this.currentLine);
+        }
+        if (Lexer.isLastValue(name)) {
+            throw this.createError(`expected command name, got last value reference: ${name}`, this.currentLine);
+        }
+
+        // Extract content inside parentheses (handles multi-line)
+        const parenContent = this.extractParenthesizedContent();
+        
+        // Parse arguments from the content
+        const { positionalArgs, namedArgs } = this.parseParenthesizedArguments(parenContent);
+
+        // Combine positional args and named args (named args as a special object)
+        const args: Arg[] = [...positionalArgs];
+        if (Object.keys(namedArgs).length > 0) {
+            args.push({ type: 'namedArgs', args: namedArgs });
+        }
+
+        return { type: 'command', name, args };
+    }
+
+    /**
+     * Extract content inside parentheses, handling multi-line calls
+     * Returns the inner content (without the parentheses)
+     */
+    private extractParenthesizedContent(): string {
+        const startLine = this.currentLine;
+        const line = this.lines[startLine].trim();
+        
+        // Find the opening parenthesis position
+        const openParenIndex = line.indexOf('(');
+        if (openParenIndex === -1) {
+            throw this.createError('expected (', startLine);
+        }
+
+        let pos = openParenIndex + 1;
+        let depth = 1;
+        let inString: false | '"' | "'" | '`' = false;
+        const content: string[] = [];
+        let currentLineIndex = startLine;
+
+        while (currentLineIndex < this.lines.length && depth > 0) {
+            const currentLine = this.lines[currentLineIndex];
+            
+            while (pos < currentLine.length && depth > 0) {
+                const char = currentLine[pos];
+                const prevChar = pos > 0 ? currentLine[pos - 1] : '';
+
+                // Handle strings
+                if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                    if (!inString) {
+                        inString = char;
+                    } else if (char === inString) {
+                        inString = false;
+                    }
+                    content.push(char);
+                    pos++;
+                    continue;
+                }
+
+                if (inString) {
+                    content.push(char);
+                    pos++;
+                    continue;
+                }
+
+                // Handle nested parentheses
+                if (char === '(') {
+                    depth++;
+                    content.push(char);
+                } else if (char === ')') {
+                    depth--;
+                    if (depth > 0) {
+                        // This is a closing paren for a nested call
+                        content.push(char);
+                    }
+                    // If depth === 0, we're done - don't include this closing paren
+                } else {
+                    content.push(char);
+                }
+                pos++;
+            }
+
+            if (depth > 0) {
+                // Need to continue on next line
+                content.push('\n');
+                currentLineIndex++;
+                pos = 0;
+            }
+        }
+
+        if (depth > 0) {
+            throw this.createError('unclosed parenthesized function call', startLine);
+        }
+
+        // Update currentLine to where we ended
+        this.currentLine = currentLineIndex;
+
+        return content.join('').trim();
+    }
+
+    /**
+     * Parse arguments from parenthesized content
+     * Handles both positional and named arguments (key=value)
+     */
+    private parseParenthesizedArguments(content: string): { positionalArgs: Arg[]; namedArgs: Record<string, Arg> } {
+        const positionalArgs: Arg[] = [];
+        const namedArgs: Record<string, Arg> = {};
+
+        if (!content.trim()) {
+            return { positionalArgs, namedArgs };
+        }
+
+        // Split content into argument tokens
+        // Arguments are separated by whitespace (spaces or newlines)
+        // But we need to preserve strings and subexpressions
+        const argTokens = this.tokenizeParenthesizedArguments(content);
+
+        for (const token of argTokens) {
+            // Check if it's a named argument: key=value
+            const equalsIndex = token.indexOf('=');
+            if (equalsIndex > 0 && equalsIndex < token.length - 1) {
+                // Check if = is not inside a string or subexpression
+                // Simple check: if token starts with identifier-like chars followed by =, it's named
+                const beforeEquals = token.substring(0, equalsIndex).trim();
+                const afterEquals = token.substring(equalsIndex + 1).trim();
+                
+                // Validate key name (must be identifier-like)
+                if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEquals)) {
+                    // This is a named argument: key=value
+                    const key = beforeEquals;
+                    const valueArg = this.parseArgumentValue(afterEquals);
+                    namedArgs[key] = valueArg;
+                    continue;
+                }
+            }
+
+            // Positional argument
+            const arg = this.parseArgumentValue(token);
+            positionalArgs.push(arg);
+        }
+
+        return { positionalArgs, namedArgs };
+    }
+
+    /**
+     * Tokenize arguments from parenthesized content
+     * Handles strings, subexpressions, and whitespace separation
+     */
+    private tokenizeParenthesizedArguments(content: string): string[] {
+        const tokens: string[] = [];
+        let current = '';
+        let inString: false | '"' | "'" | '`' = false;
+        let subexprDepth = 0;
+        let i = 0;
+
+        while (i < content.length) {
+            const char = content[i];
+            const nextChar = i + 1 < content.length ? content[i + 1] : '';
+            const prevChar = i > 0 ? content[i - 1] : '';
+
+            // Handle strings
+            if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
+                }
+                current += char;
+                i++;
+                continue;
+            }
+
+            if (inString) {
+                current += char;
+                i++;
+                continue;
+            }
+
+            // Handle $() subexpressions
+            if (char === '$' && nextChar === '(') {
+                subexprDepth++;
+                current += char;
+                i++;
+                continue;
+            }
+
+            if (char === ')' && subexprDepth > 0) {
+                subexprDepth--;
+                current += char;
+                i++;
+                continue;
+            }
+
+            // Handle whitespace and commas (only at top level, not inside $())
+            // Commas are optional separators
+            if (((char === ' ' || char === '\n' || char === '\t') || char === ',') && subexprDepth === 0) {
+                if (current.trim()) {
+                    tokens.push(current.trim());
+                }
+                current = '';
+                i++;
+                continue;
+            }
+
+            current += char;
+            i++;
+        }
+
+        if (current.trim()) {
+            tokens.push(current.trim());
+        }
+
+        return tokens.filter(t => t.length > 0);
+    }
+
+    /**
+     * Parse a single argument value (for both positional and named arguments)
+     */
+    private parseArgumentValue(token: string): Arg {
+        // Check if it's exactly $ (last value without attributes)
+        if (token === '$') {
+            return { type: 'lastValue' };
+        }
+        
+        // Check if it's a variable
+        if (Lexer.isVariable(token)) {
+            const { name, path } = Lexer.parseVariablePath(token);
+            return { type: 'var', name, path };
+        }
+        
+        // Check if it's a positional param
+        if (Lexer.isPositionalParam(token)) {
+            return { type: 'var', name: token.slice(1) };
+        }
+        
+        // Check if it's a boolean
+        if (token === 'true') {
+            return { type: 'literal', value: true };
+        }
+        if (token === 'false') {
+            return { type: 'literal', value: false };
+        }
+        if (token === 'null') {
+            return { type: 'literal', value: null };
+        }
+        
+        // Check if it's a string
+        if (Lexer.isString(token)) {
+            return { type: 'string', value: Lexer.parseString(token) };
+        }
+        
+        // Check if it's a number
+        if (Lexer.isNumber(token)) {
+            return { type: 'number', value: parseFloat(token) };
+        }
+        
+        // Check if it's a subexpression $(...)
+        if (token.startsWith('$(') && token.endsWith(')')) {
+            const code = token.slice(2, -1); // Remove $( and )
+            return { type: 'subexpr', code };
+        }
+        
+        // Treat as literal string
+        return { type: 'literal', value: token };
     }
 
     private parseDefine(): DefineFunction {
@@ -930,6 +1300,26 @@ class Parser {
         }
 
         const name = tokens[1];
+        
+        // Parse parameter names (optional): def fn $a $b $c
+        const paramNames: string[] = [];
+        for (let i = 2; i < tokens.length; i++) {
+            const token = tokens[i];
+            // Parameter names must be variables (e.g., $a, $b, $c)
+            if (Lexer.isVariable(token) && !Lexer.isPositionalParam(token) && !Lexer.isLastValue(token)) {
+                const { name: paramName } = Lexer.parseVariablePath(token);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    paramNames.push(paramName);
+                } else {
+                    // Invalid parameter name - stop parsing parameters
+                    break;
+                }
+            } else {
+                // Not a valid parameter name - stop parsing parameters
+                break;
+            }
+        }
+        
         this.currentLine++;
 
         const body: Statement[] = [];
@@ -975,7 +1365,7 @@ class Parser {
             throw this.createError('missing enddef', this.currentLine);
         }
 
-        return { type: 'define', name, body };
+        return { type: 'define', name, paramNames, body };
     }
 
     private parseScope(): ScopeBlock {
@@ -1410,7 +1800,8 @@ class Parser {
             throw this.createError(`expected command name, got last value reference: ${name}`, this.currentLine);
         }
         
-        const args: Arg[] = [];
+        const positionalArgs: Arg[] = [];
+        const namedArgs: Record<string, Arg> = {};
         const line = this.lines[this.currentLine];
 
         // We need to scan the original line to find $(...) subexpressions
@@ -1443,7 +1834,7 @@ class Parser {
             if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
                 // Extract the subexpression code
                 const subexprCode = this.extractSubexpression(line, pos);
-                args.push({ type: 'subexpr', code: subexprCode.code });
+                positionalArgs.push({ type: 'subexpr', code: subexprCode.code });
                 
                 // Skip past the $() in the original line
                 pos = subexprCode.endPos;
@@ -1472,30 +1863,58 @@ class Parser {
             
             const token = tokens[i];
             
-            // Check if it's exactly $ (last value without attributes)
+            // Check if this is a named argument: key=value
+            const equalsIndex = token.indexOf('=');
+            if (equalsIndex > 0 && equalsIndex < token.length - 1 && 
+                !token.startsWith('"') && !token.startsWith("'") && !token.startsWith('`')) {
+                const key = token.substring(0, equalsIndex).trim();
+                const valueStr = token.substring(equalsIndex + 1).trim();
+                
+                // Validate key name (must be identifier-like)
+                if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+                    // This is a named argument: key=value
+                    const valueArg = this.parseArgumentValue(valueStr);
+                    namedArgs[key] = valueArg;
+                    
+                    // Advance position
+                    const tokenPos = line.indexOf(token, pos);
+                    if (tokenPos !== -1) {
+                        pos = tokenPos + token.length;
+                        while (pos < line.length && /\s/.test(line[pos])) {
+                            pos++;
+                        }
+                    }
+                    i++;
+                    continue;
+                }
+            }
+            
+            // Parse as positional argument
+            let arg: Arg;
             if (token === '$') {
-                args.push({ type: 'lastValue' });
+                arg = { type: 'lastValue' };
             } else if (Lexer.isVariable(token)) {
                 // This includes $.property, $[index], $var, $var.property, etc.
-                const { name, path } = Lexer.parseVariablePath(token);
-                // If name is empty, it means last value with attributes (e.g., $.name)
-                args.push({ type: 'var', name, path });
+                const { name: varName, path } = Lexer.parseVariablePath(token);
+                arg = { type: 'var', name: varName, path };
             } else if (token === 'true') {
-                args.push({ type: 'literal', value: true });
+                arg = { type: 'literal', value: true };
             } else if (token === 'false') {
-                args.push({ type: 'literal', value: false });
+                arg = { type: 'literal', value: false };
             } else if (token === 'null') {
-                args.push({ type: 'literal', value: null });
+                arg = { type: 'literal', value: null };
             } else if (Lexer.isPositionalParam(token)) {
-                args.push({ type: 'var', name: token.slice(1) });
+                arg = { type: 'var', name: token.slice(1) };
             } else if (Lexer.isString(token)) {
-                args.push({ type: 'string', value: Lexer.parseString(token) });
+                arg = { type: 'string', value: Lexer.parseString(token) };
             } else if (Lexer.isNumber(token)) {
-                args.push({ type: 'number', value: parseFloat(token) });
+                arg = { type: 'number', value: parseFloat(token) };
             } else {
                 // Treat as literal string
-                args.push({ type: 'literal', value: token });
+                arg = { type: 'literal', value: token };
             }
+            
+            positionalArgs.push(arg);
             
             // Advance position in line (approximate)
             const tokenPos = line.indexOf(token, pos);
@@ -1507,6 +1926,12 @@ class Parser {
             }
             
             i++;
+        }
+
+        // Combine positional args and named args (named args as a special object)
+        const args: Arg[] = [...positionalArgs];
+        if (Object.keys(namedArgs).length > 0) {
+            args.push({ type: 'namedArgs', args: namedArgs });
         }
 
         return { type: 'command', name, args };
@@ -2082,7 +2507,27 @@ class Executor {
 
     private async executeCommand(cmd: CommandCall): Promise<void> {
         const frame = this.getCurrentFrame();
-        const args = await Promise.all(cmd.args.map(arg => this.evaluateArg(arg)));
+        
+        // Separate positional args and named args
+        const positionalArgs: Value[] = [];
+        let namedArgsObj: Record<string, Value> | null = null;
+        
+        for (const arg of cmd.args) {
+            if (arg.type === 'namedArgs') {
+                // Evaluate named arguments into an object
+                namedArgsObj = await this.evaluateArg(arg) as Record<string, Value>;
+            } else {
+                // Positional argument
+                const value = await this.evaluateArg(arg);
+                positionalArgs.push(value);
+            }
+        }
+        
+        // Combine positional args with named args object (if present)
+        // Named args object is appended as the last argument
+        const args = namedArgsObj 
+            ? [...positionalArgs, namedArgsObj]
+            : positionalArgs;
 
         // Special handling for "_subexpr" command - internal command to execute subexpression
         if (cmd.name === '_subexpr') {
@@ -2605,10 +3050,46 @@ Examples:
             isFunctionFrame: true
         };
 
-        // Set positional parameters
-        for (let i = 0; i < args.length; i++) {
-            frame.locals.set(String(i + 1), args[i]);
+        // Separate positional args and named args
+        // Named args object is the last argument if it's an object with non-numeric keys
+        let positionalArgs: Value[] = [];
+        let namedArgsObj: Record<string, Value> = {};
+        
+        // Check if last argument is a named args object (from parenthesized or CLI-style call)
+        // We detect this by checking if it's an object with string keys (not array indices)
+        if (args.length > 0) {
+            const lastArg = args[args.length - 1];
+            if (typeof lastArg === 'object' && lastArg !== null && !Array.isArray(lastArg)) {
+                // Check if it looks like a named args object (has non-numeric keys)
+                const keys = Object.keys(lastArg);
+                const hasNonNumericKeys = keys.some(key => !/^\d+$/.test(key));
+                if (hasNonNumericKeys && keys.length > 0) {
+                    // This is likely a named args object
+                    namedArgsObj = lastArg as Record<string, Value>;
+                    positionalArgs = args.slice(0, -1);
+                } else {
+                    // Regular object passed as positional arg (or empty object)
+                    positionalArgs = args;
+                }
+            } else {
+                positionalArgs = args;
+            }
         }
+
+        // Set positional parameters ($1, $2, $3, ...)
+        for (let i = 0; i < positionalArgs.length; i++) {
+            frame.locals.set(String(i + 1), positionalArgs[i]);
+        }
+
+        // Set parameter name aliases ($a = $1, $b = $2, etc.)
+        for (let i = 0; i < func.paramNames.length; i++) {
+            const paramName = func.paramNames[i];
+            const paramValue = i < positionalArgs.length ? positionalArgs[i] : null;
+            frame.locals.set(paramName, paramValue);
+        }
+
+        // Set $args variable with named arguments
+        frame.locals.set('args', namedArgsObj);
 
         this.callStack.push(frame);
 
@@ -2875,6 +3356,13 @@ Examples:
                 return arg.value;
             case 'literal':
                 return arg.value;
+            case 'namedArgs':
+                // Evaluate all named arguments and return as object
+                const obj: Record<string, Value> = {};
+                for (const [key, valueArg] of Object.entries(arg.args)) {
+                    obj[key] = await this.evaluateArg(valueArg);
+                }
+                return obj;
         }
     }
 
@@ -3223,10 +3711,10 @@ export class RobinPathThread {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'subexpr' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'subexpr' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -3245,10 +3733,18 @@ export class RobinPathThread {
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
             }
+            if (errorMessage.includes('missing endscope')) {
+                return { needsMore: true, waitingFor: 'endscope' };
+            }
             
             // NEW: unclosed $( ... ) subexpression – keep reading lines
             if (errorMessage.includes('unclosed subexpression')) {
                 return { needsMore: true, waitingFor: 'subexpr' };
+            }
+            
+            // NEW: unclosed parenthesized function call fn(...) – keep reading lines
+            if (errorMessage.includes('unclosed parenthesized function call')) {
+                return { needsMore: true, waitingFor: 'paren' };
             }
             
             // If it's a different error, the script is malformed but complete
@@ -3496,6 +3992,7 @@ export class RobinPathThread {
                 return {
                     ...base,
                     name: stmt.name,
+                    paramNames: stmt.paramNames,
                     body: stmt.body.map(s => this.serializeStatement(s))
                 };
             case 'scope':
@@ -3545,6 +4042,12 @@ export class RobinPathThread {
                 return { type: 'string', value: arg.value };
             case 'literal':
                 return { type: 'literal', value: arg.value };
+            case 'namedArgs':
+                const serialized: Record<string, any> = {};
+                for (const [key, valueArg] of Object.entries(arg.args)) {
+                    serialized[key] = this.serializeArg(valueArg);
+                }
+                return { type: 'namedArgs', args: serialized };
         }
     }
 
@@ -4283,10 +4786,10 @@ export class RobinPath {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'subexpr' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -4305,10 +4808,18 @@ export class RobinPath {
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
             }
+            if (errorMessage.includes('missing endscope')) {
+                return { needsMore: true, waitingFor: 'endscope' };
+            }
             
             // NEW: unclosed $( ... ) subexpression – keep reading lines
             if (errorMessage.includes('unclosed subexpression')) {
                 return { needsMore: true, waitingFor: 'subexpr' };
+            }
+            
+            // NEW: unclosed parenthesized function call fn(...) – keep reading lines
+            if (errorMessage.includes('unclosed parenthesized function call')) {
+                return { needsMore: true, waitingFor: 'paren' };
             }
             
             // If it's a different error, the script is malformed but complete
@@ -4398,6 +4909,7 @@ export class RobinPath {
                 return {
                     ...base,
                     name: stmt.name,
+                    paramNames: stmt.paramNames,
                     body: stmt.body.map(s => this.serializeStatement(s))
                 };
             case 'scope':
@@ -4447,6 +4959,12 @@ export class RobinPath {
                 return { type: 'string', value: arg.value };
             case 'literal':
                 return { type: 'literal', value: arg.value };
+            case 'namedArgs':
+                const serialized: Record<string, any> = {};
+                for (const [key, valueArg] of Object.entries(arg.args)) {
+                    serialized[key] = this.serializeArg(valueArg);
+                }
+                return { type: 'namedArgs', args: serialized };
         }
     }
 

@@ -1192,5 +1192,259 @@ test.assertEqual $ 6 "Range 0 -5 -1 - length failed"
 
 log "Test 36 - Range with step parameter: All passed"
 
+# Test 37: Parenthesized function call syntax
+# Test basic one-line parenthesized call with positional arguments
+math.add(5 10)
+test.assertEqual $ 15 "Parenthesized call - basic positional args failed"
+
+# Test parenthesized call with named arguments (if supported by function)
+# Note: Most builtin functions don't support named args, but syntax should parse correctly
+log("test message")
+test.assertNotNull $ "Parenthesized call - log with positional arg failed"
+
+# Test multi-line parenthesized call
+math.add(
+  10
+  20
+)
+test.assertEqual $ 30 "Parenthesized call - multi-line positional args failed"
+
+# Test parenthesized call with mixed types
+array(1 2 3)
+$arrFromParen = $
+array.length $arrFromParen
+test.assertEqual $ 3 "Parenthesized call - array creation failed"
+test.assertEqual $arrFromParen[0] 1 "Parenthesized call - array element access failed"
+
+# Test parenthesized call with variables
+$val1 = 5
+$val2 = 7
+math.multiply($val1 $val2)
+test.assertEqual $ 35 "Parenthesized call - with variables failed"
+
+# Test parenthesized call with expressions
+math.add(
+  $(math.multiply 2 3)
+  $(math.add 1 1)
+)
+test.assertEqual $ 8 "Parenthesized call - with subexpressions failed"
+
+# Test nested parenthesized calls
+math.add(
+  $(math.multiply(2 3))
+  $(math.add(1 1))
+)
+test.assertEqual $ 8 "Parenthesized call - nested calls failed"
+
+# Test parenthesized call with strings
+string.concat("hello" " " "world")
+test.assertEqual $ "hello world" "Parenthesized call - with strings failed"
+
+# Test parenthesized call with empty arguments
+array()
+$emptyFromParen = $
+array.length $emptyFromParen
+test.assertEqual $ 0 "Parenthesized call - empty args failed"
+
+# Test parenthesized call with single argument
+math.abs(-42)
+test.assertEqual $ 42 "Parenthesized call - single arg failed"
+
+# Test parenthesized call with module functions
+math.add(10 5)
+test.assertEqual $ 15 "Parenthesized call - module function failed"
+
+string.length("test")
+test.assertEqual $ 4 "Parenthesized call - string module function failed"
+
+# Test parenthesized call in assignment
+math.add(100 200)
+$result = $
+test.assertEqual $result 300 "Parenthesized call - in assignment failed"
+
+# Test parenthesized call with last value
+math.add(5 5)
+math.multiply($ 2)
+test.assertEqual $ 20 "Parenthesized call - chaining with last value failed"
+
+# Test parenthesized call with named arguments syntax
+# Note: Most functions don't use named args yet, but syntax should parse
+# The named args object will be passed as the last argument
+log("test" key1="value1" key2=42)
+test.assertNotNull $ "Parenthesized call - with named args failed"
+
+# Test parenthesized call with mixed positional and named arguments
+log("message" verbose=true level="info")
+test.assertNotNull $ "Parenthesized call - mixed positional and named args failed"
+
+# Test multi-line parenthesized call with named arguments
+log(
+  "test message"
+  verbose=true
+  level="debug"
+)
+test.assertNotNull $ "Parenthesized call - multi-line with named args failed"
+
+# Test named arguments with expressions
+log("test" count=$(math.add 1 2) enabled=true)
+test.assertNotNull $ "Parenthesized call - named args with expressions failed"
+
+log "Test 37 - Parenthesized function call syntax: All passed"
+
+# Test 38: Function parameters and arguments
+# Test function definition with parameter names
+def greet $name $age
+  log "Hello" $name
+  log "Age:" $age
+  log "Positional 1:" $1
+  log "Positional 2:" $2
+enddef
+
+greet("Alice" 25)
+test.assertEqual $ null "Function with param names - basic call failed"
+
+# Test parameter name aliases
+def add $a $b
+  math.add $a $b
+enddef
+
+add(10 20)
+test.assertEqual $ 30 "Function param aliases failed"
+
+# Test that $1, $2 still work
+def multiply $x $y
+  math.multiply $1 $2
+enddef
+
+multiply(5 6)
+test.assertEqual $ 30 "Function positional params via $1 $2 failed"
+
+# Test function with more args than declared params
+def first $a
+  log "a:" $a
+  log "extra:" $2
+enddef
+
+first(10 20)
+test.assertEqual $ null "Function with extra args failed"
+
+# Test function with fewer args than declared params
+def three $a $b $c
+  log "a:" $a
+  log "b:" $b
+  log "c:" $c
+enddef
+
+three(10 20)
+test.assertEqual $ null "Function with fewer args failed"
+
+# Test named arguments
+def config $env
+  log "env:" $env
+  log "key:" $args.key
+  log "value:" $args.value
+enddef
+
+config("production" key="api-key" value="secret123")
+test.assertEqual $ null "Function with named args failed"
+
+# Test named arguments in CLI-style call
+def test_fn $a $b
+  log "a:" $a
+  log "b:" $b
+  log "flag:" $args.flag
+enddef
+
+test_fn "hello" "world" flag=true
+test.assertEqual $ null "Function CLI-style with named args failed"
+
+# Test mixed positional and named arguments
+def deploy $env
+  log "env:" $env
+  log "replicas:" $args.replicas
+  log "timeout:" $args.timeout
+enddef
+
+deploy("staging" replicas=3 timeout=30)
+test.assertEqual $ null "Function mixed args failed"
+
+# Test function without parameter names (only $1, $2)
+def simple
+  log "first:" $1
+  log "second:" $2
+enddef
+
+simple("hello" "world")
+test.assertEqual $ null "Function without param names failed"
+
+# Test $args access
+def get_args
+  log "key1:" $args.key1
+  log "key2:" $args.key2
+enddef
+
+get_args(key1="value1" key2="value2")
+test.assertEqual $ null "Function $args access failed"
+
+# Test parameter name collision (param name same as named arg)
+def collision $key
+  log "param key:" $key
+  log "named key:" $args.key
+enddef
+
+collision("positional" key="named")
+test.assertEqual $ null "Function param/named arg collision failed"
+
+log "Test 38 - Function parameters and arguments: All passed"
+
+# Test 39: Backslash line continuation
+log "Test 39 - Backslash line continuation"
+
+# Test 39a: Simple continuation
+log "this is a very long message " \
+    "that continues on the next line"
+
+# Test 39b: Multiple continuations
+$long = "hello " \
+        "world " \
+        "from RobinPath"
+log "Test 39b - Long string:" $long
+
+# Test 39c: Function call with continuation
+def test_continuation
+  log "Received:" $1 $2 $3
+enddef
+
+test_continuation "first" \
+                 "second" \
+                 "third"
+
+# Test 39d: Assignment with continuation
+$query = "SELECT * FROM users " \
+         "WHERE active = 1 " \
+         "ORDER BY created_at DESC"
+log "Test 39d - Query:" $query
+
+# Test 39e: Parenthesized function call with continuation
+def multi_args
+  log "Args:" $1 $2 $args.key1 $args.key2
+enddef
+
+multi_args("arg1" "arg2" \
+           key1="value1" \
+           key2="value2")
+
+# Test 39f: If condition with continuation
+$a = 5
+$b = 3
+$c = "ok"
+if $a > 0 && \
+   $b < 10 && \
+   $c == "ok"
+  log "Test 39f - Conditions met"
+endif
+
+log "Test 39 - Backslash line continuation: All passed"
+
 log "All tests completed!"
 

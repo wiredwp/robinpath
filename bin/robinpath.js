@@ -31,6 +31,12 @@ rl.setPrompt(getPrompt());
 // State for multi-line blocks
 let accumulatedLines = [];
 
+// Helper function to check if a line ends with backslash (ignoring trailing whitespace)
+function endsWithBackslash(line) {
+    const trimmed = line.trimEnd();
+    return trimmed.endsWith('\\');
+}
+
 // Process a line of input
 async function processLine(line) {
     const trimmed = line.trim();
@@ -60,6 +66,9 @@ Multi-line blocks:
   def <name> ... enddef  - Define a function
   if <expr> ... endif    - Conditional block
   for $var in <expr> ... endfor  - Loop block
+  scope ... endscope     - Scope block
+  fn(...)                - Parenthesized function call (multi-line)
+  <line> \\              - Backslash line continuation
   
 Examples:
   math.add 10 20
@@ -76,6 +85,9 @@ Examples:
   for $i in range 1 5
     log "i =" $i
   endfor
+  
+  log "this is a long message " \\
+      "that continues on the next line"
         `);
         return;
     }
@@ -104,6 +116,23 @@ Examples:
     if (accumulatedLines.length > 0) {
         accumulatedLines.push(line);
         const script = accumulatedLines.join('\n');
+        
+        // Check if line ends with backslash - if so, continue accumulating
+        if (endsWithBackslash(line)) {
+            // Still in continuation mode, update prompt
+            if (!rp.currentThread) {
+                rl.setPrompt(`... `);
+            } else {
+                const threadId = rp.currentThread.id;
+                const currentModule = rp.currentThread.getCurrentModule();
+                if (currentModule) {
+                    rl.setPrompt(`[${threadId}]@[${currentModule}]... `);
+                } else {
+                    rl.setPrompt(`[${threadId}]... `);
+                }
+            }
+            return;
+        }
         
         // Check if the block is now complete using the built-in method
         let needsMore;
@@ -205,6 +234,23 @@ Examples:
             }
         }
         
+        return;
+    }
+    
+    // Check if this line ends with backslash - if so, enter continuation mode
+    if (endsWithBackslash(line)) {
+        accumulatedLines = [line];
+        if (!rp.currentThread) {
+            rl.setPrompt(`... `);
+        } else {
+            const threadId = rp.currentThread.id;
+            const currentModule = rp.currentThread.getCurrentModule();
+            if (currentModule) {
+                rl.setPrompt(`[${threadId}]@[${currentModule}]... `);
+            } else {
+                rl.setPrompt(`[${threadId}]... `);
+            }
+        }
         return;
     }
     
