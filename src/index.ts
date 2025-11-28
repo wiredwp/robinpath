@@ -49,6 +49,7 @@ interface Frame {
     lastValue: Value;
     isFunctionFrame?: boolean; // True if this frame is from a function (def/enddef), false/undefined if from subexpression
     forgotten?: Set<string>; // Names of variables/functions forgotten in this scope
+    isIsolatedScope?: boolean; // True if this frame is from a scope with parameters (isolated, no parent access)
 }
 
 export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
@@ -161,6 +162,7 @@ interface DefineFunction {
 
 interface ScopeBlock {
     type: 'scope';
+    paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
 }
 
@@ -1372,6 +1374,31 @@ class Parser {
     }
 
     private parseScope(): ScopeBlock {
+        const line = this.lines[this.currentLine].trim();
+        const tokens = Lexer.tokenize(line);
+        
+        // Parse parameter names (optional): scope $a $b
+        const paramNames: string[] = [];
+        
+        // Start from token index 1 (after "scope")
+        for (let i = 1; i < tokens.length; i++) {
+            const token = tokens[i];
+            
+            // Parameter names must be variables (e.g., $a, $b, $c)
+            if (Lexer.isVariable(token) && !Lexer.isPositionalParam(token) && !Lexer.isLastValue(token)) {
+                const { name: paramName } = Lexer.parseVariablePath(token);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    paramNames.push(paramName);
+                } else {
+                    // Invalid parameter name - stop parsing parameters
+                    break;
+                }
+            } else {
+                // Not a valid parameter name - stop parsing parameters
+                break;
+            }
+        }
+        
         this.currentLine++;
 
         const body: Statement[] = [];
@@ -1417,6 +1444,11 @@ class Parser {
             throw this.createError('missing endscope', this.currentLine);
         }
 
+        // If parameters are declared, include them in the scope block
+        if (paramNames.length > 0) {
+            return { type: 'scope', paramNames, body };
+        }
+        
         return { type: 'scope', body };
     }
 
@@ -2258,6 +2290,57 @@ class ExpressionEvaluator {
         if (this.frame.forgotten && this.frame.forgotten.has(name)) {
             // Variable is forgotten in this scope - return null (as if it doesn't exist)
             return null;
+        }
+        
+        // If this is an isolated scope (has parameters), only check locals
+        // Don't access parent scopes or globals
+        if (this.frame.isIsolatedScope) {
+            let baseValue: Value;
+            
+            // If name is empty, it means last value ($) with attributes
+            if (name === '') {
+                baseValue = this.frame.lastValue;
+            } else {
+                // Only check locals in isolated scope
+                if (this.frame.locals.has(name)) {
+                    baseValue = this.frame.locals.get(name)!;
+                } else {
+                    return null; // Variable not found in isolated scope
+                }
+            }
+            
+            // If no path, return the base value
+            if (!path || path.length === 0) {
+                return baseValue;
+            }
+            
+            // Traverse the path segments
+            let current: any = baseValue;
+            for (let i = 0; i < path.length; i++) {
+                const segment = path[i];
+                
+                if (segment.type === 'property') {
+                    // Property access: .propertyName
+                    if (current === null || current === undefined) {
+                        return null;
+                    }
+                    if (typeof current !== 'object') {
+                        return null;
+                    }
+                    current = current[segment.name];
+                } else if (segment.type === 'index') {
+                    // Array index access: [index]
+                    if (!Array.isArray(current)) {
+                        return null;
+                    }
+                    if (segment.index < 0 || segment.index >= current.length) {
+                        return null;
+                    }
+                    current = current[segment.index];
+                }
+            }
+            
+            return current;
         }
         
         // If name is empty, it means last value ($) with attributes
@@ -3517,13 +3600,24 @@ Examples:
         const parentFrame = this.getCurrentFrame();
         const originalLastValue = parentFrame.lastValue; // Preserve parent's $
         
-        // Create a new frame with function-like scoping (isFunctionFrame: true)
-        // This means variables created inside stay local to the scope
+        // If parameters are declared, create an isolated scope (no parent variable access)
+        // Otherwise, create a scope that inherits from parent (current behavior)
+        const isIsolated = scope.paramNames && scope.paramNames.length > 0;
+        
         const frame: Frame = {
             locals: new Map(),
             lastValue: parentFrame.lastValue, // Start with parent's $ (will be overwritten)
-            isFunctionFrame: true // Scope uses function-like scoping rules
+            isFunctionFrame: true, // Scope uses function-like scoping rules
+            isIsolatedScope: isIsolated // Mark as isolated if parameters are declared
         };
+
+        // If scope has parameters, initialize them (they'll be null by default)
+        // In the future, these could be set by calling the scope with arguments
+        if (scope.paramNames) {
+            for (const paramName of scope.paramNames) {
+                frame.locals.set(paramName, null);
+            }
+        }
 
         this.callStack.push(frame);
 
@@ -3689,6 +3783,57 @@ Examples:
             return null;
         }
         
+        // If this is an isolated scope (has parameters), only check locals
+        // Don't access parent scopes or globals
+        if (frame.isIsolatedScope) {
+            let baseValue: Value;
+            
+            // If name is empty, it means last value ($) with attributes
+            if (name === '') {
+                baseValue = frame.lastValue;
+            } else {
+                // Only check locals in isolated scope
+                if (frame.locals.has(name)) {
+                    baseValue = frame.locals.get(name)!;
+                } else {
+                    return null; // Variable not found in isolated scope
+                }
+            }
+            
+            // If no path, return the base value
+            if (!path || path.length === 0) {
+                return baseValue;
+            }
+            
+            // Traverse the path segments
+            let current: any = baseValue;
+            for (let i = 0; i < path.length; i++) {
+                const segment = path[i];
+                
+                if (segment.type === 'property') {
+                    // Property access: .propertyName
+                    if (current === null || current === undefined) {
+                        return null;
+                    }
+                    if (typeof current !== 'object') {
+                        return null;
+                    }
+                    current = current[segment.name];
+                } else if (segment.type === 'index') {
+                    // Array index access: [index]
+                    if (!Array.isArray(current)) {
+                        return null;
+                    }
+                    if (segment.index < 0 || segment.index >= current.length) {
+                        return null;
+                    }
+                    current = current[segment.index];
+                }
+            }
+            
+            return current;
+        }
+        
         // Variable resolution follows JavaScript scoping rules:
         // 1. Check current frame's locals first (function parameters and local variables)
         // 2. If not found in locals, check globals (outer scope)
@@ -3749,11 +3894,23 @@ Examples:
     private setVariable(name: string, value: Value): void {
         const currentFrame = this.getCurrentFrame();
         const isFunctionFrame = currentFrame.isFunctionFrame === true;
+        const isIsolatedScope = currentFrame.isIsolatedScope === true;
+        
+        // If this is an isolated scope, only set variables in the current frame
+        // Don't modify parent scopes or globals
+        if (isIsolatedScope) {
+            currentFrame.locals.set(name, value);
+            return;
+        }
         
         // Check if variable exists in parent scopes (walking up the call stack)
         // This allows subexpressions to modify parent scope variables
         for (let i = this.callStack.length - 2; i >= 0; i--) {
             const parentFrame = this.callStack[i];
+            // Skip isolated scopes when walking up the call stack
+            if (parentFrame.isIsolatedScope) {
+                continue;
+            }
             if (parentFrame.locals.has(name)) {
                 // Variable exists in parent frame - modify it
                 parentFrame.locals.set(name, value);
@@ -3789,6 +3946,7 @@ Examples:
      */
     private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value): void {
             const frame = this.getCurrentFrame();
+            const isIsolatedScope = frame.isIsolatedScope === true;
         
         // Get the base variable value
         let baseValue: Value;
@@ -3806,46 +3964,72 @@ Examples:
                 frame.lastValue = baseValue;
             }
         } else {
-            // Check locals first (function scope)
-            if (frame.locals.has(name)) {
-                baseValue = frame.locals.get(name)!;
-            } else if (this.environment.variables.has(name)) {
-                // Check globals (outer scope)
-                baseValue = this.environment.variables.get(name)!;
-            } else {
-                // Variable doesn't exist - create it as an object or array based on first path segment
-                if (path[0].type === 'index') {
-                    baseValue = [];
+            // If this is an isolated scope, only check and create variables in locals
+            if (isIsolatedScope) {
+                if (frame.locals.has(name)) {
+                    baseValue = frame.locals.get(name)!;
                 } else {
-                    baseValue = {};
+                    // Variable doesn't exist - create it as an object or array based on first path segment
+                    if (path[0].type === 'index') {
+                        baseValue = [];
+                    } else {
+                        baseValue = {};
+                    }
+                    frame.locals.set(name, baseValue);
                 }
-                // Set it in the appropriate scope
-                if (this.callStack.length === 1) {
-                    this.environment.variables.set(name, baseValue);
+                
+                // If variable exists but is a primitive, convert it to object/array
+                if (baseValue !== null && baseValue !== undefined && typeof baseValue !== 'object') {
+                    // Convert primitive to object or array based on first path segment
+                    if (path[0].type === 'index') {
+                        baseValue = [];
+                    } else {
+                        baseValue = {};
+                    }
+                    frame.locals.set(name, baseValue);
+                }
+            } else {
+                // Check locals first (function scope)
+                if (frame.locals.has(name)) {
+                    baseValue = frame.locals.get(name)!;
+                } else if (this.environment.variables.has(name)) {
+                    // Check globals (outer scope)
+                    baseValue = this.environment.variables.get(name)!;
                 } else {
-                    const currentFrame = this.getCurrentFrame();
-                    const isFunctionFrame = currentFrame.isFunctionFrame === true;
-                    if (isFunctionFrame) {
-                        currentFrame.locals.set(name, baseValue);
+                    // Variable doesn't exist - create it as an object or array based on first path segment
+                    if (path[0].type === 'index') {
+                        baseValue = [];
+                    } else {
+                        baseValue = {};
+                    }
+                    // Set it in the appropriate scope
+                    if (this.callStack.length === 1) {
+                        this.environment.variables.set(name, baseValue);
+                    } else {
+                        const currentFrame = this.getCurrentFrame();
+                        const isFunctionFrame = currentFrame.isFunctionFrame === true;
+                        if (isFunctionFrame) {
+                            currentFrame.locals.set(name, baseValue);
+                        } else {
+                            this.environment.variables.set(name, baseValue);
+                        }
+                    }
+                }
+                
+                // If variable exists but is a primitive, convert it to object/array
+                if (baseValue !== null && baseValue !== undefined && typeof baseValue !== 'object') {
+                    // Convert primitive to object or array based on first path segment
+                    if (path[0].type === 'index') {
+                        baseValue = [];
+                    } else {
+                        baseValue = {};
+                    }
+                    // Update the variable in the appropriate scope
+                    if (frame.locals.has(name)) {
+                        frame.locals.set(name, baseValue);
                     } else {
                         this.environment.variables.set(name, baseValue);
                     }
-                }
-            }
-            
-            // If variable exists but is a primitive, convert it to object/array
-            if (baseValue !== null && baseValue !== undefined && typeof baseValue !== 'object') {
-                // Convert primitive to object or array based on first path segment
-                if (path[0].type === 'index') {
-                    baseValue = [];
-                } else {
-                    baseValue = {};
-                }
-                // Update the variable in the appropriate scope
-                if (frame.locals.has(name)) {
-                    frame.locals.set(name, baseValue);
-                } else {
-                    this.environment.variables.set(name, baseValue);
                 }
             }
         }

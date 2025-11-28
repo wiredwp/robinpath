@@ -686,6 +686,85 @@ The `forget` command hides a variable or function **only in the current scope**:
 - Child scopes can still access forgotten items from parent scopes
 - Useful for temporarily hiding variables or functions to avoid name conflicts
 
+**`getType` - Get the type of a variable:**
+```robinpath
+# Get type of different variables
+$str = "hello"
+getType $str      # Returns "string"
+
+$num = 42
+getType $num      # Returns "number"
+
+$bool = true
+getType $bool     # Returns "boolean"
+
+$nullVar = null
+getType $nullVar  # Returns "null"
+
+$arr = range 1 5
+getType $arr      # Returns "array"
+
+obj '{name: "John"}'
+$obj = $
+getType $obj      # Returns "object"
+```
+
+The `getType` command returns the type of a variable as a string. Possible return values:
+- `"string"` - String values
+- `"number"` - Numeric values
+- `"boolean"` - Boolean values (true/false)
+- `"null"` - Null values
+- `"array"` - Array values
+- `"object"` - Object values (including empty objects)
+- `"undefined"` - Undefined values (rare in RobinPath)
+
+**Isolated Scopes with Parameters:**
+Scopes can be declared with parameters to create isolated execution contexts that don't inherit from parent scopes:
+
+```robinpath
+# Regular scope (inherits from parent)
+$parentVar = 100
+scope
+  log $parentVar  # Prints 100 (can access parent)
+  $localVar = 200
+endscope
+
+# Isolated scope with parameters (no parent access)
+$outerVar = 300
+scope $a $b
+  log $outerVar  # Prints null (cannot access parent)
+  log $a         # Prints null (parameter, defaults to null)
+  log $b         # Prints null (parameter, defaults to null)
+  $localVar = 400
+  log $localVar  # Prints 400 (local variable works)
+endscope
+log $outerVar    # Prints 300 (unchanged)
+
+# Isolated scope with multiple parameters
+scope $x $y $z
+  log $x         # Prints null (first parameter)
+  log $y         # Prints null (second parameter)
+  log $z         # Prints null (third parameter)
+  $local = 500
+endscope
+
+# Nested isolated scopes
+scope $x
+  log $x         # Prints null (parameter)
+  scope $y
+    log $x       # Prints null (cannot access outer scope parameter)
+    log $y       # Prints null (own parameter)
+  endscope
+endscope
+```
+
+When a scope is declared with parameters:
+- The scope is **isolated** - it cannot access variables from parent scopes or globals
+- Only the declared parameters and variables created inside the scope are accessible
+- Parameters default to `null` if not provided
+- Variables created inside an isolated scope don't leak to parent scopes
+- Useful for creating clean, isolated execution contexts
+
 ### Comments
 
 Lines starting with `#` are comments:

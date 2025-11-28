@@ -2047,7 +2047,8 @@ $emptyMeta = $
 test.assertType $emptyMeta "object" "getMeta for variable with no metadata should return empty object"
 clear
 scope
-  keyLength $emptyMeta
+  keys $emptyMeta
+  array.length $
   test.assertEqual $ 0 "getMeta for variable with no metadata should return empty object"
 endscope
 
@@ -2061,7 +2062,8 @@ $emptyfuncmeta = $
 test.assertType $emptyfuncmeta "object" "getmeta for function should return an object"
 clear
 scope
-  keyLength $emptyFuncMeta
+  keys $emptyFuncMeta
+  array.length $
   test.assertEqual $ 0 "getMeta for function with no metadata should return empty object"
 endscope
 
@@ -2310,6 +2312,185 @@ scope
 endscope
 
 log "Test 44 - forget command: All passed"
+
+# Test 45: getType command
+log "Test 45 - getType command"
+
+# Test 45a: getType for string
+$strVar = "hello"
+clear
+scope
+  getType $strVar
+  test.assertEqual $ "string" "getType for string failed"
+endscope
+
+# Test 45b: getType for number
+$numVar = 42
+clear
+scope
+  getType $numVar
+  test.assertEqual $ "number" "getType for number failed"
+endscope
+
+# Test 45c: getType for boolean
+$boolVar = true
+clear
+scope
+  getType $boolVar
+  test.assertEqual $ "boolean" "getType for boolean failed"
+endscope
+
+$boolVar2 = false
+clear
+scope
+  getType $boolVar2
+  test.assertEqual $ "boolean" "getType for false boolean failed"
+endscope
+
+# Test 45d: getType for null
+$nullVar = null
+clear
+scope
+  getType $nullVar
+  test.assertEqual $ "null" "getType for null failed"
+endscope
+
+# Test 45e: getType for array
+$arrVar = range 1 5
+clear
+scope
+  getType $arrVar
+  test.assertEqual $ "array" "getType for array failed"
+endscope
+
+array 1 2 3
+$arrVar2 = $
+clear
+scope
+  getType $arrVar2
+  test.assertEqual $ "array" "getType for array created with array command failed"
+endscope
+
+# Test 45f: getType for object
+obj '{name: "John", age: 30}'
+$objVar = $
+clear
+scope
+  getType $objVar
+  test.assertEqual $ "object" "getType for object failed"
+endscope
+
+json.parse '{"key": "value"}'
+$objVar2 = $
+clear
+scope
+  getType $objVar2
+  test.assertEqual $ "object" "getType for object from json.parse failed"
+endscope
+
+# Test 45g: getType for empty object
+obj
+$emptyObj = $
+clear
+scope
+  getType $emptyObj
+  test.assertEqual $ "object" "getType for empty object failed"
+endscope
+
+# Test 45h: getType for empty array
+array
+$emptyArr = $
+clear
+scope
+  getType $emptyArr
+  test.assertEqual $ "array" "getType for empty array failed"
+endscope
+
+log "Test 45 - getType command: All passed"
+
+# Test 46: Isolated scopes with parameters
+log "Test 46 - Isolated scopes with parameters"
+
+# Test 46a: Scope without parameters inherits from parent
+$parentVar = 100
+clear
+scope
+  test.assertEqual $parentVar 100 "Scope without parameters should access parent variables"
+  $localVar = 200
+  test.assertEqual $localVar 200 "Scope without parameters should allow local variables"
+endscope
+test.assertEqual $parentVar 100 "Parent variable should be unchanged after scope"
+
+# Test 46b: Scope with parameters is isolated
+$outerVar = 300
+clear
+scope $a
+  # Should not be able to access $outerVar
+  test.assertEqual $outerVar null "Isolated scope should not access parent variables"
+  test.assertEqual $a null "Parameter should be accessible (defaults to null)"
+  $localVar = 400
+  test.assertEqual $localVar 400 "Isolated scope should allow local variables"
+endscope
+test.assertEqual $outerVar 300 "Parent variable should be unchanged after isolated scope"
+
+# Test 46c: Scope with multiple parameters
+$globalVar = 500
+clear
+scope $x $y
+  test.assertEqual $globalVar null "Isolated scope with multiple params should not access parent"
+  test.assertEqual $x null "First parameter should be accessible"
+  test.assertEqual $y null "Second parameter should be accessible"
+  $z = 600
+  test.assertEqual $z 600 "Local variable should work in isolated scope"
+endscope
+
+# Test 46d: Scope with multiple parameters
+$anotherVar = 700
+clear
+scope $a $b $c
+  test.assertEqual $anotherVar null "Isolated scope with multiple params should not access parent"
+  test.assertEqual $a null "First parameter should be accessible"
+  test.assertEqual $b null "Second parameter should be accessible"
+  test.assertEqual $c null "Third parameter should be accessible"
+  $localVar = 800
+  test.assertEqual $localVar 800 "Local variable should work in isolated scope"
+endscope
+
+# Test 46e: Nested isolated scopes
+$nestedOuter = 800
+clear
+scope $a
+  test.assertEqual $nestedOuter null "Outer isolated scope should not access parent"
+  test.assertEqual $a null "Parameter in outer scope should be accessible"
+  clear
+  scope $b
+    test.assertEqual $nestedOuter null "Inner isolated scope should not access grandparent"
+    test.assertEqual $a null "Inner isolated scope should not access outer scope parameter"
+    test.assertEqual $b null "Parameter in inner scope should be accessible"
+    $innerVar = 900
+    test.assertEqual $innerVar 900 "Inner scope local variable should work"
+  endscope
+  test.assertEqual $a null "Outer scope parameter should still be accessible"
+endscope
+
+# Test 46f: Variables created in isolated scope don't leak to parent
+clear
+scope $x
+  $isolatedVar = 1000
+  test.assertEqual $isolatedVar 1000 "Variable in isolated scope should work"
+endscope
+test.assertEqual $isolatedVar null "Variable from isolated scope should not be accessible in parent"
+
+# Test 46g: Isolated scope can use declared parameters
+clear
+scope $value
+  assign $value 42
+  test.assertEqual $value 42 "Isolated scope should be able to set parameter values"
+  math.add $value 8
+  test.assertEqual $ 50 "Isolated scope should be able to use parameters in operations"
+endscope
+
+log "Test 46 - Isolated scopes with parameters: All passed"
 
 log "All tests completed!"
 
