@@ -439,6 +439,65 @@ log $name $age
 log "Result:" $(add 5 5)
 ```
 
+**`obj` - Create objects using JSON5 syntax:**
+```robinpath
+# Create empty object
+obj
+$empty = $
+
+# Create object with JSON5 syntax (unquoted keys, trailing commas allowed)
+obj '{name: "John", age: 30}'
+$user = $
+
+# Nested objects and arrays
+obj '{nested: {key: "value"}, items: [1, 2, 3]}'
+$data = $
+
+# JSON5 features: unquoted keys, single quotes, trailing commas
+obj '{unquoted: "works", singleQuotes: "also works", trailing: true,}'
+$config = $
+
+# Access properties
+log $user.name    # Prints "John"
+log $user.age     # Prints 30
+log $data.nested.key  # Prints "value"
+log $data.items[0]    # Prints 1
+```
+
+The `obj` command uses JSON5 syntax, which is more flexible than standard JSON:
+- Keys don't need quotes (unless they contain special characters)
+- Single quotes are allowed for strings
+- Trailing commas are allowed
+- Comments are supported (though not shown in examples above)
+
+**`array` - Create arrays from arguments:**
+```robinpath
+# Create empty array
+array
+$empty = $
+
+# Create array with elements
+array 1 2 3
+$numbers = $
+
+# Mixed types
+array "hello" "world" 42 true
+$mixed = $
+
+# Access elements
+log $numbers[0]    # Prints 1
+log $numbers[1]    # Prints 2
+log $mixed[0]      # Prints "hello"
+log $mixed[2]      # Prints 42
+
+# Use in expressions
+array 10 20 30
+$values = $
+math.add $values[0] $values[1]  # Adds 10 + 20 = 30
+```
+
+The `array` command creates an array from all its arguments. If called without arguments, it returns an empty array `[]`.
+
 **`assign` - Assign a value to a variable (with optional fallback):**
 ```robinpath
 # Basic assignment
@@ -659,8 +718,13 @@ string.toUpperCase "world"
 The Object module provides object manipulation functions and is available globally (no `use` command needed):
 
 ```robinpath
-json.parse '{"name": "John", "age": 30}'
+# Create objects using obj command (JSON5 syntax)
+obj '{name: "John", age: 30}'
 $user = $
+
+# Or use json.parse for standard JSON
+json.parse '{"name": "John", "age": 30}'
+$user2 = $
 
 # Get a value using dot-notation path
 get $user "name"          # Returns "John"
@@ -680,9 +744,9 @@ values $user              # Returns ["John", 30, "NYC"]
 entries $user             # Returns [["name", "John"], ["age", 30], ["city", "NYC"]]
 
 # Merge objects
-json.parse '{"a": 1}'
+obj '{a: 1}'
 $obj1 = $
-json.parse '{"b": 2}'
+obj '{b: 2}'
 $obj2 = $
 merge $obj1 $obj2         # Returns {a: 1, b: 2}
 
@@ -1163,8 +1227,13 @@ endfor
 ### Working with Objects and Attribute Access
 
 ```robinpath
-json.parse '{"name": "John", "age": 30, "address": {"city": "NYC"}, "scores": [85, 90, 95]}'
+# Create objects using obj command (JSON5 syntax - more flexible)
+obj '{name: "John", age: 30, address: {city: "NYC"}, scores: [85, 90, 95]}'
 $user = $
+
+# Or use json.parse for standard JSON
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC"}, "scores": [85, 90, 95]}'
+$user2 = $
 
 # Access properties using dot notation
 log "Name:" $user.name
@@ -1183,6 +1252,11 @@ endif
 # Use in calculations
 math.add $user.scores[0] $user.scores[1]
 log "Sum of first two scores:" $
+
+# Create objects with obj command (JSON5 features)
+obj '{unquoted: "keys work", trailing: "comma", allowed: true,}'
+$config = $
+log $config.unquoted  # Prints "keys work"
 ```
 
 ### Function with Return Value

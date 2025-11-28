@@ -248,6 +248,68 @@ json.isValid $jsonStr
 test.assertTrue $ "Json.isValid failed"
 log "Test 19 - Json module: All passed"
 
+# Test 19a: obj command tests
+obj
+$emptyObj = $
+test.assertType $emptyObj "object" "obj without args failed"
+keys $emptyObj
+$emptyKeys = $
+array.length $emptyKeys
+test.assertEqual $ 0 "obj empty object keys failed"
+
+obj '{name: "John", age: 30}'
+$objCreated = $
+test.assertEqual $objCreated.name "John" "obj command basic creation failed"
+test.assertEqual $objCreated.age 30 "obj command with number failed"
+
+obj '{nested: {key: "value"}, array: [1, 2, 3]}'
+$complexObj = $
+test.assertEqual $complexObj.nested.key "value" "obj command nested object failed"
+test.assertEqual $complexObj.array[0] 1 "obj command with array failed"
+
+obj '{unquoted: "works", singleQuotes: "also works", numbers: 42, bool: true}'
+$json5Obj = $
+test.assertEqual $json5Obj.unquoted "works" "obj command unquoted keys failed"
+test.assertEqual $json5Obj.singleQuotes "also works" "obj command single quotes failed"
+test.assertEqual $json5Obj.numbers 42 "obj command number values failed"
+test.assertEqual $json5Obj.bool true "obj command boolean values failed"
+
+obj '{trailing: "comma", allowed: true,}'
+$trailingComma = $
+test.assertEqual $trailingComma.trailing "comma" "obj command trailing comma failed"
+test.assertEqual $trailingComma.allowed true "obj command trailing comma value failed"
+
+log "Test 19a - obj command: All passed"
+
+# Test 19a2: array builtin tests
+array
+$emptyArray = $
+array.length $emptyArray
+test.assertEqual $ 0 "array without args failed"
+
+array 1 2 3
+$arr1 = $
+array.length $arr1
+test.assertEqual $ 3 "array command length failed"
+test.assertEqual $arr1[0] 1 "array command first element failed"
+test.assertEqual $arr1[1] 2 "array command second element failed"
+test.assertEqual $arr1[2] 3 "array command third element failed"
+
+array "hello" "world" 42 true
+$mixedArray = $
+array.length $mixedArray
+test.assertEqual $ 4 "array command mixed types length failed"
+test.assertEqual $mixedArray[0] "hello" "array command string element failed"
+test.assertEqual $mixedArray[2] 42 "array command number element failed"
+test.assertEqual $mixedArray[3] true "array command boolean element failed"
+
+array 1 2 3 4 5
+$numbers = $
+math.add $numbers[0] $numbers[1]
+test.assertEqual $ 3 "array command in expressions failed"
+
+log "Test 19a2 - array command: All passed"
+
 # Test 19b: Object module tests (get, set, keys, values, entries, merge, clone)
 $testObj = $parsed
 get $testObj "name"

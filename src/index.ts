@@ -769,7 +769,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: null, // Will be resolved at execution time from frame.lastValue
                         isLastValue: true
@@ -779,7 +779,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: true 
                     };
@@ -788,7 +788,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: false 
                     };
@@ -797,7 +797,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: null 
                     };
@@ -834,7 +834,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: parseFloat(token) 
                     };
@@ -842,7 +842,7 @@ class Parser {
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: Lexer.parseString(token) 
                     };
@@ -892,8 +892,8 @@ class Parser {
                 if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(targetVar)) {
                     // Simple variable - shorthand assignment
                     const targetName = targetVar.slice(1);
-                    this.currentLine++;
-                    return { type: 'shorthand', targetName };
+                this.currentLine++;
+                return { type: 'shorthand', targetName };
                 } else {
                     // Variable with path - just a reference, treat as no-op (or could be used in expressions)
                     // For now, we'll treat it as a no-op since we can't assign to attributes
@@ -1304,35 +1304,35 @@ class Parser {
                 if (Lexer.isNumber(token)) {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: parseFloat(token) 
                     };
                 } else if (Lexer.isString(token)) {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: Lexer.parseString(token) 
                     };
                 } else if (token === 'true') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: true 
                     };
                 } else if (token === 'false') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: false 
                     };
                 } else if (token === 'null') {
                     finalCommand = { 
                         type: 'assignment', 
-                        targetName,
+                        targetName, 
                         targetPath,
                         literalValue: null 
                     };
@@ -1356,10 +1356,10 @@ class Parser {
                 } else {
                     const returnValue = this.parseReturnValue(returnValueTokens);
                     finalCommand = { type: 'return', value: returnValue };
-                }
-            } else {
-                // Not an assignment, parse as regular command
-                finalCommand = this.parseCommandFromTokens(commandTokens);
+            }
+        } else {
+            // Not an assignment, parse as regular command
+            finalCommand = this.parseCommandFromTokens(commandTokens);
             }
         }
 
@@ -1637,7 +1637,7 @@ class ExpressionEvaluator {
             try {
                 const { name, path } = Lexer.parseVariablePath('$' + varPath);
                 const val = this.resolveVariable(name, path);
-                return this.valueToJS(val);
+            return this.valueToJS(val);
             } catch {
                 // If parsing fails, return the original match
                 return _match;
@@ -1831,14 +1831,14 @@ class ExpressionEvaluator {
         if (name === '') {
             baseValue = this.frame.lastValue;
         } else {
-            // Check locals first
-            if (this.frame.locals.has(name)) {
+        // Check locals first
+        if (this.frame.locals.has(name)) {
                 baseValue = this.frame.locals.get(name)!;
             } else if (this.globals.variables.has(name)) {
-                // Check globals
+        // Check globals
                 baseValue = this.globals.variables.get(name)!;
             } else {
-                return null;
+        return null;
             }
         }
         
@@ -2439,7 +2439,7 @@ Examples:
             if (varPath && varPath.length > 0) {
                 this.setVariableAtPath(varName, varPath, value);
             } else {
-                this.setVariable(varName, value);
+            this.setVariable(varName, value);
             }
             
             // Restore the last value - assign command should not affect $
@@ -2468,7 +2468,7 @@ Examples:
             if (varPath && varPath.length > 0) {
                 this.setVariableAtPath(varName, varPath, null);
             } else {
-                this.setVariable(varName, null);
+            this.setVariable(varName, null);
             }
             
             // Restore the last value - empty command should not affect $
@@ -2574,8 +2574,8 @@ Examples:
             if (functionName === 'log') {
                 frame.lastValue = previousLastValue;
             } else {
-                // Ensure lastValue is set (even if result is undefined, preserve it)
-                frame.lastValue = result !== undefined ? result : null;
+            // Ensure lastValue is set (even if result is undefined, preserve it)
+            frame.lastValue = result !== undefined ? result : null;
             }
             return;
         }
@@ -2589,7 +2589,7 @@ Examples:
             if (cmd.name === 'log') {
                 frame.lastValue = previousLastValue;
             } else {
-                frame.lastValue = result !== undefined ? result : null;
+            frame.lastValue = result !== undefined ? result : null;
             }
             return;
         }
@@ -2808,8 +2808,8 @@ Examples:
             
             // Execute body
             try {
-                for (const stmt of forLoop.body) {
-                    await this.executeStatement(stmt);
+            for (const stmt of forLoop.body) {
+                await this.executeStatement(stmt);
                 }
             } catch (error) {
                 if (error instanceof BreakException) {
@@ -2931,11 +2931,11 @@ Examples:
         if (name === '') {
             baseValue = frame.lastValue;
         } else {
-            // Check locals first (function scope)
-            if (frame.locals.has(name)) {
+        // Check locals first (function scope)
+        if (frame.locals.has(name)) {
                 baseValue = frame.locals.get(name)!;
             } else if (this.environment.variables.has(name)) {
-                // Check globals (outer scope)
+        // Check globals (outer scope)
                 baseValue = this.environment.variables.get(name)!;
             } else {
                 return null;
@@ -3018,7 +3018,7 @@ Examples:
      * Set a value at an attribute path (e.g., $animal.cat = 5 or $.property = value)
      */
     private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value): void {
-        const frame = this.getCurrentFrame();
+            const frame = this.getCurrentFrame();
         
         // Get the base variable value
         let baseValue: Value;
@@ -3748,9 +3748,9 @@ export class RobinPath {
             return null; // log should not affect the last value
         });
 
-        this.registerBuiltin('json', (args) => {
+        this.registerBuiltin('obj', (args) => {
             if (args.length === 0) {
-                throw new Error('json requires a JSON5 string argument');
+                return {};
             }
             const jsonString = String(args[0]);
             try {
@@ -3759,6 +3759,11 @@ export class RobinPath {
             } catch (error) {
                 throw new Error(`Invalid JSON5: ${error instanceof Error ? error.message : String(error)}`);
             }
+        });
+
+        this.registerBuiltin('array', (args) => {
+            // Return all arguments as an array
+            return [...args];
         });
 
         this.registerBuiltin('range', (args) => {
@@ -3789,14 +3794,14 @@ export class RobinPath {
                 }
             } else {
                 // No step provided: use default behavior (step of 1 or -1)
-                if (start <= end) {
-                    for (let i = start; i <= end; i++) {
-                        result.push(i);
-                    }
-                } else {
-                    // Reverse range
-                    for (let i = start; i >= end; i--) {
-                        result.push(i);
+            if (start <= end) {
+                for (let i = start; i <= end; i++) {
+                    result.push(i);
+                }
+            } else {
+                // Reverse range
+                for (let i = start; i >= end; i--) {
+                    result.push(i);
                     }
                 }
             }
