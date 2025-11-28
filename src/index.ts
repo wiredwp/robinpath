@@ -25,6 +25,7 @@ import ObjectModule from './modules/Object';
 import TimeModule from './modules/Time';
 import RandomModule from './modules/Random';
 import ArrayModule from './modules/Array';
+import FetchModule from './modules/Fetch';
 import TestModule from './modules/Test';
 
 // ============================================================================
@@ -53,6 +54,51 @@ interface Frame {
 }
 
 export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
+
+/**
+ * Utility function to extract named arguments from function call arguments.
+ * Named arguments are passed as the last argument (an object with string keys).
+ * 
+ * @param args The arguments array passed to a BuiltinHandler
+ * @returns An object with `positionalArgs` (Value[]) and `namedArgs` (Record<string, Value>)
+ * 
+ * @example
+ * ```typescript
+ * export const MyFunctions: Record<string, BuiltinHandler> = {
+ *   myFunction: (args) => {
+ *     const { positionalArgs, namedArgs } = extractNamedArgs(args);
+ *     const url = namedArgs.url || positionalArgs[0];
+ *     const body = namedArgs.body || positionalArgs[1];
+ *     // ... use url and body
+ *   }
+ * };
+ * ```
+ */
+export function extractNamedArgs(args: Value[]): { positionalArgs: Value[]; namedArgs: Record<string, Value> } {
+    const positionalArgs: Value[] = [];
+    let namedArgs: Record<string, Value> = {};
+    
+    if (args.length > 0) {
+        const lastArg = args[args.length - 1];
+        if (typeof lastArg === 'object' && lastArg !== null && !Array.isArray(lastArg)) {
+            // Check if it looks like a named args object (has non-numeric keys)
+            const keys = Object.keys(lastArg);
+            const hasNonNumericKeys = keys.some(key => !/^\d+$/.test(key));
+            if (hasNonNumericKeys && keys.length > 0) {
+                // This is a named args object
+                namedArgs = lastArg as Record<string, Value>;
+                positionalArgs.push(...args.slice(0, -1));
+            } else {
+                // Regular object passed as positional arg (or empty object)
+                positionalArgs.push(...args);
+            }
+        } else {
+            positionalArgs.push(...args);
+        }
+    }
+    
+    return { positionalArgs, namedArgs };
+}
 
 // ============================================================================
 // Metadata Types
@@ -988,12 +1034,13 @@ class Parser {
             }
         }
 
-        // Check if this is a parenthesized function call: fn(...)
-        // Look for pattern: identifier followed by '('
-        if (tokens.length >= 2 && tokens[1] === '(') {
+        // Check if this is a parenthesized function call: fn(...) or module.fn(...)
+        // Look for pattern: identifier followed by '(' OR module.identifier followed by '('
+        if ((tokens.length >= 2 && tokens[1] === '(') || 
+            (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(')) {
             // This is a parenthesized call - parse it specially
+            // Note: parseParenthesizedCall already updates this.currentLine via extractParenthesizedContent
             const command = this.parseParenthesizedCall(tokens);
-            this.currentLine++;
             return command;
         }
 
@@ -1124,8 +1171,8 @@ class Parser {
             throw this.createError('unclosed parenthesized function call', startLine);
         }
 
-        // Update currentLine to where we ended
-        this.currentLine = currentLineIndex;
+        // Update currentLine to skip past the line with the closing paren
+        this.currentLine = currentLineIndex + 1;
 
         return content.join('').trim();
     }
@@ -4977,6 +5024,7 @@ export class RobinPath {
         TimeModule,
         RandomModule,
         ArrayModule,
+        FetchModule,
         TestModule
     ];
 

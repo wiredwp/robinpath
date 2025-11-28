@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createServer } from 'http';
 import { RobinPath } from '../dist/index.js';
 
 // Get the directory of the current module
@@ -16,11 +17,142 @@ console.log('Running RobinPath Test Script');
 console.log('='.repeat(60));
 console.log();
 
-// Create interpreter instance
-const rp = new RobinPath();
+// Create a simple HTTP server for fetch tests
+const testServer = createServer((req, res) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const method = req.method;
+    
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+    }
+    
+    // Handle different endpoints
+    if (url.pathname === '/test/get') {
+        if (method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'GET request successful', method: 'GET', path: '/test/get' }));
+        } else {
+            res.writeHead(405);
+            res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+    } else if (url.pathname === '/test/post') {
+        if (method === 'POST') {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    const parsedBody = body ? JSON.parse(body) : {};
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                        message: 'POST request successful', 
+                        method: 'POST', 
+                        path: '/test/post',
+                        receivedBody: parsedBody
+                    }));
+                } catch (e) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                }
+            });
+        } else {
+            res.writeHead(405);
+            res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+    } else if (url.pathname === '/test/put') {
+        if (method === 'PUT') {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    const parsedBody = body ? JSON.parse(body) : {};
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                        message: 'PUT request successful', 
+                        method: 'PUT', 
+                        path: '/test/put',
+                        receivedBody: parsedBody
+                    }));
+                } catch (e) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                }
+            });
+        } else {
+            res.writeHead(405);
+            res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+    } else if (url.pathname === '/test/delete') {
+        if (method === 'DELETE') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'DELETE request successful', method: 'DELETE', path: '/test/delete' }));
+        } else {
+            res.writeHead(405);
+            res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+    } else if (url.pathname === '/test/echo') {
+        // Echo endpoint that returns request info
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const parsedBody = body ? JSON.parse(body) : null;
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 
+                    method: method,
+                    path: url.pathname,
+                    query: Object.fromEntries(url.searchParams),
+                    headers: req.headers,
+                    body: parsedBody
+                }));
+            } catch (e) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 
+                    method: method,
+                    path: url.pathname,
+                    query: Object.fromEntries(url.searchParams),
+                    headers: req.headers,
+                    body: body
+                }));
+            }
+        });
+    } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found', path: url.pathname }));
+    }
+});
+
+// Start the test server and run tests
+const PORT = 3005;
 
 (async () => {
     try {
+        // Start the test server
+        await new Promise((resolve, reject) => {
+            testServer.listen(PORT, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.log(`Test server started on http://localhost:${PORT}`);
+                    resolve();
+                }
+            });
+        });
+        
+        // Create interpreter instance
+        const rp = new RobinPath();
         // Record start time
         const startTime = Date.now();
         
@@ -56,24 +188,26 @@ endif
 `;
         
         const astResult = await thread.getASTWithState(testScriptForAST);
-        
+       
+        /*
         console.log('AST Structure:');
         console.log(JSON.stringify(astResult.ast, null, 2));
-        console.log();
         console.log('Variables:');
         console.log('  Thread:', astResult.variables.thread);
         console.log('  Global:', astResult.variables.global);
         console.log();
         console.log('Last Value ($):', astResult.lastValue);
-        console.log();
+        console.log();        
         console.log('Call Stack:', astResult.callStack.length, 'frame(s)');
         console.log('='.repeat(60));
-        
+        */
+       
         // Test "end" command
         console.log();
         console.log('='.repeat(60));
         console.log('Testing "end" command');
         console.log('='.repeat(60));
+
         
         const endTestScript = `
 log "Before end"
@@ -109,6 +243,14 @@ $afterEnd = 200
         
         console.log('='.repeat(60));
         
+        // Close the test server
+        await new Promise((resolve) => {
+            testServer.close(() => {
+                console.log('Test server closed');
+                resolve();
+            });
+        });
+        
     } catch (error) {
         console.error();
         console.error('='.repeat(60));
@@ -118,6 +260,15 @@ $afterEnd = 200
             console.error(error.stack);
         }
         console.error('='.repeat(60));
+        
+        // Close the test server on error
+        await new Promise((resolve) => {
+            testServer.close(() => {
+                console.log('Test server closed');
+                resolve();
+            });
+        });
+        
         process.exit(1);
     }
 })();
