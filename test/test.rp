@@ -3051,5 +3051,53 @@ endscope
 
 log "Test 47 - Fetch module: All passed"
 
+# Test 48: Def blocks extracted first and stored separately
+log "Test 48 - Def blocks extracted first"
+
+# Test that def blocks are extracted first, so functions can reference each other
+# regardless of order in the code
+
+# After all def blocks are extracted, fn should be callable
+# and it should be able to call fn2 and fn3 even though they're defined after
+clear
+scope
+  fn
+  test.assertEqual $ 30 "Def blocks extracted first - fn should be able to call fn2 and fn3"
+endscope
+
+# Test that fn2 and fn3 are also callable directly
+clear
+scope
+  fn2
+  test.assertEqual $ 10 "Def blocks extracted first - fn2 should be callable"
+endscope
+
+clear
+scope
+  fn3
+  test.assertEqual $ 20 "Def blocks extracted first - fn3 should be callable"
+endscope
+
+
+def fn
+  fn2
+  $result1 = $
+  fn3
+  $result2 = $
+  math.add $result1 $result2
+enddef
+
+def fn2
+  return 10
+enddef
+
+def fn3
+  return 20
+enddef
+
+
+
+log "Test 48 - Def blocks extracted first: All passed"
+
 log "All tests completed!"
 

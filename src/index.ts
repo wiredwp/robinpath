@@ -763,9 +763,120 @@ class Parser {
     }
 
     parse(): Statement[] {
+        // First pass: extract all def/enddef blocks and mark their line numbers
+        const defBlockLines = new Set<number>();
+        const extractedFunctions: DefineFunction[] = [];
+        let scanLine = 0;
+        
+        while (scanLine < this.lines.length) {
+            const line = this.lines[scanLine].trim();
+            
+            // Skip empty lines and comments when scanning for def blocks
+            if (!line || line.startsWith('#')) {
+                scanLine++;
+                continue;
+            }
+            
+            const tokens = Lexer.tokenize(line);
+            if (tokens.length > 0 && tokens[0] === 'def') {
+                // Found a def block - extract it
+                const savedCurrentLine = this.currentLine;
+                this.currentLine = scanLine;
+                const func = this.parseDefine();
+                extractedFunctions.push(func);
+                
+                // Mark all lines in this def block (from def to enddef)
+                const startLine = scanLine;
+                const endLine = this.currentLine - 1; // parseDefine advances past enddef
+                for (let i = startLine; i <= endLine; i++) {
+                    defBlockLines.add(i);
+                }
+                
+                scanLine = this.currentLine;
+                this.currentLine = savedCurrentLine;
+            } else {
+                scanLine++;
+            }
+        }
+        
+        // Extract nested def blocks from function bodies
+        const allExtractedFunctions = [...extractedFunctions];
+        const extractNestedDefs = (statements: Statement[]): void => {
+            for (const stmt of statements) {
+                if (stmt.type === 'define') {
+                    // Found a nested def - extract it and remove from parent body
+                    allExtractedFunctions.push(stmt);
+                    // Note: We'll remove it from the parent body later
+                } else if (stmt.type === 'ifBlock') {
+                    // Check branches for nested defs
+                    if (stmt.thenBranch) extractNestedDefs(stmt.thenBranch);
+                    if (stmt.elseifBranches) {
+                        for (const branch of stmt.elseifBranches) {
+                            extractNestedDefs(branch.body);
+                        }
+                    }
+                    if (stmt.elseBranch) extractNestedDefs(stmt.elseBranch);
+                } else if (stmt.type === 'forLoop') {
+                    if (stmt.body) extractNestedDefs(stmt.body);
+                } else if (stmt.type === 'scope') {
+                    if (stmt.body) extractNestedDefs(stmt.body);
+                }
+            }
+        };
+        
+        // Extract nested defs from already-extracted functions
+        for (const func of extractedFunctions) {
+            extractNestedDefs(func.body);
+        }
+        
+        // Remove nested def statements from function bodies
+        const removeNestedDefs = (statements: Statement[]): Statement[] => {
+            return statements.filter(stmt => stmt.type !== 'define');
+        };
+        
+        for (const func of extractedFunctions) {
+            func.body = removeNestedDefs(func.body);
+            // Also remove nested defs from nested blocks
+            func.body = func.body.map(stmt => {
+                if (stmt.type === 'ifBlock') {
+                    return {
+                        ...stmt,
+                        thenBranch: stmt.thenBranch ? removeNestedDefs(stmt.thenBranch) : undefined,
+                        elseifBranches: stmt.elseifBranches?.map(branch => ({
+                            ...branch,
+                            body: removeNestedDefs(branch.body)
+                        })),
+                        elseBranch: stmt.elseBranch ? removeNestedDefs(stmt.elseBranch) : undefined
+                    };
+                } else if (stmt.type === 'forLoop') {
+                    return {
+                        ...stmt,
+                        body: removeNestedDefs(stmt.body)
+                    };
+                } else if (stmt.type === 'scope') {
+                    return {
+                        ...stmt,
+                        body: removeNestedDefs(stmt.body)
+                    };
+                }
+                return stmt;
+            }) as Statement[];
+        }
+        
+        // Store all extracted functions (including nested ones) for later registration
+        (this as any).extractedFunctions = allExtractedFunctions;
+        
+        // Second pass: parse remaining statements (excluding def blocks)
+        this.currentLine = 0;
         const statements: Statement[] = [];
         
         while (this.currentLine < this.lines.length) {
+            // Skip lines that are part of def blocks
+            if (defBlockLines.has(this.currentLine)) {
+                this.currentLine++;
+                continue;
+            }
+            
             const line = this.lines[this.currentLine].trim();
             
             // Skip empty lines
@@ -793,6 +904,13 @@ class Parser {
         }
 
         return statements;
+    }
+    
+    /**
+     * Get extracted function definitions (def/enddef blocks) that were parsed separately
+     */
+    getExtractedFunctions(): DefineFunction[] {
+        return (this as any).extractedFunctions || [];
     }
 
     private parseStatement(): Statement | null {
@@ -4917,6 +5035,13 @@ export class RobinPathThread {
         const lines = splitIntoLogicalLines(script);
         const parser = new Parser(lines);
         const statements = parser.parse();
+        
+        // Register extracted function definitions first (before executing other statements)
+        const extractedFunctions = parser.getExtractedFunctions();
+        for (const func of extractedFunctions) {
+            this.environment.functions.set(func.name, func);
+        }
+        
         const result = await this.executor.execute(statements);
         return result;
     }
@@ -4929,6 +5054,13 @@ export class RobinPathThread {
         const lines = splitIntoLogicalLines(line);
         const parser = new Parser(lines);
         const statements = parser.parse();
+        
+        // Register extracted function definitions first (before executing other statements)
+        const extractedFunctions = parser.getExtractedFunctions();
+        for (const func of extractedFunctions) {
+            this.environment.functions.set(func.name, func);
+        }
+        
         const result = await this.executor.execute(statements);
         return result;
     }
@@ -4994,6 +5126,30 @@ export class RobinPathThread {
         });
 
         return ast;
+    }
+
+    /**
+     * Get extracted function definitions (def/enddef blocks) from a script
+     * Returns a JSON-serializable array of function definitions
+     * 
+     * Note: This method only parses the script, it does not execute it.
+     */
+    getExtractedFunctions(script: string): any[] {
+        // Parse the script to extract functions
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        parser.parse(); // Parse to extract functions
+        
+        const extractedFunctions = parser.getExtractedFunctions();
+        
+        // Serialize functions
+        return extractedFunctions.map((func) => {
+            return {
+                name: func.name,
+                paramNames: func.paramNames,
+                body: func.body.map((stmt) => this.serializeStatement(stmt))
+            };
+        });
     }
 
     /**
@@ -6001,6 +6157,30 @@ export class RobinPath {
     }
 
     /**
+     * Get extracted function definitions (def/enddef blocks) from a script
+     * Returns a JSON-serializable array of function definitions
+     * 
+     * Note: This method only parses the script, it does not execute it.
+     */
+    getExtractedFunctions(script: string): any[] {
+        // Parse the script to extract functions
+        const lines = splitIntoLogicalLines(script);
+        const parser = new Parser(lines);
+        parser.parse(); // Parse to extract functions
+        
+        const extractedFunctions = parser.getExtractedFunctions();
+        
+        // Serialize functions
+        return extractedFunctions.map((func) => {
+            return {
+                name: func.name,
+                paramNames: func.paramNames,
+                body: func.body.map((stmt) => this.serializeStatement(stmt))
+            };
+        });
+    }
+
+    /**
      * Find the module name for a given function name
      * Returns the module name if found, null otherwise
      */
@@ -6174,6 +6354,12 @@ export class RobinPath {
         const parser = new Parser(lines);
         const statements = parser.parse();
         
+        // Register extracted function definitions first (before executing other statements)
+        const extractedFunctions = parser.getExtractedFunctions();
+        for (const func of extractedFunctions) {
+            this.environment.functions.set(func.name, func);
+        }
+        
         const executor = new Executor(this.environment, null);
         this.lastExecutor = executor;
         const result = await executor.execute(statements);
@@ -6190,6 +6376,12 @@ export class RobinPath {
         const lines = splitIntoLogicalLines(line);
         const parser = new Parser(lines);
         const statements = parser.parse();
+        
+        // Register extracted function definitions first (before executing other statements)
+        const extractedFunctions = parser.getExtractedFunctions();
+        for (const func of extractedFunctions) {
+            this.environment.functions.set(func.name, func);
+        }
         
         if (!this.persistentExecutor) {
             this.persistentExecutor = new Executor(this.environment, null);

@@ -322,6 +322,32 @@ $afterEnd = 200
         
         console.log('='.repeat(60));
         
+        // List all extracted functions from test.rp
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Extracted Functions from test.rp');
+        console.log('='.repeat(60));
+        
+        const functionsRp = new RobinPath();
+        const extractedFunctions = functionsRp.getExtractedFunctions(testScript);
+        
+        if (extractedFunctions.length === 0) {
+            console.log('No functions defined in test.rp');
+        } else {
+            console.log(`Total: ${extractedFunctions.length} function(s)`);
+            
+            // Sort functions alphabetically by name
+            const sortedFunctions = [...extractedFunctions].sort((a, b) => 
+                a.name.localeCompare(b.name)
+            );
+            
+            // Join function names with commas
+            const functionNames = sortedFunctions.map(func => func.name).join(', ');
+            console.log(functionNames);
+        }
+        
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {
