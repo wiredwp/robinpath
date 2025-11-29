@@ -891,7 +891,6 @@ $b = { [$key]: 1 }
 test.assertEqual $b.key 1 "Computed property name in object literal failed"
 
 $num = 42
-log $num
 $arr = [$num, 43]
 test.assertEqual $arr[0] 42 "Variable interpolation in array literal failed"
 test.assertEqual $arr[1] 43 "Variable interpolation in array literal - second element failed"
