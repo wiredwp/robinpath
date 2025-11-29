@@ -5095,8 +5095,48 @@ export class RobinPathThread {
     }
 
     /**
-     * Serialize a statement to JSON with execution state
+     * Find the module name for a given function name
+     * Returns the module name if found, null otherwise
      */
+    private findModuleName(functionName: string): string | null {
+        // If the function name contains a dot, extract the module name
+        if (functionName.includes('.')) {
+            const parts = functionName.split('.');
+            return parts[0] || null;
+        }
+
+        // Check if currentModule is set
+        if (this.environment.currentModule) {
+            // Verify that the function exists in this module
+            const fullName = `${this.environment.currentModule}.${functionName}`;
+            if (this.environment.builtins.has(fullName) || this.environment.metadata.has(fullName)) {
+                return this.environment.currentModule;
+            }
+        }
+
+        // Search through builtins and metadata to find which module this function belongs to
+        for (const [name] of this.environment.builtins.entries()) {
+            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
+                const parts = name.split('.');
+                return parts[0] || null;
+            }
+        }
+
+        for (const [name] of this.environment.metadata.entries()) {
+            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
+                const parts = name.split('.');
+                return parts[0] || null;
+            }
+        }
+
+        // Check if it's a global builtin (no module)
+        if (this.environment.builtins.has(functionName) || this.environment.metadata.has(functionName)) {
+            return null; // Global function, no module
+        }
+
+        return null;
+    }
+
     private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }): any {
         const base: any = {
             type: stmt.type,
@@ -5105,9 +5145,11 @@ export class RobinPathThread {
 
         switch (stmt.type) {
             case 'command':
+                const moduleName = this.findModuleName(stmt.name);
                 return {
                     ...base,
                     name: stmt.name,
+                    module: moduleName,
                     args: stmt.args.map(arg => this.serializeArg(arg))
                 };
             case 'assignment':
@@ -5959,6 +6001,49 @@ export class RobinPath {
     }
 
     /**
+     * Find the module name for a given function name
+     * Returns the module name if found, null otherwise
+     */
+    private findModuleName(functionName: string): string | null {
+        // If the function name contains a dot, extract the module name
+        if (functionName.includes('.')) {
+            const parts = functionName.split('.');
+            return parts[0] || null;
+        }
+
+        // Check if currentModule is set
+        if (this.environment.currentModule) {
+            // Verify that the function exists in this module
+            const fullName = `${this.environment.currentModule}.${functionName}`;
+            if (this.environment.builtins.has(fullName) || this.environment.metadata.has(fullName)) {
+                return this.environment.currentModule;
+            }
+        }
+
+        // Search through builtins and metadata to find which module this function belongs to
+        for (const [name] of this.environment.builtins.entries()) {
+            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
+                const parts = name.split('.');
+                return parts[0] || null;
+            }
+        }
+
+        for (const [name] of this.environment.metadata.entries()) {
+            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
+                const parts = name.split('.');
+                return parts[0] || null;
+            }
+        }
+
+        // Check if it's a global builtin (no module)
+        if (this.environment.builtins.has(functionName) || this.environment.metadata.has(functionName)) {
+            return null; // Global function, no module
+        }
+
+        return null;
+    }
+
+    /**
      * Serialize a statement to JSON without execution state
      */
     private serializeStatement(stmt: Statement): any {
@@ -5969,9 +6054,11 @@ export class RobinPath {
 
         switch (stmt.type) {
             case 'command':
+                const moduleName = this.findModuleName(stmt.name);
                 return {
                     ...base,
                     name: stmt.name,
+                    module: moduleName,
                     args: stmt.args.map(arg => this.serializeArg(arg))
                 };
             case 'assignment':
