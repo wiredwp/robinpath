@@ -153,6 +153,8 @@ type Arg =
     | { type: 'literal'; value: Value }
     | { type: 'number'; value: number }
     | { type: 'string'; value: string }
+    | { type: 'object'; code: string }    // { ... } object literal
+    | { type: 'array'; code: string }     // [ ... ] array literal
     | { type: 'namedArgs'; args: Record<string, Arg> }; // Named arguments object (key=value pairs)
 
 interface CommandCall {
@@ -968,8 +970,8 @@ class Parser {
                 };
             }
             
-            // Check if the assignment value is a subexpression $(...)
-            // We need to check the original line because tokenization may have split $() incorrectly
+            // Check if the assignment value is a subexpression $(...), object {...}, or array [...]
+            // We need to check the original line because tokenization may have split these incorrectly
             const line = this.lines[this.currentLine];
             const equalsIndex = line.indexOf('=');
             if (equalsIndex !== -1) {
@@ -994,12 +996,67 @@ class Parser {
                         }
                     };
                 }
+                // Check if we're at an object literal {
+                if (pos < line.length && line[pos] === '{') {
+                    const objCode = this.extractObjectLiteral(line, pos);
+                    this.currentLine++;
+                    return {
+                        type: 'assignment',
+                        targetName,
+                        targetPath,
+                        command: {
+                            type: 'command',
+                            name: '_object',
+                            args: [{ type: 'object', code: objCode.code }]
+                        }
+                    };
+                }
+                // Check if we're at an array literal [
+                if (pos < line.length && line[pos] === '[') {
+                    const arrCode = this.extractArrayLiteral(line, pos);
+                    this.currentLine++;
+                    return {
+                        type: 'assignment',
+                        targetName,
+                        targetPath,
+                        command: {
+                            type: 'command',
+                            name: '_array',
+                            args: [{ type: 'array', code: arrCode.code }]
+                        }
+                    };
+                }
             }
             
             // Otherwise, treat as command
             const command = this.parseCommandFromTokens(restTokens);
             this.currentLine++;
             return { type: 'assignment', targetName, targetPath, command };
+        }
+
+        // Check if line starts with object or array literal
+        const currentLine = this.lines[this.currentLine].trim();
+        if (currentLine.startsWith('{')) {
+            const objCode = this.extractObjectLiteral(this.lines[this.currentLine], this.lines[this.currentLine].indexOf('{'));
+            // extractObjectLiteral sets this.currentLine to the line containing the closing brace
+            // We need to move past that line
+            this.currentLine++;
+            return {
+                type: 'command',
+                name: '_object', // Special internal command for object literals
+                args: [{ type: 'object', code: objCode.code }]
+            };
+        }
+        if (currentLine.startsWith('[')) {
+            const arrCode = this.extractArrayLiteral(this.lines[this.currentLine], this.lines[this.currentLine].indexOf('['));
+            // extractArrayLiteral sets this.currentLine to the line containing the closing bracket
+            // We need to move past that line
+            this.currentLine++;
+            return {
+                type: 'command',
+                name: '_array', // Special internal command for array literals
+                args: [{ type: 'array', code: arrCode.code }]
+            };
         }
 
         // Check for shorthand assignment or positional param reference
@@ -1223,13 +1280,15 @@ class Parser {
 
     /**
      * Tokenize arguments from parenthesized content
-     * Handles strings, subexpressions, and whitespace separation
+     * Handles strings, subexpressions, object/array literals, and whitespace separation
      */
     private tokenizeParenthesizedArguments(content: string): string[] {
         const tokens: string[] = [];
         let current = '';
         let inString: false | '"' | "'" | '`' = false;
         let subexprDepth = 0;
+        let braceDepth = 0;
+        let bracketDepth = 0;
         let i = 0;
 
         while (i < content.length) {
@@ -1270,9 +1329,40 @@ class Parser {
                 continue;
             }
 
-            // Handle whitespace and commas (only at top level, not inside $())
+            // Handle object literals { }
+            if (char === '{') {
+                braceDepth++;
+                current += char;
+                i++;
+                continue;
+            }
+
+            if (char === '}' && braceDepth > 0) {
+                braceDepth--;
+                current += char;
+                i++;
+                continue;
+            }
+
+            // Handle array literals [ ]
+            if (char === '[') {
+                bracketDepth++;
+                current += char;
+                i++;
+                continue;
+            }
+
+            if (char === ']' && bracketDepth > 0) {
+                bracketDepth--;
+                current += char;
+                i++;
+                continue;
+            }
+
+            // Handle whitespace and commas (only at top level, not inside $(), {}, or [])
             // Commas are optional separators
-            if (((char === ' ' || char === '\n' || char === '\t') || char === ',') && subexprDepth === 0) {
+            if (((char === ' ' || char === '\n' || char === '\t') || char === ',') && 
+                subexprDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
                 if (current.trim()) {
                     tokens.push(current.trim());
                 }
@@ -1337,6 +1427,18 @@ class Parser {
         if (token.startsWith('$(') && token.endsWith(')')) {
             const code = token.slice(2, -1); // Remove $( and )
             return { type: 'subexpr', code };
+        }
+        
+        // Check if it's an object literal {...}
+        if (token.startsWith('{') && token.endsWith('}')) {
+            const code = token.slice(1, -1); // Remove { and }
+            return { type: 'object', code };
+        }
+        
+        // Check if it's an array literal [...]
+        if (token.startsWith('[') && token.endsWith(']')) {
+            const code = token.slice(1, -1); // Remove [ and ]
+            return { type: 'array', code };
         }
         
         // Treat as literal string
@@ -1884,7 +1986,8 @@ class Parser {
         
         const positionalArgs: Arg[] = [];
         const namedArgs: Record<string, Arg> = {};
-        const line = this.lines[this.currentLine];
+        let currentLineIndex = this.currentLine;
+        let line = this.lines[currentLineIndex];
 
         // We need to scan the original line to find $(...) subexpressions
         // because tokenization may have split them incorrectly
@@ -1911,14 +2014,25 @@ class Parser {
             pos++;
         }
 
-        while (i < tokens.length || pos < line.length) {
-            // Check if we're at a $( subexpression in the original line
+        while (i < tokens.length || pos < line.length || currentLineIndex < this.lines.length) {
+            // Update line if we've moved to a new line
+            if (currentLineIndex !== this.currentLine) {
+                currentLineIndex = this.currentLine;
+                line = this.lines[currentLineIndex];
+                pos = 0;
+                // Skip whitespace at start of new line
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+            }
+            
+            // Check if we're at a $( subexpression in the current line
             if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
                 // Extract the subexpression code
                 const subexprCode = this.extractSubexpression(line, pos);
                 positionalArgs.push({ type: 'subexpr', code: subexprCode.code });
                 
-                // Skip past the $() in the original line
+                // Skip past the $() in the current line
                 pos = subexprCode.endPos;
                 
                 // Skip any tokens that were part of this subexpression
@@ -1937,8 +2051,132 @@ class Parser {
                 }
                 continue;
             }
+
+            // Check if we're at an object literal { ... }
+            if (pos < line.length && line[pos] === '{') {
+                const startLineIndex = this.currentLine;
+                const objCode = this.extractObjectLiteral(line, pos);
+                positionalArgs.push({ type: 'object', code: objCode.code });
+                
+                // extractObjectLiteral may have advanced this.currentLine if it was multi-line
+                // Update our tracking variables
+                if (this.currentLine > startLineIndex) {
+                    // We've moved to a new line - continue parsing from that line
+                    currentLineIndex = this.currentLine;
+                    line = this.lines[currentLineIndex];
+                    pos = objCode.endPos;
+                    // Skip past the closing brace
+                    if (pos < line.length && line[pos] === '}') {
+                        pos++;
+                    }
+                    // Re-tokenize the remaining part of this line to get any remaining arguments
+                    const remainingLine = line.substring(pos).trim();
+                    if (remainingLine) {
+                        const remainingTokens = Lexer.tokenize(remainingLine);
+                        // Insert remaining tokens at current position
+                        tokens.splice(i, 0, ...remainingTokens);
+                    }
+                } else {
+                    pos = objCode.endPos;
+                }
+                
+                // Skip any tokens that were part of this object
+                while (i < tokens.length) {
+                    const tokenStart = line.indexOf(tokens[i], Math.max(0, pos - 100));
+                    if (tokenStart === -1 || tokenStart >= pos) {
+                        break;
+                    }
+                    i++;
+                }
+                
+                // Skip whitespace
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+                continue;
+            }
+
+            // Check if we're at an array literal [ ... ]
+            if (pos < line.length && line[pos] === '[') {
+                const startLineIndex = this.currentLine;
+                const arrCode = this.extractArrayLiteral(line, pos);
+                positionalArgs.push({ type: 'array', code: arrCode.code });
+                
+                // extractArrayLiteral may have advanced this.currentLine if it was multi-line
+                // Update our tracking variables
+                if (this.currentLine > startLineIndex) {
+                    // We've moved to a new line - continue parsing from that line
+                    currentLineIndex = this.currentLine;
+                    line = this.lines[currentLineIndex];
+                    pos = arrCode.endPos;
+                    // Skip past the closing bracket
+                    if (pos < line.length && line[pos] === ']') {
+                        pos++;
+                    }
+                    // Re-tokenize the remaining part of this line to get any remaining arguments
+                    const remainingLine = line.substring(pos).trim();
+                    if (remainingLine) {
+                        const remainingTokens = Lexer.tokenize(remainingLine);
+                        // Insert remaining tokens at current position
+                        tokens.splice(i, 0, ...remainingTokens);
+                    }
+                } else {
+                    pos = arrCode.endPos;
+                }
+                
+                // Skip any tokens that were part of this array
+                while (i < tokens.length) {
+                    const tokenStart = line.indexOf(tokens[i], Math.max(0, pos - 100));
+                    if (tokenStart === -1 || tokenStart >= pos) {
+                        break;
+                    }
+                    i++;
+                }
+                
+                // Skip whitespace
+                while (pos < line.length && /\s/.test(line[pos])) {
+                    pos++;
+                }
+                continue;
+            }
             
-            // If we've processed all tokens, break
+            // If we've processed all tokens and we're at the end of the current line,
+            // check if there are more lines to process (for multi-line commands)
+            if (i >= tokens.length && pos >= line.length) {
+                // Check if we've moved to a new line due to multi-line literal extraction
+                if (currentLineIndex < this.currentLine) {
+                    // We've moved ahead, continue from the new line
+                    currentLineIndex = this.currentLine;
+                    line = this.lines[currentLineIndex];
+                    pos = 0;
+                    // Re-tokenize the new line to get remaining arguments
+                    const remainingTokens = Lexer.tokenize(line);
+                    // Add remaining tokens to our processing queue
+                    tokens.push(...remainingTokens);
+                    // Skip whitespace
+                    while (pos < line.length && /\s/.test(line[pos])) {
+                        pos++;
+                    }
+                    continue;
+                } else {
+                    // No more lines to process
+                    break;
+                }
+            }
+            
+            // If we've processed all tokens from the original line but there's more content on current line
+            if (i >= tokens.length && pos < line.length) {
+                // Re-tokenize remaining part of current line
+                const remainingLine = line.substring(pos).trim();
+                if (remainingLine) {
+                    const remainingTokens = Lexer.tokenize(remainingLine);
+                    tokens.push(...remainingTokens);
+                    // Update pos to end of line to avoid re-processing
+                    pos = line.length;
+                }
+            }
+            
+            // If we still have no tokens, break
             if (i >= tokens.length) {
                 break;
             }
@@ -2088,6 +2326,174 @@ class Parser {
         
         return {
             code: code.join(''),
+            endPos: pos
+        };
+    }
+
+    /**
+     * Extract object literal { ... } from a line, starting at the given position.
+     * Handles nested objects, arrays, and strings.
+     * Supports multi-line objects.
+     */
+    private extractObjectLiteral(line: string, startPos: number): { code: string; endPos: number } {
+        // Skip past "{"
+        let pos = startPos + 1;
+        let braceDepth = 1;
+        let bracketDepth = 0; // Track array depth inside object
+        let inString: false | '"' | "'" | '`' = false;
+        const code: string[] = [];
+        let currentLineIndex = this.currentLine;
+        
+        while (currentLineIndex < this.lines.length && braceDepth > 0) {
+            const currentLine = currentLineIndex === this.currentLine ? line : this.lines[currentLineIndex];
+            
+            while (pos < currentLine.length && braceDepth > 0) {
+                const char = currentLine[pos];
+                const prevChar = pos > 0 ? currentLine[pos - 1] : '';
+                
+                // Handle strings
+                if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                    if (!inString) {
+                        inString = char;
+                    } else if (char === inString) {
+                        inString = false;
+                    }
+                    code.push(char);
+                    pos++;
+                    continue;
+                }
+                
+                if (inString) {
+                    code.push(char);
+                    pos++;
+                    continue;
+                }
+                
+                // Handle nested objects and arrays
+                if (char === '{') {
+                    braceDepth++;
+                    code.push(char);
+                } else if (char === '}') {
+                    braceDepth--;
+                    if (braceDepth > 0) {
+                        code.push(char);
+                    }
+                    // If braceDepth === 0, we're done - don't include this closing brace
+                } else if (char === '[') {
+                    bracketDepth++;
+                    code.push(char);
+                } else if (char === ']') {
+                    bracketDepth--;
+                    code.push(char);
+                } else {
+                    code.push(char);
+                }
+                pos++;
+            }
+            
+            if (braceDepth > 0) {
+                // Need to continue on next line
+                code.push('\n');
+                currentLineIndex++;
+                pos = 0;
+            }
+        }
+        
+        if (braceDepth > 0) {
+            throw this.createError('unclosed object literal', this.currentLine);
+        }
+        
+        // Update currentLine if we moved to a new line
+        if (currentLineIndex > this.currentLine) {
+            this.currentLine = currentLineIndex;
+        }
+        
+        return {
+            code: code.join('').trim(),
+            endPos: pos
+        };
+    }
+
+    /**
+     * Extract array literal [ ... ] from a line, starting at the given position.
+     * Handles nested arrays, objects, and strings.
+     * Supports multi-line arrays.
+     */
+    private extractArrayLiteral(line: string, startPos: number): { code: string; endPos: number } {
+        // Skip past "["
+        let pos = startPos + 1;
+        let bracketDepth = 1;
+        let braceDepth = 0; // Track object depth inside array
+        let inString: false | '"' | "'" | '`' = false;
+        const code: string[] = [];
+        let currentLineIndex = this.currentLine;
+        
+        while (currentLineIndex < this.lines.length && bracketDepth > 0) {
+            const currentLine = currentLineIndex === this.currentLine ? line : this.lines[currentLineIndex];
+            
+            while (pos < currentLine.length && bracketDepth > 0) {
+                const char = currentLine[pos];
+                const prevChar = pos > 0 ? currentLine[pos - 1] : '';
+                
+                // Handle strings
+                if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                    if (!inString) {
+                        inString = char;
+                    } else if (char === inString) {
+                        inString = false;
+                    }
+                    code.push(char);
+                    pos++;
+                    continue;
+                }
+                
+                if (inString) {
+                    code.push(char);
+                    pos++;
+                    continue;
+                }
+                
+                // Handle nested arrays and objects
+                if (char === '[') {
+                    bracketDepth++;
+                    code.push(char);
+                } else if (char === ']') {
+                    bracketDepth--;
+                    if (bracketDepth > 0) {
+                        code.push(char);
+                    }
+                    // If bracketDepth === 0, we're done - don't include this closing bracket
+                } else if (char === '{') {
+                    braceDepth++;
+                    code.push(char);
+                } else if (char === '}') {
+                    braceDepth--;
+                    code.push(char);
+                } else {
+                    code.push(char);
+                }
+                pos++;
+            }
+            
+            if (bracketDepth > 0) {
+                // Need to continue on next line
+                code.push('\n');
+                currentLineIndex++;
+                pos = 0;
+            }
+        }
+        
+        if (bracketDepth > 0) {
+            throw this.createError('unclosed array literal', this.currentLine);
+        }
+        
+        // Update currentLine if we moved to a new line
+        if (currentLineIndex > this.currentLine) {
+            this.currentLine = currentLineIndex;
+        }
+        
+        return {
+            code: code.join('').trim(),
             endPos: pos
         };
     }
@@ -2744,6 +3150,26 @@ class Executor {
                 throw new Error('_var command requires a variable name argument');
             }
             // The variable value is already evaluated by evaluateArg, so just return it
+            frame.lastValue = args[0];
+            return;
+        }
+
+        // Special handling for "_object" command - internal command for object literals
+        if (cmd.name === '_object') {
+            if (args.length === 0) {
+                throw new Error('_object command requires an object literal argument');
+            }
+            // The object is already evaluated by evaluateArg, so just return it
+            frame.lastValue = args[0];
+            return;
+        }
+
+        // Special handling for "_array" command - internal command for array literals
+        if (cmd.name === '_array') {
+            if (args.length === 0) {
+                throw new Error('_array command requires an array literal argument');
+            }
+            // The array is already evaluated by evaluateArg, so just return it
             frame.lastValue = args[0];
             return;
         }
@@ -3773,6 +4199,30 @@ Examples:
                 return arg.value;
             case 'literal':
                 return arg.value;
+            case 'object':
+                // Parse object literal as JSON5
+                // Handle empty object literal {}
+                if (!arg.code || arg.code.trim() === '') {
+                    return {};
+                }
+                try {
+                    // Wrap the extracted content in braces since extractObjectLiteral only returns the inner content
+                    return JSON5.parse(`{${arg.code}}`);
+                } catch (error) {
+                    throw new Error(`Invalid object literal: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            case 'array':
+                // Parse array literal as JSON5 (to support objects with unquoted keys inside arrays)
+                // Handle empty array literal []
+                if (!arg.code || arg.code.trim() === '') {
+                    return [];
+                }
+                try {
+                    // Wrap the extracted content in brackets since extractArrayLiteral only returns the inner content
+                    return JSON5.parse(`[${arg.code}]`);
+                } catch (error) {
+                    throw new Error(`Invalid array literal: ${error instanceof Error ? error.message : String(error)}`);
+                }
             case 'namedArgs':
                 // Evaluate all named arguments and return as object
                 const obj: Record<string, Value> = {};
@@ -4226,10 +4676,10 @@ export class RobinPathThread {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -4260,6 +4710,16 @@ export class RobinPathThread {
             // NEW: unclosed parenthesized function call fn(...) – keep reading lines
             if (errorMessage.includes('unclosed parenthesized function call')) {
                 return { needsMore: true, waitingFor: 'paren' };
+            }
+            
+            // NEW: unclosed object literal { ... } – keep reading lines
+            if (errorMessage.includes('unclosed object literal')) {
+                return { needsMore: true, waitingFor: 'object' };
+            }
+            
+            // NEW: unclosed array literal [ ... ] – keep reading lines
+            if (errorMessage.includes('unclosed array literal')) {
+                return { needsMore: true, waitingFor: 'array' };
             }
             
             // If it's a different error, the script is malformed but complete
@@ -5396,10 +5856,10 @@ export class RobinPath {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -5430,6 +5890,16 @@ export class RobinPath {
             // NEW: unclosed parenthesized function call fn(...) – keep reading lines
             if (errorMessage.includes('unclosed parenthesized function call')) {
                 return { needsMore: true, waitingFor: 'paren' };
+            }
+            
+            // NEW: unclosed object literal { ... } – keep reading lines
+            if (errorMessage.includes('unclosed object literal')) {
+                return { needsMore: true, waitingFor: 'object' };
+            }
+            
+            // NEW: unclosed array literal [ ... ] – keep reading lines
+            if (errorMessage.includes('unclosed array literal')) {
+                return { needsMore: true, waitingFor: 'array' };
             }
             
             // If it's a different error, the script is malformed but complete

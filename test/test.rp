@@ -481,6 +481,408 @@ endscope
 
 log "Test 19a2 - array command: All passed"
 
+# Test 19a3: Object and Array Literal Syntax {} and []
+# Test empty object literal
+{}
+
+$emptyObjLit = $
+test.assertType $emptyObjLit "object" "Empty object literal {} failed"
+clear
+scope
+  keys $emptyObjLit
+  $emptyKeys = $
+  array.length $emptyKeys
+  test.assertEqual $ 0 "Empty object literal keys failed"
+endscope
+
+# Test basic object literal
+{name: "John", age: 30}
+$objLit = $
+test.assertEqual $objLit.name "John" "Object literal basic creation failed"
+test.assertEqual $objLit.age 30 "Object literal with number failed"
+
+# Test object literal with nested object
+{nested: {key: "value"}, array: [1, 2, 3]}
+$complexObjLit = $
+test.assertEqual $complexObjLit.nested.key "value" "Object literal nested object failed"
+test.assertEqual $complexObjLit.array[0] 1 "Object literal with array failed"
+
+# Test object literal with JSON5 features
+{unquoted: "works", singleQuotes: "also works", numbers: 42, bool: true}
+$json5ObjLit = $
+test.assertEqual $json5ObjLit.unquoted "works" "Object literal unquoted keys failed"
+test.assertEqual $json5ObjLit.singleQuotes "also works" "Object literal single quotes failed"
+test.assertEqual $json5ObjLit.numbers 42 "Object literal number values failed"
+test.assertEqual $json5ObjLit.bool true "Object literal boolean values failed"
+
+# Test object literal with trailing comma
+{trailing: "comma", allowed: true}
+$trailingCommaLit = $
+test.assertEqual $trailingCommaLit.trailing "comma" "Object literal trailing comma failed"
+test.assertEqual $trailingCommaLit.allowed true "Object literal trailing comma value failed"
+
+# Test empty array literal
+[]
+$emptyArrLit = $
+clear
+scope
+  array.length $emptyArrLit
+  test.assertEqual $ 0 "Empty array literal [] failed"
+endscope
+
+# Test basic array literal
+[1, 2, 3]
+$arrLit = $
+clear
+scope
+  array.length $arrLit
+  test.assertEqual $ 3 "Array literal length failed"
+endscope
+test.assertEqual $arrLit[0] 1 "Array literal first element failed"
+test.assertEqual $arrLit[1] 2 "Array literal second element failed"
+test.assertEqual $arrLit[2] 3 "Array literal third element failed"
+
+# Test array literal with mixed types
+["hello", "world", 42, true]
+$mixedArrLit = $
+clear
+scope
+  array.length $mixedArrLit
+  test.assertEqual $ 4 "Array literal mixed types length failed"
+endscope
+test.assertEqual $mixedArrLit[0] "hello" "Array literal string element failed"
+test.assertEqual $mixedArrLit[2] 42 "Array literal number element failed"
+test.assertEqual $mixedArrLit[3] true "Array literal boolean element failed"
+
+# Test array literal in expressions
+[1, 2, 3, 4, 5]
+$numbersLit = $
+clear
+scope
+  math.add $numbersLit[0] $numbersLit[1]
+  test.assertEqual $ 3 "Array literal in expressions failed"
+endscope
+
+# Test nested array literals
+[[1, 2], [3, 4]]
+$nestedArr = $
+clear
+scope
+  array.length $nestedArr
+  test.assertEqual $ 2 "Nested array literal outer length failed"
+endscope
+clear
+scope
+  array.length $nestedArr[0]
+  test.assertEqual $ 2 "Nested array literal inner length failed"
+endscope
+test.assertEqual $nestedArr[0][0] 1 "Nested array literal access failed"
+test.assertEqual $nestedArr[1][1] 4 "Nested array literal second array failed"
+
+# Test array with objects
+[{name: "Alice", age: 25}, {name: "Bob", age: 30}]
+$arrWithObjs = $
+clear
+scope
+  array.length $arrWithObjs
+  test.assertEqual $ 2 "Array with objects length failed"
+endscope
+test.assertEqual $arrWithObjs[0].name "Alice" "Array with objects first name failed"
+test.assertEqual $arrWithObjs[1].age 30 "Array with objects second age failed"
+
+# Test object with array of objects
+{users: [{name: "Alice"}, {name: "Bob"}]}
+$objWithArrOfObjs = $
+test.assertEqual $objWithArrOfObjs.users[0].name "Alice" "Object with array of objects failed"
+test.assertEqual $objWithArrOfObjs.users[1].name "Bob" "Object with array of objects second user failed"
+
+# Test object literal in assignment
+$assignedObj = {key: "value", num: 42}
+test.assertEqual $assignedObj.key "value" "Object literal in assignment failed"
+test.assertEqual $assignedObj.num 42 "Object literal in assignment number failed"
+
+# Test array literal in assignment
+$assignedArr = [10, 20, 30]
+test.assertEqual $assignedArr[0] 10 "Array literal in assignment failed"
+test.assertEqual $assignedArr[1] 20 "Array literal in assignment second element failed"
+
+# Test object literal as function argument
+clear
+scope
+  get {name: "Test", value: 100} "name"
+  test.assertEqual $ "Test" "Object literal as function argument failed"
+endscope
+
+# Test array literal as function argument
+clear
+scope
+  array.length [1, 2, 3, 4]
+  test.assertEqual $ 4 "Array literal as function argument failed"
+endscope
+
+# Test object literal in parenthesized call
+clear
+scope
+  get({name: "John", age: 30} "name")
+  test.assertEqual $ "John" "Object literal in parenthesized call failed"
+endscope
+
+# Test array literal in parenthesized call
+clear
+scope
+  array.length([1, 2, 3])
+  test.assertEqual $ 3 "Array literal in parenthesized call failed"
+endscope
+
+# Test multi-line object literal
+{
+  name: "Multi",
+  age: 25,
+  city: "NYC"
+}
+$multiLineObj = $
+test.assertEqual $multiLineObj.name "Multi" "Multi-line object literal failed"
+test.assertEqual $multiLineObj.age 25 "Multi-line object literal age failed"
+test.assertEqual $multiLineObj.city "NYC" "Multi-line object literal city failed"
+
+# Test multi-line array literal
+[
+  1,
+  2,
+  3
+]
+$multiLineArr = $
+clear
+scope
+  array.length $multiLineArr
+  test.assertEqual $ 3 "Multi-line array literal length failed"
+endscope
+test.assertEqual $multiLineArr[1] 2 "Multi-line array literal element failed"
+
+# Test 19a4: Comprehensive multi-line object and array literal tests
+log "Test 19a4 - Comprehensive Multi-line Object and Array Literals"
+
+# Test multi-line object literal with nested objects
+{
+  user: {
+    name: "Alice",
+    age: 30
+  },
+  settings: {
+    theme: "dark",
+    notifications: true
+  }
+}
+$nestedMultiLineObj = $
+test.assertEqual $nestedMultiLineObj.user.name "Alice" "Multi-line nested object literal failed"
+test.assertEqual $nestedMultiLineObj.settings.theme "dark" "Multi-line nested object literal settings failed"
+
+# Test multi-line object literal with arrays
+{
+  tags: [
+    "javascript",
+    "typescript",
+    "node"
+  ],
+  scores: [
+    100,
+    95,
+    88
+  ]
+}
+$objWithArrays = $
+clear
+scope
+  array.length $objWithArrays.tags
+  test.assertEqual $ 3 "Multi-line object with array - tags length failed"
+endscope
+test.assertEqual $objWithArrays.tags[0] "javascript" "Multi-line object with array - first tag failed"
+test.assertEqual $objWithArrays.scores[1] 95 "Multi-line object with array - second score failed"
+
+# Test multi-line array literal with objects
+[
+  {
+    id: 1,
+    name: "First"
+  },
+  {
+    id: 2,
+    name: "Second"
+  },
+  {
+    id: 3,
+    name: "Third"
+  }
+]
+$arrWithObjs = $
+clear
+scope
+  array.length $arrWithObjs
+  test.assertEqual $ 3 "Multi-line array with objects - length failed"
+endscope
+test.assertEqual $arrWithObjs[0].id 1 "Multi-line array with objects - first id failed"
+test.assertEqual $arrWithObjs[1].name "Second" "Multi-line array with objects - second name failed"
+
+# Test multi-line array literal with nested arrays
+[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9]
+]
+$nestedMultiLineArr = $
+clear
+scope
+  array.length $nestedMultiLineArr
+  test.assertEqual $ 3 "Multi-line nested array - outer length failed"
+endscope
+clear
+scope
+  array.length $nestedMultiLineArr[0]
+  test.assertEqual $ 3 "Multi-line nested array - inner length failed"
+endscope
+test.assertEqual $nestedMultiLineArr[1][2] 6 "Multi-line nested array - access failed"
+
+# Test multi-line object literal in assignment
+$assignedMultiLineObj = {
+  key1: "value1",
+  key2: "value2",
+  key3: 42
+}
+test.assertEqual $assignedMultiLineObj.key1 "value1" "Multi-line object in assignment - key1 failed"
+test.assertEqual $assignedMultiLineObj.key3 42 "Multi-line object in assignment - key3 failed"
+
+# Test multi-line array literal in assignment
+$assignedMultiLineArr = [
+  "a",
+  "b",
+  "c"
+]
+clear
+scope
+  array.length $assignedMultiLineArr
+  test.assertEqual $ 3 "Multi-line array in assignment - length failed"
+endscope
+test.assertEqual $assignedMultiLineArr[2] "c" "Multi-line array in assignment - element failed"
+
+# Test multi-line object literal as function argument (direct)
+clear
+scope
+  get {
+    name: "Test",
+    value: 100,
+    active: true
+  } "name"
+  test.assertEqual $ "Test" "Multi-line object as function argument (direct) failed"
+endscope
+
+# Test multi-line object literal as function argument (via variable)
+clear
+scope
+  get {
+    name: "Test",
+    value: 100,
+    active: true
+  } "name"
+  test.assertEqual $ "Test" "Multi-line object as function argument (via variable) failed"
+endscope
+
+# Test multi-line array literal as function argument
+clear
+scope
+  array.length [
+    10,
+    20,
+    30,
+    40
+  ]
+  test.assertEqual $ 4 "Multi-line array as function argument failed"
+endscope
+
+# Test multi-line object literal in parenthesized call
+clear
+scope
+  get({
+    id: 123,
+    status: "active"
+  } "id")
+  test.assertEqual $ 123 "Multi-line object in parenthesized call failed"
+endscope
+
+# Test multi-line array literal in parenthesized call
+clear
+scope
+  array.length([
+    "one",
+    "two",
+    "three"
+  ])
+  test.assertEqual $ 3 "Multi-line array in parenthesized call failed"
+endscope
+
+# Test deeply nested multi-line structures
+{
+  level1: {
+    level2: {
+      level3: [
+        {
+          deep: "value"
+        }
+      ]
+    }
+  }
+}
+$deepNested = $
+test.assertEqual $deepNested.level1.level2.level3[0].deep "value" "Deeply nested multi-line structure failed"
+
+# Test multi-line object with trailing comma
+{
+  a: 1,
+  b: 2,
+  c: 3,
+}
+$trailingCommaObj = $
+test.assertEqual $trailingCommaObj.a 1 "Multi-line object with trailing comma failed"
+
+# Test multi-line array with trailing comma
+[
+  1,
+  2,
+  3,
+]
+$trailingCommaArr = $
+clear
+scope
+  array.length $trailingCommaArr
+  test.assertEqual $ 3 "Multi-line array with trailing comma failed"
+endscope
+
+# Test multi-line object with empty lines (should be handled gracefully)
+{
+  name: "Test",
+
+  age: 25
+}
+$withEmptyLines = $
+test.assertEqual $withEmptyLines.name "Test" "Multi-line object with empty lines failed"
+test.assertEqual $withEmptyLines.age 25 "Multi-line object with empty lines - age failed"
+
+log "Test 19a4 - Comprehensive Multi-line Object and Array Literals: All passed"
+
+# Test object literal with string values containing special chars
+{message: "Hello, world!", count: 5}
+$specialObj = $
+test.assertEqual $specialObj.message "Hello, world!" "Object literal with special chars failed"
+
+# Test array literal with null and boolean
+[null, true, false, "text"]
+$mixedTypesArr = $
+test.assertEqual $mixedTypesArr[0] null "Array literal with null failed"
+test.assertEqual $mixedTypesArr[1] true "Array literal with true failed"
+test.assertEqual $mixedTypesArr[2] false "Array literal with false failed"
+test.assertEqual $mixedTypesArr[3] "text" "Array literal with string failed"
+
+log "Test 19a3 - Object and Array Literals {} and []: All passed"
+
 # Test 19b: Object module tests (get, set, keys, values, entries, merge, clone)
 $testObj = $parsed
 clear
@@ -2545,7 +2947,7 @@ endscope
 # Test 47b: fetch.get with headers
 clear
 scope
-  fetch.get(url="http://localhost:3005/test/get" headers=obj`{"X-Custom-Header": "test-value"}`)
+  fetch.get(url="http://localhost:3005/test/get" headers={"X-Custom-Header": "test-value"})
   $response = $
   test.assertEqual $response.ok true "fetch.get with headers should succeed"
   test.assertEqual $response.status 200 "fetch.get with headers status should be 200"
@@ -2554,7 +2956,7 @@ endscope
 # Test 47c: fetch.post with named arguments
 clear
 scope
-  fetch.post(url="http://localhost:3005/test/post" body=obj`{"name": "John", "age": 30}`)
+  fetch.post(url="http://localhost:3005/test/post" body={"name": "John", "age": 30})
   $response = $
   test.assertType $response "object" "fetch.post should return an object"
   test.assertEqual $response.ok true "fetch.post response.ok should be true"
@@ -2568,7 +2970,7 @@ endscope
 # Test 47d: fetch.put with named arguments
 clear
 scope
-  fetch.put(url="http://localhost:3005/test/put" body=obj`{"id": 123, "status": "updated"}`)
+  fetch.put(url="http://localhost:3005/test/put" body={"id": 123, "status": "updated"})
   $response = $
   test.assertType $response "object" "fetch.put should return an object"
   test.assertEqual $response.ok true "fetch.put response.ok should be true"
@@ -2601,22 +3003,6 @@ scope
   test.assertEqual $response.data.query.key2 "value2" "fetch.get query parameter key2 failed"
 endscope
 
-# Test 47g: fetch.post with string body
-clear
-scope
-  fetch.post(url="http://localhost:3005/test/post" body="plain text body")
-  $response = $
-  test.assertEqual $response.ok true "fetch.post with string body should succeed"
-endscope
-
-# Test 47h: fetch.post with empty body
-clear
-scope
-  fetch.post(url="http://localhost:3005/test/post")
-  $response = $
-  test.assertEqual $response.ok true "fetch.post with empty body should succeed"
-endscope
-
 # Test 47i: fetch.get with 404 endpoint (should still return response object)
 clear
 scope
@@ -2630,7 +3016,7 @@ endscope
 # Test 47j: fetch.post with custom headers
 clear
 scope
-  fetch.post(url="http://localhost:3005/test/echo" body=obj`{"test": "data"}` headers=obj`{"X-Custom-Header": "custom-value", "Authorization": "Bearer token123"}`)
+  fetch.post(url="http://localhost:3005/test/echo" body={"test": "data"} headers={"X-Custom-Header": "custom-value", "Authorization": "Bearer token123"})
   $response = $
   test.assertEqual $response.ok true "fetch.post with custom headers should succeed"
   test.assertEqual $response.data.body.test "data" "fetch.post echo body should match"

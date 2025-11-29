@@ -69,6 +69,8 @@ Multi-line blocks:
   for $var in <expr> ... endfor  - Loop block
   scope ... endscope     - Scope block
   fn(...)                - Parenthesized function call (multi-line)
+  { ... }                - Object literal (multi-line)
+  [ ... ]                - Array literal (multi-line)
   <line> \\              - Backslash line continuation
         `);
         return;
