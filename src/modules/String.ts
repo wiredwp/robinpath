@@ -559,8 +559,15 @@ export const StringFunctionMetadata: Record<string, FunctionMetadata> = {
                 name: 'strings',
                 dataType: 'string',
                 description: 'Strings to concatenate (can be multiple arguments)',
-                formInputType: 'text',
-                required: true
+                formInputType: 'json',
+                required: true,
+                children: {
+                    name: 'string',
+                    dataType: 'string',
+                    description: 'String to concatenate',
+                    formInputType: 'text',
+                    required: true
+                }
             }
         ],
         returnType: 'string',

@@ -18,6 +18,7 @@ export interface ModuleAdapter {
 import JSON5 from 'json5';
 
 // Import core modules
+import CoreModule from './modules/Core';
 import MathModule from './modules/Math';
 import StringModule from './modules/String';
 import JsonModule from './modules/Json';
@@ -126,6 +127,7 @@ export interface ParameterMetadata {
     formInputType: FormInputType;
     required?: boolean;
     defaultValue?: Value;
+    children?: ParameterMetadata; // Schema for array/list items (for variable arguments)
 }
 
 export interface FunctionMetadata {
@@ -5408,159 +5410,7 @@ export class RobinPath {
         // Create persistent executor for REPL mode
         this.persistentExecutor = new Executor(this.environment, null);
 
-        // Register some basic builtins
-        this.registerBuiltin('log', (args) => {
-            console.log(...args);
-            return null; // log should not affect the last value
-        });
-
-        this.registerBuiltin('obj', (args) => {
-            if (args.length === 0) {
-                return {};
-            }
-            const jsonString = String(args[0]);
-            try {
-                // Parse JSON5 string into object
-                return JSON5.parse(jsonString);
-            } catch (error) {
-                throw new Error(`Invalid JSON5: ${error instanceof Error ? error.message : String(error)}`);
-            }
-        });
-
-        this.registerBuiltin('array', (args) => {
-            // Return all arguments as an array
-            return [...args];
-        });
-
-        this.registerBuiltin('tag', (args) => {
-            // Tag command: tag [type] [name] [description]
-            // Used to declare meaningful info/metadata
-            // Does nothing (no-op) but accepts the arguments
-            if (args.length < 3) {
-                throw new Error('tag requires 3 arguments: type, name, and description');
-            }
-            // All arguments are accepted but not used
-            // This is a no-op command for declaring metadata
-            return null;
-        });
-
-        this.registerBuiltin('meta', (args) => {
-            // Meta command: meta [fn/variable] [meta key] [value]
-            // Used to add metadata for functions or variables
-            // Examples:
-            //   meta $a description "A variable to add number"
-            //   meta fn description "function to do something"
-            //   meta $a version 5
-            // Note: The actual implementation is in executeCommand for special handling
-            // This registration ensures it's recognized as a valid command
-            if (args.length < 3) {
-                throw new Error('meta requires 3 arguments: target (fn/variable), meta key, and value');
-            }
-            // The actual metadata storage is handled in executeCommand
-            return null;
-        });
-
-        this.registerBuiltin('getMeta', (args) => {
-            // getMeta command: getMeta [fn/variable] [key?]
-            // Used to retrieve metadata for functions or variables
-            // Examples:
-            //   getMeta $a           # Returns all metadata as object
-            //   getMeta $a description # Returns specific metadata value
-            //   getMeta fn description # Returns function metadata value
-            // Note: The actual implementation is in executeCommand for special handling
-            // This registration ensures it's recognized as a valid command
-            if (args.length < 1) {
-                throw new Error('getMeta requires at least 1 argument: target (fn/variable)');
-            }
-            // The actual metadata retrieval is handled in executeCommand
-            return null;
-        });
-
-        this.registerBuiltin('getType', (args) => {
-            // getType command: getType <variable>
-            // Returns the type of a variable as a string
-            // Examples:
-            //   getType $myVar  # Returns "string", "number", "boolean", "object", "array", or "null"
-            // Note: The actual implementation is in executeCommand for special handling
-            // This registration ensures it's recognized as a valid command
-            if (args.length < 1) {
-                throw new Error('getType requires 1 argument: variable name');
-            }
-            // The actual type detection is handled in executeCommand
-            return null;
-        });
-
-        this.registerBuiltin('clear', () => {
-            // clear command: clear
-            // Clears the last return value ($)
-            // Example:
-            //   math.add 10 20  # $ = 30
-            //   clear           # $ = null
-            // Note: The actual implementation is in executeCommand for special handling
-            // This registration ensures it's recognized as a valid command
-            // The actual clearing is handled in executeCommand
-            return null;
-        });
-
-        this.registerBuiltin('forget', () => {
-            // forget command: forget <variable|function>
-            // Ignores a variable or function in the current scope only
-            // Example:
-            //   $x = 10
-            //   scope
-            //     forget $x
-            //     $x  # Returns null (ignored in this scope)
-            //   endscope
-            //   $x  # Returns 10 (still exists in outer scope)
-            // Note: The actual implementation is in executeCommand for special handling
-            // This registration ensures it's recognized as a valid command
-            return null;
-        });
-
-        this.registerBuiltin('range', (args) => {
-            const start = Number(args[0]) || 0;
-            const end = Number(args[1]) || 0;
-            const step = args.length >= 3 ? Number(args[2]) : undefined;
-            const result: number[] = [];
-            
-            // If step is provided, use it
-            if (step !== undefined) {
-                if (step === 0) {
-                    throw new Error('range step cannot be zero');
-                }
-                
-                // Determine direction based on step sign and start/end relationship
-                if (step > 0) {
-                    // Positive step: count up from start to end
-                    // If start > end, this will produce empty array (correct behavior)
-                    for (let i = start; i <= end; i += step) {
-                        result.push(i);
-                    }
-                } else {
-                    // Negative step: count down from start to end
-                    // If start < end, this will produce empty array (correct behavior)
-                    for (let i = start; i >= end; i += step) {
-                        result.push(i);
-                    }
-                }
-            } else {
-                // No step provided: use default behavior (step of 1 or -1)
-            if (start <= end) {
-                for (let i = start; i <= end; i++) {
-                    result.push(i);
-                }
-            } else {
-                // Reverse range
-                for (let i = start; i >= end; i--) {
-                    result.push(i);
-                    }
-                }
-            }
-            
-            return result;
-        });
-
-        // Load native modules
+        // Load native modules (includes Core module with built-in functions)
         this.loadNativeModules();
 
         // Note: "use" command is handled specially in executeCommand to access the executor's environment
@@ -5656,6 +5506,7 @@ export class RobinPath {
      * Add new modules here to auto-load them
      */
     private static readonly NATIVE_MODULES: ModuleAdapter[] = [
+        CoreModule,
         MathModule,
         StringModule,
         JsonModule,

@@ -228,7 +228,14 @@ export const ObjectFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'array',
                 description: 'Array of objects to merge (or multiple object arguments)',
                 formInputType: 'json',
-                required: true
+                required: true,
+                children: {
+                    name: 'object',
+                    dataType: 'object',
+                    description: 'Object to merge',
+                    formInputType: 'json',
+                    required: true
+                }
             }
         ],
         returnType: 'object',

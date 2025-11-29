@@ -123,7 +123,14 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'array',
                 description: 'Numbers to add together (supports multiple arguments)',
                 formInputType: 'json',
-                required: true
+                required: true,
+                children: {
+                    name: 'value',
+                    dataType: 'number',
+                    description: 'Number to add',
+                    formInputType: 'number',
+                    required: true
+                }
             }
         ],
         returnType: 'number',
@@ -162,7 +169,14 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'array',
                 description: 'Numbers to multiply together (supports multiple arguments)',
                 formInputType: 'json',
-                required: true
+                required: true,
+                children: {
+                    name: 'value',
+                    dataType: 'number',
+                    description: 'Number to multiply',
+                    formInputType: 'number',
+                    required: true
+                }
             }
         ],
         returnType: 'number',
@@ -327,7 +341,14 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'array',
                 description: 'Array of numbers to find minimum from',
                 formInputType: 'json',
-                required: true
+                required: true,
+                children: {
+                    name: 'value',
+                    dataType: 'number',
+                    description: 'Number to compare',
+                    formInputType: 'number',
+                    required: true
+                }
             }
         ],
         returnType: 'number',
@@ -343,7 +364,14 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'array',
                 description: 'Array of numbers to find maximum from',
                 formInputType: 'json',
-                required: true
+                required: true,
+                children: {
+                    name: 'value',
+                    dataType: 'number',
+                    description: 'Number to compare',
+                    formInputType: 'number',
+                    required: true
+                }
             }
         ],
         returnType: 'number',

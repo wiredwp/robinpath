@@ -242,7 +242,14 @@ export const ArrayFunctionMetadata: Record<string, FunctionMetadata> = {
                 dataType: 'any',
                 description: 'Values to include in the array (any number of arguments)',
                 formInputType: 'json',
-                required: false
+                required: false,
+                children: {
+                    name: 'value',
+                    dataType: 'any',
+                    description: 'Value to include in the array',
+                    formInputType: 'json',
+                    required: false
+                }
             }
         ],
         returnType: 'array',
