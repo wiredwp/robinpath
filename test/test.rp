@@ -881,6 +881,34 @@ test.assertEqual $mixedTypesArr[1] true "Array literal with true failed"
 test.assertEqual $mixedTypesArr[2] false "Array literal with false failed"
 test.assertEqual $mixedTypesArr[3] "text" "Array literal with string failed"
 
+# Test 19a4: Variable interpolation in object and array literals
+$a = 1
+$b = { a: $a }
+test.assertEqual $b.a 1 "Variable interpolation in object literal failed"
+
+$key = "key"
+$b = { [$key]: 1 }
+test.assertEqual $b.key 1 "Computed property name in object literal failed"
+
+$num = 42
+log $num
+$arr = [$num, 43]
+test.assertEqual $arr[0] 42 "Variable interpolation in array literal failed"
+test.assertEqual $arr[1] 43 "Variable interpolation in array literal - second element failed"
+
+$name = "John"
+$age = 30
+$obj = { name: $name, age: $age }
+test.assertEqual $obj.name "John" "Multiple variable interpolation in object literal failed"
+test.assertEqual $obj.age 30 "Multiple variable interpolation in object literal - age failed"
+
+$nested = { inner: $a }
+$outer = { nested: $nested, value: $a }
+test.assertEqual $outer.nested.inner 1 "Nested object with variable interpolation failed"
+test.assertEqual $outer.value 1 "Nested object with variable interpolation - outer value failed"
+
+log "Test 19a4 - Variable Interpolation in Object and Array Literals: All passed"
+
 log "Test 19a3 - Object and Array Literals {} and []: All passed"
 
 # Test 19b: Object module tests (get, set, keys, values, entries, merge, clone)

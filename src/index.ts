@@ -4206,8 +4206,10 @@ Examples:
                     return {};
                 }
                 try {
+                    // Interpolate variables and subexpressions in the object literal code
+                    const interpolatedCode = await this.interpolateObjectLiteral(arg.code);
                     // Wrap the extracted content in braces since extractObjectLiteral only returns the inner content
-                    return JSON5.parse(`{${arg.code}}`);
+                    return JSON5.parse(`{${interpolatedCode}}`);
                 } catch (error) {
                     throw new Error(`Invalid object literal: ${error instanceof Error ? error.message : String(error)}`);
                 }
@@ -4218,8 +4220,10 @@ Examples:
                     return [];
                 }
                 try {
+                    // Interpolate variables and subexpressions in the array literal code
+                    const interpolatedCode = await this.interpolateObjectLiteral(arg.code); // Reuse same method
                     // Wrap the extracted content in brackets since extractArrayLiteral only returns the inner content
-                    return JSON5.parse(`[${arg.code}]`);
+                    return JSON5.parse(`[${interpolatedCode}]`);
                 } catch (error) {
                     throw new Error(`Invalid array literal: ${error instanceof Error ? error.message : String(error)}`);
                 }
@@ -4234,9 +4238,177 @@ Examples:
     }
 
     /**
-     * Execute a subexpression $(code) in its own frame.
-     * Returns the final $ value from the subexpression.
+     * Interpolate variables and subexpressions in object literal code
+     * Replaces $var, $(expr), and [$key] with their actual values
      */
+    private async interpolateObjectLiteral(code: string): Promise<string> {
+        let result = code;
+        
+        // First, replace subexpressions $(...)
+        const subexprRegex = /\$\(([^)]*)\)/g;
+        let match;
+        const subexprPromises: Array<{ start: number; end: number; promise: Promise<string> }> = [];
+        
+        while ((match = subexprRegex.exec(code)) !== null) {
+            const subexprCode = match[1];
+            const start = match.index;
+            const end = match.index + match[0].length;
+            
+            subexprPromises.push({
+                start,
+                end,
+                promise: this.executeSubexpression(subexprCode).then(val => {
+                    // Serialize the value to JSON5-compatible string
+                    if (val === null) return 'null';
+                    if (typeof val === 'string') return JSON.stringify(val);
+                    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+                    if (Array.isArray(val)) return JSON.stringify(val);
+                    if (typeof val === 'object') return JSON.stringify(val);
+                    return String(val);
+                })
+            });
+        }
+        
+        // Wait for all subexpressions to be evaluated
+        const subexprResults = await Promise.all(subexprPromises.map(p => p.promise));
+        
+        // Replace subexpressions in reverse order to maintain indices
+        for (let i = subexprPromises.length - 1; i >= 0; i--) {
+            const { start, end } = subexprPromises[i];
+            const replacement = subexprResults[i];
+            result = result.substring(0, start) + replacement + result.substring(end);
+        }
+        
+        // Now replace variable references $var and computed property names [$var]
+        // We need to be careful not to replace variables inside strings
+        
+        // Replace computed property names: [$var]: -> "key":
+        // We need to find patterns like [$var]: (computed property name followed by colon)
+        const computedPropRegex = /\[(\$[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*)\]\s*:/g;
+        const computedPropReplacements: Array<{ match: string; replacement: string }> = [];
+        
+        let computedMatch;
+        while ((computedMatch = computedPropRegex.exec(result)) !== null) {
+            const varPath = computedMatch[1];
+            const { name, path } = Lexer.parseVariablePath(varPath);
+            const value = this.resolveVariable(name, path);
+            
+            if (value !== null && value !== undefined) {
+                // For computed property names, use the value as the key
+                // If it's a valid identifier, use it unquoted; otherwise quote it
+                const key = typeof value === 'string' ? value : String(value);
+                // Check if it's a valid identifier (starts with letter/underscore, contains only alphanumeric/underscore)
+                if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+                    computedPropReplacements.push({
+                        match: computedMatch[0],
+                        replacement: `${key}:`
+                    });
+                } else {
+                    // Need to quote the key
+                    computedPropReplacements.push({
+                        match: computedMatch[0],
+                        replacement: `"${key.replace(/"/g, '\\"')}":`
+                    });
+                }
+            }
+        }
+        
+        // Apply computed property replacements in reverse order
+        for (let i = computedPropReplacements.length - 1; i >= 0; i--) {
+            const { match, replacement } = computedPropReplacements[i];
+            result = result.replace(match, replacement);
+        }
+        
+        // Replace variable references in values (not in strings or keys)
+        // This is tricky - we need to identify where variables can appear
+        // Variables can appear after : (in values) or after , (in array elements)
+        // We'll use a more sophisticated approach: parse the structure and replace values
+        
+        // Simple approach: replace $var patterns that are not inside strings
+        // We'll track string boundaries
+        let inString: false | '"' | "'" | '`' = false;
+        let escaped = false;
+        let i = 0;
+        let output = '';
+        
+        while (i < result.length) {
+            const char = result[i];
+            
+            // Handle string boundaries
+            if (!escaped && (char === '"' || char === "'" || char === '`')) {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
+                }
+                output += char;
+                escaped = false;
+                i++;
+                continue;
+            }
+            
+            if (inString) {
+                escaped = char === '\\' && !escaped;
+                output += char;
+                i++;
+                continue;
+            }
+            
+            // Check for variable reference $var
+            if (char === '$' && i + 1 < result.length) {
+                const nextChar = result[i + 1];
+                
+                // Check if it's a variable: $var, $var.property, etc.
+                if (/[A-Za-z_]/.test(nextChar)) {
+                    // Extract the variable path
+                    let varPath = '$';
+                    let j = i + 1;
+                    while (j < result.length && /[A-Za-z0-9_.\[\]]/.test(result[j])) {
+                        varPath += result[j];
+                        j++;
+                    }
+                    
+                    // Parse and resolve the variable
+                    try {
+                        const { name, path } = Lexer.parseVariablePath(varPath);
+                        const value = this.resolveVariable(name, path);
+                        
+                        // Serialize the value appropriately
+                        let replacement: string;
+                        if (value === null) {
+                            replacement = 'null';
+                        } else if (typeof value === 'string') {
+                            replacement = JSON.stringify(value);
+                        } else if (typeof value === 'number' || typeof value === 'boolean') {
+                            replacement = String(value);
+                        } else if (Array.isArray(value)) {
+                            replacement = JSON.stringify(value);
+                        } else if (typeof value === 'object') {
+                            replacement = JSON.stringify(value);
+                        } else {
+                            replacement = String(value);
+                        }
+                        
+                        output += replacement;
+                        i = j;
+                        continue;
+                    } catch {
+                        // If parsing fails, keep the original
+                        output += char;
+                        i++;
+                        continue;
+                    }
+                }
+            }
+            
+            output += char;
+            escaped = false;
+            i++;
+        }
+        
+        return output;
+    }
+
     async executeSubexpression(code: string): Promise<Value> {
         // Split into logical lines (handles ; inside $())
         const lines = splitIntoLogicalLines(code);
@@ -4396,6 +4568,13 @@ Examples:
         // If this is an isolated scope, only set variables in the current frame
         // Don't modify parent scopes or globals
         if (isIsolatedScope) {
+            currentFrame.locals.set(name, value);
+            return;
+        }
+        
+        // Check if variable exists in current frame's locals first
+        // This ensures that loop variables and other locals can be reassigned
+        if (currentFrame.locals.has(name)) {
             currentFrame.locals.set(name, value);
             return;
         }
