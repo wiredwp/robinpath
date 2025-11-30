@@ -1016,9 +1016,22 @@ class Parser {
             if (stmt) {
                 const allComments: string[] = [];
                 
-                // If we've created comment nodes before, remaining comments should also be nodes
-                // (because they're part of the same separated sequence)
-                if (pendingComments.length > 0 && hasCreatedCommentNodes) {
+                // If there was a blank line after pending comments, create comment nodes
+                // UNLESS we've already created comment nodes (comment->blank->comment pattern)
+                // In that case, if there's another blank line, these should also be nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment && hasCreatedCommentNodes) {
+                    // comment -> blank -> comment -> blank -> statement: all comments become nodes
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        statements.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0 && hasBlankLineAfterLastComment && !hasCreatedCommentNodes) {
+                    // comment -> blank -> statement: comment becomes node (not attached)
                     for (let i = 0; i < pendingComments.length; i++) {
                         statements.push({
                             type: 'comment',
@@ -1029,7 +1042,7 @@ class Parser {
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0) {
-                    // No comment nodes created - attach comments (even if blank line before)
+                    // No blank line after comments - attach them (consecutive comments)
                     allComments.push(...pendingComments);
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
@@ -1814,8 +1827,20 @@ class Parser {
             if (stmt) {
                 const allComments: string[] = [];
                 
-                // If we've created comment nodes before, remaining comments should also be nodes
-                if (pendingComments.length > 0 && hasCreatedCommentNodes) {
+                // If there was a blank line after pending comments, create comment nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment && hasCreatedCommentNodes) {
+                    // comment -> blank -> comment -> blank -> statement: all comments become nodes
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        body.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0 && hasBlankLineAfterLastComment && !hasCreatedCommentNodes) {
+                    // comment -> blank -> statement: comment becomes node (not attached)
                     for (let i = 0; i < pendingComments.length; i++) {
                         body.push({
                             type: 'comment',
@@ -1826,7 +1851,7 @@ class Parser {
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0) {
-                    // No comment nodes created - attach comments
+                    // No blank line after comments - attach them (consecutive comments)
                     allComments.push(...pendingComments);
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;

@@ -366,9 +366,6 @@ add 2 3  # inline comment
 
 # line 4
 multiply 5 10
-
-# line 5 (should not be attached - blank line before)
-log "test"
 `;
         
         // Use getASTWithState from the thread to test comment attachment
@@ -407,38 +404,23 @@ log "test"
             console.log('  Got:', multiplyNode?.comments);
         }
         
-        // Test 3: Comment "line 5" SHOULD be attached to "log" (blank line doesn't break if comment is directly above)
-        const logNode = commentAST.find(node => node.type === 'command' && node.name === 'log');
-        const commentTest3Passed = logNode && 
-            Array.isArray(logNode.comments) && 
-            logNode.comments.length === 1 &&
-            logNode.comments[0] === 'line 5 (should not be attached - blank line before)';
-        
-        if (commentTest3Passed) {
-            console.log('✓ Test 3 PASSED - Comment "line 5" attached to "log" command');
-        } else {
-            console.log('✗ Test 3 FAILED - Comments for "log" command');
-            console.log('  Expected: ["line 5 (should not be attached - blank line before)"]');
-            console.log('  Got:', logNode?.comments);
-        }
-        
-        // Test 4: Comment "line 1" should NOT be attached but should be a separate comment node
-        const commentTest4aPassed = !commentAST.some(node => 
+        // Test 3: Comment "line 1" should NOT be attached but should be a separate comment node
+        const commentTest3aPassed = !commentAST.some(node => 
             node.type === 'command' && 
             node.comments && 
             node.comments.includes('line 1')
         );
         
         const commentNode1 = commentAST.find(node => node.type === 'comment' && node.text === 'line 1');
-        const commentTest4bPassed = commentNode1 && commentNode1.type === 'comment' && commentNode1.text === 'line 1';
-        const commentTest4Passed = commentTest4aPassed && commentTest4bPassed;
+        const commentTest3bPassed = commentNode1 && commentNode1.type === 'comment' && commentNode1.text === 'line 1';
+        const commentTest3Passed = commentTest3aPassed && commentTest3bPassed;
         
-        if (commentTest4Passed) {
-            console.log('✓ Test 4 PASSED - Comment "line 1" is a separate comment node (not attached)');
+        if (commentTest3Passed) {
+            console.log('✓ Test 3 PASSED - Comment "line 1" is a separate comment node (not attached)');
         } else {
-            console.log('✗ Test 4 FAILED - Comment "line 1" should be a separate comment node');
-            console.log('  Not attached to command:', commentTest4aPassed);
-            console.log('  Is comment node:', commentTest4bPassed);
+            console.log('✗ Test 3 FAILED - Comment "line 1" should be a separate comment node');
+            console.log('  Not attached to command:', commentTest3aPassed);
+            console.log('  Is comment node:', commentTest3bPassed);
             console.log('  Comment node:', commentNode1);
         }
         
@@ -470,19 +452,33 @@ add 5 5
             console.log('  Comment node 2:', commentNode5b);
         }
         
-        // Test 6: Comment "line 5" should be attached to "log", not a separate comment node
-        const commentNode5 = commentAST.find(node => node.type === 'comment' && node.text === 'line 5 (should not be attached - blank line before)');
-        const commentTest6Passed = !commentNode5; // Should NOT be a separate comment node
         
-        if (commentTest6Passed) {
-            console.log('✓ Test 6 PASSED - Comment "line 5" is attached to "log", not a separate node');
+        // Test 7: Comment "line 1" should be a standalone comment node (separated by blank line, not consecutive with any statement)
+        const testScript7 = `
+# line 1
+
+add 5 3
+`;
+        const astTest7 = commentTestRp.getAST(testScript7);
+        const addNode7 = astTest7.find(node => node.type === 'command' && node.name === 'add');
+        const commentNode7 = astTest7.find(node => node.type === 'comment' && node.text === 'line 1');
+        
+        const commentTest7aPassed = addNode7 && (!addNode7.comments || addNode7.comments.length === 0);
+        const commentTest7bPassed = commentNode7 && commentNode7.type === 'comment' && commentNode7.text === 'line 1';
+        const commentTest7Passed = commentTest7aPassed && commentTest7bPassed;
+        
+        if (commentTest7Passed) {
+            console.log('✓ Test 7 PASSED - Comment "line 1" is a standalone comment node (separated by blank line)');
         } else {
-            console.log('✗ Test 6 FAILED - Comment "line 5" should be attached, not a separate comment node');
-            console.log('  Comment node:', commentNode5);
+            console.log('✗ Test 7 FAILED - Comment "line 1" should be a standalone comment node');
+            console.log('  Not attached to command:', commentTest7aPassed);
+            console.log('  Is comment node:', commentTest7bPassed);
+            console.log('  Comment node:', commentNode7);
+            console.log('  Add node comments:', addNode7?.comments);
         }
         
         // Summary
-        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest4Passed && commentTest5Passed && commentTest6Passed;
+        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest5Passed && commentTest7Passed;
         if (allCommentTestsPassed) {
             console.log();
             console.log('✓ All comment attachment tests PASSED!');
@@ -492,10 +488,16 @@ add 5 5
             console.log();
             console.log('AST Structure:');
             console.log(JSON.stringify(commentAST, null, 2));
-            if (!commentTest5Passed || !commentTest6Passed) {
+            if (!commentTest5Passed || !commentTest7Passed) {
                 console.log();
-                console.log('Test 5 AST Structure:');
-                console.log(JSON.stringify(astTest5, null, 2));
+                if (!commentTest5Passed) {
+                    console.log('Test 5 AST Structure:');
+                    console.log(JSON.stringify(astTest5, null, 2));
+                }
+                if (!commentTest7Passed) {
+                    console.log('Test 7 AST Structure:');
+                    console.log(JSON.stringify(astTest7, null, 2));
+                }
             }
         }
         
