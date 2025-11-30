@@ -119,7 +119,8 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Adds multiple numbers together',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'array',
                 description: 'Numbers to add together (supports multiple arguments)',
                 formInputType: 'json',
@@ -165,7 +166,8 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Multiplies multiple numbers together',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'array',
                 description: 'Numbers to multiply together (supports multiple arguments)',
                 formInputType: 'json',
@@ -337,7 +339,8 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Returns the minimum value from a list of numbers',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'array',
                 description: 'Array of numbers to find minimum from',
                 formInputType: 'json',
@@ -360,7 +363,8 @@ export const MathFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Returns the maximum value from a list of numbers',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'array',
                 description: 'Array of numbers to find maximum from',
                 formInputType: 'json',

@@ -238,7 +238,8 @@ export const ArrayFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Creates an array from the given arguments',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'any',
                 description: 'Values to include in the array (any number of arguments)',
                 formInputType: 'json',

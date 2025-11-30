@@ -224,7 +224,8 @@ export const ObjectFunctionMetadata: Record<string, FunctionMetadata> = {
         description: 'Merges multiple objects into a single object',
         parameters: [
             {
-                name: 'Arguments',
+                name: 'args',
+                label: 'Arguments',
                 dataType: 'array',
                 description: 'Array of objects to merge (or multiple object arguments)',
                 formInputType: 'json',

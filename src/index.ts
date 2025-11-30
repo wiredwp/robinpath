@@ -122,6 +122,7 @@ export type FormInputType =
 
 export interface ParameterMetadata {
     name: string;
+    label?: string; // Display label for the parameter (e.g., "Arguments" for variadic parameters)
     dataType: DataType;
     description: string;
     formInputType: FormInputType;
