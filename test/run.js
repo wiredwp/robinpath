@@ -348,6 +348,107 @@ $afterEnd = 200
         
         console.log('='.repeat(60));
         
+        // Test comment attachment in AST
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Comment Attachment in AST');
+        console.log('='.repeat(60));
+        
+        const commentTestRp = new RobinPath();
+        const commentTestThread = commentTestRp.createThread('comment-test-thread');
+        
+        const commentTestScript = `
+# line 1
+
+# line 2
+# line 3
+add 2 3  # inline comment
+
+# line 4
+multiply 5 10
+
+# line 5 (should not be attached - blank line before)
+log "test"
+`;
+        
+        // Use getASTWithState from the thread to test comment attachment
+        const astWithState = await commentTestThread.getASTWithState(commentTestScript);
+        const commentAST = astWithState.ast;
+        
+        // Test 1: Comments above "add" command (line 2, 3) should be attached
+        const addNode = commentAST.find(node => node.type === 'command' && node.name === 'add');
+        const commentTest1Passed = addNode && 
+            Array.isArray(addNode.comments) && 
+            addNode.comments.length === 3 &&
+            addNode.comments[0] === 'line 2' &&
+            addNode.comments[1] === 'line 3' &&
+            addNode.comments[2] === 'inline comment';
+        
+        if (commentTest1Passed) {
+            console.log('✓ Test 1 PASSED - Comments above and inline for "add" command');
+        } else {
+            console.log('✗ Test 1 FAILED - Comments for "add" command');
+            console.log('  Expected: ["line 2", "line 3", "inline comment"]');
+            console.log('  Got:', addNode?.comments);
+        }
+        
+        // Test 2: Comment above "multiply" command (line 4) should be attached
+        const multiplyNode = commentAST.find(node => node.type === 'command' && node.name === 'multiply');
+        const commentTest2Passed = multiplyNode && 
+            Array.isArray(multiplyNode.comments) && 
+            multiplyNode.comments.length === 1 &&
+            multiplyNode.comments[0] === 'line 4';
+        
+        if (commentTest2Passed) {
+            console.log('✓ Test 2 PASSED - Comment above "multiply" command');
+        } else {
+            console.log('✗ Test 2 FAILED - Comments for "multiply" command');
+            console.log('  Expected: ["line 4"]');
+            console.log('  Got:', multiplyNode?.comments);
+        }
+        
+        // Test 3: Comment "line 5" should NOT be attached to "log" (blank line before)
+        const logNode = commentAST.find(node => node.type === 'command' && node.name === 'log');
+        const commentTest3Passed = logNode && 
+            (!logNode.comments || logNode.comments.length === 0);
+        
+        if (commentTest3Passed) {
+            console.log('✓ Test 3 PASSED - Comment with blank line before "log" not attached');
+        } else {
+            console.log('✗ Test 3 FAILED - Comments for "log" command');
+            console.log('  Expected: no comments (blank line before)');
+            console.log('  Got:', logNode?.comments);
+        }
+        
+        // Test 4: Comment "line 1" should NOT be attached (blank line after)
+        // This should be a separate comment node or not attached to anything
+        const commentTest4Passed = !commentAST.some(node => 
+            node.type === 'command' && 
+            node.comments && 
+            node.comments.includes('line 1')
+        );
+        
+        if (commentTest4Passed) {
+            console.log('✓ Test 4 PASSED - Comment "line 1" not attached (blank line after)');
+        } else {
+            console.log('✗ Test 4 FAILED - Comment "line 1" should not be attached');
+        }
+        
+        // Summary
+        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest4Passed;
+        if (allCommentTestsPassed) {
+            console.log();
+            console.log('✓ All comment attachment tests PASSED!');
+        } else {
+            console.log();
+            console.log('✗ Some comment attachment tests FAILED');
+            console.log();
+            console.log('AST Structure:');
+            console.log(JSON.stringify(commentAST, null, 2));
+        }
+        
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {

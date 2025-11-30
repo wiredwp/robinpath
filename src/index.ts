@@ -163,6 +163,7 @@ interface CommandCall {
     type: 'command';
     name: string;
     args: Arg[];
+    comments?: string[]; // Comments attached to this command (above and inline)
 }
 
 interface Assignment {
@@ -172,17 +173,20 @@ interface Assignment {
     command?: CommandCall;
     literalValue?: Value;
     isLastValue?: boolean; // True if assignment is from $ (last value)
+    comments?: string[]; // Comments attached to this assignment (above and inline)
 }
 
 interface ShorthandAssignment {
     type: 'shorthand';
     targetName: string;
+    comments?: string[]; // Comments attached to this shorthand assignment (above and inline)
 }
 
 interface InlineIf {
     type: 'inlineIf';
     conditionExpr: string;
     command: Statement;
+    comments?: string[]; // Comments attached to this inline if (above and inline)
 }
 
 interface IfBlock {
@@ -191,16 +195,19 @@ interface IfBlock {
     thenBranch: Statement[];
     elseBranch?: Statement[];
     elseifBranches?: Array<{ condition: string; body: Statement[] }>;
+    comments?: string[]; // Comments attached to this if block (above and inline)
 }
 
 interface IfTrue {
     type: 'ifTrue';
     command: Statement;
+    comments?: string[]; // Comments attached to this iftrue (above and inline)
 }
 
 interface IfFalse {
     type: 'ifFalse';
     command: Statement;
+    comments?: string[]; // Comments attached to this iffalse (above and inline)
 }
 
 interface DefineFunction {
@@ -208,12 +215,14 @@ interface DefineFunction {
     name: string;
     paramNames: string[]; // Parameter names (e.g., ['a', 'b', 'c']) - aliases for $1, $2, $3
     body: Statement[];
+    comments?: string[]; // Comments attached to this function definition (above and inline)
 }
 
 interface ScopeBlock {
     type: 'scope';
     paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
+    comments?: string[]; // Comments attached to this scope block (above and inline)
 }
 
 interface ForLoop {
@@ -221,15 +230,18 @@ interface ForLoop {
     varName: string;
     iterableExpr: string;
     body: Statement[];
+    comments?: string[]; // Comments attached to this for loop (above and inline)
 }
 
 interface ReturnStatement {
     type: 'return';
     value?: Arg; // Optional value to return (if not provided, returns $)
+    comments?: string[]; // Comments attached to this return statement (above and inline)
 }
 
 interface BreakStatement {
     type: 'break';
+    comments?: string[]; // Comments attached to this break statement (above and inline)
 }
 
 interface CommentStatement {
@@ -867,41 +879,13 @@ class Parser {
         (this as any).extractedFunctions = allExtractedFunctions;
         
         // Second pass: parse remaining statements (excluding def blocks)
+        // Collect comments and attach them to the following statement
         this.currentLine = 0;
-        const statements: Statement[] = [];
-        
-        while (this.currentLine < this.lines.length) {
-            // Skip lines that are part of def blocks
-            if (defBlockLines.has(this.currentLine)) {
-                this.currentLine++;
-                continue;
-            }
-            
-            const line = this.lines[this.currentLine].trim();
-            
-            // Skip empty lines
-            if (!line) {
-                this.currentLine++;
-                continue;
-            }
-            
-            // Handle comments
-            if (line.startsWith('#')) {
-                const commentText = line.slice(1).trim(); // Remove # and trim
-                statements.push({
-                    type: 'comment',
-                    text: commentText,
-                    lineNumber: this.currentLine
-                });
-                this.currentLine++;
-                continue;
-            }
-
-            const stmt = this.parseStatement();
-            if (stmt) {
-                statements.push(stmt);
-            }
-        }
+        const pendingComments: string[] = [];
+        const statements = this.parseStatementsWithComments(
+            pendingComments,
+            (lineNumber) => defBlockLines.has(lineNumber)
+        );
 
         return statements;
     }
@@ -911,6 +895,113 @@ class Parser {
      */
     getExtractedFunctions(): DefineFunction[] {
         return (this as any).extractedFunctions || [];
+    }
+
+    /**
+     * Extract inline comment from a line (comment after code on the same line)
+     * Returns the comment text without the #, or null if no inline comment found
+     */
+    private extractInlineComment(line: string): string | null {
+        let inString: false | '"' | "'" | '`' = false;
+        let escaped = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            // Handle string boundaries
+            if (!escaped && (char === '"' || char === "'" || char === '`')) {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
+                }
+                escaped = false;
+                continue;
+            }
+            
+            if (inString) {
+                escaped = char === '\\' && !escaped;
+                continue;
+            }
+            
+            // Check for comment character (not inside string)
+            if (char === '#') {
+                const commentText = line.slice(i + 1).trim();
+                return commentText || null;
+            }
+            
+            escaped = false;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Parse statements with comment collection
+     * Collects consecutive comments and attaches them to the following statement
+     * Also extracts inline comments from statements
+     * @param pendingComments Array to store pending comments (will be modified)
+     * @param shouldSkipLine Function to determine if a line should be skipped (e.g., def block lines)
+     * @returns Array of parsed statements
+     */
+    private parseStatementsWithComments(
+        pendingComments: string[],
+        shouldSkipLine?: (lineNumber: number) => boolean
+    ): Statement[] {
+        const statements: Statement[] = [];
+        
+        while (this.currentLine < this.lines.length) {
+            // Skip lines if needed (e.g., def blocks)
+            if (shouldSkipLine && shouldSkipLine(this.currentLine)) {
+                this.currentLine++;
+                continue;
+            }
+            
+            const originalLine = this.lines[this.currentLine];
+            const line = originalLine.trim();
+            
+            // Skip empty lines - clear pending comments when we encounter a blank line
+            // This ensures only comments directly above a statement (no blank lines) are attached
+            if (!line) {
+                pendingComments.length = 0; // Clear pending comments on blank line
+                this.currentLine++;
+                continue;
+            }
+            
+            // Handle comment-only lines
+            if (line.startsWith('#')) {
+                const commentText = line.slice(1).trim();
+                pendingComments.push(commentText);
+                this.currentLine++;
+                continue;
+            }
+
+            // Parse the statement
+            const stmt = this.parseStatement();
+            if (stmt) {
+                // Extract inline comment from the original line (if any)
+                const inlineComment = this.extractInlineComment(originalLine);
+                
+                // Combine pending comments (above) with inline comment
+                const allComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments.length = 0; // Clear pending comments
+                }
+                if (inlineComment) {
+                    allComments.push(inlineComment);
+                }
+                
+                // Attach comments to the statement
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
+                statements.push(stmt);
+            }
+        }
+
+        return statements;
     }
 
     private parseStatement(): Statement | null {
@@ -1566,7 +1657,8 @@ class Parser {
     }
 
     private parseDefine(): DefineFunction {
-        const line = this.lines[this.currentLine].trim();
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
         if (tokens.length < 2) {
@@ -1594,35 +1686,42 @@ class Parser {
             }
         }
         
+        // Extract inline comment from def line
+        const inlineComment = this.extractInlineComment(originalLine);
+        const comments: string[] = [];
+        if (inlineComment) {
+            comments.push(inlineComment);
+        }
+        
         this.currentLine++;
 
         const body: Statement[] = [];
         let closed = false;
+        let pendingComments: string[] = [];
 
         while (this.currentLine < this.lines.length) {
-            const line = this.lines[this.currentLine].trim();
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
             
-            if (!line) {
+            // Skip empty lines - clear pending comments when we encounter a blank line
+            if (!bodyLine) {
+                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comments
-            if (line.startsWith('#')) {
-                const commentText = line.slice(1).trim();
-                body.push({
-                    type: 'comment',
-                    text: commentText,
-                    lineNumber: this.currentLine
-                });
+            // Handle comment-only lines - collect for next statement
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                pendingComments.push(commentText);
                 this.currentLine++;
                 continue;
             }
 
-            const tokens = Lexer.tokenize(line);
+            const bodyTokens = Lexer.tokenize(bodyLine);
             
             // If this is our closing enddef, consume it and stop
-            if (tokens[0] === 'enddef') {
+            if (bodyTokens[0] === 'enddef') {
                 this.currentLine++;
                 closed = true;
                 break;
@@ -1631,6 +1730,24 @@ class Parser {
             // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
+                // Extract inline comment from the original line (if any)
+                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
+                
+                // Combine pending comments (above) with inline comment
+                const allComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments = []; // Clear pending comments
+                }
+                if (stmtInlineComment) {
+                    allComments.push(stmtInlineComment);
+                }
+                
+                // Attach comments to the statement
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
                 body.push(stmt);
             }
         }
@@ -1639,11 +1756,16 @@ class Parser {
             throw this.createError('missing enddef', this.currentLine);
         }
 
-        return { type: 'define', name, paramNames, body };
+        const result: DefineFunction = { type: 'define', name, paramNames, body };
+        if (comments.length > 0) {
+            result.comments = comments;
+        }
+        return result;
     }
 
     private parseScope(): ScopeBlock {
-        const line = this.lines[this.currentLine].trim();
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
         // Parse parameter names (optional): scope $a $b
@@ -1668,35 +1790,42 @@ class Parser {
             }
         }
         
+        // Extract inline comment from scope line
+        const inlineComment = this.extractInlineComment(originalLine);
+        const comments: string[] = [];
+        if (inlineComment) {
+            comments.push(inlineComment);
+        }
+        
         this.currentLine++;
 
         const body: Statement[] = [];
         let closed = false;
+        let pendingComments: string[] = [];
 
         while (this.currentLine < this.lines.length) {
-            const line = this.lines[this.currentLine].trim();
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
             
-            if (!line) {
+            // Skip empty lines - clear pending comments when we encounter a blank line
+            if (!bodyLine) {
+                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comments
-            if (line.startsWith('#')) {
-                const commentText = line.slice(1).trim();
-                body.push({
-                    type: 'comment',
-                    text: commentText,
-                    lineNumber: this.currentLine
-                });
+            // Handle comment-only lines - collect for next statement
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                pendingComments.push(commentText);
                 this.currentLine++;
                 continue;
             }
 
-            const tokens = Lexer.tokenize(line);
+            const bodyTokens = Lexer.tokenize(bodyLine);
             
             // If this is our closing endscope, consume it and stop
-            if (tokens[0] === 'endscope') {
+            if (bodyTokens[0] === 'endscope') {
                 this.currentLine++;
                 closed = true;
                 break;
@@ -1705,6 +1834,24 @@ class Parser {
             // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
+                // Extract inline comment from the original line (if any)
+                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
+                
+                // Combine pending comments (above) with inline comment
+                const allComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments = []; // Clear pending comments
+                }
+                if (stmtInlineComment) {
+                    allComments.push(stmtInlineComment);
+                }
+                
+                // Attach comments to the statement
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
                 body.push(stmt);
             }
         }
@@ -1714,15 +1861,18 @@ class Parser {
         }
 
         // If parameters are declared, include them in the scope block
-        if (paramNames.length > 0) {
-            return { type: 'scope', paramNames, body };
+        const result: ScopeBlock = paramNames.length > 0 
+            ? { type: 'scope', paramNames, body }
+            : { type: 'scope', body };
+        if (comments.length > 0) {
+            result.comments = comments;
         }
-        
-        return { type: 'scope', body };
+        return result;
     }
 
     private parseForLoop(): ForLoop {
-        const line = this.lines[this.currentLine].trim();
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
         // Parse: for $var in <expr>
@@ -1748,35 +1898,42 @@ class Parser {
         const exprTokens = tokens.slice(3);
         const iterableExpr = exprTokens.join(' ');
         
+        // Extract inline comment from for line
+        const inlineComment = this.extractInlineComment(originalLine);
+        const comments: string[] = [];
+        if (inlineComment) {
+            comments.push(inlineComment);
+        }
+        
         this.currentLine++;
 
         const body: Statement[] = [];
         let closed = false;
+        let pendingComments: string[] = [];
 
         while (this.currentLine < this.lines.length) {
-            const line = this.lines[this.currentLine].trim();
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
             
-            if (!line) {
+            // Skip empty lines - clear pending comments when we encounter a blank line
+            if (!bodyLine) {
+                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comments
-            if (line.startsWith('#')) {
-                const commentText = line.slice(1).trim();
-                body.push({
-                    type: 'comment',
-                    text: commentText,
-                    lineNumber: this.currentLine
-                });
+            // Handle comment-only lines - collect for next statement
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                pendingComments.push(commentText);
                 this.currentLine++;
                 continue;
             }
 
-            const tokens = Lexer.tokenize(line);
+            const bodyTokens = Lexer.tokenize(bodyLine);
             
             // If this is our closing endfor, consume it and stop
-            if (tokens[0] === 'endfor') {
+            if (bodyTokens[0] === 'endfor') {
                 this.currentLine++;
                 closed = true;
                 break;
@@ -1785,6 +1942,24 @@ class Parser {
             // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
+                // Extract inline comment from the original line (if any)
+                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
+                
+                // Combine pending comments (above) with inline comment
+                const allComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments = []; // Clear pending comments
+                }
+                if (stmtInlineComment) {
+                    allComments.push(stmtInlineComment);
+                }
+                
+                // Attach comments to the statement
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
                 body.push(stmt);
             }
         }
@@ -1793,7 +1968,11 @@ class Parser {
             throw this.createError('missing endfor', this.currentLine);
         }
 
-        return { type: 'forLoop', varName, iterableExpr, body };
+        const result: ForLoop = { type: 'forLoop', varName, iterableExpr, body };
+        if (comments.length > 0) {
+            result.comments = comments;
+        }
+        return result;
     }
 
     private parseReturn(): ReturnStatement {
@@ -1870,7 +2049,8 @@ class Parser {
     }
 
     private parseIfBlock(): IfBlock {
-        const line = this.lines[this.currentLine].trim();
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
         
         // Extract condition (everything after 'if')
         // Use the original line string to preserve subexpressions $(...)
@@ -1885,49 +2065,67 @@ class Parser {
         }
         const conditionExpr = line.slice(conditionStart).trim();
 
+        // Extract inline comment from if line
+        const inlineComment = this.extractInlineComment(originalLine);
+        const comments: string[] = [];
+        if (inlineComment) {
+            comments.push(inlineComment);
+        }
+
         this.currentLine++;
 
         const thenBranch: Statement[] = [];
         const elseifBranches: Array<{ condition: string; body: Statement[] }> = [];
         let elseBranch: Statement[] | undefined;
         let currentBranch: Statement[] = thenBranch;
+        let pendingComments: string[] = [];
         let closed = false;
 
         while (this.currentLine < this.lines.length) {
-            const line = this.lines[this.currentLine].trim();
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
             
-            if (!line) {
+            // Skip empty lines - clear pending comments when we encounter a blank line
+            if (!bodyLine) {
+                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comments
-            if (line.startsWith('#')) {
-                const commentText = line.slice(1).trim();
-                currentBranch.push({
-                    type: 'comment',
-                    text: commentText,
-                    lineNumber: this.currentLine
-                });
+            // Handle comment-only lines - collect for next statement
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                pendingComments.push(commentText);
                 this.currentLine++;
                 continue;
             }
 
-            const tokens = Lexer.tokenize(line);
+            const tokens = Lexer.tokenize(bodyLine);
 
             // Handle elseif - switch to new branch
             if (tokens[0] === 'elseif') {
                 // Extract condition from original line string to preserve subexpressions $(...)
-                const elseifIndex = line.indexOf('elseif');
+                const elseifIndex = bodyLine.indexOf('elseif');
                 if (elseifIndex === -1) {
                     throw this.createError('elseif statement must contain "elseif"', this.currentLine);
                 }
                 // Find the position after "elseif" and any whitespace
                 let conditionStart = elseifIndex + 6; // "elseif" is 6 characters
-                while (conditionStart < line.length && /\s/.test(line[conditionStart])) {
+                while (conditionStart < bodyLine.length && /\s/.test(bodyLine[conditionStart])) {
                     conditionStart++;
                 }
-                const condition = line.slice(conditionStart).trim();
+                const condition = bodyLine.slice(conditionStart).trim();
+                
+                // Extract inline comment from elseif line
+                const elseifInlineComment = this.extractInlineComment(originalBodyLine);
+                const elseifComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    elseifComments.push(...pendingComments);
+                    pendingComments = [];
+                }
+                if (elseifInlineComment) {
+                    elseifComments.push(elseifInlineComment);
+                }
                 
                 elseifBranches.push({ condition, body: [] });
                 currentBranch = elseifBranches[elseifBranches.length - 1].body;
@@ -1937,6 +2135,17 @@ class Parser {
 
             // Handle else - switch to else branch
             if (tokens[0] === 'else') {
+                // Extract inline comment from else line
+                const elseInlineComment = this.extractInlineComment(originalBodyLine);
+                const elseComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    elseComments.push(...pendingComments);
+                    pendingComments = [];
+                }
+                if (elseInlineComment) {
+                    elseComments.push(elseInlineComment);
+                }
+                
                 elseBranch = [];
                 currentBranch = elseBranch;
                 this.currentLine++;
@@ -1953,6 +2162,24 @@ class Parser {
             // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
+                // Extract inline comment from the original line (if any)
+                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
+                
+                // Combine pending comments (above) with inline comment
+                const allComments: string[] = [];
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments = []; // Clear pending comments
+                }
+                if (stmtInlineComment) {
+                    allComments.push(stmtInlineComment);
+                }
+                
+                // Attach comments to the statement
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
                 currentBranch.push(stmt);
             }
         }
@@ -1961,17 +2188,22 @@ class Parser {
             throw this.createError('missing endif', this.currentLine);
         }
 
-        return {
+        const result: IfBlock = {
             type: 'ifBlock',
             conditionExpr,
             thenBranch,
             elseifBranches: elseifBranches.length > 0 ? elseifBranches : undefined,
             elseBranch
         };
+        if (comments.length > 0) {
+            result.comments = comments;
+        }
+        return result;
     }
 
     private parseInlineIf(): InlineIf {
-        const line = this.lines[this.currentLine].trim();
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
         const thenIndex = tokens.indexOf('then');
@@ -2057,8 +2289,19 @@ class Parser {
             }
         }
 
+        // Extract inline comment from inline if line
+        const inlineComment = this.extractInlineComment(originalLine);
+        const comments: string[] = [];
+        if (inlineComment) {
+            comments.push(inlineComment);
+        }
+
         this.currentLine++;
-        return { type: 'inlineIf', conditionExpr, command: finalCommand };
+        const result: InlineIf = { type: 'inlineIf', conditionExpr, command: finalCommand };
+        if (comments.length > 0) {
+            result.comments = comments;
+        }
+        return result;
     }
 
     private parseCommandFromTokens(tokens: string[]): CommandCall {
@@ -5299,6 +5542,12 @@ export class RobinPathThread {
             lastValue: state?.lastValue ?? null
         };
 
+        // Add comments if present
+        const comments = (stmt as any).comments;
+        if (comments && comments.length > 0) {
+            base.comments = comments;
+        }
+
         switch (stmt.type) {
             case 'command':
                 const moduleName = this.findModuleName(stmt.name);
@@ -6231,6 +6480,12 @@ export class RobinPath {
             type: stmt.type,
             lastValue: null
         };
+
+        // Add comments if present
+        const comments = (stmt as any).comments;
+        if (comments && comments.length > 0) {
+            base.comments = comments;
+        }
 
         switch (stmt.type) {
             case 'command':
