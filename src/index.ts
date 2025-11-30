@@ -332,8 +332,13 @@ function splitIntoLogicalLines(script: string): string[] {
         // Handle line separators (only at top level, not inside $())
         if ((char === '\n' && subexprDepth === 0) || (char === ';' && subexprDepth === 0)) {
             // End of logical line
-            if (current.trim()) {
-                lines.push(current.trim());
+            // Preserve blank lines as empty strings so parser can detect them for comment attachment
+            const trimmed = current.trim();
+            if (trimmed) {
+                lines.push(trimmed);
+            } else {
+                // Preserve blank line as empty string
+                lines.push('');
             }
             current = '';
             i++;
@@ -353,11 +358,16 @@ function splitIntoLogicalLines(script: string): string[] {
     }
 
     // Push remaining content
-    if (current.trim()) {
-        lines.push(current.trim());
+    const trimmed = current.trim();
+    if (trimmed) {
+        lines.push(trimmed);
+    } else if (current.length > 0 || lines.length === 0) {
+        // Preserve blank line at end, or if it's the only line
+        lines.push('');
     }
 
-    return lines.filter(line => line.length > 0);
+    // Don't filter out empty lines - they're needed for comment attachment logic
+    return lines;
 }
 
 /**
@@ -938,20 +948,21 @@ class Parser {
 
     /**
      * Parse statements with comment collection
-     * Collects consecutive comments and attaches them to the following statement
-     * Also extracts inline comments from statements
-     * @param pendingComments Array to store pending comments (will be modified)
-     * @param shouldSkipLine Function to determine if a line should be skipped (e.g., def block lines)
-     * @returns Array of parsed statements
+     * Rules:
+     * 1. Collect consecutive comments directly above a statement (no blank lines between)
+     * 2. Collect inline comments on the same line as the statement
+     * Blank lines break the comment sequence - unattached comments become CommentStatement nodes
      */
     private parseStatementsWithComments(
         pendingComments: string[],
         shouldSkipLine?: (lineNumber: number) => boolean
     ): Statement[] {
         const statements: Statement[] = [];
+        const pendingCommentLines: number[] = []; // Track line numbers for pending comments
+        let hasBlankLineAfterLastComment = false; // Track if blank line appeared after last comment
+        let hasCreatedCommentNodes = false; // Track if we've created comment nodes (indicates comment->blank->comment pattern)
         
         while (this.currentLine < this.lines.length) {
-            // Skip lines if needed (e.g., def blocks)
             if (shouldSkipLine && shouldSkipLine(this.currentLine)) {
                 this.currentLine++;
                 continue;
@@ -960,45 +971,94 @@ class Parser {
             const originalLine = this.lines[this.currentLine];
             const line = originalLine.trim();
             
-            // Skip empty lines - clear pending comments when we encounter a blank line
-            // This ensures only comments directly above a statement (no blank lines) are attached
+            // Blank line: mark that blank line appeared after last comment
             if (!line) {
-                pendingComments.length = 0; // Clear pending comments on blank line
+                hasBlankLineAfterLastComment = true;
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comment-only lines
+            // Comment line: if we have pending comments with blank line after, create comment nodes
+            // Then start a new sequence with this comment
             if (line.startsWith('#')) {
                 const commentText = line.slice(1).trim();
+                
+                // If we have pending comments and there was a blank line after them, create comment nodes
+                // This happens when: comment -> blank line -> comment (first comment becomes node)
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        statements.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                    hasCreatedCommentNodes = true; // Mark that we've created comment nodes
+                } else if (!hasBlankLineAfterLastComment) {
+                    // Consecutive comment (no blank line) - reset flag so they can be attached
+                    hasCreatedCommentNodes = false;
+                }
+                
+                // Start new sequence with this comment
                 pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
+                hasBlankLineAfterLastComment = false; // Reset flag
                 this.currentLine++;
                 continue;
             }
 
-            // Parse the statement
+            // Statement: attach pending comments + inline comment
+            // If we've created comment nodes before (comment->blank->comment pattern), 
+            // remaining comments should also be nodes
             const stmt = this.parseStatement();
             if (stmt) {
-                // Extract inline comment from the original line (if any)
-                const inlineComment = this.extractInlineComment(originalLine);
-                
-                // Combine pending comments (above) with inline comment
                 const allComments: string[] = [];
-                if (pendingComments.length > 0) {
+                
+                // If we've created comment nodes before, remaining comments should also be nodes
+                // (because they're part of the same separated sequence)
+                if (pendingComments.length > 0 && hasCreatedCommentNodes) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        statements.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0) {
+                    // No comment nodes created - attach comments (even if blank line before)
                     allComments.push(...pendingComments);
-                    pendingComments.length = 0; // Clear pending comments
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
+                
+                // Add inline comment from same line
+                const inlineComment = this.extractInlineComment(originalLine);
                 if (inlineComment) {
                     allComments.push(inlineComment);
                 }
                 
-                // Attach comments to the statement
+                // Attach to statement
                 if (allComments.length > 0) {
                     (stmt as any).comments = allComments;
                 }
                 
                 statements.push(stmt);
+                hasBlankLineAfterLastComment = false; // Reset flag
+                hasCreatedCommentNodes = false; // Reset flag after statement
             }
+        }
+
+        // Handle any remaining pending comments at end of file
+        for (let i = 0; i < pendingComments.length; i++) {
+            statements.push({
+                type: 'comment',
+                text: pendingComments[i],
+                lineNumber: pendingCommentLines[i]
+            });
         }
 
         return statements;
@@ -1698,58 +1758,103 @@ class Parser {
         const body: Statement[] = [];
         let closed = false;
         let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
+        let hasBlankLineAfterLastComment = false;
+        let hasCreatedCommentNodes = false;
 
         while (this.currentLine < this.lines.length) {
             const originalBodyLine = this.lines[this.currentLine];
             const bodyLine = originalBodyLine.trim();
             
-            // Skip empty lines - clear pending comments when we encounter a blank line
+            // Blank line: mark that blank line appeared after last comment
             if (!bodyLine) {
-                pendingComments.length = 0; // Clear pending comments on blank line
+                hasBlankLineAfterLastComment = true;
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comment-only lines - collect for next statement
+            // Comment line: if we have pending comments with blank line after, create comment nodes
             if (bodyLine.startsWith('#')) {
                 const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments and there was a blank line after them, create comment nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        body.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                    hasCreatedCommentNodes = true;
+                } else if (!hasBlankLineAfterLastComment) {
+                    // Consecutive comment (no blank line) - reset flag so they can be attached
+                    hasCreatedCommentNodes = false;
+                }
+                
+                // Start new sequence with this comment
                 pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
+                hasBlankLineAfterLastComment = false;
                 this.currentLine++;
                 continue;
             }
 
             const bodyTokens = Lexer.tokenize(bodyLine);
             
-            // If this is our closing enddef, consume it and stop
             if (bodyTokens[0] === 'enddef') {
                 this.currentLine++;
                 closed = true;
                 break;
             }
 
-            // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
-                // Extract inline comment from the original line (if any)
-                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
-                
-                // Combine pending comments (above) with inline comment
                 const allComments: string[] = [];
-                if (pendingComments.length > 0) {
+                
+                // If we've created comment nodes before, remaining comments should also be nodes
+                if (pendingComments.length > 0 && hasCreatedCommentNodes) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        body.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0) {
+                    // No comment nodes created - attach comments
                     allComments.push(...pendingComments);
-                    pendingComments = []; // Clear pending comments
-                }
-                if (stmtInlineComment) {
-                    allComments.push(stmtInlineComment);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 
-                // Attach comments to the statement
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment);
+                }
+                
                 if (allComments.length > 0) {
                     (stmt as any).comments = allComments;
                 }
                 
                 body.push(stmt);
+                hasBlankLineAfterLastComment = false;
+                hasCreatedCommentNodes = false;
             }
+        }
+
+        // Handle any remaining pending comments at end of block
+        for (let i = 0; i < pendingComments.length; i++) {
+            body.push({
+                type: 'comment',
+                text: pendingComments[i],
+                lineNumber: pendingCommentLines[i]
+            });
         }
 
         if (!closed) {
@@ -1802,58 +1907,84 @@ class Parser {
         const body: Statement[] = [];
         let closed = false;
         let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
 
         while (this.currentLine < this.lines.length) {
             const originalBodyLine = this.lines[this.currentLine];
             const bodyLine = originalBodyLine.trim();
             
-            // Skip empty lines - clear pending comments when we encounter a blank line
+            // Blank line: preserve pending comments (they may be attached to next statement)
             if (!bodyLine) {
-                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comment-only lines - collect for next statement
+            // Comment line: if we have pending comments, they were separated by blank line, so create comment nodes
+            // Then start a new sequence with this comment
             if (bodyLine.startsWith('#')) {
                 const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments, they were separated by blank line from this comment
+                // Create comment nodes for them (they won't be attached to a statement)
+                if (pendingComments.length > 0) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        body.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                }
+                
+                // Start new sequence with this comment
                 pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
                 this.currentLine++;
                 continue;
             }
 
             const bodyTokens = Lexer.tokenize(bodyLine);
             
-            // If this is our closing endscope, consume it and stop
             if (bodyTokens[0] === 'endscope') {
                 this.currentLine++;
                 closed = true;
                 break;
             }
 
-            // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
-                // Extract inline comment from the original line (if any)
-                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
-                
-                // Combine pending comments (above) with inline comment
                 const allComments: string[] = [];
+                
+                // Consecutive comments above
                 if (pendingComments.length > 0) {
                     allComments.push(...pendingComments);
-                    pendingComments = []; // Clear pending comments
-                }
-                if (stmtInlineComment) {
-                    allComments.push(stmtInlineComment);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 
-                // Attach comments to the statement
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment);
+                }
+                
                 if (allComments.length > 0) {
                     (stmt as any).comments = allComments;
                 }
                 
                 body.push(stmt);
             }
+        }
+
+        // Handle any remaining pending comments at end of block
+        for (let i = 0; i < pendingComments.length; i++) {
+            body.push({
+                type: 'comment',
+                text: pendingComments[i],
+                lineNumber: pendingCommentLines[i]
+            });
         }
 
         if (!closed) {
@@ -1910,58 +2041,84 @@ class Parser {
         const body: Statement[] = [];
         let closed = false;
         let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
 
         while (this.currentLine < this.lines.length) {
             const originalBodyLine = this.lines[this.currentLine];
             const bodyLine = originalBodyLine.trim();
             
-            // Skip empty lines - clear pending comments when we encounter a blank line
+            // Blank line: preserve pending comments (they may be attached to next statement)
             if (!bodyLine) {
-                pendingComments.length = 0; // Clear pending comments on blank line
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comment-only lines - collect for next statement
+            // Comment line: if we have pending comments, they were separated by blank line, so create comment nodes
+            // Then start a new sequence with this comment
             if (bodyLine.startsWith('#')) {
                 const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments, they were separated by blank line from this comment
+                // Create comment nodes for them (they won't be attached to a statement)
+                if (pendingComments.length > 0) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        body.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                }
+                
+                // Start new sequence with this comment
                 pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
                 this.currentLine++;
                 continue;
             }
 
             const bodyTokens = Lexer.tokenize(bodyLine);
             
-            // If this is our closing endfor, consume it and stop
             if (bodyTokens[0] === 'endfor') {
                 this.currentLine++;
                 closed = true;
                 break;
             }
 
-            // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
-                // Extract inline comment from the original line (if any)
-                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
-                
-                // Combine pending comments (above) with inline comment
                 const allComments: string[] = [];
+                
+                // Consecutive comments above
                 if (pendingComments.length > 0) {
                     allComments.push(...pendingComments);
-                    pendingComments = []; // Clear pending comments
-                }
-                if (stmtInlineComment) {
-                    allComments.push(stmtInlineComment);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 
-                // Attach comments to the statement
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment);
+                }
+                
                 if (allComments.length > 0) {
                     (stmt as any).comments = allComments;
                 }
                 
                 body.push(stmt);
             }
+        }
+
+        // Handle any remaining pending comments at end of block
+        for (let i = 0; i < pendingComments.length; i++) {
+            body.push({
+                type: 'comment',
+                text: pendingComments[i],
+                lineNumber: pendingCommentLines[i]
+            });
         }
 
         if (!closed) {
@@ -2079,23 +2236,47 @@ class Parser {
         let elseBranch: Statement[] | undefined;
         let currentBranch: Statement[] = thenBranch;
         let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
+        let hasBlankLineAfterLastComment = false;
+        let hasCreatedCommentNodes = false;
         let closed = false;
 
         while (this.currentLine < this.lines.length) {
             const originalBodyLine = this.lines[this.currentLine];
             const bodyLine = originalBodyLine.trim();
             
-            // Skip empty lines - clear pending comments when we encounter a blank line
+            // Blank line: mark that blank line appeared after last comment
             if (!bodyLine) {
-                pendingComments.length = 0; // Clear pending comments on blank line
+                hasBlankLineAfterLastComment = true;
                 this.currentLine++;
                 continue;
             }
             
-            // Handle comment-only lines - collect for next statement
+            // Comment line: if we have pending comments with blank line after, create comment nodes
             if (bodyLine.startsWith('#')) {
                 const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments and there was a blank line after them, create comment nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        currentBranch.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                    hasCreatedCommentNodes = true;
+                } else if (!hasBlankLineAfterLastComment) {
+                    // Consecutive comment (no blank line) - reset flag so they can be attached
+                    hasCreatedCommentNodes = false;
+                }
+                
+                // Start new sequence with this comment
                 pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
+                hasBlankLineAfterLastComment = false;
                 this.currentLine++;
                 continue;
             }
@@ -2121,7 +2302,8 @@ class Parser {
                 const elseifComments: string[] = [];
                 if (pendingComments.length > 0) {
                     elseifComments.push(...pendingComments);
-                    pendingComments = [];
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 if (elseifInlineComment) {
                     elseifComments.push(elseifInlineComment);
@@ -2129,6 +2311,8 @@ class Parser {
                 
                 elseifBranches.push({ condition, body: [] });
                 currentBranch = elseifBranches[elseifBranches.length - 1].body;
+                hasBlankLineAfterLastComment = false;
+                hasCreatedCommentNodes = false;
                 this.currentLine++;
                 continue;
             }
@@ -2140,7 +2324,8 @@ class Parser {
                 const elseComments: string[] = [];
                 if (pendingComments.length > 0) {
                     elseComments.push(...pendingComments);
-                    pendingComments = [];
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 if (elseInlineComment) {
                     elseComments.push(elseInlineComment);
@@ -2148,6 +2333,8 @@ class Parser {
                 
                 elseBranch = [];
                 currentBranch = elseBranch;
+                hasBlankLineAfterLastComment = false;
+                hasCreatedCommentNodes = false;
                 this.currentLine++;
                 continue;
             }
@@ -2159,29 +2346,51 @@ class Parser {
                 break;
             }
 
-            // Otherwise, let parseStatement handle it (including nested blocks)
             const stmt = this.parseStatement();
             if (stmt) {
-                // Extract inline comment from the original line (if any)
-                const stmtInlineComment = this.extractInlineComment(originalBodyLine);
-                
-                // Combine pending comments (above) with inline comment
                 const allComments: string[] = [];
-                if (pendingComments.length > 0) {
+                
+                // If we've created comment nodes before, remaining comments should also be nodes
+                if (pendingComments.length > 0 && hasCreatedCommentNodes) {
+                    for (let i = 0; i < pendingComments.length; i++) {
+                        currentBranch.push({
+                            type: 'comment',
+                            text: pendingComments[i],
+                            lineNumber: pendingCommentLines[i]
+                        });
+                    }
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0) {
+                    // No comment nodes created - attach comments
                     allComments.push(...pendingComments);
-                    pendingComments = []; // Clear pending comments
-                }
-                if (stmtInlineComment) {
-                    allComments.push(stmtInlineComment);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
                 }
                 
-                // Attach comments to the statement
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment);
+                }
+                
                 if (allComments.length > 0) {
                     (stmt as any).comments = allComments;
                 }
                 
                 currentBranch.push(stmt);
+                hasBlankLineAfterLastComment = false;
+                hasCreatedCommentNodes = false;
             }
+        }
+
+        // Handle any remaining pending comments at end of block
+        for (let i = 0; i < pendingComments.length; i++) {
+            currentBranch.push({
+                type: 'comment',
+                text: pendingComments[i],
+                lineNumber: pendingCommentLines[i]
+            });
         }
 
         if (!closed) {

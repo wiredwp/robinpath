@@ -407,35 +407,82 @@ log "test"
             console.log('  Got:', multiplyNode?.comments);
         }
         
-        // Test 3: Comment "line 5" should NOT be attached to "log" (blank line before)
+        // Test 3: Comment "line 5" SHOULD be attached to "log" (blank line doesn't break if comment is directly above)
         const logNode = commentAST.find(node => node.type === 'command' && node.name === 'log');
         const commentTest3Passed = logNode && 
-            (!logNode.comments || logNode.comments.length === 0);
+            Array.isArray(logNode.comments) && 
+            logNode.comments.length === 1 &&
+            logNode.comments[0] === 'line 5 (should not be attached - blank line before)';
         
         if (commentTest3Passed) {
-            console.log('✓ Test 3 PASSED - Comment with blank line before "log" not attached');
+            console.log('✓ Test 3 PASSED - Comment "line 5" attached to "log" command');
         } else {
             console.log('✗ Test 3 FAILED - Comments for "log" command');
-            console.log('  Expected: no comments (blank line before)');
+            console.log('  Expected: ["line 5 (should not be attached - blank line before)"]');
             console.log('  Got:', logNode?.comments);
         }
         
-        // Test 4: Comment "line 1" should NOT be attached (blank line after)
-        // This should be a separate comment node or not attached to anything
-        const commentTest4Passed = !commentAST.some(node => 
+        // Test 4: Comment "line 1" should NOT be attached but should be a separate comment node
+        const commentTest4aPassed = !commentAST.some(node => 
             node.type === 'command' && 
             node.comments && 
             node.comments.includes('line 1')
         );
         
+        const commentNode1 = commentAST.find(node => node.type === 'comment' && node.text === 'line 1');
+        const commentTest4bPassed = commentNode1 && commentNode1.type === 'comment' && commentNode1.text === 'line 1';
+        const commentTest4Passed = commentTest4aPassed && commentTest4bPassed;
+        
         if (commentTest4Passed) {
-            console.log('✓ Test 4 PASSED - Comment "line 1" not attached (blank line after)');
+            console.log('✓ Test 4 PASSED - Comment "line 1" is a separate comment node (not attached)');
         } else {
-            console.log('✗ Test 4 FAILED - Comment "line 1" should not be attached');
+            console.log('✗ Test 4 FAILED - Comment "line 1" should be a separate comment node');
+            console.log('  Not attached to command:', commentTest4aPassed);
+            console.log('  Is comment node:', commentTest4bPassed);
+            console.log('  Comment node:', commentNode1);
+        }
+        
+        // Test 5: Comments separated by blank lines should NOT be attached but should be comment nodes
+        const testScript5 = `
+# test comment
+
+# test comment 2
+
+add 5 5
+`;
+        const astTest5 = commentTestRp.getAST(testScript5);
+        const addNode5 = astTest5.find(node => node.type === 'command' && node.name === 'add');
+        const commentTest5aPassed = addNode5 && 
+            (!addNode5.comments || addNode5.comments.length === 0);
+        
+        const commentNode5a = astTest5.find(node => node.type === 'comment' && node.text === 'test comment');
+        const commentNode5b = astTest5.find(node => node.type === 'comment' && node.text === 'test comment 2');
+        const commentTest5bPassed = commentNode5a && commentNode5b;
+        const commentTest5Passed = commentTest5aPassed && commentTest5bPassed;
+        
+        if (commentTest5Passed) {
+            console.log('✓ Test 5 PASSED - Comments separated by blank lines are separate comment nodes');
+        } else {
+            console.log('✗ Test 5 FAILED - Comments separated by blank lines should be comment nodes');
+            console.log('  Not attached to command:', commentTest5aPassed);
+            console.log('  Are comment nodes:', commentTest5bPassed);
+            console.log('  Comment node 1:', commentNode5a);
+            console.log('  Comment node 2:', commentNode5b);
+        }
+        
+        // Test 6: Comment "line 5" should be attached to "log", not a separate comment node
+        const commentNode5 = commentAST.find(node => node.type === 'comment' && node.text === 'line 5 (should not be attached - blank line before)');
+        const commentTest6Passed = !commentNode5; // Should NOT be a separate comment node
+        
+        if (commentTest6Passed) {
+            console.log('✓ Test 6 PASSED - Comment "line 5" is attached to "log", not a separate node');
+        } else {
+            console.log('✗ Test 6 FAILED - Comment "line 5" should be attached, not a separate comment node');
+            console.log('  Comment node:', commentNode5);
         }
         
         // Summary
-        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest4Passed;
+        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest4Passed && commentTest5Passed && commentTest6Passed;
         if (allCommentTestsPassed) {
             console.log();
             console.log('✓ All comment attachment tests PASSED!');
@@ -445,6 +492,11 @@ log "test"
             console.log();
             console.log('AST Structure:');
             console.log(JSON.stringify(commentAST, null, 2));
+            if (!commentTest5Passed || !commentTest6Passed) {
+                console.log();
+                console.log('Test 5 AST Structure:');
+                console.log(JSON.stringify(astTest5, null, 2));
+            }
         }
         
         console.log('='.repeat(60));

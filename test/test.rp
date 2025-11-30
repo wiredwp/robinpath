@@ -3099,5 +3099,46 @@ enddef
 
 log "Test 48 - Def blocks extracted first: All passed"
 
+# Test 49: Comment attachment and AST nodes
+log "Test 49 - Comment attachment and AST nodes"
+
+# Test 49a: Comments directly above statement should be attached
+# comment 1
+# comment 2
+math.add 5 3
+$test49a = $
+test.assertEqual $test49a 8 "Comments directly above statement should be attached"
+
+# Test 49b: Comments separated by blank line should become separate comment nodes
+# comment 3
+
+# comment 4
+math.add 2 2
+$test49b = $
+test.assertEqual $test49b 4 "Comments separated by blank line should not be attached"
+
+# Test 49c: Inline comments should be attached
+math.add 10 5  # inline comment
+$test49c = $
+test.assertEqual $test49c 15 "Inline comments should be attached"
+
+# Test 49d: Multiple consecutive comments above statement
+# comment 5
+# comment 6
+# comment 7
+log "test"
+test.assertNotNull $ "Multiple consecutive comments should be attached"
+
+# Test 49e: Comment with blank line before should be separate node
+# comment 8
+
+log "test2"
+test.assertNotNull $ "Comment with blank line before should not be attached"
+
+# Test 49f: Comment at end of file (no statement after)
+# final comment
+
+log "Test 49 - Comment attachment and AST nodes: All passed"
+
 log "All tests completed!"
 
