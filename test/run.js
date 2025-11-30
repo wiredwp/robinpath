@@ -424,10 +424,9 @@ multiply 5 10
             console.log('  Comment node:', commentNode1);
         }
         
-        // Test 5: Comments separated by blank lines should NOT be attached but should be comment nodes
+        // Test 5: Consecutive orphaned comments separated by blank lines should be grouped into a single comment node
         const testScript5 = `
 # test comment
-
 # test comment 2
 
 add 5 5
@@ -437,19 +436,24 @@ add 5 5
         const commentTest5aPassed = addNode5 && 
             (!addNode5.comments || addNode5.comments.length === 0);
         
-        const commentNode5a = astTest5.find(node => node.type === 'comment' && node.text === 'test comment');
-        const commentNode5b = astTest5.find(node => node.type === 'comment' && node.text === 'test comment 2');
-        const commentTest5bPassed = commentNode5a && commentNode5b;
+        // Should be grouped into a single comment node with newline-separated text
+        const commentNodes5 = astTest5.filter(node => node.type === 'comment');
+        const groupedCommentNode5 = commentNodes5.find(node => 
+            node.text === 'test comment\ntest comment 2'
+        );
+        const commentTest5bPassed = commentNodes5.length === 1 && groupedCommentNode5 !== undefined;
         const commentTest5Passed = commentTest5aPassed && commentTest5bPassed;
         
         if (commentTest5Passed) {
-            console.log('✓ Test 5 PASSED - Comments separated by blank lines are separate comment nodes');
+            console.log('✓ Test 5 PASSED - Consecutive orphaned comments are grouped into single comment node');
         } else {
-            console.log('✗ Test 5 FAILED - Comments separated by blank lines should be comment nodes');
+            console.log('✗ Test 5 FAILED - Consecutive orphaned comments should be grouped');
             console.log('  Not attached to command:', commentTest5aPassed);
-            console.log('  Are comment nodes:', commentTest5bPassed);
-            console.log('  Comment node 1:', commentNode5a);
-            console.log('  Comment node 2:', commentNode5b);
+            console.log('  Grouped correctly:', commentTest5bPassed);
+            console.log('  Expected 1 comment node, got:', commentNodes5.length);
+            console.log('  Comment nodes:', commentNodes5);
+            console.log('  Expected text: "test comment\\ntest comment 2"');
+            console.log('  Got text:', groupedCommentNode5?.text);
         }
         
         
@@ -477,8 +481,77 @@ add 5 3
             console.log('  Add node comments:', addNode7?.comments);
         }
         
+        // Test 8: Consecutive orphaned comments should be grouped into a single comment node
+        const testScript8 = `
+# line 1
+# line 2
+# line 3
+
+add 5 5
+`;
+        const astTest8 = commentTestRp.getAST(testScript8);
+        const addNode8 = astTest8.find(node => node.type === 'command' && node.name === 'add');
+        
+        // Find all comment nodes - should be only ONE grouped comment node
+        const commentNodes8 = astTest8.filter(node => node.type === 'comment');
+        const groupedCommentNode8 = commentNodes8.find(node => 
+            node.text === 'line 1\nline 2\nline 3' || 
+            node.text.includes('line 1') && node.text.includes('line 2') && node.text.includes('line 3')
+        );
+        
+        const commentTest8aPassed = addNode8 && (!addNode8.comments || addNode8.comments.length === 0);
+        const commentTest8bPassed = commentNodes8.length === 1; // Should be only one comment node
+        const commentTest8cPassed = groupedCommentNode8 && groupedCommentNode8.text === 'line 1\nline 2\nline 3';
+        const commentTest8Passed = commentTest8aPassed && commentTest8bPassed && commentTest8cPassed;
+        
+        if (commentTest8Passed) {
+            console.log('✓ Test 8 PASSED - Consecutive orphaned comments are grouped into single node with newline-separated text');
+        } else {
+            console.log('✗ Test 8 FAILED - Consecutive orphaned comments should be grouped');
+            console.log('  Not attached to command:', commentTest8aPassed);
+            console.log('  Only one comment node:', commentTest8bPassed, `(found ${commentNodes8.length})`);
+            console.log('  Correct grouped text:', commentTest8cPassed);
+            console.log('  Comment nodes:', commentNodes8);
+            console.log('  Expected text: "line 1\\nline 2\\nline 3"');
+            console.log('  Got text:', groupedCommentNode8?.text);
+        }
+        
+        // Test 9: Multiple groups of consecutive orphaned comments
+        const testScript9 = `
+# group1 line 1
+# group1 line 2
+
+add 5 5
+
+# group2 line 1
+# group2 line 2
+
+multiply 3 4
+`;
+        const astTest9 = commentTestRp.getAST(testScript9);
+        const commentNodes9 = astTest9.filter(node => node.type === 'comment');
+        const group1Node = commentNodes9.find(node => node.text === 'group1 line 1\ngroup1 line 2');
+        const group2Node = commentNodes9.find(node => node.text === 'group2 line 1\ngroup2 line 2');
+        
+        const commentTest9Passed = 
+            commentNodes9.length === 2 && // Should be exactly 2 comment nodes
+            group1Node && 
+            group2Node &&
+            group1Node.text === 'group1 line 1\ngroup1 line 2' &&
+            group2Node.text === 'group2 line 1\ngroup2 line 2';
+        
+        if (commentTest9Passed) {
+            console.log('✓ Test 9 PASSED - Multiple groups of consecutive orphaned comments are correctly grouped');
+        } else {
+            console.log('✗ Test 9 FAILED - Multiple groups should be correctly grouped');
+            console.log('  Expected 2 comment nodes, got:', commentNodes9.length);
+            console.log('  Group 1 node:', group1Node);
+            console.log('  Group 2 node:', group2Node);
+            console.log('  All comment nodes:', commentNodes9);
+        }
+        
         // Summary
-        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest5Passed && commentTest7Passed;
+        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest5Passed && commentTest7Passed && commentTest8Passed && commentTest9Passed;
         if (allCommentTestsPassed) {
             console.log();
             console.log('✓ All comment attachment tests PASSED!');
@@ -488,7 +561,7 @@ add 5 3
             console.log();
             console.log('AST Structure:');
             console.log(JSON.stringify(commentAST, null, 2));
-            if (!commentTest5Passed || !commentTest7Passed) {
+            if (!commentTest5Passed || !commentTest7Passed || !commentTest8Passed || !commentTest9Passed) {
                 console.log();
                 if (!commentTest5Passed) {
                     console.log('Test 5 AST Structure:');
@@ -497,6 +570,14 @@ add 5 3
                 if (!commentTest7Passed) {
                     console.log('Test 7 AST Structure:');
                     console.log(JSON.stringify(astTest7, null, 2));
+                }
+                if (!commentTest8Passed) {
+                    console.log('Test 8 AST Structure:');
+                    console.log(JSON.stringify(astTest8, null, 2));
+                }
+                if (!commentTest9Passed) {
+                    console.log('Test 9 AST Structure:');
+                    console.log(JSON.stringify(astTest9, null, 2));
                 }
             }
         }

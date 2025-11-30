@@ -771,6 +771,21 @@ class Parser {
         this.lines = lines;
     }
 
+    /**
+     * Helper function to create a single comment node from multiple consecutive orphaned comments
+     * Groups them with newline-separated text
+     */
+    private createGroupedCommentNode(comments: string[], commentLines: number[]): CommentStatement {
+        // Join all comments with newlines
+        const groupedText = comments.join('\n');
+        // Use the first line number as the reference
+        return {
+            type: 'comment',
+            text: groupedText,
+            lineNumber: commentLines[0]
+        };
+    }
+
     private getLineContent(lineNumber: number): string {
         if (lineNumber >= 0 && lineNumber < this.lines.length) {
             return this.lines[lineNumber].trim();
@@ -986,13 +1001,8 @@ class Parser {
                 // If we have pending comments and there was a blank line after them, create comment nodes
                 // This happens when: comment -> blank line -> comment (first comment becomes node)
                 if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        statements.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    statements.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                     hasCreatedCommentNodes = true; // Mark that we've created comment nodes
@@ -1021,24 +1031,14 @@ class Parser {
                 // In that case, if there's another blank line, these should also be nodes
                 if (pendingComments.length > 0 && hasBlankLineAfterLastComment && hasCreatedCommentNodes) {
                     // comment -> blank -> comment -> blank -> statement: all comments become nodes
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        statements.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    statements.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0 && hasBlankLineAfterLastComment && !hasCreatedCommentNodes) {
                     // comment -> blank -> statement: comment becomes node (not attached)
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        statements.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    statements.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0) {
@@ -1066,12 +1066,9 @@ class Parser {
         }
 
         // Handle any remaining pending comments at end of file
-        for (let i = 0; i < pendingComments.length; i++) {
-            statements.push({
-                type: 'comment',
-                text: pendingComments[i],
-                lineNumber: pendingCommentLines[i]
-            });
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            statements.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
         }
 
         return statements;
@@ -1792,13 +1789,8 @@ class Parser {
                 
                 // If we have pending comments and there was a blank line after them, create comment nodes
                 if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        body.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                     hasCreatedCommentNodes = true;
@@ -1830,24 +1822,14 @@ class Parser {
                 // If there was a blank line after pending comments, create comment nodes
                 if (pendingComments.length > 0 && hasBlankLineAfterLastComment && hasCreatedCommentNodes) {
                     // comment -> blank -> comment -> blank -> statement: all comments become nodes
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        body.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0 && hasBlankLineAfterLastComment && !hasCreatedCommentNodes) {
                     // comment -> blank -> statement: comment becomes node (not attached)
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        body.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0) {
@@ -1874,12 +1856,9 @@ class Parser {
         }
 
         // Handle any remaining pending comments at end of block
-        for (let i = 0; i < pendingComments.length; i++) {
-            body.push({
-                type: 'comment',
-                text: pendingComments[i],
-                lineNumber: pendingCommentLines[i]
-            });
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
         }
 
         if (!closed) {
@@ -1951,14 +1930,9 @@ class Parser {
                 
                 // If we have pending comments, they were separated by blank line from this comment
                 // Create comment nodes for them (they won't be attached to a statement)
+                // Group consecutive orphaned comments into a single node
                 if (pendingComments.length > 0) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        body.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 }
@@ -2004,12 +1978,9 @@ class Parser {
         }
 
         // Handle any remaining pending comments at end of block
-        for (let i = 0; i < pendingComments.length; i++) {
-            body.push({
-                type: 'comment',
-                text: pendingComments[i],
-                lineNumber: pendingCommentLines[i]
-            });
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
         }
 
         if (!closed) {
@@ -2085,14 +2056,9 @@ class Parser {
                 
                 // If we have pending comments, they were separated by blank line from this comment
                 // Create comment nodes for them (they won't be attached to a statement)
+                // Group consecutive orphaned comments into a single node
                 if (pendingComments.length > 0) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        body.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 }
@@ -2138,12 +2104,9 @@ class Parser {
         }
 
         // Handle any remaining pending comments at end of block
-        for (let i = 0; i < pendingComments.length; i++) {
-            body.push({
-                type: 'comment',
-                text: pendingComments[i],
-                lineNumber: pendingCommentLines[i]
-            });
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
         }
 
         if (!closed) {
@@ -2283,13 +2246,8 @@ class Parser {
                 
                 // If we have pending comments and there was a blank line after them, create comment nodes
                 if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        currentBranch.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    currentBranch.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                     hasCreatedCommentNodes = true;
@@ -2377,13 +2335,8 @@ class Parser {
                 
                 // If we've created comment nodes before, remaining comments should also be nodes
                 if (pendingComments.length > 0 && hasCreatedCommentNodes) {
-                    for (let i = 0; i < pendingComments.length; i++) {
-                        currentBranch.push({
-                            type: 'comment',
-                            text: pendingComments[i],
-                            lineNumber: pendingCommentLines[i]
-                        });
-                    }
+                    // Group consecutive orphaned comments into a single node
+                    currentBranch.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 } else if (pendingComments.length > 0) {
@@ -2410,12 +2363,9 @@ class Parser {
         }
 
         // Handle any remaining pending comments at end of block
-        for (let i = 0; i < pendingComments.length; i++) {
-            currentBranch.push({
-                type: 'comment',
-                text: pendingComments[i],
-                lineNumber: pendingCommentLines[i]
-            });
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            currentBranch.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
         }
 
         if (!closed) {
