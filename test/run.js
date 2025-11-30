@@ -436,10 +436,13 @@ add 5 5
         const commentTest5aPassed = addNode5 && 
             (!addNode5.comments || addNode5.comments.length === 0);
         
-        // Should be grouped into a single comment node with newline-separated text
+        // Should be grouped into a single comment node with comments array
         const commentNodes5 = astTest5.filter(node => node.type === 'comment');
         const groupedCommentNode5 = commentNodes5.find(node => 
-            node.text === 'test comment\ntest comment 2'
+            Array.isArray(node.comments) && 
+            node.comments.length === 2 &&
+            node.comments[0] === 'test comment' &&
+            node.comments[1] === 'test comment 2'
         );
         const commentTest5bPassed = commentNodes5.length === 1 && groupedCommentNode5 !== undefined;
         const commentTest5Passed = commentTest5aPassed && commentTest5bPassed;
@@ -452,8 +455,8 @@ add 5 5
             console.log('  Grouped correctly:', commentTest5bPassed);
             console.log('  Expected 1 comment node, got:', commentNodes5.length);
             console.log('  Comment nodes:', commentNodes5);
-            console.log('  Expected text: "test comment\\ntest comment 2"');
-            console.log('  Got text:', groupedCommentNode5?.text);
+            console.log('  Expected comments: ["test comment", "test comment 2"]');
+            console.log('  Got comments:', groupedCommentNode5?.comments);
         }
         
         
@@ -495,25 +498,28 @@ add 5 5
         // Find all comment nodes - should be only ONE grouped comment node
         const commentNodes8 = astTest8.filter(node => node.type === 'comment');
         const groupedCommentNode8 = commentNodes8.find(node => 
-            node.text === 'line 1\nline 2\nline 3' || 
-            node.text.includes('line 1') && node.text.includes('line 2') && node.text.includes('line 3')
+            Array.isArray(node.comments) && 
+            node.comments.length === 3 &&
+            node.comments[0] === 'line 1' &&
+            node.comments[1] === 'line 2' &&
+            node.comments[2] === 'line 3'
         );
         
         const commentTest8aPassed = addNode8 && (!addNode8.comments || addNode8.comments.length === 0);
         const commentTest8bPassed = commentNodes8.length === 1; // Should be only one comment node
-        const commentTest8cPassed = groupedCommentNode8 && groupedCommentNode8.text === 'line 1\nline 2\nline 3';
+        const commentTest8cPassed = groupedCommentNode8 !== undefined;
         const commentTest8Passed = commentTest8aPassed && commentTest8bPassed && commentTest8cPassed;
         
         if (commentTest8Passed) {
-            console.log('✓ Test 8 PASSED - Consecutive orphaned comments are grouped into single node with newline-separated text');
+            console.log('✓ Test 8 PASSED - Consecutive orphaned comments are grouped into single node with comments array');
         } else {
             console.log('✗ Test 8 FAILED - Consecutive orphaned comments should be grouped');
             console.log('  Not attached to command:', commentTest8aPassed);
             console.log('  Only one comment node:', commentTest8bPassed, `(found ${commentNodes8.length})`);
-            console.log('  Correct grouped text:', commentTest8cPassed);
+            console.log('  Correct comments array:', commentTest8cPassed);
             console.log('  Comment nodes:', commentNodes8);
-            console.log('  Expected text: "line 1\\nline 2\\nline 3"');
-            console.log('  Got text:', groupedCommentNode8?.text);
+            console.log('  Expected comments: ["line 1", "line 2", "line 3"]');
+            console.log('  Got comments:', groupedCommentNode8?.comments);
         }
         
         // Test 9: Multiple groups of consecutive orphaned comments
@@ -530,15 +536,23 @@ multiply 3 4
 `;
         const astTest9 = commentTestRp.getAST(testScript9);
         const commentNodes9 = astTest9.filter(node => node.type === 'comment');
-        const group1Node = commentNodes9.find(node => node.text === 'group1 line 1\ngroup1 line 2');
-        const group2Node = commentNodes9.find(node => node.text === 'group2 line 1\ngroup2 line 2');
+        const group1Node = commentNodes9.find(node => 
+            Array.isArray(node.comments) &&
+            node.comments.length === 2 &&
+            node.comments[0] === 'group1 line 1' &&
+            node.comments[1] === 'group1 line 2'
+        );
+        const group2Node = commentNodes9.find(node => 
+            Array.isArray(node.comments) &&
+            node.comments.length === 2 &&
+            node.comments[0] === 'group2 line 1' &&
+            node.comments[1] === 'group2 line 2'
+        );
         
         const commentTest9Passed = 
             commentNodes9.length === 2 && // Should be exactly 2 comment nodes
-            group1Node && 
-            group2Node &&
-            group1Node.text === 'group1 line 1\ngroup1 line 2' &&
-            group2Node.text === 'group2 line 1\ngroup2 line 2';
+            group1Node !== undefined && 
+            group2Node !== undefined;
         
         if (commentTest9Passed) {
             console.log('✓ Test 9 PASSED - Multiple groups of consecutive orphaned comments are correctly grouped');
