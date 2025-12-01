@@ -947,6 +947,122 @@ endif`;
         console.log('✓ All AST update tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test function metadata retrieval
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Function Metadata Retrieval');
+        console.log('='.repeat(60));
+        
+        {
+            const metadataTestRp = new RobinPath();
+            
+            // Test 1: Get metadata for module function
+            const mathAddMeta = metadataTestRp.getFunctionMetadata('math.add');
+            const metadataTest1Passed = mathAddMeta !== null && 
+                typeof mathAddMeta === 'object' &&
+                mathAddMeta.description !== undefined;
+            
+            if (metadataTest1Passed) {
+                console.log('✓ Metadata Test 1 PASSED - Module function metadata retrieved');
+            } else {
+                console.log('✗ Metadata Test 1 FAILED - Module function metadata not found');
+                console.log('  Function: math.add');
+                console.log('  Metadata:', mathAddMeta);
+                throw new Error('Metadata Test 1 FAILED - Module function metadata not found');
+            }
+            
+            // Test 2: Get metadata for global function (if it exists)
+            const addMeta = metadataTestRp.getFunctionMetadata('add');
+            const metadataTest2Passed = addMeta !== null && 
+                typeof addMeta === 'object' &&
+                addMeta.description !== undefined;
+            
+            if (metadataTest2Passed) {
+                console.log('✓ Metadata Test 2 PASSED - Global function metadata retrieved');
+            } else {
+                console.log('✗ Metadata Test 2 FAILED - Global function metadata not found');
+                console.log('  Function: add');
+                console.log('  Metadata:', addMeta);
+                throw new Error('Metadata Test 2 FAILED - Global function metadata not found');
+            }
+            
+            // Test 3: Get module info
+            const mathModuleInfo = metadataTestRp.getModuleInfo('math');
+            const metadataTest3Passed = mathModuleInfo !== null && 
+                typeof mathModuleInfo === 'object' &&
+                mathModuleInfo.description !== undefined;
+            
+            if (metadataTest3Passed) {
+                console.log('✓ Metadata Test 3 PASSED - Module info retrieved');
+            } else {
+                console.log('✗ Metadata Test 3 FAILED - Module info not found');
+                console.log('  Module: math');
+                console.log('  Info:', mathModuleInfo);
+                throw new Error('Metadata Test 3 FAILED - Module info not found');
+            }
+            
+            // Test 4: Verify metadata structure for function
+            const logMeta = metadataTestRp.getFunctionMetadata('log');
+            const metadataTest4Passed = logMeta !== null &&
+                typeof logMeta === 'object' &&
+                (logMeta.parameters === undefined || Array.isArray(logMeta.parameters)) &&
+                typeof logMeta.description === 'string';
+            
+            if (metadataTest4Passed) {
+                console.log('✓ Metadata Test 4 PASSED - Function metadata has correct structure');
+            } else {
+                console.log('✗ Metadata Test 4 FAILED - Function metadata structure incorrect');
+                console.log('  Function: log');
+                console.log('  Metadata:', logMeta);
+                throw new Error('Metadata Test 4 FAILED - Function metadata structure incorrect');
+            }
+            
+            // Test 5: Verify metadata for non-existent function returns null
+            const nonExistentMeta = metadataTestRp.getFunctionMetadata('nonexistent.function');
+            const metadataTest5Passed = nonExistentMeta === null;
+            
+            if (metadataTest5Passed) {
+                console.log('✓ Metadata Test 5 PASSED - Non-existent function returns null');
+            } else {
+                console.log('✗ Metadata Test 5 FAILED - Non-existent function should return null');
+                console.log('  Function: nonexistent.function');
+                console.log('  Metadata:', nonExistentMeta);
+                throw new Error('Metadata Test 5 FAILED - Non-existent function should return null');
+            }
+            
+            // Test 6: Verify metadata for non-existent module returns null
+            const nonExistentModuleInfo = metadataTestRp.getModuleInfo('nonexistent');
+            const metadataTest6Passed = nonExistentModuleInfo === null;
+            
+            if (metadataTest6Passed) {
+                console.log('✓ Metadata Test 6 PASSED - Non-existent module returns null');
+            } else {
+                console.log('✗ Metadata Test 6 FAILED - Non-existent module should return null');
+                console.log('  Module: nonexistent');
+                console.log('  Info:', nonExistentModuleInfo);
+                throw new Error('Metadata Test 6 FAILED - Non-existent module should return null');
+            }
+            
+            // Test 7: Verify that both module-prefixed and global function names work for global functions
+            // This tests the fix we just made
+            const addMetaGlobal = metadataTestRp.getFunctionMetadata('add');
+            const addMetaModule = metadataTestRp.getFunctionMetadata('math.add');
+            const metadataTest7Passed = addMetaGlobal !== null && addMetaModule !== null &&
+                addMetaGlobal.description === addMetaModule.description;
+            
+            if (metadataTest7Passed) {
+                console.log('✓ Metadata Test 7 PASSED - Global function metadata accessible via both names');
+            } else {
+                console.log('✗ Metadata Test 7 FAILED - Global function metadata should be accessible via both names');
+                console.log('  Global (add):', addMetaGlobal);
+                console.log('  Module (math.add):', addMetaModule);
+                throw new Error('Metadata Test 7 FAILED - Global function metadata should be accessible via both names');
+            }
+        }
+        
+        console.log('✓ All metadata tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {

@@ -458,6 +458,15 @@ export class RobinPath {
                     this.environment.builtins.set(funcName, funcHandler);
                 }
             }
+            
+            // Also register metadata for global functions without module prefix
+            // This allows getFunctionMetadata('add') to work, not just getFunctionMetadata('math.add')
+            for (const [funcName, metadata] of Object.entries(module.functionMetadata || {})) {
+                // Only register if not already registered (avoid conflicts with existing metadata)
+                if (!this.environment.metadata.has(funcName)) {
+                    this.environment.metadata.set(funcName, metadata);
+                }
+            }
         }
     }
 

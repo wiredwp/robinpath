@@ -670,7 +670,7 @@ export class Parser {
                     // Simple variable - shorthand assignment
                     const targetName = targetVar.slice(1);
                     const endLine = this.currentLine;
-                    this.currentLine++;
+                this.currentLine++;
                     return { type: 'shorthand', targetName, lineRange: this.createLineRange(startLine, endLine) };
                 } else {
                     // Variable with path - just a reference, treat as no-op (or could be used in expressions)
