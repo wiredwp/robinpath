@@ -188,9 +188,26 @@ export class RobinPathThread {
         const parser = new Parser(lines);
         const statements = parser.parse();
 
-        // Serialize AST without execution state
+        // Track "use" command context to determine module names
+        let currentModuleContext: string | null = null;
+
+        // Serialize AST without execution state, tracking "use" commands
         const ast = statements.map((stmt) => {
-            return this.serializeStatement(stmt);
+            // Handle "use" command to track module context
+            if (stmt.type === 'command' && stmt.name === 'use' && stmt.args.length > 0) {
+                const moduleArg = stmt.args[0];
+                if (moduleArg.type === 'literal' || moduleArg.type === 'string') {
+                    const moduleName = String(moduleArg.value);
+                    if (moduleName === 'clear' || moduleName === '' || moduleName === null) {
+                        currentModuleContext = null;
+                    } else {
+                        currentModuleContext = moduleName;
+                    }
+                }
+            }
+
+            // Serialize statement with current module context
+            return this.serializeStatement(stmt, undefined, currentModuleContext);
         });
 
         return ast;
@@ -215,7 +232,7 @@ export class RobinPathThread {
             return {
                 name: func.name,
                 paramNames: func.paramNames,
-                body: func.body.map((stmt) => this.serializeStatement(stmt))
+                body: func.body.map((stmt) => this.serializeStatement(stmt, undefined, undefined))
             };
         });
     }
@@ -257,7 +274,7 @@ export class RobinPathThread {
         // Serialize AST with execution state
         const ast = statements.map((stmt, index) => {
             const state = stateTracker.getState(index);
-            return this.serializeStatement(stmt, state);
+            return this.serializeStatement(stmt, state, undefined);
         });
 
         // Get variables
@@ -322,20 +339,29 @@ export class RobinPathThread {
      * Find the module name for a given function name
      * Returns the module name if found, null otherwise
      */
-    private findModuleName(functionName: string): string | null {
+    private findModuleName(functionName: string, currentModuleContext?: string | null): string | null {
         // If the function name contains a dot, extract the module name
         if (functionName.includes('.')) {
             const parts = functionName.split('.');
             return parts[0] || null;
         }
 
-        // Check if currentModule is set
-        if (this.environment.currentModule) {
-            // Verify that the function exists in this module
-            const fullName = `${this.environment.currentModule}.${functionName}`;
+        // Use provided context or environment's currentModule
+        const moduleContext = currentModuleContext !== undefined ? currentModuleContext : this.environment.currentModule;
+
+        // If there's a module context, check that module first
+        if (moduleContext) {
+            const fullName = `${moduleContext}.${functionName}`;
             if (this.environment.builtins.has(fullName) || this.environment.metadata.has(fullName)) {
-                return this.environment.currentModule;
+                return moduleContext;
             }
+        }
+
+        // Check if it's a global builtin BEFORE searching modules
+        // This ensures global functions are preferred over module functions
+        // (e.g., "log" should be global, not "core.log")
+        if (this.environment.builtins.has(functionName) || this.environment.metadata.has(functionName)) {
+            return null; // Global function, no module
         }
 
         // Search through builtins and metadata to find which module this function belongs to
@@ -353,18 +379,14 @@ export class RobinPathThread {
             }
         }
 
-        // Check if it's a global builtin (no module)
-        if (this.environment.builtins.has(functionName) || this.environment.metadata.has(functionName)) {
-            return null; // Global function, no module
-        }
-
         return null;
     }
 
-    private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }): any {
+    private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }, currentModuleContext?: string | null): any {
         const base: any = {
             type: stmt.type,
-            lastValue: state?.lastValue ?? null
+            lastValue: state?.lastValue ?? null,
+            lineRange: stmt.lineRange
         };
 
         // Add comments if present
@@ -375,7 +397,7 @@ export class RobinPathThread {
 
         switch (stmt.type) {
             case 'command':
-                const moduleName = this.findModuleName(stmt.name);
+                const moduleName = this.findModuleName(stmt.name, currentModuleContext);
                 return {
                     ...base,
                     name: stmt.name,
@@ -387,7 +409,7 @@ export class RobinPathThread {
                     ...base,
                     targetName: stmt.targetName,
                     targetPath: stmt.targetPath,
-                    command: stmt.command ? this.serializeStatement(stmt.command) : undefined,
+                    command: stmt.command ? this.serializeStatement(stmt.command, undefined, currentModuleContext) : undefined,
                     literalValue: stmt.literalValue,
                     isLastValue: stmt.isLastValue
                 };
@@ -400,47 +422,47 @@ export class RobinPathThread {
                 return {
                     ...base,
                     conditionExpr: stmt.conditionExpr,
-                    command: this.serializeStatement(stmt.command)
+                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
                 };
             case 'ifBlock':
                 return {
                     ...base,
                     conditionExpr: stmt.conditionExpr,
-                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s)),
+                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s, undefined, currentModuleContext)),
                     elseifBranches: stmt.elseifBranches?.map(branch => ({
                         condition: branch.condition,
-                        body: branch.body.map(s => this.serializeStatement(s))
+                        body: branch.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                     })),
-                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s))
+                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'ifTrue':
                 return {
                     ...base,
-                    command: this.serializeStatement(stmt.command)
+                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
                 };
             case 'ifFalse':
                 return {
                     ...base,
-                    command: this.serializeStatement(stmt.command)
+                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
                 };
             case 'define':
                 return {
                     ...base,
                     name: stmt.name,
                     paramNames: stmt.paramNames,
-                    body: stmt.body.map(s => this.serializeStatement(s))
+                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'scope':
                 return {
                     ...base,
-                    body: stmt.body.map(s => this.serializeStatement(s))
+                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'forLoop':
                 return {
                     ...base,
                     varName: stmt.varName,
                     iterableExpr: stmt.iterableExpr,
-                    body: stmt.body.map(s => this.serializeStatement(s))
+                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'return':
                 return {

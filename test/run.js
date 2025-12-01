@@ -232,6 +232,7 @@ array.length [1, 2, 3]
             console.log('  math.add module:', ast1[0]?.module);
             console.log('  string.length module:', ast1[1]?.module);
             console.log('  array.length module:', ast1[2]?.module);
+            throw new Error('Test 1 FAILED - Module names incorrectly extracted from explicit syntax');
         }
         
         // Test 2: Commands without module names but with "use" command
@@ -259,6 +260,7 @@ length "test"
             console.log('  add module:', ast2[1]?.module);
             console.log('  multiply module:', ast2[2]?.module);
             console.log('  length module:', ast2[4]?.module);
+            throw new Error('Test 2 FAILED - Module names incorrectly found from metadata lookup');
         }
         
         // Test 3: Global commands (no module)
@@ -277,6 +279,7 @@ $var = 10
             console.log('✗ Test 3 FAILED - Global commands');
             console.log('AST:', JSON.stringify(ast3, null, 2));
             console.log('  log module:', ast3[0]?.module);
+            throw new Error('Test 3 FAILED - Global commands incorrectly identified');
         }
         
         console.log('='.repeat(60));
@@ -387,6 +390,7 @@ multiply 5 10
             console.log('✗ Test 1 FAILED - Comments for "add" command');
             console.log('  Expected: ["line 2", "line 3", "inline comment"]');
             console.log('  Got:', addNode?.comments);
+            throw new Error('Comment Test 1 FAILED - Comments above and inline for "add" command');
         }
         
         // Test 2: Comment above "multiply" command (line 4) should be attached
@@ -402,6 +406,7 @@ multiply 5 10
             console.log('✗ Test 2 FAILED - Comments for "multiply" command');
             console.log('  Expected: ["line 4"]');
             console.log('  Got:', multiplyNode?.comments);
+            throw new Error('Comment Test 2 FAILED - Comment above "multiply" command');
         }
         
         // Test 3: Comment "line 1" should NOT be attached but should be a separate comment node
@@ -422,6 +427,7 @@ multiply 5 10
             console.log('  Not attached to command:', commentTest3aPassed);
             console.log('  Is comment node:', commentTest3bPassed);
             console.log('  Comment node:', commentNode1);
+            throw new Error('Comment Test 3 FAILED - Comment "line 1" should be a separate comment node');
         }
         
         // Test 5: Consecutive orphaned comments separated by blank lines should be grouped into a single comment node
@@ -457,6 +463,7 @@ add 5 5
             console.log('  Comment nodes:', commentNodes5);
             console.log('  Expected comments: ["test comment", "test comment 2"]');
             console.log('  Got comments:', groupedCommentNode5?.comments);
+            throw new Error('Comment Test 5 FAILED - Consecutive orphaned comments should be grouped');
         }
         
         
@@ -482,6 +489,7 @@ add 5 3
             console.log('  Is comment node:', commentTest7bPassed);
             console.log('  Comment node:', commentNode7);
             console.log('  Add node comments:', addNode7?.comments);
+            throw new Error('Comment Test 7 FAILED - Comment "line 1" should be a standalone comment node');
         }
         
         // Test 8: Consecutive orphaned comments should be grouped into a single comment node
@@ -520,6 +528,7 @@ add 5 5
             console.log('  Comment nodes:', commentNodes8);
             console.log('  Expected comments: ["line 1", "line 2", "line 3"]');
             console.log('  Got comments:', groupedCommentNode8?.comments);
+            throw new Error('Comment Test 8 FAILED - Consecutive orphaned comments should be grouped');
         }
         
         // Test 9: Multiple groups of consecutive orphaned comments
@@ -562,6 +571,7 @@ multiply 3 4
             console.log('  Group 1 node:', group1Node);
             console.log('  Group 2 node:', group2Node);
             console.log('  All comment nodes:', commentNodes9);
+            throw new Error('Comment Test 9 FAILED - Multiple groups of consecutive orphaned comments should be correctly grouped');
         }
         
         // Summary
@@ -594,8 +604,134 @@ multiply 3 4
                     console.log(JSON.stringify(astTest9, null, 2));
                 }
             }
+            throw new Error('Some comment attachment tests FAILED');
         }
         
+        console.log('='.repeat(60));
+        
+        // Test AST line range tracking
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing AST Line Range Tracking');
+        console.log('='.repeat(60));
+        
+        const lineRangeTestRp = new RobinPath();
+        const lineRangeTestScript = `
+log "first"
+log "second"
+$var = 10
+if $var > 5
+  log "inside if"
+endif
+log "after if"
+`;
+        const lineRangeAST = lineRangeTestRp.getAST(lineRangeTestScript);
+        
+        // Test 1: All statements should have lineRange property
+        const allHaveLineRange = lineRangeAST.every(node => 
+            node.lineRange !== undefined && 
+            typeof node.lineRange === 'object' &&
+            typeof node.lineRange.start === 'number' &&
+            typeof node.lineRange.end === 'number'
+        );
+        
+        if (allHaveLineRange) {
+            console.log('✓ Line Range Test 1 PASSED - All statements have lineRange property');
+        } else {
+            console.log('✗ Line Range Test 1 FAILED - Not all statements have lineRange property');
+            console.log('AST:', JSON.stringify(lineRangeAST, null, 2));
+            throw new Error('Line Range Test 1 FAILED - Not all statements have lineRange property');
+        }
+        
+        // Test 2: Verify line ranges are correct (0-indexed)
+        // Script breakdown:
+        // Line 0: empty
+        // Line 1: log "first"
+        // Line 2: log "second"
+        // Line 3: $var = 10
+        // Line 4: if $var > 5
+        // Line 5:   log "inside if"
+        // Line 6: endif
+        // Line 7: log "after if"
+        
+        const firstLog = lineRangeAST.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'first');
+        const secondLog = lineRangeAST.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'second');
+        const assignment = lineRangeAST.find(node => node.type === 'assignment' && node.targetName === 'var');
+        const ifBlock = lineRangeAST.find(node => node.type === 'ifBlock');
+        // insideIfLog is nested inside the ifBlock's thenBranch
+        const insideIfLog = ifBlock?.thenBranch?.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'inside if');
+        const afterIfLog = lineRangeAST.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'after if');
+        
+        const lineRangeTest2Passed = 
+            firstLog && firstLog.lineRange.start === 1 && firstLog.lineRange.end === 1 &&
+            secondLog && secondLog.lineRange.start === 2 && secondLog.lineRange.end === 2 &&
+            assignment && assignment.lineRange.start === 3 && assignment.lineRange.end === 3 &&
+            ifBlock && ifBlock.lineRange.start === 4 && ifBlock.lineRange.end === 6 &&
+            insideIfLog && insideIfLog.lineRange.start === 5 && insideIfLog.lineRange.end === 5 &&
+            afterIfLog && afterIfLog.lineRange.start === 7 && afterIfLog.lineRange.end === 7;
+        
+        if (lineRangeTest2Passed) {
+            console.log('✓ Line Range Test 2 PASSED - Line ranges are correct (0-indexed)');
+        } else {
+            console.log('✗ Line Range Test 2 FAILED - Line ranges are incorrect');
+            console.log('  first log:', firstLog?.lineRange);
+            console.log('  second log:', secondLog?.lineRange);
+            console.log('  assignment:', assignment?.lineRange);
+            console.log('  if block:', ifBlock?.lineRange);
+            console.log('  inside if log:', insideIfLog?.lineRange);
+            console.log('  after if log:', afterIfLog?.lineRange);
+            console.log('Full AST:', JSON.stringify(lineRangeAST, null, 2));
+            throw new Error('Line Range Test 2 FAILED - Line ranges are incorrect');
+        }
+        
+        // Test 3: Verify lineRange.end >= lineRange.start
+        const endGreaterThanStart = lineRangeAST.every(node => 
+            node.lineRange.end >= node.lineRange.start
+        );
+        
+        if (endGreaterThanStart) {
+            console.log('✓ Line Range Test 3 PASSED - All statements have end >= start');
+        } else {
+            console.log('✗ Line Range Test 3 FAILED - Some statements have end < start');
+            console.log('AST:', JSON.stringify(lineRangeAST, null, 2));
+            throw new Error('Line Range Test 3 FAILED - Some statements have end < start');
+        }
+        
+        // Test 4: Test multi-line statements (if blocks should span multiple lines)
+        const ifBlockSpansMultipleLines = ifBlock && ifBlock.lineRange.end > ifBlock.lineRange.start;
+        
+        if (ifBlockSpansMultipleLines) {
+            console.log('✓ Line Range Test 4 PASSED - Multi-line statements span correct range');
+        } else {
+            console.log('✗ Line Range Test 4 FAILED - Multi-line statements should span multiple lines');
+            console.log('  if block lineRange:', ifBlock?.lineRange);
+            throw new Error('Line Range Test 4 FAILED - Multi-line statements should span multiple lines');
+        }
+        
+        // Test 5: Test with comments (comments should have lineRange)
+        const commentLineRangeScript = `
+# comment 1
+log "test"
+# comment 2
+`;
+        const commentLineRangeAST = lineRangeTestRp.getAST(commentLineRangeScript);
+        const commentNodes = commentLineRangeAST.filter(node => node.type === 'comment');
+        const logNode = commentLineRangeAST.find(node => node.type === 'command' && node.name === 'log');
+        
+        const commentLineRangeTestPassed = 
+            commentNodes.every(node => node.lineRange && typeof node.lineRange.start === 'number' && typeof node.lineRange.end === 'number') &&
+            logNode && logNode.lineRange && logNode.lineRange.start === 2 && logNode.lineRange.end === 2;
+        
+        if (commentLineRangeTestPassed) {
+            console.log('✓ Line Range Test 5 PASSED - Comments have correct lineRange');
+        } else {
+            console.log('✗ Line Range Test 5 FAILED - Comments should have lineRange');
+            console.log('  Comment nodes:', commentNodes.map(n => ({ type: n.type, lineRange: n.lineRange })));
+            console.log('  Log node:', logNode ? { type: logNode.type, lineRange: logNode.lineRange } : 'not found');
+            throw new Error('Line Range Test 5 FAILED - Comments should have lineRange');
+        }
+        
+        console.log('✓ All line range tests PASSED!');
         console.log('='.repeat(60));
         
         // Close the test server

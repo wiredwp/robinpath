@@ -26,6 +26,13 @@ export class Parser {
     }
 
     /**
+     * Create a line range object
+     */
+    private createLineRange(start: number, end: number): { start: number; end: number } {
+        return { start, end };
+    }
+
+    /**
      * Helper function to create a comment node from orphaned comments
      * For a single comment, uses 'text' property
      * For multiple comments, uses 'comments' array
@@ -35,20 +42,24 @@ export class Parser {
         if (comments.length === 0) {
             throw new Error('createGroupedCommentNode called with empty comments array');
         }
+        const startLine = Math.min(...commentLines);
+        const endLine = Math.max(...commentLines);
         // Use the first line number as the reference
         if (comments.length === 1) {
             // Single comment - use 'text' property
             return {
                 type: 'comment',
                 text: comments[0],
-                lineNumber: commentLines[0]
+                lineNumber: commentLines[0],
+                lineRange: this.createLineRange(startLine, endLine)
             };
         } else {
             // Multiple comments - use 'comments' array
             return {
                 type: 'comment',
                 comments: comments,
-                lineNumber: commentLines[0]
+                lineNumber: commentLines[0],
+                lineRange: this.createLineRange(startLine, endLine)
             };
         }
     }
@@ -86,7 +97,7 @@ export class Parser {
                 // Found a def block - extract it
                 const savedCurrentLine = this.currentLine;
                 this.currentLine = scanLine;
-                const func = this.parseDefine();
+                const func = this.parseDefine(scanLine);
                 extractedFunctions.push(func);
                 
                 // Mark all lines in this def block (from def to enddef)
@@ -348,6 +359,7 @@ export class Parser {
     private parseStatement(): Statement | null {
         if (this.currentLine >= this.lines.length) return null;
 
+        const startLine = this.currentLine; // Track start line
         const line = this.lines[this.currentLine].trim();
         if (!line || line.startsWith('#')) {
             this.currentLine++;
@@ -363,53 +375,56 @@ export class Parser {
 
         // Check for define block
         if (tokens[0] === 'def') {
-            return this.parseDefine();
+            return this.parseDefine(startLine);
         }
 
         // Check for scope block
         if (tokens[0] === 'scope') {
-            return this.parseScope();
+            return this.parseScope(startLine);
         }
 
         // Check for for loop
         if (tokens[0] === 'for') {
-            return this.parseForLoop();
+            return this.parseForLoop(startLine);
         }
 
         // Check for return statement
         if (tokens[0] === 'return') {
-            return this.parseReturn();
+            return this.parseReturn(startLine);
         }
 
         // Check for break statement
         if (tokens[0] === 'break') {
+            const endLine = this.currentLine;
             this.currentLine++;
-            return { type: 'break' };
+            return { type: 'break', lineRange: { start: startLine, end: endLine } };
         }
 
         // Check for block if
         if (tokens[0] === 'if' && !tokens.includes('then')) {
-            return this.parseIfBlock();
+            return this.parseIfBlock(startLine);
         }
 
         // Check for inline if
         if (tokens[0] === 'if' && tokens.includes('then')) {
-            return this.parseInlineIf();
+            return this.parseInlineIf(startLine);
         }
 
         // Check for iftrue/iffalse
         if (tokens[0] === 'iftrue') {
             this.currentLine++;
             const restTokens = tokens.slice(1);
-            const command = this.parseCommandFromTokens(restTokens);
-            return { type: 'ifTrue', command };
+            const command = this.parseCommandFromTokens(restTokens, startLine);
+            const endLine = this.currentLine - 1; // Already incremented
+            return { type: 'ifTrue', command, lineRange: { start: startLine, end: endLine } };
         }
 
         if (tokens[0] === 'iffalse') {
             this.currentLine++;
             const restTokens = tokens.slice(1);
-            const command = this.parseCommandFromTokens(restTokens);
-            return { type: 'ifFalse', command };
+            const command = this.parseCommandFromTokens(restTokens, startLine);
+            const endLine = this.currentLine - 1; // Already incremented
+            return { type: 'ifFalse', command, lineRange: { start: startLine, end: endLine } };
         }
 
         // Check for assignment
@@ -425,44 +440,53 @@ export class Parser {
                 if (LexerUtils.isLastValue(token)) {
                     // Special case: $var = $ means assign last value
                     // This is handled by executeAssignment which will use frame.lastValue
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
                         literalValue: null, // Will be resolved at execution time from frame.lastValue
-                        isLastValue: true
+                        isLastValue: true,
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (token === 'true') {
                     // Check for boolean true BEFORE checking for variables
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: true 
+                        literalValue: true,
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (token === 'false') {
                     // Check for boolean false BEFORE checking for variables
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: false 
+                        literalValue: false,
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (token === 'null') {
                     // Check for null BEFORE checking for variables
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: null 
+                        literalValue: null,
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (LexerUtils.isPositionalParam(token)) {
                     // Special case: $var1 = $1 means assign positional param value
                     const varName = token.slice(1);
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return {
                         type: 'assignment',
@@ -471,13 +495,16 @@ export class Parser {
                         command: {
                             type: 'command',
                             name: '_var', // Special internal command name
-                            args: [{ type: 'var', name: varName }]
-                        }
+                            args: [{ type: 'var', name: varName }],
+                            lineRange: this.createLineRange(startLine, endLine)
+                        },
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (LexerUtils.isVariable(token)) {
                     // Special case: $var1 = $var2 means assign variable value
                     // Create a command that just references the variable
                     const { name: varName, path } = LexerUtils.parseVariablePath(token);
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return {
                         type: 'assignment',
@@ -486,24 +513,30 @@ export class Parser {
                         command: {
                             type: 'command',
                             name: '_var', // Special internal command name
-                            args: [{ type: 'var', name: varName, path }]
-                        }
+                            args: [{ type: 'var', name: varName, path }],
+                            lineRange: this.createLineRange(startLine, endLine)
+                        },
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (LexerUtils.isNumber(token)) {
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: parseFloat(token) 
+                        literalValue: parseFloat(token),
+                        lineRange: this.createLineRange(startLine, endLine)
                     };
                 } else if (LexerUtils.isString(token)) {
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: LexerUtils.parseString(token) 
+                        literalValue: LexerUtils.parseString(token),
+                        lineRange: { start: startLine, end: endLine }
                     };
                 }
             }
@@ -513,12 +546,14 @@ export class Parser {
             if (restTokens.length > 1 && restTokens.every(token => LexerUtils.isString(token))) {
                 // Concatenate all string literals
                 const concatenated = restTokens.map(token => LexerUtils.parseString(token)).join('');
+                const endLine = this.currentLine;
                 this.currentLine++;
                 return {
                     type: 'assignment',
                     targetName,
                     targetPath,
-                    literalValue: concatenated
+                    literalValue: concatenated,
+                    lineRange: { start: startLine, end: endLine }
                 };
             }
             
@@ -536,6 +571,7 @@ export class Parser {
                 if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
                     // Extract the subexpression code
                     const subexprCode = this.extractSubexpression(line, pos);
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return {
                         type: 'assignment',
@@ -544,13 +580,16 @@ export class Parser {
                         command: {
                             type: 'command',
                             name: '_subexpr', // Special internal command name for subexpressions
-                            args: [{ type: 'subexpr', code: subexprCode.code }]
-                        }
+                            args: [{ type: 'subexpr', code: subexprCode.code }],
+                            lineRange: { start: startLine, end: endLine }
+                        },
+                        lineRange: { start: startLine, end: endLine }
                     };
                 }
                 // Check if we're at an object literal {
                 if (pos < line.length && line[pos] === '{') {
                     const objCode = this.extractObjectLiteral(line, pos);
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return {
                         type: 'assignment',
@@ -559,13 +598,16 @@ export class Parser {
                         command: {
                             type: 'command',
                             name: '_object',
-                            args: [{ type: 'object', code: objCode.code }]
-                        }
+                            args: [{ type: 'object', code: objCode.code }],
+                            lineRange: { start: startLine, end: endLine }
+                        },
+                        lineRange: { start: startLine, end: endLine }
                     };
                 }
                 // Check if we're at an array literal [
                 if (pos < line.length && line[pos] === '[') {
                     const arrCode = this.extractArrayLiteral(line, pos);
+                    const endLine = this.currentLine;
                     this.currentLine++;
                     return {
                         type: 'assignment',
@@ -574,16 +616,19 @@ export class Parser {
                         command: {
                             type: 'command',
                             name: '_array',
-                            args: [{ type: 'array', code: arrCode.code }]
-                        }
+                            args: [{ type: 'array', code: arrCode.code }],
+                            lineRange: { start: startLine, end: endLine }
+                        },
+                        lineRange: { start: startLine, end: endLine }
                     };
                 }
             }
             
             // Otherwise, treat as command
-            const command = this.parseCommandFromTokens(restTokens);
+            const command = this.parseCommandFromTokens(restTokens, startLine);
+            const endLine = this.currentLine;
             this.currentLine++;
-            return { type: 'assignment', targetName, targetPath, command };
+            return { type: 'assignment', targetName, targetPath, command, lineRange: { start: startLine, end: endLine } };
         }
 
         // Check if line starts with object or array literal
@@ -592,22 +637,26 @@ export class Parser {
             const objCode = this.extractObjectLiteral(this.lines[this.currentLine], this.lines[this.currentLine].indexOf('{'));
             // extractObjectLiteral sets this.currentLine to the line containing the closing brace
             // We need to move past that line
+            const endLine = this.currentLine;
             this.currentLine++;
             return {
                 type: 'command',
                 name: '_object', // Special internal command for object literals
-                args: [{ type: 'object', code: objCode.code }]
+                args: [{ type: 'object', code: objCode.code }],
+                lineRange: this.createLineRange(startLine, endLine)
             };
         }
         if (currentLine.startsWith('[')) {
             const arrCode = this.extractArrayLiteral(this.lines[this.currentLine], this.lines[this.currentLine].indexOf('['));
             // extractArrayLiteral sets this.currentLine to the line containing the closing bracket
             // We need to move past that line
+            const endLine = this.currentLine;
             this.currentLine++;
             return {
                 type: 'command',
                 name: '_array', // Special internal command for array literals
-                args: [{ type: 'array', code: arrCode.code }]
+                args: [{ type: 'array', code: arrCode.code }],
+                lineRange: this.createLineRange(startLine, endLine)
             };
         }
 
@@ -620,8 +669,9 @@ export class Parser {
                 if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(targetVar)) {
                     // Simple variable - shorthand assignment
                     const targetName = targetVar.slice(1);
-                this.currentLine++;
-                return { type: 'shorthand', targetName };
+                    const endLine = this.currentLine;
+                    this.currentLine++;
+                    return { type: 'shorthand', targetName, lineRange: this.createLineRange(startLine, endLine) };
                 } else {
                     // Variable with path - just a reference, treat as no-op (or could be used in expressions)
                     // For now, we'll treat it as a no-op since we can't assign to attributes
@@ -631,8 +681,9 @@ export class Parser {
             } else if (LexerUtils.isPositionalParam(tokens[0])) {
                 // Positional params alone on a line are no-ops (just references)
                 // They're used for documentation/clarity in function definitions
+                const endLine = this.currentLine;
                 this.currentLine++;
-                return { type: 'shorthand', targetName: tokens[0].slice(1) };
+                return { type: 'shorthand', targetName: tokens[0].slice(1), lineRange: this.createLineRange(startLine, endLine) };
             } else if (LexerUtils.isLastValue(tokens[0])) {
                 // Just $ on a line is a no-op (just references the last value, doesn't assign)
                 // This is useful in subexpressions or for clarity
@@ -649,14 +700,15 @@ export class Parser {
             (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(')) {
             // This is a parenthesized call - parse it specially
             // Note: parseParenthesizedCall already updates this.currentLine via extractParenthesizedContent
-            const command = this.parseParenthesizedCall(tokens);
+            const command = this.parseParenthesizedCall(tokens, startLine);
             return command;
         }
 
         // Regular command
-        const command = this.parseCommandFromTokens(tokens);
+        const command = this.parseCommandFromTokens(tokens, startLine);
+        const endLine = this.currentLine;
         this.currentLine++;
-        return command;
+        return { ...command, lineRange: this.createLineRange(startLine, endLine) };
     }
 
     /**
@@ -664,7 +716,8 @@ export class Parser {
      * Supports both positional and named arguments (key=value)
      * Handles multi-line calls
      */
-    private parseParenthesizedCall(tokens: string[]): CommandCall {
+    private parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall {
+        const callStartLine = startLine !== undefined ? startLine : this.currentLine;
         // Get function name (handle module.function syntax)
         let name: string;
         if (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(') {
@@ -703,7 +756,13 @@ export class Parser {
             args.push({ type: 'namedArgs', args: namedArgs });
         }
 
-        return { type: 'command', name, args };
+        const endLine = this.currentLine;
+        return { 
+            type: 'command', 
+            name, 
+            args,
+            lineRange: this.createLineRange(callStartLine, endLine)
+        };
     }
 
     /**
@@ -997,7 +1056,7 @@ export class Parser {
         return { type: 'literal', value: token };
     }
 
-    private parseDefine(): DefineFunction {
+    private parseDefine(startLine: number): DefineFunction {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
@@ -1136,14 +1195,21 @@ export class Parser {
             throw this.createError('missing enddef', this.currentLine);
         }
 
-        const result: DefineFunction = { type: 'define', name, paramNames, body };
+        const endLine = this.currentLine - 1; // enddef line
+        const result: DefineFunction = { 
+            type: 'define', 
+            name, 
+            paramNames, 
+            body,
+            lineRange: this.createLineRange(startLine, endLine)
+        };
         if (comments.length > 0) {
             result.comments = comments;
         }
         return result;
     }
 
-    private parseScope(): ScopeBlock {
+    private parseScope(startLine: number): ScopeBlock {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
@@ -1259,16 +1325,17 @@ export class Parser {
         }
 
         // If parameters are declared, include them in the scope block
+        const endLine = this.currentLine - 1; // endscope line
         const result: ScopeBlock = paramNames.length > 0 
-            ? { type: 'scope', paramNames, body }
-            : { type: 'scope', body };
+            ? { type: 'scope', paramNames, body, lineRange: this.createLineRange(startLine, endLine) }
+            : { type: 'scope', body, lineRange: this.createLineRange(startLine, endLine) };
         if (comments.length > 0) {
             result.comments = comments;
         }
         return result;
     }
 
-    private parseForLoop(): ForLoop {
+    private parseForLoop(startLine: number): ForLoop {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
@@ -1384,17 +1451,25 @@ export class Parser {
             throw this.createError('missing endfor', this.currentLine);
         }
 
-        const result: ForLoop = { type: 'forLoop', varName, iterableExpr, body };
+        const endLine = this.currentLine - 1; // endfor line
+        const result: ForLoop = { 
+            type: 'forLoop', 
+            varName, 
+            iterableExpr, 
+            body,
+            lineRange: this.createLineRange(startLine, endLine)
+        };
         if (comments.length > 0) {
             result.comments = comments;
         }
         return result;
     }
 
-    private parseReturn(): ReturnStatement {
+    private parseReturn(startLine: number): ReturnStatement {
         const line = this.lines[this.currentLine].trim();
         const tokens = Lexer.tokenize(line);
         
+        const endLine = this.currentLine;
         this.currentLine++;
         
         // If there's a value after "return", parse it as an argument
@@ -1402,11 +1477,18 @@ export class Parser {
             const valueTokens = tokens.slice(1);
             // Parse the value as a single argument
             const arg = this.parseReturnValue(valueTokens);
-            return { type: 'return', value: arg };
+            return { 
+                type: 'return', 
+                value: arg,
+                lineRange: this.createLineRange(startLine, endLine)
+            };
         }
         
         // No value specified - returns $ (last value)
-        return { type: 'return' };
+        return { 
+            type: 'return',
+            lineRange: this.createLineRange(startLine, endLine)
+        };
     }
 
     private parseReturnValue(tokens: string[]): Arg {
@@ -1464,7 +1546,7 @@ export class Parser {
         }
     }
 
-    private parseIfBlock(): IfBlock {
+    private parseIfBlock(startLine: number): IfBlock {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         
@@ -1643,12 +1725,14 @@ export class Parser {
             throw this.createError('missing endif', this.currentLine);
         }
 
+        const endLine = this.currentLine - 1; // endif line
         const result: IfBlock = {
             type: 'ifBlock',
             conditionExpr,
             thenBranch,
             elseifBranches: elseifBranches.length > 0 ? elseifBranches : undefined,
-            elseBranch
+            elseBranch,
+            lineRange: { start: startLine, end: endLine }
         };
         if (comments.length > 0) {
             result.comments = comments;
@@ -1656,7 +1740,7 @@ export class Parser {
         return result;
     }
 
-    private parseInlineIf(): InlineIf {
+    private parseInlineIf(startLine: number): InlineIf {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
@@ -1687,60 +1771,65 @@ export class Parser {
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: parseFloat(token) 
+                        literalValue: parseFloat(token),
+                        lineRange: { start: startLine, end: startLine }
                     };
                 } else if (LexerUtils.isString(token)) {
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: LexerUtils.parseString(token) 
+                        literalValue: LexerUtils.parseString(token),
+                        lineRange: { start: startLine, end: startLine }
                     };
                 } else if (token === 'true') {
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: true 
+                        literalValue: true,
+                        lineRange: { start: startLine, end: startLine }
                     };
                 } else if (token === 'false') {
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: false 
+                        literalValue: false,
+                        lineRange: { start: startLine, end: startLine }
                     };
                 } else if (token === 'null') {
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: null 
+                        literalValue: null,
+                        lineRange: { start: startLine, end: startLine }
                     };
                 } else {
-                    const cmd = this.parseCommandFromTokens(restTokens);
-                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd };
+                    const cmd = this.parseCommandFromTokens(restTokens, startLine);
+                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, lineRange: { start: startLine, end: startLine } };
                 }
             } else {
-                const cmd = this.parseCommandFromTokens(restTokens);
-                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd };
+                const cmd = this.parseCommandFromTokens(restTokens, startLine);
+                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, lineRange: { start: startLine, end: startLine } };
             }
         } else {
             // Check if it's a break or return statement
             if (commandTokens.length === 1 && commandTokens[0] === 'break') {
-                finalCommand = { type: 'break' };
+                finalCommand = { type: 'break', lineRange: { start: startLine, end: startLine } };
             } else if (commandTokens.length >= 1 && commandTokens[0] === 'return') {
                 // Parse return statement
                 const returnValueTokens = commandTokens.slice(1);
                 if (returnValueTokens.length === 0) {
-                    finalCommand = { type: 'return' };
+                    finalCommand = { type: 'return', lineRange: { start: startLine, end: startLine } };
                 } else {
                     const returnValue = this.parseReturnValue(returnValueTokens);
-                    finalCommand = { type: 'return', value: returnValue };
+                    finalCommand = { type: 'return', value: returnValue, lineRange: { start: startLine, end: startLine } };
             }
         } else {
             // Not an assignment, parse as regular command
-            finalCommand = this.parseCommandFromTokens(commandTokens);
+            finalCommand = this.parseCommandFromTokens(commandTokens, startLine);
             }
         }
 
@@ -1751,15 +1840,22 @@ export class Parser {
             comments.push(inlineComment);
         }
 
+        const endLine = this.currentLine;
         this.currentLine++;
-        const result: InlineIf = { type: 'inlineIf', conditionExpr, command: finalCommand };
+        const result: InlineIf = { 
+            type: 'inlineIf', 
+            conditionExpr, 
+            command: finalCommand,
+            lineRange: { start: startLine, end: endLine }
+        };
         if (comments.length > 0) {
             result.comments = comments;
         }
         return result;
     }
 
-    private parseCommandFromTokens(tokens: string[]): CommandCall {
+    private parseCommandFromTokens(tokens: string[], startLine?: number): CommandCall {
+        const commandStartLine = startLine !== undefined ? startLine : this.currentLine;
         if (tokens.length === 0) {
             throw this.createError('empty command', this.currentLine);
         }
@@ -2072,7 +2168,9 @@ export class Parser {
             args.push({ type: 'namedArgs', args: namedArgs });
         }
 
-        return { type: 'command', name, args };
+        // Determine end line - use the current line index (may have advanced due to multi-line literals)
+        const endLine = currentLineIndex;
+        return { type: 'command', name, args, lineRange: { start: commandStartLine, end: endLine } };
     }
 
     /**
