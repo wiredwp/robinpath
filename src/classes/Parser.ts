@@ -14,7 +14,9 @@ import type {
     ScopeBlock,
     ForLoop,
     ReturnStatement,
-    CommentStatement
+    CommentStatement,
+    CommentWithPosition,
+    CodePosition
 } from '../index';
 
 export class Parser {
@@ -26,16 +28,38 @@ export class Parser {
     }
 
     /**
-     * Create a line range object
+     * Create a code position object with row and column information
      */
-    private createLineRange(start: number, end: number): { start: number; end: number } {
-        return { start, end };
+    private createCodePosition(startRow: number, startCol: number, endRow: number, endCol: number): CodePosition {
+        return { startRow, startCol, endRow, endCol };
+    }
+
+    /**
+     * Helper to get column positions from line content
+     * Returns start column (0 or position of first non-whitespace) and end column (line length - 1)
+     */
+    private getColumnPositions(lineNumber: number): { startCol: number; endCol: number } {
+        const line = this.lines[lineNumber] || '';
+        const trimmed = line.trimStart();
+        const startCol = line.length - trimmed.length; // Position of first non-whitespace, or 0
+        const endCol = Math.max(0, line.length - 1); // End of line
+        return { startCol, endCol };
+    }
+
+    /**
+     * Helper to create code position from start/end line numbers
+     * Automatically calculates column positions from line content
+     */
+    private createCodePositionFromLines(startRow: number, endRow: number): CodePosition {
+        const startCols = this.getColumnPositions(startRow);
+        const endCols = this.getColumnPositions(endRow);
+        return this.createCodePosition(startRow, startCols.startCol, endRow, endCols.endCol);
     }
 
     /**
      * Helper function to create a comment node from orphaned comments
      * For a single comment, uses 'text' property
-     * For multiple comments, uses 'comments' array
+     * For multiple comments, uses 'comments' array with CommentWithPosition objects
      */
     private createGroupedCommentNode(comments: string[], commentLines: number[]): CommentStatement {
         // Ensure we have comments to group
@@ -44,24 +68,27 @@ export class Parser {
         }
         const startLine = Math.min(...commentLines);
         const endLine = Math.max(...commentLines);
-        // Use the first line number as the reference
-        if (comments.length === 1) {
-            // Single comment - use 'text' property
-            return {
-                type: 'comment',
-                text: comments[0],
-                lineNumber: commentLines[0],
-                lineRange: this.createLineRange(startLine, endLine)
-            };
-        } else {
-            // Multiple comments - use 'comments' array
-            return {
-                type: 'comment',
-                comments: comments,
-                lineNumber: commentLines[0],
-                lineRange: this.createLineRange(startLine, endLine)
-            };
-        }
+        
+        // Get column positions from the actual lines
+        const startLineContent = this.lines[startLine] || '';
+        const endLineContent = this.lines[endLine] || '';
+        const startCol = startLineContent.indexOf('#');
+        const endCol = endLineContent.length - 1; // End of line
+        
+        // Always use 'comments' array with CommentWithPosition objects (consistent structure)
+        // Combine consecutive comments into a single CommentWithPosition object with \n-separated text
+        const combinedText = comments.join('\n');
+        const commentsWithPos: CommentWithPosition[] = [{
+            text: combinedText,
+            codePos: this.createCodePosition(startLine, startCol >= 0 ? startCol : 0, endLine, endCol >= 0 ? endCol : 0)
+        }];
+        
+        return {
+            type: 'comment',
+            comments: commentsWithPos,
+            lineNumber: commentLines[0]
+            // codePos is not stored - derive from comments[0].codePos when needed
+        };
     }
 
     private getLineContent(lineNumber: number): string {
@@ -201,6 +228,18 @@ export class Parser {
     }
 
     /**
+     * Create a CommentWithPosition from an inline comment
+     */
+    private createInlineCommentWithPosition(line: string, lineNumber: number, commentText: string): CommentWithPosition {
+        const commentCol = line.indexOf('#');
+        const endCol = line.length - 1;
+        return {
+            text: commentText,
+            codePos: this.createCodePosition(lineNumber, commentCol >= 0 ? commentCol : 0, lineNumber, endCol >= 0 ? endCol : 0)
+        };
+    }
+
+    /**
      * Extract inline comment from a line (comment after code on the same line)
      * Returns the comment text without the #, or null if no inline comment found
      */
@@ -312,14 +351,34 @@ export class Parser {
                 pendingCommentLines.length = 0;
             }
             
+            const statementLineNumber = this.currentLine; // Save line number before parsing
             const stmt = this.parseStatement();
             if (stmt) {
-                const allComments: string[] = [];
+                const allComments: CommentWithPosition[] = [];
                 
                 // If there are still pending comments (no blank line), attach them
                 if (pendingComments.length > 0) {
                     // No blank line after comments - attach them (consecutive comments)
-                    allComments.push(...pendingComments);
+                    // Combine consecutive comments into a single CommentWithPosition object
+                    const firstCommentLine = pendingCommentLines[0];
+                    const lastCommentLine = pendingCommentLines[pendingCommentLines.length - 1];
+                    const firstLineContent = this.lines[firstCommentLine] || '';
+                    const lastLineContent = this.lines[lastCommentLine] || '';
+                    const startCol = firstLineContent.indexOf('#');
+                    const endCol = lastLineContent.length - 1;
+                    
+                    // Combine all comment texts with \n
+                    const combinedText = pendingComments.join('\n');
+                    
+                    allComments.push({
+                        text: combinedText,
+                        codePos: this.createCodePosition(
+                            firstCommentLine,
+                            startCol >= 0 ? startCol : 0,
+                            lastCommentLine,
+                            endCol >= 0 ? endCol : 0
+                        )
+                    });
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
                 }
@@ -327,7 +386,7 @@ export class Parser {
                 // Add inline comment from same line
                 const inlineComment = this.extractInlineComment(originalLine);
                 if (inlineComment) {
-                    allComments.push(inlineComment);
+                    allComments.push(this.createInlineCommentWithPosition(originalLine, statementLineNumber, inlineComment));
                 }
                 
                 // Attach to statement
@@ -397,7 +456,7 @@ export class Parser {
         if (tokens[0] === 'break') {
             const endLine = this.currentLine;
             this.currentLine++;
-            return { type: 'break', lineRange: { start: startLine, end: endLine } };
+            return { type: 'break', codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
         // Check for block if
@@ -416,7 +475,7 @@ export class Parser {
             const restTokens = tokens.slice(1);
             const command = this.parseCommandFromTokens(restTokens, startLine);
             const endLine = this.currentLine - 1; // Already incremented
-            return { type: 'ifTrue', command, lineRange: { start: startLine, end: endLine } };
+            return { type: 'ifTrue', command, codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
         if (tokens[0] === 'iffalse') {
@@ -424,7 +483,7 @@ export class Parser {
             const restTokens = tokens.slice(1);
             const command = this.parseCommandFromTokens(restTokens, startLine);
             const endLine = this.currentLine - 1; // Already incremented
-            return { type: 'ifFalse', command, lineRange: { start: startLine, end: endLine } };
+            return { type: 'ifFalse', command, codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
         // Check for assignment
@@ -448,7 +507,7 @@ export class Parser {
                         targetPath,
                         literalValue: null, // Will be resolved at execution time from frame.lastValue
                         isLastValue: true,
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (token === 'true') {
                     // Check for boolean true BEFORE checking for variables
@@ -459,7 +518,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: true,
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (token === 'false') {
                     // Check for boolean false BEFORE checking for variables
@@ -470,7 +529,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: false,
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (token === 'null') {
                     // Check for null BEFORE checking for variables
@@ -481,7 +540,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: null,
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isPositionalParam(token)) {
                     // Special case: $var1 = $1 means assign positional param value
@@ -496,9 +555,9 @@ export class Parser {
                             type: 'command',
                             name: '_var', // Special internal command name
                             args: [{ type: 'var', name: varName }],
-                            lineRange: this.createLineRange(startLine, endLine)
+                            codePos: this.createCodePositionFromLines(startLine, endLine)
                         },
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isVariable(token)) {
                     // Special case: $var1 = $var2 means assign variable value
@@ -514,9 +573,9 @@ export class Parser {
                             type: 'command',
                             name: '_var', // Special internal command name
                             args: [{ type: 'var', name: varName, path }],
-                            lineRange: this.createLineRange(startLine, endLine)
+                            codePos: this.createCodePositionFromLines(startLine, endLine)
                         },
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isNumber(token)) {
                     const endLine = this.currentLine;
@@ -526,7 +585,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: parseFloat(token),
-                        lineRange: this.createLineRange(startLine, endLine)
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isString(token)) {
                     const endLine = this.currentLine;
@@ -536,7 +595,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: LexerUtils.parseString(token),
-                        lineRange: { start: startLine, end: endLine }
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 }
             }
@@ -553,7 +612,7 @@ export class Parser {
                     targetName,
                     targetPath,
                     literalValue: concatenated,
-                    lineRange: { start: startLine, end: endLine }
+                    codePos: this.createCodePositionFromLines(startLine, endLine)
                 };
             }
             
@@ -581,9 +640,9 @@ export class Parser {
                             type: 'command',
                             name: '_subexpr', // Special internal command name for subexpressions
                             args: [{ type: 'subexpr', code: subexprCode.code }],
-                            lineRange: { start: startLine, end: endLine }
+                            codePos: this.createCodePositionFromLines(startLine, endLine)
                         },
-                        lineRange: { start: startLine, end: endLine }
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 }
                 // Check if we're at an object literal {
@@ -599,9 +658,9 @@ export class Parser {
                             type: 'command',
                             name: '_object',
                             args: [{ type: 'object', code: objCode.code }],
-                            lineRange: { start: startLine, end: endLine }
+                            codePos: this.createCodePositionFromLines(startLine, endLine)
                         },
-                        lineRange: { start: startLine, end: endLine }
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 }
                 // Check if we're at an array literal [
@@ -617,9 +676,9 @@ export class Parser {
                             type: 'command',
                             name: '_array',
                             args: [{ type: 'array', code: arrCode.code }],
-                            lineRange: { start: startLine, end: endLine }
+                            codePos: this.createCodePositionFromLines(startLine, endLine)
                         },
-                        lineRange: { start: startLine, end: endLine }
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 }
             }
@@ -628,7 +687,7 @@ export class Parser {
             const command = this.parseCommandFromTokens(restTokens, startLine);
             const endLine = this.currentLine;
             this.currentLine++;
-            return { type: 'assignment', targetName, targetPath, command, lineRange: { start: startLine, end: endLine } };
+            return { type: 'assignment', targetName, targetPath, command, codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
         // Check if line starts with object or array literal
@@ -643,7 +702,7 @@ export class Parser {
                 type: 'command',
                 name: '_object', // Special internal command for object literals
                 args: [{ type: 'object', code: objCode.code }],
-                lineRange: this.createLineRange(startLine, endLine)
+                codePos: this.createCodePositionFromLines(startLine, endLine)
             };
         }
         if (currentLine.startsWith('[')) {
@@ -656,7 +715,7 @@ export class Parser {
                 type: 'command',
                 name: '_array', // Special internal command for array literals
                 args: [{ type: 'array', code: arrCode.code }],
-                lineRange: this.createLineRange(startLine, endLine)
+                codePos: this.createCodePositionFromLines(startLine, endLine)
             };
         }
 
@@ -671,7 +730,7 @@ export class Parser {
                     const targetName = targetVar.slice(1);
                     const endLine = this.currentLine;
                 this.currentLine++;
-                    return { type: 'shorthand', targetName, lineRange: this.createLineRange(startLine, endLine) };
+                    return { type: 'shorthand', targetName, codePos: this.createCodePositionFromLines(startLine, endLine) };
                 } else {
                     // Variable with path - just a reference, treat as no-op (or could be used in expressions)
                     // For now, we'll treat it as a no-op since we can't assign to attributes
@@ -683,7 +742,7 @@ export class Parser {
                 // They're used for documentation/clarity in function definitions
                 const endLine = this.currentLine;
                 this.currentLine++;
-                return { type: 'shorthand', targetName: tokens[0].slice(1), lineRange: this.createLineRange(startLine, endLine) };
+                return { type: 'shorthand', targetName: tokens[0].slice(1), codePos: this.createCodePositionFromLines(startLine, endLine) };
             } else if (LexerUtils.isLastValue(tokens[0])) {
                 // Just $ on a line is a no-op (just references the last value, doesn't assign)
                 // This is useful in subexpressions or for clarity
@@ -708,7 +767,7 @@ export class Parser {
         const command = this.parseCommandFromTokens(tokens, startLine);
         const endLine = this.currentLine;
         this.currentLine++;
-        return { ...command, lineRange: this.createLineRange(startLine, endLine) };
+        return { ...command, codePos: this.createCodePositionFromLines(startLine, endLine) };
     }
 
     /**
@@ -761,7 +820,7 @@ export class Parser {
             type: 'command', 
             name, 
             args,
-            lineRange: this.createLineRange(callStartLine, endLine)
+            codePos: this.createCodePositionFromLines(callStartLine, endLine)
         };
     }
 
@@ -1088,9 +1147,9 @@ export class Parser {
         
         // Extract inline comment from def line
         const inlineComment = this.extractInlineComment(originalLine);
-        const comments: string[] = [];
+        const comments: CommentWithPosition[] = [];
         if (inlineComment) {
-            comments.push(inlineComment);
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
         }
         
         this.currentLine++;
@@ -1201,7 +1260,7 @@ export class Parser {
             name, 
             paramNames, 
             body,
-            lineRange: this.createLineRange(startLine, endLine)
+            codePos: this.createCodePositionFromLines(startLine, endLine)
         };
         if (comments.length > 0) {
             result.comments = comments;
@@ -1238,9 +1297,9 @@ export class Parser {
         
         // Extract inline comment from scope line
         const inlineComment = this.extractInlineComment(originalLine);
-        const comments: string[] = [];
+        const comments: CommentWithPosition[] = [];
         if (inlineComment) {
-            comments.push(inlineComment);
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
         }
         
         this.currentLine++;
@@ -1327,8 +1386,8 @@ export class Parser {
         // If parameters are declared, include them in the scope block
         const endLine = this.currentLine - 1; // endscope line
         const result: ScopeBlock = paramNames.length > 0 
-            ? { type: 'scope', paramNames, body, lineRange: this.createLineRange(startLine, endLine) }
-            : { type: 'scope', body, lineRange: this.createLineRange(startLine, endLine) };
+            ? { type: 'scope', paramNames, body, codePos: this.createCodePositionFromLines(startLine, endLine) }
+            : { type: 'scope', body, codePos: this.createCodePositionFromLines(startLine, endLine) };
         if (comments.length > 0) {
             result.comments = comments;
         }
@@ -1365,9 +1424,9 @@ export class Parser {
         
         // Extract inline comment from for line
         const inlineComment = this.extractInlineComment(originalLine);
-        const comments: string[] = [];
+        const comments: CommentWithPosition[] = [];
         if (inlineComment) {
-            comments.push(inlineComment);
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
         }
         
         this.currentLine++;
@@ -1457,7 +1516,7 @@ export class Parser {
             varName, 
             iterableExpr, 
             body,
-            lineRange: this.createLineRange(startLine, endLine)
+            codePos: this.createCodePositionFromLines(startLine, endLine)
         };
         if (comments.length > 0) {
             result.comments = comments;
@@ -1480,14 +1539,14 @@ export class Parser {
             return { 
                 type: 'return', 
                 value: arg,
-                lineRange: this.createLineRange(startLine, endLine)
+                codePos: this.createCodePositionFromLines(startLine, endLine)
             };
         }
         
         // No value specified - returns $ (last value)
         return { 
             type: 'return',
-            lineRange: this.createLineRange(startLine, endLine)
+            codePos: this.createCodePositionFromLines(startLine, endLine)
         };
     }
 
@@ -1565,9 +1624,9 @@ export class Parser {
 
         // Extract inline comment from if line
         const inlineComment = this.extractInlineComment(originalLine);
-        const comments: string[] = [];
+        const comments: CommentWithPosition[] = [];
         if (inlineComment) {
-            comments.push(inlineComment);
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
         }
 
         this.currentLine++;
@@ -1732,7 +1791,7 @@ export class Parser {
             thenBranch,
             elseifBranches: elseifBranches.length > 0 ? elseifBranches : undefined,
             elseBranch,
-            lineRange: { start: startLine, end: endLine }
+            codePos: this.createCodePositionFromLines(startLine, endLine)
         };
         if (comments.length > 0) {
             result.comments = comments;
@@ -1772,7 +1831,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: parseFloat(token),
-                        lineRange: { start: startLine, end: startLine }
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (LexerUtils.isString(token)) {
                     finalCommand = { 
@@ -1780,7 +1839,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: LexerUtils.parseString(token),
-                        lineRange: { start: startLine, end: startLine }
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'true') {
                     finalCommand = { 
@@ -1788,7 +1847,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: true,
-                        lineRange: { start: startLine, end: startLine }
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'false') {
                     finalCommand = { 
@@ -1796,7 +1855,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: false,
-                        lineRange: { start: startLine, end: startLine }
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'null') {
                     finalCommand = { 
@@ -1804,28 +1863,28 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: null,
-                        lineRange: { start: startLine, end: startLine }
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else {
                     const cmd = this.parseCommandFromTokens(restTokens, startLine);
-                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, lineRange: { start: startLine, end: startLine } };
+                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, codePos: this.createCodePositionFromLines(startLine, startLine) };
                 }
             } else {
                 const cmd = this.parseCommandFromTokens(restTokens, startLine);
-                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, lineRange: { start: startLine, end: startLine } };
+                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, codePos: this.createCodePositionFromLines(startLine, startLine) };
             }
         } else {
             // Check if it's a break or return statement
             if (commandTokens.length === 1 && commandTokens[0] === 'break') {
-                finalCommand = { type: 'break', lineRange: { start: startLine, end: startLine } };
+                finalCommand = { type: 'break', codePos: this.createCodePositionFromLines(startLine, startLine) };
             } else if (commandTokens.length >= 1 && commandTokens[0] === 'return') {
                 // Parse return statement
                 const returnValueTokens = commandTokens.slice(1);
                 if (returnValueTokens.length === 0) {
-                    finalCommand = { type: 'return', lineRange: { start: startLine, end: startLine } };
+                    finalCommand = { type: 'return', codePos: this.createCodePositionFromLines(startLine, startLine) };
                 } else {
                     const returnValue = this.parseReturnValue(returnValueTokens);
-                    finalCommand = { type: 'return', value: returnValue, lineRange: { start: startLine, end: startLine } };
+                    finalCommand = { type: 'return', value: returnValue, codePos: this.createCodePositionFromLines(startLine, startLine) };
             }
         } else {
             // Not an assignment, parse as regular command
@@ -1835,9 +1894,9 @@ export class Parser {
 
         // Extract inline comment from inline if line
         const inlineComment = this.extractInlineComment(originalLine);
-        const comments: string[] = [];
+        const comments: CommentWithPosition[] = [];
         if (inlineComment) {
-            comments.push(inlineComment);
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
         }
 
         const endLine = this.currentLine;
@@ -1846,7 +1905,7 @@ export class Parser {
             type: 'inlineIf', 
             conditionExpr, 
             command: finalCommand,
-            lineRange: { start: startLine, end: endLine }
+            codePos: this.createCodePositionFromLines(startLine, endLine)
         };
         if (comments.length > 0) {
             result.comments = comments;
@@ -2170,7 +2229,7 @@ export class Parser {
 
         // Determine end line - use the current line index (may have advanced due to multi-line literals)
         const endLine = currentLineIndex;
-        return { type: 'command', name, args, lineRange: { start: commandStartLine, end: endLine } };
+        return { type: 'command', name, args, codePos: this.createCodePositionFromLines(commandStartLine, endLine) };
     }
 
     /**

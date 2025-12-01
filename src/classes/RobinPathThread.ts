@@ -383,11 +383,16 @@ export class RobinPathThread {
     }
 
     private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }, currentModuleContext?: string | null): any {
+        // For comment nodes, don't include codePos - derive from comments array when needed
         const base: any = {
             type: stmt.type,
-            lastValue: state?.lastValue ?? null,
-            lineRange: stmt.lineRange
+            lastValue: state?.lastValue ?? null
         };
+        
+        // Only add codePos for non-comment nodes
+        if (stmt.type !== 'comment') {
+            base.codePos = (stmt as any).codePos;
+        }
 
         // Add comments if present
         const comments = (stmt as any).comments;
@@ -476,8 +481,7 @@ export class RobinPathThread {
             case 'comment':
                 return {
                     ...base,
-                    text: stmt.text,
-                    comments: stmt.comments,
+                    comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
         }

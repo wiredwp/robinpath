@@ -376,19 +376,23 @@ multiply 5 10
         const commentAST = astWithState.ast;
         
         // Test 1: Comments above "add" command (line 2, 3) should be attached
+        // Consecutive comments should be combined into a single comment object with \n
         const addNode = commentAST.find(node => node.type === 'command' && node.name === 'add');
         const commentTest1Passed = addNode && 
             Array.isArray(addNode.comments) && 
-            addNode.comments.length === 3 &&
-            addNode.comments[0] === 'line 2' &&
-            addNode.comments[1] === 'line 3' &&
-            addNode.comments[2] === 'inline comment';
+            addNode.comments.length === 2 &&
+            addNode.comments[0].text === 'line 2\nline 3' && // Consecutive comments combined
+            addNode.comments[0].codePos &&
+            addNode.comments[0].codePos.startRow >= 0 &&
+            addNode.comments[0].codePos.endRow >= addNode.comments[0].codePos.startRow &&
+            addNode.comments[1].text === 'inline comment' &&
+            typeof addNode.comments[1].codePos === 'object';
         
         if (commentTest1Passed) {
             console.log('✓ Test 1 PASSED - Comments above and inline for "add" command');
         } else {
             console.log('✗ Test 1 FAILED - Comments for "add" command');
-            console.log('  Expected: ["line 2", "line 3", "inline comment"]');
+            console.log('  Expected: [{text: "line 2\\nline 3", ...}, {text: "inline comment", ...}]');
             console.log('  Got:', addNode?.comments);
             throw new Error('Comment Test 1 FAILED - Comments above and inline for "add" command');
         }
@@ -398,7 +402,8 @@ multiply 5 10
         const commentTest2Passed = multiplyNode && 
             Array.isArray(multiplyNode.comments) && 
             multiplyNode.comments.length === 1 &&
-            multiplyNode.comments[0] === 'line 4';
+            multiplyNode.comments[0].text === 'line 4' &&
+            typeof multiplyNode.comments[0].codePos === 'object';
         
         if (commentTest2Passed) {
             console.log('✓ Test 2 PASSED - Comment above "multiply" command');
@@ -413,11 +418,22 @@ multiply 5 10
         const commentTest3aPassed = !commentAST.some(node => 
             node.type === 'command' && 
             node.comments && 
-            node.comments.includes('line 1')
+            node.comments.some(c => c.text === 'line 1')
         );
         
-        const commentNode1 = commentAST.find(node => node.type === 'comment' && node.text === 'line 1');
-        const commentTest3bPassed = commentNode1 && commentNode1.type === 'comment' && commentNode1.text === 'line 1';
+        const commentNode1 = commentAST.find(node => 
+            node.type === 'comment' && 
+            node.comments && 
+            Array.isArray(node.comments) && 
+            node.comments.length > 0 && 
+            node.comments[0].text === 'line 1'
+        );
+        const commentTest3bPassed = commentNode1 && 
+            commentNode1.type === 'comment' && 
+            commentNode1.comments && 
+            Array.isArray(commentNode1.comments) && 
+            commentNode1.comments.length > 0 && 
+            commentNode1.comments[0].text === 'line 1';
         const commentTest3Passed = commentTest3aPassed && commentTest3bPassed;
         
         if (commentTest3Passed) {
@@ -443,12 +459,12 @@ add 5 5
             (!addNode5.comments || addNode5.comments.length === 0);
         
         // Should be grouped into a single comment node with comments array
+        // Consecutive comments are combined into a single CommentWithPosition with \n-separated text
         const commentNodes5 = astTest5.filter(node => node.type === 'comment');
         const groupedCommentNode5 = commentNodes5.find(node => 
             Array.isArray(node.comments) && 
-            node.comments.length === 2 &&
-            node.comments[0] === 'test comment' &&
-            node.comments[1] === 'test comment 2'
+            node.comments.length === 1 &&
+            node.comments[0].text === 'test comment\ntest comment 2'
         );
         const commentTest5bPassed = commentNodes5.length === 1 && groupedCommentNode5 !== undefined;
         const commentTest5Passed = commentTest5aPassed && commentTest5bPassed;
@@ -475,10 +491,21 @@ add 5 3
 `;
         const astTest7 = commentTestRp.getAST(testScript7);
         const addNode7 = astTest7.find(node => node.type === 'command' && node.name === 'add');
-        const commentNode7 = astTest7.find(node => node.type === 'comment' && node.text === 'line 1');
+        const commentNode7 = astTest7.find(node => 
+            node.type === 'comment' && 
+            node.comments && 
+            Array.isArray(node.comments) && 
+            node.comments.length > 0 && 
+            node.comments[0].text === 'line 1'
+        );
         
         const commentTest7aPassed = addNode7 && (!addNode7.comments || addNode7.comments.length === 0);
-        const commentTest7bPassed = commentNode7 && commentNode7.type === 'comment' && commentNode7.text === 'line 1';
+        const commentTest7bPassed = commentNode7 && 
+            commentNode7.type === 'comment' && 
+            commentNode7.comments && 
+            Array.isArray(commentNode7.comments) && 
+            commentNode7.comments.length > 0 && 
+            commentNode7.comments[0].text === 'line 1';
         const commentTest7Passed = commentTest7aPassed && commentTest7bPassed;
         
         if (commentTest7Passed) {
@@ -505,12 +532,11 @@ add 5 5
         
         // Find all comment nodes - should be only ONE grouped comment node
         const commentNodes8 = astTest8.filter(node => node.type === 'comment');
+        // Consecutive comments are combined into a single CommentWithPosition with \n-separated text
         const groupedCommentNode8 = commentNodes8.find(node => 
             Array.isArray(node.comments) && 
-            node.comments.length === 3 &&
-            node.comments[0] === 'line 1' &&
-            node.comments[1] === 'line 2' &&
-            node.comments[2] === 'line 3'
+            node.comments.length === 1 &&
+            node.comments[0].text === 'line 1\nline 2\nline 3'
         );
         
         const commentTest8aPassed = addNode8 && (!addNode8.comments || addNode8.comments.length === 0);
@@ -545,17 +571,16 @@ multiply 3 4
 `;
         const astTest9 = commentTestRp.getAST(testScript9);
         const commentNodes9 = astTest9.filter(node => node.type === 'comment');
+        // Consecutive comments are combined into a single CommentWithPosition with \n-separated text
         const group1Node = commentNodes9.find(node => 
             Array.isArray(node.comments) &&
-            node.comments.length === 2 &&
-            node.comments[0] === 'group1 line 1' &&
-            node.comments[1] === 'group1 line 2'
+            node.comments.length === 1 &&
+            node.comments[0].text === 'group1 line 1\ngroup1 line 2'
         );
         const group2Node = commentNodes9.find(node => 
             Array.isArray(node.comments) &&
-            node.comments.length === 2 &&
-            node.comments[0] === 'group2 line 1' &&
-            node.comments[1] === 'group2 line 2'
+            node.comments.length === 1 &&
+            node.comments[0].text === 'group2 line 1\ngroup2 line 2'
         );
         
         const commentTest9Passed = 
@@ -574,8 +599,128 @@ multiply 3 4
             throw new Error('Comment Test 9 FAILED - Multiple groups of consecutive orphaned comments should be correctly grouped');
         }
         
+        // Test 10: Verify comment positions are correct
+        const commentPosTestScript = `
+# comment 1
+log "test"
+# comment 2
+add 5 5  # inline comment
+`;
+        const commentPosAST = commentTestRp.getAST(commentPosTestScript);
+        const commentPosLogNode = commentPosAST.find(node => node.type === 'command' && node.name === 'log');
+        const commentPosAddNode = commentPosAST.find(node => node.type === 'command' && node.name === 'add');
+        
+        // Script breakdown (0-indexed):
+        // Line 0: empty (leading newline)
+        // Line 1: # comment 1
+        // Line 2: log "test"
+        // Line 3: # comment 2
+        // Line 4: add 5 5  # inline comment
+        
+        // log command should have comment 1 attached (no blank line between comment and command)
+        const commentPosTest10aPassed = commentPosLogNode && 
+            commentPosLogNode.comments &&
+            commentPosLogNode.comments.length === 1 &&
+            commentPosLogNode.comments[0].text === 'comment 1' &&
+            commentPosLogNode.comments[0].codePos &&
+            typeof commentPosLogNode.comments[0].codePos.startRow === 'number' &&
+            typeof commentPosLogNode.comments[0].codePos.startCol === 'number' &&
+            typeof commentPosLogNode.comments[0].codePos.endRow === 'number' &&
+            typeof commentPosLogNode.comments[0].codePos.endCol === 'number' &&
+            commentPosLogNode.comments[0].codePos.startRow === 1 && // Line 1 in script
+            commentPosLogNode.comments[0].codePos.startCol >= 0 &&
+            commentPosLogNode.comments[0].codePos.endRow === 1 &&
+            commentPosLogNode.comments[0].codePos.endCol >= commentPosLogNode.comments[0].codePos.startCol;
+        
+        // add command should have comment 2 and inline comment attached (no blank line between comment 2 and add)
+        const commentPosTest10bPassed = commentPosAddNode && 
+            commentPosAddNode.comments &&
+            commentPosAddNode.comments.length === 2 &&
+            commentPosAddNode.comments[0].text === 'comment 2' &&
+            commentPosAddNode.comments[0].codePos &&
+            typeof commentPosAddNode.comments[0].codePos.startRow === 'number' &&
+            commentPosAddNode.comments[0].codePos.startRow === 3 && // Line 3 in script
+            commentPosAddNode.comments[1].text === 'inline comment' &&
+            commentPosAddNode.comments[1].codePos &&
+            typeof commentPosAddNode.comments[1].codePos.startRow === 'number' &&
+            commentPosAddNode.comments[1].codePos.startRow === 4 && // Line 4 in script
+            commentPosAddNode.comments[1].codePos.startCol > 0; // Inline comment should be after the command
+        
+        const commentPosTest10Passed = commentPosTest10aPassed && commentPosTest10bPassed;
+        
+        if (commentPosTest10Passed) {
+            console.log('✓ Test 10 PASSED - Comment positions are correct');
+        } else {
+            console.log('✗ Test 10 FAILED - Comment positions should be correct');
+            console.log('  Log comment position:', commentPosTest10aPassed, commentPosLogNode?.comments?.[0]?.codePos);
+            console.log('  Add comments position:', commentPosTest10bPassed, commentPosAddNode?.comments?.map(c => c.codePos));
+            throw new Error('Comment Test 10 FAILED - Comment positions should be correct');
+        }
+        
+        // Test 11: Verify multiple comments attached to a statement have correct positions
+        // Consecutive comments should be combined into a single comment object
+        const multiCommentTestScript = `
+# comment above 1
+# comment above 2
+log "test"  # inline comment
+`;
+        const multiCommentAST = commentTestRp.getAST(multiCommentTestScript);
+        const multiCommentLogNode = multiCommentAST.find(node => node.type === 'command' && node.name === 'log');
+        
+        const multiCommentTest11Passed = multiCommentLogNode && 
+            multiCommentLogNode.comments &&
+            multiCommentLogNode.comments.length === 2 &&
+            multiCommentLogNode.comments[0].text === 'comment above 1\ncomment above 2' && // Consecutive comments combined
+            multiCommentLogNode.comments[0].codePos &&
+            typeof multiCommentLogNode.comments[0].codePos.startRow === 'number' &&
+            typeof multiCommentLogNode.comments[0].codePos.endRow === 'number' &&
+            multiCommentLogNode.comments[0].codePos.endRow > multiCommentLogNode.comments[0].codePos.startRow && // Should span multiple lines
+            multiCommentLogNode.comments[1].text === 'inline comment' &&
+            multiCommentLogNode.comments[1].codePos &&
+            typeof multiCommentLogNode.comments[1].codePos.startRow === 'number' &&
+            multiCommentLogNode.comments[1].codePos.startRow > multiCommentLogNode.comments[0].codePos.endRow && // Should be on a later line
+            multiCommentLogNode.comments[1].codePos.startCol > 0; // Inline comment should be after the command
+        
+        if (multiCommentTest11Passed) {
+            console.log('✓ Test 11 PASSED - Multiple comments have correct positions');
+        } else {
+            console.log('✗ Test 11 FAILED - Multiple comments should have correct positions');
+            console.log('  Comments:', multiCommentLogNode?.comments);
+            throw new Error('Comment Test 11 FAILED - Multiple comments should have correct positions');
+        }
+        
+        // Test 12: Verify grouped comment nodes have correct positions
+        const groupedCommentTestScript = `
+# group comment 1
+# group comment 2
+# group comment 3
+
+log "test"
+`;
+        const groupedCommentAST = commentTestRp.getAST(groupedCommentTestScript);
+        const groupedCommentNodes = groupedCommentAST.filter(node => node.type === 'comment');
+        // Consecutive comments are combined into a single CommentWithPosition with \n-separated text
+        const groupedCommentNode = groupedCommentNodes.find(node => 
+            Array.isArray(node.comments) && 
+            node.comments.length === 1 &&
+            node.comments[0].text === 'group comment 1\ngroup comment 2\ngroup comment 3'
+        );
+        
+        const groupedCommentTest12Passed = groupedCommentNode &&
+            groupedCommentNode.comments &&
+            groupedCommentNode.comments[0].codePos &&
+            typeof groupedCommentNode.comments[0].codePos.startRow === 'number';
+        
+        if (groupedCommentTest12Passed) {
+            console.log('✓ Test 12 PASSED - Grouped comment nodes have correct positions');
+        } else {
+            console.log('✗ Test 12 FAILED - Grouped comment nodes should have correct positions');
+            console.log('  Grouped node:', groupedCommentNode);
+            throw new Error('Comment Test 12 FAILED - Grouped comment nodes should have correct positions');
+        }
+        
         // Summary
-        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest5Passed && commentTest7Passed && commentTest8Passed && commentTest9Passed;
+        const allCommentTestsPassed = commentTest1Passed && commentTest2Passed && commentTest3Passed && commentTest5Passed && commentTest7Passed && commentTest8Passed && commentTest9Passed && commentPosTest10Passed && multiCommentTest11Passed && groupedCommentTest12Passed;
         if (allCommentTestsPassed) {
             console.log();
             console.log('✓ All comment attachment tests PASSED!');
@@ -627,23 +772,23 @@ log "after if"
 `;
         const lineRangeAST = lineRangeTestRp.getAST(lineRangeTestScript);
         
-        // Test 1: All statements should have lineRange property
-        const allHaveLineRange = lineRangeAST.every(node => 
-            node.lineRange !== undefined && 
-            typeof node.lineRange === 'object' &&
-            typeof node.lineRange.start === 'number' &&
-            typeof node.lineRange.end === 'number'
+        // Test 1: All statements should have codePos property (backward compatibility check)
+        const allHaveCodePos = lineRangeAST.every(node => 
+            node.codePos !== undefined && 
+            typeof node.codePos === 'object' &&
+            typeof node.codePos.startRow === 'number' &&
+            typeof node.codePos.endRow === 'number'
         );
         
-        if (allHaveLineRange) {
-            console.log('✓ Line Range Test 1 PASSED - All statements have lineRange property');
+        if (allHaveCodePos) {
+            console.log('✓ Line Range Test 1 PASSED - All statements have codePos property');
         } else {
-            console.log('✗ Line Range Test 1 FAILED - Not all statements have lineRange property');
+            console.log('✗ Line Range Test 1 FAILED - Not all statements have codePos property');
             console.log('AST:', JSON.stringify(lineRangeAST, null, 2));
-            throw new Error('Line Range Test 1 FAILED - Not all statements have lineRange property');
+            throw new Error('Line Range Test 1 FAILED - Not all statements have codePos property');
         }
         
-        // Test 2: Verify line ranges are correct (0-indexed)
+        // Test 2: Verify codePos row ranges are correct (0-indexed)
         // Script breakdown:
         // Line 0: empty
         // Line 1: log "first"
@@ -663,52 +808,59 @@ log "after if"
         const afterIfLog = lineRangeAST.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'after if');
         
         const lineRangeTest2Passed = 
-            firstLog && firstLog.lineRange.start === 1 && firstLog.lineRange.end === 1 &&
-            secondLog && secondLog.lineRange.start === 2 && secondLog.lineRange.end === 2 &&
-            assignment && assignment.lineRange.start === 3 && assignment.lineRange.end === 3 &&
-            ifBlock && ifBlock.lineRange.start === 4 && ifBlock.lineRange.end === 6 &&
-            insideIfLog && insideIfLog.lineRange.start === 5 && insideIfLog.lineRange.end === 5 &&
-            afterIfLog && afterIfLog.lineRange.start === 7 && afterIfLog.lineRange.end === 7;
+            firstLog && firstLog.codePos.startRow === 1 && firstLog.codePos.endRow === 1 &&
+            secondLog && secondLog.codePos.startRow === 2 && secondLog.codePos.endRow === 2 &&
+            assignment && assignment.codePos.startRow === 3 && assignment.codePos.endRow === 3 &&
+            ifBlock && ifBlock.codePos.startRow === 4 && ifBlock.codePos.endRow === 6 &&
+            insideIfLog && insideIfLog.codePos.startRow === 5 && insideIfLog.codePos.endRow === 5 &&
+            afterIfLog && afterIfLog.codePos.startRow === 7 && afterIfLog.codePos.endRow === 7;
         
         if (lineRangeTest2Passed) {
-            console.log('✓ Line Range Test 2 PASSED - Line ranges are correct (0-indexed)');
+            console.log('✓ Line Range Test 2 PASSED - CodePos row ranges are correct (0-indexed)');
         } else {
-            console.log('✗ Line Range Test 2 FAILED - Line ranges are incorrect');
-            console.log('  first log:', firstLog?.lineRange);
-            console.log('  second log:', secondLog?.lineRange);
-            console.log('  assignment:', assignment?.lineRange);
-            console.log('  if block:', ifBlock?.lineRange);
-            console.log('  inside if log:', insideIfLog?.lineRange);
-            console.log('  after if log:', afterIfLog?.lineRange);
+            console.log('✗ Line Range Test 2 FAILED - CodePos row ranges are incorrect');
+            console.log('  first log:', firstLog?.codePos);
+            console.log('  second log:', secondLog?.codePos);
+            console.log('  assignment:', assignment?.codePos);
+            console.log('  if block:', ifBlock?.codePos);
+            console.log('  inside if log:', insideIfLog?.codePos);
+            console.log('  after if log:', afterIfLog?.codePos);
             console.log('Full AST:', JSON.stringify(lineRangeAST, null, 2));
-            throw new Error('Line Range Test 2 FAILED - Line ranges are incorrect');
+            throw new Error('Line Range Test 2 FAILED - CodePos row ranges are incorrect');
         }
         
-        // Test 3: Verify lineRange.end >= lineRange.start
-        const endGreaterThanStart = lineRangeAST.every(node => 
-            node.lineRange.end >= node.lineRange.start
-        );
+        // Test 3: Verify codePos.endRow >= codePos.startRow
+        // Comment nodes derive codePos from comments array
+        const endGreaterThanStart = lineRangeAST.every(node => {
+            if (node.type === 'comment') {
+                // Check comments array codePos
+                return !node.comments || node.comments.every(c => 
+                    c.codePos && c.codePos.endRow >= c.codePos.startRow
+                );
+            }
+            return node.codePos.endRow >= node.codePos.startRow;
+        });
         
         if (endGreaterThanStart) {
-            console.log('✓ Line Range Test 3 PASSED - All statements have end >= start');
+            console.log('✓ Line Range Test 3 PASSED - All statements have endRow >= startRow');
         } else {
-            console.log('✗ Line Range Test 3 FAILED - Some statements have end < start');
+            console.log('✗ Line Range Test 3 FAILED - Some statements have endRow < startRow');
             console.log('AST:', JSON.stringify(lineRangeAST, null, 2));
-            throw new Error('Line Range Test 3 FAILED - Some statements have end < start');
+            throw new Error('Line Range Test 3 FAILED - Some statements have endRow < startRow');
         }
         
-        // Test 4: Test multi-line statements (if blocks should span multiple lines)
-        const ifBlockSpansMultipleLines = ifBlock && ifBlock.lineRange.end > ifBlock.lineRange.start;
+        // Test 4: Test multi-line statements (if blocks should span multiple rows)
+        const ifBlockSpansMultipleLines = ifBlock && ifBlock.codePos.endRow > ifBlock.codePos.startRow;
         
         if (ifBlockSpansMultipleLines) {
-            console.log('✓ Line Range Test 4 PASSED - Multi-line statements span correct range');
+            console.log('✓ Line Range Test 4 PASSED - Multi-line statements span correct row range');
         } else {
-            console.log('✗ Line Range Test 4 FAILED - Multi-line statements should span multiple lines');
-            console.log('  if block lineRange:', ifBlock?.lineRange);
-            throw new Error('Line Range Test 4 FAILED - Multi-line statements should span multiple lines');
+            console.log('✗ Line Range Test 4 FAILED - Multi-line statements should span multiple rows');
+            console.log('  if block codePos:', ifBlock?.codePos);
+            throw new Error('Line Range Test 4 FAILED - Multi-line statements should span multiple rows');
         }
         
-        // Test 5: Test with comments (comments should have lineRange)
+        // Test 5: Test with comments (comments should have codePos)
         const commentLineRangeScript = `
 # comment 1
 log "test"
@@ -718,20 +870,192 @@ log "test"
         const commentNodes = commentLineRangeAST.filter(node => node.type === 'comment');
         const logNode = commentLineRangeAST.find(node => node.type === 'command' && node.name === 'log');
         
+        // Comment nodes derive codePos from comments array
         const commentLineRangeTestPassed = 
-            commentNodes.every(node => node.lineRange && typeof node.lineRange.start === 'number' && typeof node.lineRange.end === 'number') &&
-            logNode && logNode.lineRange && logNode.lineRange.start === 2 && logNode.lineRange.end === 2;
+            commentNodes.every(node => 
+                node.comments && 
+                Array.isArray(node.comments) && 
+                node.comments.length > 0 &&
+                node.comments.every(c => c.codePos && typeof c.codePos.startRow === 'number')
+            ) &&
+            logNode && logNode.codePos && logNode.codePos.startRow === 2 && logNode.codePos.endRow === 2;
         
         if (commentLineRangeTestPassed) {
-            console.log('✓ Line Range Test 5 PASSED - Comments have correct lineRange');
+            console.log('✓ Line Range Test 5 PASSED - Comments have correct codePos');
         } else {
-            console.log('✗ Line Range Test 5 FAILED - Comments should have lineRange');
-            console.log('  Comment nodes:', commentNodes.map(n => ({ type: n.type, lineRange: n.lineRange })));
-            console.log('  Log node:', logNode ? { type: logNode.type, lineRange: logNode.lineRange } : 'not found');
-            throw new Error('Line Range Test 5 FAILED - Comments should have lineRange');
+            console.log('✗ Line Range Test 5 FAILED - Comments should have codePos');
+            console.log('  Comment nodes:', commentNodes.map(n => ({ type: n.type, codePos: n.codePos })));
+            console.log('  Log node:', logNode ? { type: logNode.type, codePos: logNode.codePos } : 'not found');
+            throw new Error('Line Range Test 5 FAILED - Comments should have codePos');
         }
         
         console.log('✓ All line range tests PASSED!');
+        console.log('='.repeat(60));
+        
+        // Test AST codePos tracking (row/column positions)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing AST Code Position (codePos) Tracking');
+        console.log('='.repeat(60));
+        
+        const codePosTestRp = new RobinPath();
+        const codePosTestScript = `log "test"
+$var = 10
+if $var > 5
+  log "inside"
+endif`;
+        const codePosAST = codePosTestRp.getAST(codePosTestScript);
+        
+        // Test 1: All statements should have codePos property
+        // Comment nodes derive codePos from comments array
+        const codePosAllHaveCodePos = codePosAST.every(node => {
+            if (node.type === 'comment') {
+                // Comment nodes derive codePos from comments array
+                return node.comments && Array.isArray(node.comments) && node.comments.length > 0 &&
+                    node.comments.every(c => c.codePos && typeof c.codePos.startRow === 'number');
+            }
+            return node.codePos !== undefined && 
+                typeof node.codePos === 'object' &&
+                typeof node.codePos.startRow === 'number' &&
+                typeof node.codePos.startCol === 'number' &&
+                typeof node.codePos.endRow === 'number' &&
+                typeof node.codePos.endCol === 'number';
+        });
+        
+        if (codePosAllHaveCodePos) {
+            console.log('✓ CodePos Test 1 PASSED - All statements have codePos property');
+        } else {
+            console.log('✗ CodePos Test 1 FAILED - Not all statements have codePos property');
+            console.log('AST:', JSON.stringify(codePosAST, null, 2));
+            throw new Error('CodePos Test 1 FAILED - Not all statements have codePos property');
+        }
+        
+        // Test 2: Verify codePos structure is correct
+        // Note: Script starts at line 0 (no leading newline in this test)
+        // Line 0: log "test"
+        // Line 1: $var = 10
+        // Line 2: if $var > 5
+        // Line 3:   log "inside"
+        // Line 4: endif
+        const codePosFirstLog = codePosAST.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'test');
+        const codePosAssignment = codePosAST.find(node => node.type === 'assignment' && node.targetName === 'var');
+        const codePosIfBlock = codePosAST.find(node => node.type === 'ifBlock');
+        
+        const codePosTest2Passed = 
+            codePosFirstLog && 
+            codePosFirstLog.codePos.startRow === 0 && 
+            codePosFirstLog.codePos.startCol >= 0 &&
+            codePosFirstLog.codePos.endRow === 0 &&
+            codePosFirstLog.codePos.endCol >= codePosFirstLog.codePos.startCol &&
+            codePosAssignment &&
+            codePosAssignment.codePos.startRow === 1 &&
+            codePosAssignment.codePos.startCol >= 0 &&
+            codePosAssignment.codePos.endRow === 1 &&
+            codePosAssignment.codePos.endCol >= codePosAssignment.codePos.startCol &&
+            codePosIfBlock &&
+            codePosIfBlock.codePos.startRow === 2 &&
+            codePosIfBlock.codePos.startCol >= 0 &&
+            codePosIfBlock.codePos.endRow === 4 &&
+            codePosIfBlock.codePos.endCol >= 0;
+        
+        if (codePosTest2Passed) {
+            console.log('✓ CodePos Test 2 PASSED - CodePos structure is correct');
+        } else {
+            console.log('✗ CodePos Test 2 FAILED - CodePos structure is incorrect');
+            console.log('  first log codePos:', codePosFirstLog?.codePos);
+            console.log('  assignment codePos:', codePosAssignment?.codePos);
+            console.log('  if block codePos:', codePosIfBlock?.codePos);
+            console.log('Full AST:', JSON.stringify(codePosAST, null, 2));
+            throw new Error('CodePos Test 2 FAILED - CodePos structure is incorrect');
+        }
+        
+        // Test 3: Verify endRow >= startRow and endCol >= startCol
+        const codePosEndGreaterThanStart = codePosAST.every(node => 
+            node.codePos.endRow >= node.codePos.startRow &&
+            node.codePos.endCol >= node.codePos.startCol
+        );
+        
+        if (codePosEndGreaterThanStart) {
+            console.log('✓ CodePos Test 3 PASSED - All statements have endRow >= startRow and endCol >= startCol');
+        } else {
+            console.log('✗ CodePos Test 3 FAILED - Some statements have invalid codePos ranges');
+            console.log('AST:', JSON.stringify(codePosAST, null, 2));
+            throw new Error('CodePos Test 3 FAILED - Some statements have invalid codePos ranges');
+        }
+        
+        // Test 4: Test multi-line statements (if blocks should span multiple rows)
+        const codePosIfBlockSpansMultipleRows = codePosIfBlock && codePosIfBlock.codePos.endRow > codePosIfBlock.codePos.startRow;
+        
+        if (codePosIfBlockSpansMultipleRows) {
+            console.log('✓ CodePos Test 4 PASSED - Multi-line statements span correct row range');
+        } else {
+            console.log('✗ CodePos Test 4 FAILED - Multi-line statements should span multiple rows');
+            console.log('  if block codePos:', codePosIfBlock?.codePos);
+            throw new Error('CodePos Test 4 FAILED - Multi-line statements should span multiple rows');
+        }
+        
+        // Test 5: Test nested statements have correct codePos
+        const codePosInsideIfLog = codePosIfBlock?.thenBranch?.find(node => node.type === 'command' && node.name === 'log' && node.args[0]?.value === 'inside');
+        
+        const codePosTest5Passed = 
+            codePosInsideIfLog &&
+            codePosInsideIfLog.codePos.startRow === 3 &&
+            codePosInsideIfLog.codePos.startCol >= 0 &&
+            codePosInsideIfLog.codePos.endRow === 3 &&
+            codePosInsideIfLog.codePos.endCol >= codePosInsideIfLog.codePos.startCol;
+        
+        if (codePosTest5Passed) {
+            console.log('✓ CodePos Test 5 PASSED - Nested statements have correct codePos');
+        } else {
+            console.log('✗ CodePos Test 5 FAILED - Nested statements should have correct codePos');
+            console.log('  inside if log codePos:', codePosInsideIfLog?.codePos);
+            console.log('  if block thenBranch:', codePosIfBlock?.thenBranch);
+            throw new Error('CodePos Test 5 FAILED - Nested statements should have correct codePos');
+        }
+        
+        // Test 6: Test comments have codePos (comment nodes derive codePos from comments array)
+        const commentCodePosScript = `
+# comment 1
+log "test"
+# comment 2
+`;
+        const commentCodePosAST = codePosTestRp.getAST(commentCodePosScript);
+        const codePosCommentNodes = commentCodePosAST.filter(node => node.type === 'comment');
+        const codePosLogNode = commentCodePosAST.find(node => node.type === 'command' && node.name === 'log');
+        
+        // Note: Script has leading newline, so:
+        // Line 0: empty
+        // Line 1: # comment 1
+        // Line 2: log "test"
+        // Line 3: # comment 2
+        const commentCodePosTestPassed = 
+            codePosCommentNodes.every(node => 
+                node.comments && 
+                Array.isArray(node.comments) && 
+                node.comments.length > 0 &&
+                node.comments.every(c => 
+                    c.codePos && 
+                    typeof c.codePos.startRow === 'number' && 
+                    typeof c.codePos.startCol === 'number' &&
+                    typeof c.codePos.endRow === 'number' &&
+                    typeof c.codePos.endCol === 'number'
+                )
+            ) &&
+            codePosLogNode && 
+            codePosLogNode.codePos && 
+            codePosLogNode.codePos.startRow === 2 && 
+            codePosLogNode.codePos.endRow === 2;
+        
+        if (commentCodePosTestPassed) {
+            console.log('✓ CodePos Test 6 PASSED - Comments have correct codePos');
+        } else {
+            console.log('✗ CodePos Test 6 FAILED - Comments should have codePos');
+            console.log('  Comment nodes:', codePosCommentNodes.map(n => ({ type: n.type, comments: n.comments })));
+            console.log('  Log node:', codePosLogNode ? { type: codePosLogNode.type, codePos: codePosLogNode.codePos } : 'not found');
+            throw new Error('CodePos Test 6 FAILED - Comments should have codePos');
+        }
+        
+        console.log('✓ All codePos tests PASSED!');
         console.log('='.repeat(60));
         
         // Test AST-based code updates
@@ -887,8 +1211,9 @@ endif`;
 log "test"`;
             const updateAst8 = updateTestRp.getAST(updateTestScript8);
             const updateCommentNode = updateAst8.find(node => node.type === 'comment');
-            if (updateCommentNode) {
-                updateCommentNode.text = 'new comment';
+            if (updateCommentNode && updateCommentNode.comments && updateCommentNode.comments.length > 0) {
+                // Update comment text in comments array
+                updateCommentNode.comments[0].text = 'new comment';
                 const updateUpdatedScript8 = updateTestRp.updateCodeFromAST(updateTestScript8, updateAst8);
                 const updateExpected8 = `# new comment
 
@@ -945,6 +1270,134 @@ endif`;
         }
         
         console.log('✓ All AST update tests PASSED!');
+        console.log('='.repeat(60));
+        
+        // Test comment updates with codePos
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Comment Updates with CodePos');
+        console.log('='.repeat(60));
+        
+        {
+            const commentUpdateTestRp = new RobinPath();
+            
+            // Test 1: Update comment text
+            const commentUpdateTestScript1 = `# old comment
+log "test"`;
+            const commentUpdateAst1 = commentUpdateTestRp.getAST(commentUpdateTestScript1);
+            const logNode1 = commentUpdateAst1.find(node => node.type === 'command' && node.name === 'log');
+            if (logNode1 && logNode1.comments && logNode1.comments.length > 0) {
+                logNode1.comments[0].text = 'new comment';
+                const commentUpdateUpdatedScript1 = commentUpdateTestRp.updateCodeFromAST(commentUpdateTestScript1, commentUpdateAst1);
+                const commentUpdateTest1Passed = commentUpdateUpdatedScript1.includes('# new comment') && 
+                    commentUpdateUpdatedScript1.includes('log "test"');
+                
+                if (commentUpdateTest1Passed) {
+                    console.log('✓ Comment Update Test 1 PASSED - Comment text update');
+                } else {
+                    console.log('✗ Comment Update Test 1 FAILED - Comment text update');
+                    console.log('  Original:', commentUpdateTestScript1);
+                    console.log('  Got:', commentUpdateUpdatedScript1);
+                    throw new Error('Comment Update Test 1 FAILED - Comment text update');
+                }
+            } else {
+                throw new Error('Comment Update Test 1 FAILED - No comments found');
+            }
+            
+            // Test 2: Add new line to consecutive comments
+            const commentUpdateTestScript2 = `# comment 1
+log "test"`;
+            const commentUpdateAst2 = commentUpdateTestRp.getAST(commentUpdateTestScript2);
+            const logNode2 = commentUpdateAst2.find(node => node.type === 'command' && node.name === 'log');
+            if (logNode2 && logNode2.comments && logNode2.comments.length > 0) {
+                // Add a new line to the comment (simulating adding a second comment line)
+                logNode2.comments[0].text = 'comment 1\ncomment 2';
+                // Update codePos to span both lines
+                logNode2.comments[0].codePos.endRow = logNode2.comments[0].codePos.startRow + 1;
+                logNode2.comments[0].codePos.endCol = 10; // Approximate end column for "comment 2"
+                const commentUpdateUpdatedScript2 = commentUpdateTestRp.updateCodeFromAST(commentUpdateTestScript2, commentUpdateAst2);
+                const commentUpdateTest2Passed = commentUpdateUpdatedScript2.includes('# comment 1') && 
+                    commentUpdateUpdatedScript2.includes('# comment 2') &&
+                    commentUpdateUpdatedScript2.includes('log "test"');
+                
+                if (commentUpdateTest2Passed) {
+                    console.log('✓ Comment Update Test 2 PASSED - Add new line to comments');
+                } else {
+                    console.log('✗ Comment Update Test 2 FAILED - Add new line to comments');
+                    console.log('  Original:', commentUpdateTestScript2);
+                    console.log('  Got:', commentUpdateUpdatedScript2);
+                    throw new Error('Comment Update Test 2 FAILED - Add new line to comments');
+                }
+            } else {
+                throw new Error('Comment Update Test 2 FAILED - No comments found');
+            }
+            
+            // Test 3: Update inline comment
+            const commentUpdateTestScript3 = `log "test"  # old inline`;
+            const commentUpdateAst3 = commentUpdateTestRp.getAST(commentUpdateTestScript3);
+            const logNode3 = commentUpdateAst3.find(node => node.type === 'command' && node.name === 'log');
+            if (logNode3 && logNode3.comments && logNode3.comments.length > 0) {
+                const inlineComment = logNode3.comments.find(c => c.codePos.startCol > 0);
+                if (inlineComment) {
+                    inlineComment.text = 'new inline';
+                    const commentUpdateUpdatedScript3 = commentUpdateTestRp.updateCodeFromAST(commentUpdateTestScript3, commentUpdateAst3);
+                    const commentUpdateTest3Passed = commentUpdateUpdatedScript3.includes('log "test"') && 
+                        commentUpdateUpdatedScript3.includes('# new inline');
+                    
+                    if (commentUpdateTest3Passed) {
+                        console.log('✓ Comment Update Test 3 PASSED - Inline comment update');
+                    } else {
+                        console.log('✗ Comment Update Test 3 FAILED - Inline comment update');
+                        console.log('  Original:', commentUpdateTestScript3);
+                        console.log('  Got:', commentUpdateUpdatedScript3);
+                        throw new Error('Comment Update Test 3 FAILED - Inline comment update');
+                    }
+                } else {
+                    throw new Error('Comment Update Test 3 FAILED - No inline comment found');
+                }
+            } else {
+                throw new Error('Comment Update Test 3 FAILED - No comments found');
+            }
+            
+            // Test 4: Remove comment line (from consecutive comments)
+            // Note: When removing a line, we need to update codePos.endRow to reflect the original range
+            // that needs to be replaced, not just the new range
+            const commentUpdateTestScript4 = `# comment 1
+# comment 2
+log "test"`;
+            const commentUpdateAst4 = commentUpdateTestRp.getAST(commentUpdateTestScript4);
+            const logNode4 = commentUpdateAst4.find(node => node.type === 'command' && node.name === 'log');
+            if (logNode4 && logNode4.comments && logNode4.comments.length > 0) {
+                // Remove one line from consecutive comments
+                const comment = logNode4.comments[0];
+                const originalEndRow = comment.codePos.endRow; // Save original end row
+                if (comment.text.includes('\n')) {
+                    // Remove the second line
+                    comment.text = comment.text.split('\n')[0];
+                    // Keep endRow the same to replace the entire original range
+                    // The codePos.endRow should remain as the original to replace both lines
+                    const commentUpdateUpdatedScript4 = commentUpdateTestRp.updateCodeFromAST(commentUpdateTestScript4, commentUpdateAst4);
+                    const commentUpdateTest4Passed = commentUpdateUpdatedScript4.includes('# comment 1') && 
+                        !commentUpdateUpdatedScript4.includes('# comment 2') &&
+                        commentUpdateUpdatedScript4.includes('log "test"');
+                    
+                    if (commentUpdateTest4Passed) {
+                        console.log('✓ Comment Update Test 4 PASSED - Remove comment line');
+                    } else {
+                        console.log('✗ Comment Update Test 4 FAILED - Remove comment line');
+                        console.log('  Original:', commentUpdateTestScript4);
+                        console.log('  Got:', commentUpdateUpdatedScript4);
+                        throw new Error('Comment Update Test 4 FAILED - Remove comment line');
+                    }
+                } else {
+                    throw new Error('Comment Update Test 4 FAILED - Comment does not have multiple lines');
+                }
+            } else {
+                throw new Error('Comment Update Test 4 FAILED - No comments found');
+            }
+        }
+        
+        console.log('✓ All comment update tests PASSED!');
         console.log('='.repeat(60));
         
         // Test function metadata retrieval

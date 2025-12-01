@@ -131,17 +131,19 @@ export type Arg =
     | { type: 'array'; code: string }     // [ ... ] array literal
     | { type: 'namedArgs'; args: Record<string, Arg> }; // Named arguments object (key=value pairs)
 
-export interface LineRange {
-    start: number; // 0-indexed line number where statement starts
-    end: number; // 0-indexed line number where statement ends (inclusive)
+export interface CodePosition {
+    startRow: number; // 0-indexed row (line) number where statement starts
+    startCol: number; // 0-indexed column number where statement starts
+    endRow: number; // 0-indexed row (line) number where statement ends (inclusive)
+    endCol: number; // 0-indexed column number where statement ends (inclusive)
 }
 
 export interface CommandCall {
     type: 'command';
     name: string;
     args: Arg[];
-    comments?: string[]; // Comments attached to this command (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface Assignment {
@@ -151,23 +153,23 @@ export interface Assignment {
     command?: CommandCall;
     literalValue?: Value;
     isLastValue?: boolean; // True if assignment is from $ (last value)
-    comments?: string[]; // Comments attached to this assignment (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface ShorthandAssignment {
     type: 'shorthand';
     targetName: string;
-    comments?: string[]; // Comments attached to this shorthand assignment (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this shorthand assignment (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface InlineIf {
     type: 'inlineIf';
     conditionExpr: string;
     command: Statement;
-    comments?: string[]; // Comments attached to this inline if (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this inline if (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface IfBlock {
@@ -176,22 +178,22 @@ export interface IfBlock {
     thenBranch: Statement[];
     elseBranch?: Statement[];
     elseifBranches?: Array<{ condition: string; body: Statement[] }>;
-    comments?: string[]; // Comments attached to this if block (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this if block (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface IfTrue {
     type: 'ifTrue';
     command: Statement;
-    comments?: string[]; // Comments attached to this iftrue (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this iftrue (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface IfFalse {
     type: 'ifFalse';
     command: Statement;
-    comments?: string[]; // Comments attached to this iffalse (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this iffalse (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface DefineFunction {
@@ -199,16 +201,16 @@ export interface DefineFunction {
     name: string;
     paramNames: string[]; // Parameter names (e.g., ['a', 'b', 'c']) - aliases for $1, $2, $3
     body: Statement[];
-    comments?: string[]; // Comments attached to this function definition (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this function definition (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface ScopeBlock {
     type: 'scope';
     paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
-    comments?: string[]; // Comments attached to this scope block (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface ForLoop {
@@ -216,29 +218,33 @@ export interface ForLoop {
     varName: string;
     iterableExpr: string;
     body: Statement[];
-    comments?: string[]; // Comments attached to this for loop (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this for loop (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface ReturnStatement {
     type: 'return';
     value?: Arg; // Optional value to return (if not provided, returns $)
-    comments?: string[]; // Comments attached to this return statement (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this return statement (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface BreakStatement {
     type: 'break';
-    comments?: string[]; // Comments attached to this break statement (above and inline)
-    lineRange: LineRange; // Line number range in source code
+    comments?: CommentWithPosition[]; // Comments attached to this break statement (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
+}
+
+export interface CommentWithPosition {
+    text: string; // Comment text without the #
+    codePos: CodePosition; // Code position (row/col) in source code
 }
 
 export interface CommentStatement {
     type: 'comment';
-    text?: string; // Comment text without the # (for single comments)
-    comments?: string[]; // Array of comment texts (for grouped orphaned comments)
-    lineNumber: number; // Original line number for reference (deprecated, use lineRange.start)
-    lineRange: LineRange; // Line number range in source code
+    comments: CommentWithPosition[]; // Array of comment objects with position (always use this, never 'text')
+    lineNumber: number; // Original line number for reference (deprecated, derive from comments[0].codePos.startRow)
+    // codePos is derived from comments array - no need to store it separately
 }
 
 export type Statement = 
@@ -981,11 +987,16 @@ export class RobinPath {
      * @param currentModuleContext Optional module context from "use" command (for getAST)
      */
     private serializeStatement(stmt: Statement, currentModuleContext?: string | null): any {
+        // For comment nodes, don't include codePos - derive from comments array when needed
         const base: any = {
             type: stmt.type,
-            lastValue: null,
-            lineRange: stmt.lineRange
+            lastValue: null
         };
+        
+        // Only add codePos for non-comment nodes
+        if (stmt.type !== 'comment') {
+            base.codePos = (stmt as any).codePos;
+        }
 
         // Add comments if present
         const comments = (stmt as any).comments;
@@ -1074,57 +1085,257 @@ export class RobinPath {
             case 'comment':
                 return {
                     ...base,
-                    text: stmt.text,
-                    comments: stmt.comments,
+                    comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
         }
     }
 
     /**
+     * Convert row/column position to character offset in the script
+     * @param script The original script string
+     * @param row 0-indexed row number
+     * @param col 0-indexed column number (inclusive)
+     * @param exclusive If true, returns offset one past the column (for slice end). Default false.
+     * @returns Character offset in the script
+     */
+    private rowColToCharOffset(script: string, row: number, col: number, exclusive: boolean = false): number {
+        const lines = script.split('\n');
+        let offset = 0;
+        
+        // Sum up the lengths of all lines before the target row
+        for (let i = 0; i < row && i < lines.length; i++) {
+            offset += lines[i].length + 1; // +1 for the newline character
+        }
+        
+        // Add the column offset within the target row
+        if (row < lines.length) {
+            const colOffset = Math.min(col, lines[row].length);
+            offset += colOffset;
+            // If exclusive, add 1 to point one past the column
+            if (exclusive) {
+                offset += 1;
+            }
+        } else {
+            // Row doesn't exist, but if exclusive, still add 1
+            if (exclusive) {
+                offset += 1;
+            }
+        }
+        
+        return offset;
+    }
+
+    /**
      * Update source code based on AST changes
-     * Replaces code at each top-level AST node's lineRange with reconstructed code from the AST node
+     * Uses precise character-level positions (codePos.startRow/startCol/endRow/endCol) to update code
      * Nested nodes are reconstructed as part of their parent's code
      * @param originalScript The original source code
      * @param ast The modified AST array (top-level nodes only)
      * @returns Updated source code
      */
+    /**
+     * Reconstruct comment code from a CommentWithPosition object
+     */
+    private reconstructCommentCode(comment: CommentWithPosition, indentLevel: number = 0): string {
+        const indent = '  '.repeat(indentLevel);
+        // Split by \n to handle consecutive comments, add # prefix to each line
+        return comment.text.split('\n').map(line => `${indent}# ${line}`).join('\n');
+    }
+
     updateCodeFromAST(originalScript: string, ast: any[]): string {
-        const lines = splitIntoLogicalLines(originalScript);
-        const lineRanges: Array<{ start: number; end: number; code: string }> = [];
+        const codePositions: Array<{ startOffset: number; endOffset: number; code: string }> = [];
 
-        // Only process top-level nodes to avoid conflicts with nested nodes
-        // Nested nodes are reconstructed as part of their parent's code
+        // Collect all code positions to update
         for (const node of ast) {
-            if (!node.lineRange) continue;
+            // Handle comment nodes separately - derive codePos from comments array
+            if (node.type === 'comment') {
+                if (node.comments && Array.isArray(node.comments) && node.comments.length > 0) {
+                    // Get the range from first to last comment
+                    const firstComment = node.comments[0];
+                    const lastComment = node.comments[node.comments.length - 1];
+                    
+                    if (firstComment.codePos && lastComment.codePos) {
+                        const commentCode = this.reconstructCodeFromASTNode(node, 0);
+                        if (commentCode !== null) {
+                            const startOffset = this.rowColToCharOffset(
+                                originalScript,
+                                firstComment.codePos.startRow,
+                                firstComment.codePos.startCol,
+                                false // inclusive
+                            );
+                            const endOffset = this.rowColToCharOffset(
+                                originalScript,
+                                lastComment.codePos.endRow,
+                                lastComment.codePos.endCol,
+                                true // exclusive (one past the end)
+                            );
 
-            const reconstructed = this.reconstructCodeFromASTNode(node, 0);
-            if (reconstructed !== null) {
-                lineRanges.push({
-                    start: node.lineRange.start,
-                    end: node.lineRange.end,
-                    code: reconstructed
-                });
+                            codePositions.push({
+                                startOffset,
+                                endOffset,
+                                code: commentCode
+                            });
+                        }
+                    }
+                }
+                continue; // Skip to next node
+            }
+            
+            // Check if node has comments attached
+            const hasComments = node.comments && Array.isArray(node.comments) && node.comments.length > 0;
+            
+            // Separate comments above from inline comments
+            const commentsAbove: CommentWithPosition[] = [];
+            const inlineComments: CommentWithPosition[] = [];
+            
+            if (hasComments) {
+                for (const comment of node.comments) {
+                    if (comment.codePos) {
+                        // Inline comments are on the same row as the statement and start after column 0
+                        if (comment.codePos.startRow === node.codePos.startRow && comment.codePos.startCol > 0) {
+                            inlineComments.push(comment);
+                        } else {
+                            // Comments above are on different rows or start at column 0
+                            commentsAbove.push(comment);
+                        }
+                    }
+                }
+            }
+            
+            // Check if comments above would overlap with the statement
+            let commentsOverlapStatement = false;
+            let combinedStartRow = node.codePos.startRow;
+            let combinedStartCol = node.codePos.startCol;
+            let combinedEndRow = node.codePos.endRow;
+            let combinedEndCol = node.codePos.endCol;
+            
+            if (commentsAbove.length > 0) {
+                const firstCommentAbove = commentsAbove[0];
+                const lastCommentAbove = commentsAbove[commentsAbove.length - 1];
+                
+                // Check if comments overlap or are adjacent to the statement
+                if (lastCommentAbove.codePos.endRow >= node.codePos.startRow) {
+                    commentsOverlapStatement = true;
+                    // Merge ranges: from first comment to end of statement (including inline comments)
+                    combinedStartRow = firstCommentAbove.codePos.startRow;
+                    combinedStartCol = firstCommentAbove.codePos.startCol;
+                    combinedEndRow = node.codePos.endRow;
+                    combinedEndCol = node.codePos.endCol;
+                    
+                    // Extend to include inline comments
+                    for (const inlineComment of inlineComments) {
+                        if (inlineComment.codePos.endCol > combinedEndCol) {
+                            combinedEndCol = inlineComment.codePos.endCol;
+                        }
+                    }
+                }
+            }
+            
+            if (commentsOverlapStatement) {
+                // Merge comment and statement into a single update
+                const reconstructed = this.reconstructCodeFromASTNode(node, 0);
+                if (reconstructed !== null) {
+                    // Build combined code: comments above + statement
+                    const commentCodes = commentsAbove.map(c => this.reconstructCommentCode(c, 0));
+                    const combinedCode = [...commentCodes, reconstructed].join('\n');
+                    
+                    const startOffset = this.rowColToCharOffset(
+                        originalScript,
+                        combinedStartRow,
+                        combinedStartCol,
+                        false // inclusive
+                    );
+                    const endOffset = this.rowColToCharOffset(
+                        originalScript,
+                        combinedEndRow,
+                        combinedEndCol,
+                        true // exclusive (one past the end)
+                    );
+
+                    codePositions.push({
+                        startOffset,
+                        endOffset,
+                        code: combinedCode
+                    });
+                }
+            } else {
+                // Process comments above separately (no overlap)
+                for (const comment of commentsAbove) {
+                    const commentCode = this.reconstructCommentCode(comment, 0);
+                    const startOffset = this.rowColToCharOffset(
+                        originalScript,
+                        comment.codePos.startRow,
+                        comment.codePos.startCol,
+                        false // inclusive
+                    );
+                    const endOffset = this.rowColToCharOffset(
+                        originalScript,
+                        comment.codePos.endRow,
+                        comment.codePos.endCol,
+                        true // exclusive (one past the end)
+                    );
+
+                    codePositions.push({
+                        startOffset,
+                        endOffset,
+                        code: commentCode
+                    });
+                }
+                
+                // Process the node itself (includes inline comments in reconstruction)
+                const reconstructed = this.reconstructCodeFromASTNode(node, 0);
+                if (reconstructed !== null) {
+                    // Calculate the effective range that includes inline comments
+                    let effectiveStartRow = node.codePos.startRow;
+                    let effectiveStartCol = node.codePos.startCol;
+                    let effectiveEndRow = node.codePos.endRow;
+                    let effectiveEndCol = node.codePos.endCol;
+                    
+                    // Extend range to include inline comments
+                    for (const comment of inlineComments) {
+                        if (comment.codePos.endCol > effectiveEndCol) {
+                            effectiveEndCol = comment.codePos.endCol;
+                        }
+                    }
+                    
+                    const startOffset = this.rowColToCharOffset(
+                        originalScript,
+                        effectiveStartRow,
+                        effectiveStartCol,
+                        false // inclusive
+                    );
+                    const endOffset = this.rowColToCharOffset(
+                        originalScript,
+                        effectiveEndRow,
+                        effectiveEndCol,
+                        true // exclusive (one past the end)
+                    );
+
+                    codePositions.push({
+                        startOffset,
+                        endOffset,
+                        code: reconstructed
+                    });
+                }
             }
         }
 
-        // Sort by start line (descending) to replace from end to start
-        // This prevents line number shifts from affecting subsequent replacements
-        lineRanges.sort((a, b) => b.start - a.start);
+        // Sort by start offset (descending) to replace from end to start
+        // This prevents character position shifts from affecting subsequent replacements
+        codePositions.sort((a, b) => b.startOffset - a.startOffset);
 
-        // Build updated lines array
-        const updatedLines = [...lines];
-
-        // Replace code at each line range
-        for (const range of lineRanges) {
-            const rangeLines = range.code.split('\n');
-            const numLinesToReplace = range.end - range.start + 1;
-            
-            // Replace the lines
-            updatedLines.splice(range.start, numLinesToReplace, ...rangeLines);
+        // Build updated script by replacing from end to start
+        let updatedScript = originalScript;
+        for (const pos of codePositions) {
+            // Replace the exact character range
+            updatedScript = 
+                updatedScript.slice(0, pos.startOffset) + 
+                pos.code + 
+                updatedScript.slice(pos.endOffset);
         }
 
-        return updatedLines.join('\n');
+        return updatedScript;
     }
 
     /**
@@ -1148,7 +1359,19 @@ export class RobinPath {
                 }
                 const modulePrefix = node.module ? `${node.module}.` : '';
                 const argsStr = node.args.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
-                return `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
+                let commandCode = `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
+                
+                // Add inline comment if present (comments above are handled separately in updateCodeFromAST)
+                if (node.comments && Array.isArray(node.comments)) {
+                    const inlineComment = node.comments.find((c: CommentWithPosition) => 
+                        c.codePos.startRow === node.codePos.startRow && c.codePos.startCol > 0
+                    );
+                    if (inlineComment) {
+                        commandCode += `  # ${inlineComment.text}`;
+                    }
+                }
+                
+                return commandCode;
             }
             case 'assignment': {
                 const target = '$' + node.targetName + (node.targetPath?.map((seg: any) => 
@@ -1263,9 +1486,11 @@ export class RobinPath {
                 return `${indent}break`;
             case 'comment': {
                 if (node.comments && Array.isArray(node.comments)) {
-                    return node.comments.map((c: string) => `${indent}# ${c}`).join('\n');
-                } else if (node.text) {
-                    return `${indent}# ${node.text}`;
+                    // Each comment may contain \n for consecutive comments
+                    return node.comments.map((c: CommentWithPosition) => {
+                        // Split by \n and add # prefix to each line
+                        return c.text.split('\n').map(line => `${indent}# ${line}`).join('\n');
+                    }).join('\n');
                 }
                 return null;
             }
