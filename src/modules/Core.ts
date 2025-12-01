@@ -378,14 +378,14 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
                 name: 'value',
                 dataType: 'any',
                 description: 'Value to assign',
-                formInputType: 'textarea',
+                formInputType: 'code',
                 required: true
             },
             {
                 name: 'fallback',
                 dataType: 'any',
                 description: 'Fallback value to use if value is empty/null (optional)',
-                formInputType: 'textarea',
+                formInputType: 'code',
                 required: false
             }
         ],
