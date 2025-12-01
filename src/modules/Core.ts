@@ -120,6 +120,18 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         return null;
     },
 
+    assign: () => {
+        // assign command: assign <variable> <value> [fallback]
+        // Assigns a value to a variable, with optional fallback if value is empty/null
+        // Examples:
+        //   assign $myVar "hello"           # $myVar = "hello"
+        //   assign $user.name "John"       # $user.name = "John" (attribute path)
+        //   assign $x "" "default"         # $x = "default" (fallback used)
+        // Note: The actual implementation is in executeCommand for special handling
+        // This registration ensures it's recognized as a valid command
+        return null;
+    },
+
     range: (args) => {
         const start = Number(args[0]) || 0;
         const end = Number(args[1]) || 0;
@@ -352,6 +364,36 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'scope\n  forget $x\n  $x  # Returns null\nendscope'
     },
 
+    assign: {
+        description: 'Assigns a value to a variable, with optional fallback if value is empty/null (actual implementation handled by executeCommand)',
+        parameters: [
+            {
+                name: 'variable',
+                dataType: 'string',
+                description: 'Variable name to assign to (e.g., $myVar or $user.name)',
+                formInputType: 'text',
+                required: true
+            },
+            {
+                name: 'value',
+                dataType: 'any',
+                description: 'Value to assign',
+                formInputType: 'textarea',
+                required: true
+            },
+            {
+                name: 'fallback',
+                dataType: 'any',
+                description: 'Fallback value to use if value is empty/null (optional)',
+                formInputType: 'textarea',
+                required: false
+            }
+        ],
+        returnType: 'null',
+        returnDescription: 'Always returns null (does not affect last value)',
+        example: 'assign $myVar "hello"  # $myVar = "hello"\nassign $x "" "default"  # $x = "default" (fallback used)'
+    },
+
     range: {
         description: 'Generates an array of numbers from start to end (inclusive)',
         parameters: [
@@ -395,6 +437,7 @@ export const CoreModuleMetadata: ModuleMetadata = {
         'getType',
         'clear',
         'forget',
+        'assign',
         'range'
     ]
 };
