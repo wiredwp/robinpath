@@ -1267,6 +1267,74 @@ endif`;
                 console.log('  Parsed AST:', JSON.stringify(updateAst9b, null, 2));
                 throw new Error('Update Test 9 FAILED - Round-trip test');
             }
+            
+            // Test 10: Update assign command with subexpression
+            const updateTestScript10 = `assign $myVar $(array.create 1 2 3)`;
+            const updateAst10 = updateTestRp.getAST(updateTestScript10);
+            const updateAssignNode = updateAst10.find(node => node.type === 'command' && node.name === 'assign');
+            
+            if (updateAssignNode && updateAssignNode.args && updateAssignNode.args.length >= 2) {
+                // Update the value argument (second arg) to a different subexpression
+                updateAssignNode.args[1] = { type: 'subexpr', code: 'array.create 4 5 6' };
+                const updateUpdatedScript10 = updateTestRp.updateCodeFromAST(updateTestScript10, updateAst10);
+                const updateExpected10 = 'assign $myVar $(array.create 4 5 6)';
+                const updateTest10Passed = updateUpdatedScript10 === updateExpected10;
+                
+                if (updateTest10Passed) {
+                    console.log('✓ Update Test 10 PASSED - Assign command with subexpression update');
+                } else {
+                    console.log('✗ Update Test 10 FAILED - Assign command with subexpression update');
+                    console.log('  Original:', updateTestScript10);
+                    console.log('  Expected:', updateExpected10);
+                    console.log('  Got:', updateUpdatedScript10);
+                    console.log('  AST:', JSON.stringify(updateAssignNode, null, 2));
+                    throw new Error('Update Test 10 FAILED - Assign command with subexpression update');
+                }
+                
+                // Test 10b: Update assign command value to a string literal
+                const updateAssignNode10b = updateTestRp.getAST(updateTestScript10);
+                const updateAssignCmd10b = updateAssignNode10b.find(node => node.type === 'command' && node.name === 'assign');
+                if (updateAssignCmd10b && updateAssignCmd10b.args && updateAssignCmd10b.args.length >= 2) {
+                    updateAssignCmd10b.args[1] = { type: 'string', value: 'hello world' };
+                    const updateUpdatedScript10b = updateTestRp.updateCodeFromAST(updateTestScript10, updateAssignNode10b);
+                    const updateExpected10b = 'assign $myVar "hello world"';
+                    const updateTest10bPassed = updateUpdatedScript10b === updateExpected10b;
+                    
+                    if (updateTest10bPassed) {
+                        console.log('✓ Update Test 10b PASSED - Assign command value update to string');
+                    } else {
+                        console.log('✗ Update Test 10b FAILED - Assign command value update to string');
+                        console.log('  Original:', updateTestScript10);
+                        console.log('  Expected:', updateExpected10b);
+                        console.log('  Got:', updateUpdatedScript10b);
+                        throw new Error('Update Test 10b FAILED - Assign command value update to string');
+                    }
+                }
+                
+                // Test 10c: Update assign command value to object literal
+                const updateAssignNode10c = updateTestRp.getAST(updateTestScript10);
+                const updateAssignCmd10c = updateAssignNode10c.find(node => node.type === 'command' && node.name === 'assign');
+                if (updateAssignCmd10c && updateAssignCmd10c.args && updateAssignCmd10c.args.length >= 2) {
+                    updateAssignCmd10c.args[1] = { type: 'object', code: 'name: "John", age: 30' };
+                    const updateUpdatedScript10c = updateTestRp.updateCodeFromAST(updateTestScript10, updateAssignNode10c);
+                    const updateExpected10c = 'assign $myVar {name: "John", age: 30}';
+                    const updateTest10cPassed = updateUpdatedScript10c === updateExpected10c;
+                    
+                    if (updateTest10cPassed) {
+                        console.log('✓ Update Test 10c PASSED - Assign command value update to object literal');
+                    } else {
+                        console.log('✗ Update Test 10c FAILED - Assign command value update to object literal');
+                        console.log('  Original:', updateTestScript10);
+                        console.log('  Expected:', updateExpected10c);
+                        console.log('  Got:', updateUpdatedScript10c);
+                        throw new Error('Update Test 10c FAILED - Assign command value update to object literal');
+                    }
+                }
+            } else {
+                console.log('✗ Update Test 10 FAILED - Assign command node not found');
+                console.log('  AST:', JSON.stringify(updateAst10, null, 2));
+                throw new Error('Update Test 10 FAILED - Assign command node not found');
+            }
         }
         
         console.log('✓ All AST update tests PASSED!');

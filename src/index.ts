@@ -1528,11 +1528,11 @@ export class RobinPath {
             case 'lastValue':
                 return '$';
             case 'subexpr':
-                return arg.code || '$(...)';
+                return `$(${arg.code || ''})`;
             case 'object':
-                return arg.code || '{...}';
+                return `{${arg.code || ''}}`;
             case 'array':
-                return arg.code || '[...]';
+                return `[${arg.code || ''}]`;
             case 'namedArgs': {
                 const pairs: string[] = [];
                 for (const [key, valueArg] of Object.entries(arg.args || {})) {
