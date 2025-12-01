@@ -734,6 +734,219 @@ log "test"
         console.log('✓ All line range tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test AST-based code updates
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing AST-based Code Updates');
+        console.log('='.repeat(60));
+        
+        {
+            const updateTestRp = new RobinPath();
+            
+            // Test 1: Update a simple command
+            const updateTestScript1 = `log "hello"`;
+            const updateAst1 = updateTestRp.getAST(updateTestScript1);
+            updateAst1[0].name = 'print';
+            const updateUpdatedScript1 = updateTestRp.updateCodeFromAST(updateTestScript1, updateAst1);
+            const updateTest1Passed = updateUpdatedScript1 === 'print "hello"';
+            
+            if (updateTest1Passed) {
+                console.log('✓ Update Test 1 PASSED - Simple command update');
+            } else {
+                console.log('✗ Update Test 1 FAILED - Simple command update');
+                console.log('  Original:', updateTestScript1);
+                console.log('  Expected: print "hello"');
+                console.log('  Got:', updateUpdatedScript1);
+                throw new Error('Update Test 1 FAILED - Simple command update');
+            }
+            
+            // Test 2: Update command arguments
+            const updateTestScript2 = `log "hello" "world"`;
+            const updateAst2 = updateTestRp.getAST(updateTestScript2);
+            updateAst2[0].args[0].value = 'goodbye';
+            const updateUpdatedScript2 = updateTestRp.updateCodeFromAST(updateTestScript2, updateAst2);
+            const updateTest2Passed = updateUpdatedScript2 === 'log "goodbye" "world"';
+            
+            if (updateTest2Passed) {
+                console.log('✓ Update Test 2 PASSED - Command argument update');
+            } else {
+                console.log('✗ Update Test 2 FAILED - Command argument update');
+                console.log('  Original:', updateTestScript2);
+                console.log('  Expected: log "goodbye" "world"');
+                console.log('  Got:', updateUpdatedScript2);
+                throw new Error('Update Test 2 FAILED - Command argument update');
+            }
+            
+            // Test 3: Update assignment
+            const updateTestScript3 = `$var = 10`;
+            const updateAst3 = updateTestRp.getAST(updateTestScript3);
+            updateAst3[0].literalValue = 20;
+            const updateUpdatedScript3 = updateTestRp.updateCodeFromAST(updateTestScript3, updateAst3);
+            const updateTest3Passed = updateUpdatedScript3 === '$var = 20';
+            
+            if (updateTest3Passed) {
+                console.log('✓ Update Test 3 PASSED - Assignment value update');
+            } else {
+                console.log('✗ Update Test 3 FAILED - Assignment value update');
+                console.log('  Original:', updateTestScript3);
+                console.log('  Expected: $var = 20');
+                console.log('  Got:', updateUpdatedScript3);
+                throw new Error('Update Test 3 FAILED - Assignment value update');
+            }
+            
+            // Test 4: Update multiple statements
+            const updateTestScript4 = `log "first"
+log "second"
+$var = 10`;
+            const updateAst4 = updateTestRp.getAST(updateTestScript4);
+            updateAst4[0].name = 'print';
+            updateAst4[1].args[0].value = 'updated';
+            updateAst4[2].literalValue = 99;
+            const updateUpdatedScript4 = updateTestRp.updateCodeFromAST(updateTestScript4, updateAst4);
+            const updateExpected4 = `print "first"
+log "updated"
+$var = 99`;
+            const updateTest4Passed = updateUpdatedScript4 === updateExpected4;
+            
+            if (updateTest4Passed) {
+                console.log('✓ Update Test 4 PASSED - Multiple statement updates');
+            } else {
+                console.log('✗ Update Test 4 FAILED - Multiple statement updates');
+                console.log('  Original:', updateTestScript4);
+                console.log('  Expected:', updateExpected4);
+                console.log('  Got:', updateUpdatedScript4);
+                throw new Error('Update Test 4 FAILED - Multiple statement updates');
+            }
+            
+            // Test 5: Update if block condition
+            const updateTestScript5 = `if $var > 5
+  log "inside"
+endif`;
+            const updateAst5 = updateTestRp.getAST(updateTestScript5);
+            updateAst5[0].conditionExpr = '$var > 10';
+            const updateUpdatedScript5 = updateTestRp.updateCodeFromAST(updateTestScript5, updateAst5);
+            const updateExpected5 = `if $var > 10
+  log "inside"
+endif`;
+            const updateTest5Passed = updateUpdatedScript5 === updateExpected5;
+            
+            if (updateTest5Passed) {
+                console.log('✓ Update Test 5 PASSED - If block condition update');
+            } else {
+                console.log('✗ Update Test 5 FAILED - If block condition update');
+                console.log('  Original:', updateTestScript5);
+                console.log('  Expected:', updateExpected5);
+                console.log('  Got:', updateUpdatedScript5);
+                throw new Error('Update Test 5 FAILED - If block condition update');
+            }
+            
+            // Test 6: Update nested command in if block
+            const updateTestScript6 = `if $var > 5
+  log "inside"
+endif`;
+            const updateAst6 = updateTestRp.getAST(updateTestScript6);
+            updateAst6[0].thenBranch[0].name = 'print';
+            updateAst6[0].thenBranch[0].args[0].value = 'nested';
+            const updateUpdatedScript6 = updateTestRp.updateCodeFromAST(updateTestScript6, updateAst6);
+            const updateExpected6 = `if $var > 5
+  print "nested"
+endif`;
+            const updateTest6Passed = updateUpdatedScript6 === updateExpected6;
+            
+            if (updateTest6Passed) {
+                console.log('✓ Update Test 6 PASSED - Nested command update in if block');
+            } else {
+                console.log('✗ Update Test 6 FAILED - Nested command update in if block');
+                console.log('  Original:', updateTestScript6);
+                console.log('  Expected:', updateExpected6);
+                console.log('  Got:', updateUpdatedScript6);
+                throw new Error('Update Test 6 FAILED - Nested command update in if block');
+            }
+            
+            // Test 7: Update module prefix
+            const updateTestScript7 = `math.add 5 10`;
+            const updateAst7 = updateTestRp.getAST(updateTestScript7);
+            updateAst7[0].module = 'calc';
+            const updateUpdatedScript7 = updateTestRp.updateCodeFromAST(updateTestScript7, updateAst7);
+            const updateTest7Passed = updateUpdatedScript7 === 'calc.add 5 10';
+            
+            if (updateTest7Passed) {
+                console.log('✓ Update Test 7 PASSED - Module prefix update');
+            } else {
+                console.log('✗ Update Test 7 FAILED - Module prefix update');
+                console.log('  Original:', updateTestScript7);
+                console.log('  Expected: calc.add 5 10');
+                console.log('  Got:', updateUpdatedScript7);
+                throw new Error('Update Test 7 FAILED - Module prefix update');
+            }
+            
+            // Test 8: Update comment
+            // Use a comment separated by blank line to ensure it's a standalone comment node
+            const updateTestScript8 = `# old comment
+
+log "test"`;
+            const updateAst8 = updateTestRp.getAST(updateTestScript8);
+            const updateCommentNode = updateAst8.find(node => node.type === 'comment');
+            if (updateCommentNode) {
+                updateCommentNode.text = 'new comment';
+                const updateUpdatedScript8 = updateTestRp.updateCodeFromAST(updateTestScript8, updateAst8);
+                const updateExpected8 = `# new comment
+
+log "test"`;
+                const updateTest8Passed = updateUpdatedScript8 === updateExpected8;
+                
+                if (updateTest8Passed) {
+                    console.log('✓ Update Test 8 PASSED - Comment update');
+                } else {
+                    console.log('✗ Update Test 8 FAILED - Comment update');
+                    console.log('  Original:', updateTestScript8);
+                    console.log('  Expected:', updateExpected8);
+                    console.log('  Got:', updateUpdatedScript8);
+                    console.log('  AST:', JSON.stringify(updateAst8, null, 2));
+                    throw new Error('Update Test 8 FAILED - Comment update');
+                }
+            } else {
+                console.log('✗ Update Test 8 FAILED - Comment node not found');
+                console.log('  AST nodes:', updateAst8.map(n => ({ type: n.type, name: n.name })));
+                console.log('  Full AST:', JSON.stringify(updateAst8, null, 2));
+                throw new Error('Update Test 8 FAILED - Comment node not found');
+            }
+            
+            // Test 9: Round-trip test (parse -> modify -> update -> parse again)
+            const updateTestScript9 = `log "test"
+$var = 42
+if $var > 40
+  log "big"
+endif`;
+            const updateAst9a = updateTestRp.getAST(updateTestScript9);
+            updateAst9a[0].name = 'print';
+            updateAst9a[1].literalValue = 100;
+            updateAst9a[2].conditionExpr = '$var > 90';
+            updateAst9a[2].thenBranch[0].args[0].value = 'huge';
+            const updateUpdatedScript9 = updateTestRp.updateCodeFromAST(updateTestScript9, updateAst9a);
+            const updateAst9b = updateTestRp.getAST(updateUpdatedScript9);
+            
+            const updateRoundTripPassed = 
+                updateAst9b[0].name === 'print' &&
+                updateAst9b[0].args[0].value === 'test' &&
+                updateAst9b[1].literalValue === 100 &&
+                updateAst9b[2].conditionExpr === '$var > 90' &&
+                updateAst9b[2].thenBranch[0].args[0].value === 'huge';
+            
+            if (updateRoundTripPassed) {
+                console.log('✓ Update Test 9 PASSED - Round-trip test (parse -> modify -> update -> parse)');
+            } else {
+                console.log('✗ Update Test 9 FAILED - Round-trip test');
+                console.log('  Original AST:', JSON.stringify(updateAst9a, null, 2));
+                console.log('  Updated script:', updateUpdatedScript9);
+                console.log('  Parsed AST:', JSON.stringify(updateAst9b, null, 2));
+                throw new Error('Update Test 9 FAILED - Round-trip test');
+            }
+        }
+        
+        console.log('✓ All AST update tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {

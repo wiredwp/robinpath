@@ -1073,6 +1073,248 @@ export class RobinPath {
     }
 
     /**
+     * Update source code based on AST changes
+     * Replaces code at each top-level AST node's lineRange with reconstructed code from the AST node
+     * Nested nodes are reconstructed as part of their parent's code
+     * @param originalScript The original source code
+     * @param ast The modified AST array (top-level nodes only)
+     * @returns Updated source code
+     */
+    updateCodeFromAST(originalScript: string, ast: any[]): string {
+        const lines = splitIntoLogicalLines(originalScript);
+        const lineRanges: Array<{ start: number; end: number; code: string }> = [];
+
+        // Only process top-level nodes to avoid conflicts with nested nodes
+        // Nested nodes are reconstructed as part of their parent's code
+        for (const node of ast) {
+            if (!node.lineRange) continue;
+
+            const reconstructed = this.reconstructCodeFromASTNode(node, 0);
+            if (reconstructed !== null) {
+                lineRanges.push({
+                    start: node.lineRange.start,
+                    end: node.lineRange.end,
+                    code: reconstructed
+                });
+            }
+        }
+
+        // Sort by start line (descending) to replace from end to start
+        // This prevents line number shifts from affecting subsequent replacements
+        lineRanges.sort((a, b) => b.start - a.start);
+
+        // Build updated lines array
+        const updatedLines = [...lines];
+
+        // Replace code at each line range
+        for (const range of lineRanges) {
+            const rangeLines = range.code.split('\n');
+            const numLinesToReplace = range.end - range.start + 1;
+            
+            // Replace the lines
+            updatedLines.splice(range.start, numLinesToReplace, ...rangeLines);
+        }
+
+        return updatedLines.join('\n');
+    }
+
+    /**
+     * Reconstruct code string from an AST node
+     * @param node The AST node (serialized)
+     * @param indentLevel Indentation level for nested code
+     * @returns Reconstructed code string, or null if cannot be reconstructed
+     */
+    private reconstructCodeFromASTNode(node: any, indentLevel: number = 0): string | null {
+        const indent = '  '.repeat(indentLevel);
+
+        switch (node.type) {
+            case 'command': {
+                // If node.name contains a dot, it already has a module prefix
+                // Extract just the command name (after the last dot) if module is set
+                let commandName = node.name;
+                if (node.module && node.name.includes('.')) {
+                    // Remove existing module prefix from name
+                    const parts = node.name.split('.');
+                    commandName = parts[parts.length - 1];
+                }
+                const modulePrefix = node.module ? `${node.module}.` : '';
+                const argsStr = node.args.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
+                return `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
+            }
+            case 'assignment': {
+                const target = '$' + node.targetName + (node.targetPath?.map((seg: any) => 
+                    seg.type === 'property' ? '.' + seg.name : `[${seg.index}]`
+                ).join('') || '');
+                
+                if (node.command) {
+                    const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
+                    return `${indent}${target} = ${cmdCode?.trim() || ''}`;
+                } else if (node.literalValue !== undefined) {
+                    const value = typeof node.literalValue === 'string' ? `"${node.literalValue}"` : String(node.literalValue);
+                    return `${indent}${target} = ${value}`;
+                } else if (node.isLastValue) {
+                    return `${indent}${target} = $`;
+                }
+                return null;
+            }
+            case 'shorthand':
+                return `${indent}$${node.targetName} = $`;
+            case 'inlineIf': {
+                const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
+                return `${indent}if ${node.conditionExpr} ${cmdCode?.trim() || ''}`;
+            }
+            case 'ifBlock': {
+                const parts: string[] = [];
+                parts.push(`${indent}if ${node.conditionExpr}`);
+                
+                if (node.thenBranch) {
+                    for (const stmt of node.thenBranch) {
+                        const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                        if (stmtCode) parts.push(stmtCode);
+                    }
+                }
+                
+                if (node.elseifBranches) {
+                    for (const branch of node.elseifBranches) {
+                        parts.push(`${indent}elseif ${branch.condition}`);
+                        for (const stmt of branch.body) {
+                            const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                            if (stmtCode) parts.push(stmtCode);
+                        }
+                    }
+                }
+                
+                if (node.elseBranch) {
+                    parts.push(`${indent}else`);
+                    for (const stmt of node.elseBranch) {
+                        const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                        if (stmtCode) parts.push(stmtCode);
+                    }
+                }
+                
+                parts.push(`${indent}endif`);
+                return parts.join('\n');
+            }
+            case 'ifTrue': {
+                const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
+                return `${indent}iftrue ${cmdCode?.trim() || ''}`;
+            }
+            case 'ifFalse': {
+                const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
+                return `${indent}iffalse ${cmdCode?.trim() || ''}`;
+            }
+            case 'define': {
+                const params = node.paramNames.join(' ');
+                const parts: string[] = [`${indent}def ${node.name}${params ? ' ' + params : ''}`];
+                
+                if (node.body) {
+                    for (const stmt of node.body) {
+                        const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                        if (stmtCode) parts.push(stmtCode);
+                    }
+                }
+                
+                parts.push(`${indent}enddef`);
+                return parts.join('\n');
+            }
+            case 'scope': {
+                const parts: string[] = [`${indent}scope`];
+                
+                if (node.body) {
+                    for (const stmt of node.body) {
+                        const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                        if (stmtCode) parts.push(stmtCode);
+                    }
+                }
+                
+                parts.push(`${indent}endscope`);
+                return parts.join('\n');
+            }
+            case 'forLoop': {
+                const parts: string[] = [`${indent}for $${node.varName} in ${node.iterableExpr}`];
+                
+                if (node.body) {
+                    for (const stmt of node.body) {
+                        const stmtCode = this.reconstructCodeFromASTNode(stmt, indentLevel + 1);
+                        if (stmtCode) parts.push(stmtCode);
+                    }
+                }
+                
+                parts.push(`${indent}endfor`);
+                return parts.join('\n');
+            }
+            case 'return': {
+                if (node.value) {
+                    const valueCode = this.reconstructArgCode(node.value);
+                    return `${indent}return ${valueCode || ''}`;
+                }
+                return `${indent}return`;
+            }
+            case 'break':
+                return `${indent}break`;
+            case 'comment': {
+                if (node.comments && Array.isArray(node.comments)) {
+                    return node.comments.map((c: string) => `${indent}# ${c}`).join('\n');
+                } else if (node.text) {
+                    return `${indent}# ${node.text}`;
+                }
+                return null;
+            }
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Reconstruct code string from an Arg object
+     */
+    private reconstructArgCode(arg: any): string | null {
+        if (!arg) return null;
+
+        switch (arg.type) {
+            case 'var': {
+                let result = '$' + arg.name;
+                if (arg.path) {
+                    for (const seg of arg.path) {
+                        if (seg.type === 'property') {
+                            result += '.' + seg.name;
+                        } else if (seg.type === 'index') {
+                            result += '[' + seg.index + ']';
+                        }
+                    }
+                }
+                return result;
+            }
+            case 'string':
+                return `"${arg.value}"`;
+            case 'number':
+                return String(arg.value);
+            case 'literal':
+                return String(arg.value);
+            case 'lastValue':
+                return '$';
+            case 'subexpr':
+                return arg.code || '$(...)';
+            case 'object':
+                return arg.code || '{...}';
+            case 'array':
+                return arg.code || '[...]';
+            case 'namedArgs': {
+                const pairs: string[] = [];
+                for (const [key, valueArg] of Object.entries(arg.args || {})) {
+                    const valueCode = this.reconstructArgCode(valueArg as any);
+                    if (valueCode !== null) {
+                        pairs.push(`${key}=${valueCode}`);
+                    }
+                }
+                return pairs.join(' ');
+            }
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Serialize an argument to JSON
      */
     private serializeArg(arg: Arg): any {
