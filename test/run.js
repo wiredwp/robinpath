@@ -1468,6 +1468,471 @@ log "test"`;
         console.log('✓ All comment update tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test inline comment functionality and AST updates
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Inline Comment Functionality and AST Updates');
+        console.log('='.repeat(60));
+        
+        {
+            const inlineCommentTestRp = new RobinPath();
+            
+            // Test 1: Verify inline property is set correctly when parsing
+            const inlineTestScript1 = `# regular comment above
+log "test"  # inline comment here`;
+            const inlineAst1 = inlineCommentTestRp.getAST(inlineTestScript1);
+            const logNode1 = inlineAst1.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode1 || !logNode1.comments || logNode1.comments.length < 2) {
+                throw new Error('Inline Comment Test 1 FAILED - Expected 2 comments (regular + inline)');
+            }
+            
+            const regularComment1 = logNode1.comments.find(c => c.inline === false || c.inline === undefined);
+            const inlineComment1 = logNode1.comments.find(c => c.inline === true);
+            
+            const inlineTest1Passed = regularComment1 && 
+                regularComment1.text === 'regular comment above' &&
+                (regularComment1.inline === false || regularComment1.inline === undefined) &&
+                inlineComment1 &&
+                inlineComment1.text === 'inline comment here' &&
+                inlineComment1.inline === true;
+            
+            if (inlineTest1Passed) {
+                console.log('✓ Inline Comment Test 1 PASSED - Inline property correctly set during parsing');
+            } else {
+                console.log('✗ Inline Comment Test 1 FAILED - Inline property not set correctly');
+                console.log('  Regular comment:', regularComment1);
+                console.log('  Inline comment:', inlineComment1);
+                console.log('  All comments:', logNode1.comments);
+                throw new Error('Inline Comment Test 1 FAILED - Inline property not set correctly');
+            }
+            
+            // Test 2: Update inline comment via AST
+            const inlineTestScript2 = `log "test"  # old inline`;
+            const inlineAst2 = inlineCommentTestRp.getAST(inlineTestScript2);
+            const logNode2 = inlineAst2.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode2 || !logNode2.comments || logNode2.comments.length === 0) {
+                throw new Error('Inline Comment Test 2 FAILED - No comments found');
+            }
+            
+            const inlineComment2 = logNode2.comments.find(c => c.inline === true);
+            if (!inlineComment2) {
+                throw new Error('Inline Comment Test 2 FAILED - No inline comment found');
+            }
+            
+            inlineComment2.text = 'new inline';
+            const inlineUpdatedScript2 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript2, inlineAst2);
+            const inlineTest2Passed = inlineUpdatedScript2 === 'log "test"  # new inline';
+            
+            if (inlineTest2Passed) {
+                console.log('✓ Inline Comment Test 2 PASSED - Inline comment updated via AST');
+            } else {
+                console.log('✗ Inline Comment Test 2 FAILED - Inline comment update failed');
+                console.log('  Original:', inlineTestScript2);
+                console.log('  Expected: log "test"  # new inline');
+                console.log('  Got:', inlineUpdatedScript2);
+                throw new Error('Inline Comment Test 2 FAILED - Inline comment update failed');
+            }
+            
+            // Test 3: Update regular comment separately from inline comment
+            const inlineTestScript3 = `# regular comment
+log "test"  # inline comment`;
+            const inlineAst3 = inlineCommentTestRp.getAST(inlineTestScript3);
+            const logNode3 = inlineAst3.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode3 || !logNode3.comments || logNode3.comments.length < 2) {
+                throw new Error('Inline Comment Test 3 FAILED - Expected 2 comments');
+            }
+            
+            const regularComment3 = logNode3.comments.find(c => c.inline !== true);
+            const inlineComment3 = logNode3.comments.find(c => c.inline === true);
+            
+            if (!regularComment3 || !inlineComment3) {
+                throw new Error('Inline Comment Test 3 FAILED - Could not find both comment types');
+            }
+            
+            // Update only regular comment, inline should remain unchanged
+            regularComment3.text = 'updated regular';
+            const inlineUpdatedScript3 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript3, inlineAst3);
+            const inlineTest3Passed = inlineUpdatedScript3.includes('# updated regular') &&
+                inlineUpdatedScript3.includes('# inline comment') &&
+                inlineUpdatedScript3.includes('log "test"');
+            
+            if (inlineTest3Passed) {
+                console.log('✓ Inline Comment Test 3 PASSED - Regular comment updated independently');
+            } else {
+                console.log('✗ Inline Comment Test 3 FAILED - Regular comment update affected inline');
+                console.log('  Original:', inlineTestScript3);
+                console.log('  Got:', inlineUpdatedScript3);
+                throw new Error('Inline Comment Test 3 FAILED - Regular comment update affected inline');
+            }
+            
+            // Test 4: Update inline comment separately from regular comment
+            const inlineTestScript4 = `# regular comment
+log "test"  # inline comment`;
+            const inlineAst4 = inlineCommentTestRp.getAST(inlineTestScript4);
+            const logNode4 = inlineAst4.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode4 || !logNode4.comments || logNode4.comments.length < 2) {
+                throw new Error('Inline Comment Test 4 FAILED - Expected 2 comments');
+            }
+            
+            const regularComment4 = logNode4.comments.find(c => c.inline !== true);
+            const inlineComment4 = logNode4.comments.find(c => c.inline === true);
+            
+            if (!regularComment4 || !inlineComment4) {
+                throw new Error('Inline Comment Test 4 FAILED - Could not find both comment types');
+            }
+            
+            // Update only inline comment, regular should remain unchanged
+            inlineComment4.text = 'updated inline';
+            const inlineUpdatedScript4 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript4, inlineAst4);
+            const inlineTest4Passed = inlineUpdatedScript4.includes('# regular comment') &&
+                inlineUpdatedScript4.includes('# updated inline') &&
+                inlineUpdatedScript4.includes('log "test"');
+            
+            if (inlineTest4Passed) {
+                console.log('✓ Inline Comment Test 4 PASSED - Inline comment updated independently');
+            } else {
+                console.log('✗ Inline Comment Test 4 FAILED - Inline comment update affected regular');
+                console.log('  Original:', inlineTestScript4);
+                console.log('  Got:', inlineUpdatedScript4);
+                throw new Error('Inline Comment Test 4 FAILED - Inline comment update affected regular');
+            }
+            
+            // Test 5: Remove inline comment (set to empty)
+            const inlineTestScript5 = `log "test"  # remove me`;
+            const inlineAst5 = inlineCommentTestRp.getAST(inlineTestScript5);
+            const logNode5 = inlineAst5.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode5 || !logNode5.comments || logNode5.comments.length === 0) {
+                throw new Error('Inline Comment Test 5 FAILED - No comments found');
+            }
+            
+            const inlineComment5 = logNode5.comments.find(c => c.inline === true);
+            if (!inlineComment5) {
+                throw new Error('Inline Comment Test 5 FAILED - No inline comment found');
+            }
+            
+            // Set inline comment text to empty (should remove it)
+            inlineComment5.text = '';
+            const inlineUpdatedScript5 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript5, inlineAst5);
+            const inlineTest5Passed = inlineUpdatedScript5 === 'log "test"' || 
+                (inlineUpdatedScript5.includes('log "test"') && !inlineUpdatedScript5.includes('# remove me'));
+            
+            if (inlineTest5Passed) {
+                console.log('✓ Inline Comment Test 5 PASSED - Inline comment removed when set to empty');
+            } else {
+                console.log('✗ Inline Comment Test 5 FAILED - Inline comment not removed');
+                console.log('  Original:', inlineTestScript5);
+                console.log('  Expected: log "test" (no comment)');
+                console.log('  Got:', inlineUpdatedScript5);
+                throw new Error('Inline Comment Test 5 FAILED - Inline comment not removed');
+            }
+            
+            // Test 6: Add inline comment to node that doesn't have one
+            const inlineTestScript6 = `log "test"`;
+            const inlineAst6 = inlineCommentTestRp.getAST(inlineTestScript6);
+            const logNode6 = inlineAst6.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode6) {
+                throw new Error('Inline Comment Test 6 FAILED - Node not found');
+            }
+            
+            // Add inline comment
+            if (!logNode6.comments) {
+                logNode6.comments = [];
+            }
+            logNode6.comments.push({
+                text: 'new inline comment',
+                codePos: logNode6.codePos, // Use node's codePos as base
+                inline: true
+            });
+            
+            const inlineUpdatedScript6 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript6, inlineAst6);
+            const inlineTest6Passed = inlineUpdatedScript6.includes('log "test"') &&
+                inlineUpdatedScript6.includes('# new inline comment');
+            
+            if (inlineTest6Passed) {
+                console.log('✓ Inline Comment Test 6 PASSED - Inline comment added to node without one');
+            } else {
+                console.log('✗ Inline Comment Test 6 FAILED - Failed to add inline comment');
+                console.log('  Original:', inlineTestScript6);
+                console.log('  Expected: log "test"  # new inline comment');
+                console.log('  Got:', inlineUpdatedScript6);
+                throw new Error('Inline Comment Test 6 FAILED - Failed to add inline comment');
+            }
+            
+            // Test 7: Update both regular and inline comments independently
+            const inlineTestScript7 = `# regular 1
+log "test"  # inline 1`;
+            const inlineAst7 = inlineCommentTestRp.getAST(inlineTestScript7);
+            const logNode7 = inlineAst7.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode7 || !logNode7.comments || logNode7.comments.length < 2) {
+                throw new Error('Inline Comment Test 7 FAILED - Expected 2 comments');
+            }
+            
+            const regularComment7 = logNode7.comments.find(c => c.inline !== true);
+            const inlineComment7 = logNode7.comments.find(c => c.inline === true);
+            
+            if (!regularComment7 || !inlineComment7) {
+                throw new Error('Inline Comment Test 7 FAILED - Could not find both comment types');
+            }
+            
+            // Update both independently
+            regularComment7.text = 'regular 2';
+            inlineComment7.text = 'inline 2';
+            const inlineUpdatedScript7 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript7, inlineAst7);
+            const inlineTest7Passed = inlineUpdatedScript7.includes('# regular 2') &&
+                inlineUpdatedScript7.includes('# inline 2') &&
+                inlineUpdatedScript7.includes('log "test"');
+            
+            if (inlineTest7Passed) {
+                console.log('✓ Inline Comment Test 7 PASSED - Both comments updated independently');
+            } else {
+                console.log('✗ Inline Comment Test 7 FAILED - Both comments not updated correctly');
+                console.log('  Original:', inlineTestScript7);
+                console.log('  Expected: # regular 2\\nlog "test"  # inline 2');
+                console.log('  Got:', inlineUpdatedScript7);
+                throw new Error('Inline Comment Test 7 FAILED - Both comments not updated correctly');
+            }
+            
+            // Test 8: Add inline comment to assignment statement via AST update
+            const inlineTestScript8 = `$a = 1`;
+            const inlineAst8 = inlineCommentTestRp.getAST(inlineTestScript8);
+            const assignmentNode8 = inlineAst8.find(node => node.type === 'assignment');
+            
+            if (!assignmentNode8) {
+                throw new Error('Inline Comment Test 8 FAILED - Assignment node not found');
+            }
+            
+            // Add inline comment to assignment
+            if (!assignmentNode8.comments) {
+                assignmentNode8.comments = [];
+            }
+            assignmentNode8.comments.push({
+                text: 'this is a value',
+                codePos: assignmentNode8.codePos, // Use node's codePos as base
+                inline: true
+            });
+            
+            const inlineUpdatedScript8 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript8, inlineAst8);
+            const inlineTest8Passed = inlineUpdatedScript8.includes('$a = 1') &&
+                inlineUpdatedScript8.includes('# this is a value');
+            
+            if (inlineTest8Passed) {
+                console.log('✓ Inline Comment Test 8 PASSED - Inline comment added to assignment via AST');
+            } else {
+                console.log('✗ Inline Comment Test 8 FAILED - Failed to add inline comment to assignment');
+                console.log('  Original:', inlineTestScript8);
+                console.log('  Expected: $a = 1  # this is a value');
+                console.log('  Got:', inlineUpdatedScript8);
+                throw new Error('Inline Comment Test 8 FAILED - Failed to add inline comment to assignment');
+            }
+            
+            // Test 9: Update inline comment on assignment statement
+            const inlineTestScript9 = `$a = 1  # old inline`;
+            const inlineAst9 = inlineCommentTestRp.getAST(inlineTestScript9);
+            const assignmentNode9 = inlineAst9.find(node => node.type === 'assignment');
+            
+            if (!assignmentNode9 || !assignmentNode9.comments || assignmentNode9.comments.length === 0) {
+                throw new Error('Inline Comment Test 9 FAILED - Assignment node or comments not found');
+            }
+            
+            const inlineComment9 = assignmentNode9.comments.find(c => c.inline === true);
+            if (!inlineComment9) {
+                throw new Error('Inline Comment Test 9 FAILED - No inline comment found on assignment');
+            }
+            
+            // Update inline comment
+            inlineComment9.text = 'updated inline';
+            const inlineUpdatedScript9 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript9, inlineAst9);
+            const inlineTest9Passed = inlineUpdatedScript9.includes('$a = 1') &&
+                inlineUpdatedScript9.includes('# updated inline') &&
+                !inlineUpdatedScript9.includes('# old inline');
+            
+            if (inlineTest9Passed) {
+                console.log('✓ Inline Comment Test 9 PASSED - Inline comment updated on assignment');
+            } else {
+                console.log('✗ Inline Comment Test 9 FAILED - Failed to update inline comment on assignment');
+                console.log('  Original:', inlineTestScript9);
+                console.log('  Expected: $a = 1  # updated inline');
+                console.log('  Got:', inlineUpdatedScript9);
+                throw new Error('Inline Comment Test 9 FAILED - Failed to update inline comment on assignment');
+            }
+            
+            // Test 10: Add inline comment to assignment with variable reference ($a = $b)
+            const inlineTestScript10 = `$a = $b`;
+            const inlineAst10 = inlineCommentTestRp.getAST(inlineTestScript10);
+            const assignmentNode10 = inlineAst10.find(node => node.type === 'assignment');
+            
+            if (!assignmentNode10) {
+                throw new Error('Inline Comment Test 10 FAILED - Assignment node not found');
+            }
+            
+            // Add inline comment to assignment
+            if (!assignmentNode10.comments) {
+                assignmentNode10.comments = [];
+            }
+            assignmentNode10.comments.push({
+                text: 'copy from b',
+                codePos: assignmentNode10.codePos, // Use node's codePos as base
+                inline: true
+            });
+            
+            const inlineUpdatedScript10 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript10, inlineAst10);
+            // Should be $a = $b  # copy from b (not $a = _var $b)
+            const inlineTest10Passed = inlineUpdatedScript10.includes('$a = $b') &&
+                inlineUpdatedScript10.includes('# copy from b') &&
+                !inlineUpdatedScript10.includes('_var');
+            
+            if (inlineTest10Passed) {
+                console.log('✓ Inline Comment Test 10 PASSED - Inline comment added to variable assignment');
+            } else {
+                console.log('✗ Inline Comment Test 10 FAILED - Failed to add inline comment to variable assignment');
+                console.log('  Original:', inlineTestScript10);
+                console.log('  Expected: $a = $b  # copy from b');
+                console.log('  Got:', inlineUpdatedScript10);
+                throw new Error('Inline Comment Test 10 FAILED - Failed to add inline comment to variable assignment');
+            }
+            
+            // Test 11: Empty regular comment (comment above) via AST - should be completely removed
+            const inlineTestScript11 = `# regular comment
+log "test"`;
+            const inlineAst11 = inlineCommentTestRp.getAST(inlineTestScript11);
+            const logNode11 = inlineAst11.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode11 || !logNode11.comments || logNode11.comments.length === 0) {
+                throw new Error('Inline Comment Test 11 FAILED - Node or comments not found');
+            }
+            
+            const regularComment11 = logNode11.comments.find(c => c.inline !== true);
+            if (!regularComment11) {
+                throw new Error('Inline Comment Test 11 FAILED - No regular comment found');
+            }
+            
+            // Empty the regular comment
+            regularComment11.text = '';
+            const inlineUpdatedScript11 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript11, inlineAst11);
+            const inlineTest11Passed = inlineUpdatedScript11.includes('log "test"') &&
+                !inlineUpdatedScript11.includes('# regular comment') &&
+                !inlineUpdatedScript11.includes('#');
+            
+            if (inlineTest11Passed) {
+                console.log('✓ Inline Comment Test 11 PASSED - Regular comment emptied and removed');
+            } else {
+                console.log('✗ Inline Comment Test 11 FAILED - Regular comment not removed when emptied');
+                console.log('  Original:', inlineTestScript11);
+                console.log('  Expected: log "test" (no comment)');
+                console.log('  Got:', inlineUpdatedScript11);
+                throw new Error('Inline Comment Test 11 FAILED - Regular comment not removed when emptied');
+            }
+            
+            // Test 12: Empty inline comment via AST - should be completely removed
+            const inlineTestScript12 = `log "test"  # inline comment`;
+            const inlineAst12 = inlineCommentTestRp.getAST(inlineTestScript12);
+            const logNode12 = inlineAst12.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode12 || !logNode12.comments || logNode12.comments.length === 0) {
+                throw new Error('Inline Comment Test 12 FAILED - Node or comments not found');
+            }
+            
+            const inlineComment12 = logNode12.comments.find(c => c.inline === true);
+            if (!inlineComment12) {
+                throw new Error('Inline Comment Test 12 FAILED - No inline comment found');
+            }
+            
+            // Empty the inline comment
+            inlineComment12.text = '';
+            const inlineUpdatedScript12 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript12, inlineAst12);
+            const inlineTest12Passed = inlineUpdatedScript12 === 'log "test"' ||
+                (inlineUpdatedScript12.includes('log "test"') && !inlineUpdatedScript12.includes('# inline comment') && !inlineUpdatedScript12.includes('#'));
+            
+            if (inlineTest12Passed) {
+                console.log('✓ Inline Comment Test 12 PASSED - Inline comment emptied and removed');
+            } else {
+                console.log('✗ Inline Comment Test 12 FAILED - Inline comment not removed when emptied');
+                console.log('  Original:', inlineTestScript12);
+                console.log('  Expected: log "test" (no comment)');
+                console.log('  Got:', inlineUpdatedScript12);
+                throw new Error('Inline Comment Test 12 FAILED - Inline comment not removed when emptied');
+            }
+            
+            // Test 13: Empty both regular and inline comments via AST - both should be removed
+            const inlineTestScript13 = `# regular comment
+log "test"  # inline comment`;
+            const inlineAst13 = inlineCommentTestRp.getAST(inlineTestScript13);
+            const logNode13 = inlineAst13.find(node => node.type === 'command' && node.name === 'log');
+            
+            if (!logNode13 || !logNode13.comments || logNode13.comments.length < 2) {
+                throw new Error('Inline Comment Test 13 FAILED - Node or comments not found');
+            }
+            
+            const regularComment13 = logNode13.comments.find(c => c.inline !== true);
+            const inlineComment13 = logNode13.comments.find(c => c.inline === true);
+            
+            if (!regularComment13 || !inlineComment13) {
+                throw new Error('Inline Comment Test 13 FAILED - Both comment types not found');
+            }
+            
+            // Empty both comments
+            regularComment13.text = '';
+            inlineComment13.text = '';
+            const inlineUpdatedScript13 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript13, inlineAst13);
+            const inlineTest13Passed = inlineUpdatedScript13 === 'log "test"' ||
+                (inlineUpdatedScript13.includes('log "test"') && 
+                 !inlineUpdatedScript13.includes('# regular comment') && 
+                 !inlineUpdatedScript13.includes('# inline comment') &&
+                 !inlineUpdatedScript13.includes('#'));
+            
+            if (inlineTest13Passed) {
+                console.log('✓ Inline Comment Test 13 PASSED - Both comments emptied and removed');
+            } else {
+                console.log('✗ Inline Comment Test 13 FAILED - Comments not removed when emptied');
+                console.log('  Original:', inlineTestScript13);
+                console.log('  Expected: log "test" (no comments)');
+                console.log('  Got:', inlineUpdatedScript13);
+                throw new Error('Inline Comment Test 13 FAILED - Comments not removed when emptied');
+            }
+            
+            // Test 14: Empty regular comment on assignment statement via AST
+            const inlineTestScript14 = `# comment above comment
+$a = 1`;
+            const inlineAst14 = inlineCommentTestRp.getAST(inlineTestScript14);
+            const assignmentNode14 = inlineAst14.find(node => node.type === 'assignment');
+            
+            if (!assignmentNode14 || !assignmentNode14.comments || assignmentNode14.comments.length === 0) {
+                throw new Error('Inline Comment Test 14 FAILED - Assignment node or comments not found');
+            }
+            
+            const regularComment14 = assignmentNode14.comments.find(c => c.inline !== true);
+            if (!regularComment14) {
+                throw new Error('Inline Comment Test 14 FAILED - No regular comment found on assignment');
+            }
+            
+            // Empty the regular comment
+            regularComment14.text = '';
+            const inlineUpdatedScript14 = inlineCommentTestRp.updateCodeFromAST(inlineTestScript14, inlineAst14);
+            const inlineTest14Passed = inlineUpdatedScript14.includes('$a = 1') &&
+                !inlineUpdatedScript14.includes('# above comment') &&
+                !inlineUpdatedScript14.match(/^#/m); // No comment lines at start
+            
+            if (inlineTest14Passed) {
+                console.log('✓ Inline Comment Test 14 PASSED - Regular comment emptied on assignment');
+            } else {
+                console.log('✗ Inline Comment Test 14 FAILED - Regular comment not removed from assignment');
+                console.log('  Original:', inlineTestScript14);
+                console.log('  Expected: $a = 1 (no comment above)');
+                console.log('  Got:', inlineUpdatedScript14);
+                throw new Error('Inline Comment Test 14 FAILED - Regular comment not removed from assignment');
+            }
+        }
+        
+        console.log('✓ All inline comment tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Test function metadata retrieval
         console.log();
         console.log('='.repeat(60));

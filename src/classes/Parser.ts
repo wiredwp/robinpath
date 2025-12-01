@@ -235,7 +235,8 @@ export class Parser {
         const endCol = line.length - 1;
         return {
             text: commentText,
-            codePos: this.createCodePosition(lineNumber, commentCol >= 0 ? commentCol : 0, lineNumber, endCol >= 0 ? endCol : 0)
+            codePos: this.createCodePosition(lineNumber, commentCol >= 0 ? commentCol : 0, lineNumber, endCol >= 0 ? endCol : 0),
+            inline: true // Mark as inline comment
         };
     }
 
@@ -377,7 +378,8 @@ export class Parser {
                             startCol >= 0 ? startCol : 0,
                             lastCommentLine,
                             endCol >= 0 ? endCol : 0
-                        )
+                        ),
+                        inline: false // Comments above are not inline
                     });
                     pendingComments.length = 0;
                     pendingCommentLines.length = 0;
@@ -1863,6 +1865,21 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: null,
+                        codePos: this.createCodePositionFromLines(startLine, startLine)
+                    };
+                } else if (LexerUtils.isVariable(token)) {
+                    // Handle variable reference: $a = $b
+                    const { name: varName, path: varPath } = LexerUtils.parseVariablePath(token);
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        command: {
+                            type: 'command',
+                            name: '_var',
+                            args: [{ type: 'var', name: varName, path: varPath }],
+                            codePos: this.createCodePositionFromLines(startLine, startLine)
+                        },
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else {

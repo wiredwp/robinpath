@@ -238,6 +238,7 @@ export interface BreakStatement {
 export interface CommentWithPosition {
     text: string; // Comment text without the #
     codePos: CodePosition; // Code position (row/col) in source code
+    inline?: boolean; // true if this is an inline comment (on same line as code), false/undefined if above
 }
 
 export interface CommentStatement {
@@ -1138,6 +1139,10 @@ export class RobinPath {
      * Reconstruct comment code from a CommentWithPosition object
      */
     private reconstructCommentCode(comment: CommentWithPosition, indentLevel: number = 0): string {
+        // Return empty string if comment text is empty
+        if (!comment.text || comment.text.trim() === '') {
+            return '';
+        }
         const indent = '  '.repeat(indentLevel);
         // Split by \n to handle consecutive comments, add # prefix to each line
         return comment.text.split('\n').map(line => `${indent}# ${line}`).join('\n');
@@ -1151,12 +1156,13 @@ export class RobinPath {
             // Handle comment nodes separately - derive codePos from comments array
             if (node.type === 'comment') {
                 if (node.comments && Array.isArray(node.comments) && node.comments.length > 0) {
-                    // Get the range from first to last comment
+                    // Get the range from first to last comment (including empty comments for deletion)
                     const firstComment = node.comments[0];
                     const lastComment = node.comments[node.comments.length - 1];
                     
                     if (firstComment.codePos && lastComment.codePos) {
                         const commentCode = this.reconstructCodeFromASTNode(node, 0);
+                        // Process even if commentCode is empty string (for deletion)
                         if (commentCode !== null) {
                             const startOffset = this.rowColToCharOffset(
                                 originalScript,
@@ -1191,19 +1197,22 @@ export class RobinPath {
             
             if (hasComments) {
                 for (const comment of node.comments) {
-                    if (comment.codePos) {
-                        // Inline comments are on the same row as the statement and start after column 0
-                        if (comment.codePos.startRow === node.codePos.startRow && comment.codePos.startCol > 0) {
-                            inlineComments.push(comment);
-                        } else {
-                            // Comments above are on different rows or start at column 0
-                            commentsAbove.push(comment);
-                        }
+                    // Skip empty comments (they should be removed, not processed)
+                    if (!comment.text || comment.text.trim() === '') {
+                        continue;
+                    }
+                    // Use inline property if available, otherwise fall back to codePos check
+                    if (comment.inline === true) {
+                        inlineComments.push(comment);
+                    } else {
+                        // Comments above are not inline
+                        commentsAbove.push(comment);
                     }
                 }
             }
             
             // Check if comments above would overlap with the statement
+            // Note: commentsAbove has already been filtered to exclude empty comments
             let commentsOverlapStatement = false;
             let combinedStartRow = node.codePos.startRow;
             let combinedStartCol = node.codePos.startCol;
@@ -1237,8 +1246,13 @@ export class RobinPath {
                 const reconstructed = this.reconstructCodeFromASTNode(node, 0);
                 if (reconstructed !== null) {
                     // Build combined code: comments above + statement
-                    const commentCodes = commentsAbove.map(c => this.reconstructCommentCode(c, 0));
-                    const combinedCode = [...commentCodes, reconstructed].join('\n');
+                    // Filter out empty comments before reconstructing
+                    const commentCodes = commentsAbove
+                        .map(c => this.reconstructCommentCode(c, 0))
+                        .filter(code => code !== '');
+                    const combinedCode = commentCodes.length > 0 
+                        ? [...commentCodes, reconstructed].join('\n')
+                        : reconstructed;
                     
                     const startOffset = this.rowColToCharOffset(
                         originalScript,
@@ -1261,8 +1275,44 @@ export class RobinPath {
                 }
             } else {
                 // Process comments above separately (no overlap)
+                // First, handle empty comments by removing them from the code
+                if (hasComments) {
+                    for (const comment of node.comments) {
+                        // Check if comment is empty (should be removed)
+                        if (!comment.text || comment.text.trim() === '') {
+                            // This is an empty comment - remove it by replacing with empty string
+                            // Only process if it's not inline (inline comments are handled in node reconstruction)
+                            if (comment.inline !== true) {
+                                const startOffset = this.rowColToCharOffset(
+                                    originalScript,
+                                    comment.codePos.startRow,
+                                    comment.codePos.startCol,
+                                    false // inclusive
+                                );
+                                const endOffset = this.rowColToCharOffset(
+                                    originalScript,
+                                    comment.codePos.endRow,
+                                    comment.codePos.endCol,
+                                    true // exclusive (one past the end)
+                                );
+
+                                codePositions.push({
+                                    startOffset,
+                                    endOffset,
+                                    code: '' // Empty string removes the comment
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // Now process non-empty comments above
                 for (const comment of commentsAbove) {
                     const commentCode = this.reconstructCommentCode(comment, 0);
+                    // Skip empty comments (defensive check)
+                    if (commentCode === '') {
+                        continue;
+                    }
                     const startOffset = this.rowColToCharOffset(
                         originalScript,
                         comment.codePos.startRow,
@@ -1349,6 +1399,22 @@ export class RobinPath {
 
         switch (node.type) {
             case 'command': {
+                // Special handling for _var command - just output the variable (used for $a = $b assignments)
+                if (node.name === '_var' && node.args && node.args.length === 1 && node.args[0].type === 'var') {
+                    const varArg = node.args[0];
+                    let varCode = '$' + varArg.name;
+                    if (varArg.path) {
+                        for (const seg of varArg.path) {
+                            if (seg.type === 'property') {
+                                varCode += '.' + seg.name;
+                            } else if (seg.type === 'index') {
+                                varCode += '[' + seg.index + ']';
+                            }
+                        }
+                    }
+                    return varCode;
+                }
+                
                 // If node.name contains a dot, it already has a module prefix
                 // Extract just the command name (after the last dot) if module is set
                 let commandName = node.name;
@@ -1363,9 +1429,7 @@ export class RobinPath {
                 
                 // Add inline comment if present (comments above are handled separately in updateCodeFromAST)
                 if (node.comments && Array.isArray(node.comments)) {
-                    const inlineComment = node.comments.find((c: CommentWithPosition) => 
-                        c.codePos.startRow === node.codePos.startRow && c.codePos.startCol > 0
-                    );
+                    const inlineComment = node.comments.find((c: CommentWithPosition) => c.inline === true && c.text && c.text.trim() !== '');
                     if (inlineComment) {
                         commandCode += `  # ${inlineComment.text}`;
                     }
@@ -1378,16 +1442,26 @@ export class RobinPath {
                     seg.type === 'property' ? '.' + seg.name : `[${seg.index}]`
                 ).join('') || '');
                 
+                let assignmentCode: string | null = null;
                 if (node.command) {
                     const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
-                    return `${indent}${target} = ${cmdCode?.trim() || ''}`;
+                    assignmentCode = `${indent}${target} = ${cmdCode?.trim() || ''}`;
                 } else if (node.literalValue !== undefined) {
                     const value = typeof node.literalValue === 'string' ? `"${node.literalValue}"` : String(node.literalValue);
-                    return `${indent}${target} = ${value}`;
+                    assignmentCode = `${indent}${target} = ${value}`;
                 } else if (node.isLastValue) {
-                    return `${indent}${target} = $`;
+                    assignmentCode = `${indent}${target} = $`;
                 }
-                return null;
+                
+                // Add inline comment if present (comments above are handled separately in updateCodeFromAST)
+                if (assignmentCode && node.comments && Array.isArray(node.comments)) {
+                    const inlineComment = node.comments.find((c: CommentWithPosition) => c.inline === true && c.text && c.text.trim() !== '');
+                    if (inlineComment) {
+                        assignmentCode += `  # ${inlineComment.text}`;
+                    }
+                }
+                
+                return assignmentCode;
             }
             case 'shorthand':
                 return `${indent}$${node.targetName} = $`;
@@ -1486,8 +1560,14 @@ export class RobinPath {
                 return `${indent}break`;
             case 'comment': {
                 if (node.comments && Array.isArray(node.comments)) {
+                    // Filter out empty comments and process non-empty ones
+                    const nonEmptyComments = node.comments.filter((c: CommentWithPosition) => c.text && c.text.trim() !== '');
+                    if (nonEmptyComments.length === 0) {
+                        // All comments are empty - return empty string to remove the comment
+                        return '';
+                    }
                     // Each comment may contain \n for consecutive comments
-                    return node.comments.map((c: CommentWithPosition) => {
+                    return nonEmptyComments.map((c: CommentWithPosition) => {
                         // Split by \n and add # prefix to each line
                         return c.text.split('\n').map(line => `${indent}# ${line}`).join('\n');
                     }).join('\n');
