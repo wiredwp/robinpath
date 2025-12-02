@@ -152,6 +152,7 @@ export interface Assignment {
     targetPath?: AttributePathSegment[]; // Path for attribute access assignment (e.g., $animal.cat)
     command?: CommandCall;
     literalValue?: Value;
+    literalValueType?: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array'; // Type of literalValue, deduced from the value
     isLastValue?: boolean; // True if assignment is from $ (last value)
     comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
@@ -1021,6 +1022,7 @@ export class RobinPath {
                     targetPath: stmt.targetPath,
                     command: stmt.command ? this.serializeStatement(stmt.command, currentModuleContext) : undefined,
                     literalValue: stmt.literalValue,
+                    literalValueType: stmt.literalValue !== undefined ? this.getValueType(stmt.literalValue) : undefined,
                     isLastValue: stmt.isLastValue
                 };
             case 'shorthand':
@@ -1089,6 +1091,152 @@ export class RobinPath {
                     comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
+        }
+    }
+
+    /**
+     * Determine the type of a value
+     * @param value The value to check
+     * @returns The type string: 'string', 'number', 'boolean', 'null', 'object', or 'array'
+     */
+    private getValueType(value: Value): 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array' {
+        if (value === null) {
+            return 'null';
+        }
+        if (typeof value === 'string') {
+            return 'string';
+        }
+        if (typeof value === 'number') {
+            return 'number';
+        }
+        if (typeof value === 'boolean') {
+            return 'boolean';
+        }
+        if (Array.isArray(value)) {
+            return 'array';
+        }
+        if (typeof value === 'object') {
+            return 'object';
+        }
+        return 'string'; // Fallback
+    }
+
+    /**
+     * Attempt to convert a value to a different type
+     * @param value The value to convert
+     * @param targetType The target type to convert to
+     * @returns The converted value, or null if conversion fails
+     */
+    private convertValueType(value: Value, targetType: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array'): Value | null {
+        // If already the correct type, return as-is
+        const currentType = this.getValueType(value);
+        if (currentType === targetType) {
+            return value;
+        }
+
+        try {
+            switch (targetType) {
+                case 'string':
+                    if (value === null) return 'null';
+                    if (typeof value === 'object' || Array.isArray(value)) {
+                        return JSON.stringify(value);
+                    }
+                    return String(value);
+
+                case 'number':
+                    if (value === null) return null; // null cannot be converted to number
+                    if (typeof value === 'boolean') {
+                        return value ? 1 : 0;
+                    }
+                    if (typeof value === 'string') {
+                        const parsed = parseFloat(value);
+                        if (isNaN(parsed)) {
+                            return null; // Conversion failed
+                        }
+                        return parsed;
+                    }
+                    if (typeof value === 'number') {
+                        return value;
+                    }
+                    return null; // Cannot convert object/array to number
+
+                case 'boolean':
+                    if (value === null) return false;
+                    if (typeof value === 'string') {
+                        const lower = value.toLowerCase().trim();
+                        if (lower === 'true' || lower === '1' || lower === 'yes') return true;
+                        if (lower === 'false' || lower === '0' || lower === 'no' || lower === '') return false;
+                        return null; // Ambiguous string, conversion failed
+                    }
+                    if (typeof value === 'number') {
+                        return value !== 0 && !isNaN(value);
+                    }
+                    if (typeof value === 'boolean') {
+                        return value;
+                    }
+                    if (Array.isArray(value)) {
+                        return value.length > 0;
+                    }
+                    if (typeof value === 'object') {
+                        return Object.keys(value).length > 0;
+                    }
+                    return false;
+
+                case 'null':
+                    return null;
+
+                case 'array':
+                    if (value === null) return [];
+                    if (Array.isArray(value)) {
+                        return value;
+                    }
+                    if (typeof value === 'string') {
+                        try {
+                            const parsed = JSON.parse(value);
+                            if (Array.isArray(parsed)) {
+                                return parsed;
+                            }
+                        } catch {
+                            // Not valid JSON array, convert string to array of characters
+                            return value.split('');
+                        }
+                    }
+                    if (typeof value === 'object') {
+                        return Object.values(value);
+                    }
+                    return [value]; // Wrap primitive in array
+
+                case 'object':
+                    if (value === null) return {};
+                    if (typeof value === 'object' && !Array.isArray(value)) {
+                        return value;
+                    }
+                    if (typeof value === 'string') {
+                        try {
+                            const parsed = JSON.parse(value);
+                            if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                                return parsed;
+                            }
+                        } catch {
+                            // Not valid JSON object, create object with single property
+                            return { value: value };
+                        }
+                    }
+                    if (Array.isArray(value)) {
+                        // Convert array to object with numeric keys
+                        const obj: Record<string, Value> = {};
+                        value.forEach((item, index) => {
+                            obj[String(index)] = item;
+                        });
+                        return obj;
+                    }
+                    return { value: value }; // Wrap primitive in object
+
+                default:
+                    return null;
+            }
+        } catch {
+            return null; // Conversion failed
         }
     }
 
@@ -1189,7 +1337,10 @@ export class RobinPath {
             }
             
             // Check if node has comments attached
+            // Note: comments can be undefined, empty array [], or array with items
+            // Empty array [] explicitly means "remove all comments"
             const hasComments = node.comments && Array.isArray(node.comments) && node.comments.length > 0;
+            const commentsExplicitlyEmpty = node.comments && Array.isArray(node.comments) && node.comments.length === 0;
             
             // Separate comments above from inline comments
             const commentsAbove: CommentWithPosition[] = [];
@@ -1207,6 +1358,97 @@ export class RobinPath {
                     } else {
                         // Comments above are not inline
                         commentsAbove.push(comment);
+                    }
+                }
+            } else if (commentsExplicitlyEmpty) {
+                // comments: [] was explicitly set - need to remove existing comments
+                // We need to find comments in the original script that are associated with this node
+                // Check if there are comments before this node's startRow (comments above)
+                const nodeStartRow = node.codePos?.startRow;
+                const nodeStartCol = node.codePos?.startCol;
+                if (nodeStartRow !== undefined && nodeStartRow >= 0) {
+                    const lines = originalScript.split('\n');
+                    // Look for comment lines immediately before this node
+                    let commentStartRow = -1;
+                    let commentEndRow = -1;
+                    
+                    // Check lines before the node for comments (only check up to 10 lines to avoid removing wrong comments)
+                    for (let row = nodeStartRow - 1; row >= Math.max(0, nodeStartRow - 10); row--) {
+                        const line = lines[row];
+                        const trimmed = line.trim();
+                        if (trimmed.startsWith('#')) {
+                            if (commentEndRow === -1) {
+                                commentEndRow = row;
+                            }
+                            commentStartRow = row;
+                        } else if (trimmed === '') {
+                            // Blank line - continue checking (comments can have blank lines between them)
+                            continue;
+                        } else {
+                            // Non-comment, non-blank line - stop looking
+                            break;
+                        }
+                    }
+                    
+                    // If we found comments above, remove them
+                    if (commentStartRow >= 0 && commentEndRow >= 0) {
+                        const firstLine = lines[commentStartRow];
+                        const lastLine = lines[commentEndRow];
+                        const startCol = firstLine.indexOf('#');
+                        const endCol = lastLine.length - 1;
+                        
+                        const startOffset = this.rowColToCharOffset(
+                            originalScript,
+                            commentStartRow,
+                            startCol,
+                            false
+                        );
+                        const endOffset = this.rowColToCharOffset(
+                            originalScript,
+                            commentEndRow,
+                            endCol,
+                            true
+                        );
+                        
+                        codePositions.push({
+                            startOffset,
+                            endOffset,
+                            code: '' // Remove the comments
+                        });
+                    }
+                    
+                    // Also check for inline comments on the same line as the node
+                    // Note: Inline comments are handled in reconstructCodeFromASTNode which won't include them
+                    // when comments is empty, but we need to remove them from the original script
+                    if (nodeStartRow < lines.length && nodeStartCol !== undefined) {
+                        const nodeLine = lines[nodeStartRow];
+                        // Look for inline comment pattern: spaces + # + comment text
+                        const inlineCommentMatch = nodeLine.match(/(\s+#\s*.+)$/);
+                        if (inlineCommentMatch) {
+                            const commentStartCol = nodeLine.indexOf('#', nodeStartCol);
+                            if (commentStartCol >= 0) {
+                                // Remove the inline comment (including leading space before #)
+                                const beforeComment = nodeLine.substring(0, commentStartCol).replace(/\s+$/, '');
+                                const startOffset = this.rowColToCharOffset(
+                                    originalScript,
+                                    nodeStartRow,
+                                    beforeComment.length,
+                                    false
+                                );
+                                const endOffset = this.rowColToCharOffset(
+                                    originalScript,
+                                    nodeStartRow,
+                                    nodeLine.length,
+                                    true
+                                );
+                                
+                                codePositions.push({
+                                    startOffset,
+                                    endOffset,
+                                    code: '' // Remove the inline comment and trailing space
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -1447,8 +1689,51 @@ export class RobinPath {
                     const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
                     assignmentCode = `${indent}${target} = ${cmdCode?.trim() || ''}`;
                 } else if (node.literalValue !== undefined) {
-                    const value = typeof node.literalValue === 'string' ? `"${node.literalValue}"` : String(node.literalValue);
-                    assignmentCode = `${indent}${target} = ${value}`;
+                    // Handle type conversion if literalValueType is specified and different from current type
+                    let valueToUse: Value = node.literalValue;
+                    let typeToUse: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array';
+                    const currentType = this.getValueType(node.literalValue);
+                    
+                    if (node.literalValueType) {
+                        if (currentType !== node.literalValueType) {
+                            // Attempt type conversion
+                            const converted = this.convertValueType(node.literalValue, node.literalValueType);
+                            if (converted !== null) {
+                                // Conversion successful, use converted value and target type
+                                valueToUse = converted;
+                                typeToUse = node.literalValueType;
+                            } else {
+                                // Conversion failed, keep original value and use original type
+                                typeToUse = currentType;
+                            }
+                        } else {
+                            // Types match, use target type
+                            typeToUse = node.literalValueType;
+                        }
+                    } else {
+                        // No target type specified, use current type
+                        typeToUse = currentType;
+                    }
+                    
+                    // Format the value for code output based on the type to use
+                    let valueStr: string;
+                    if (typeToUse === 'string') {
+                        valueStr = `"${String(valueToUse).replace(/"/g, '\\"')}"`;
+                    } else if (typeToUse === 'null') {
+                        valueStr = 'null';
+                    } else if (typeToUse === 'boolean') {
+                        valueStr = String(valueToUse);
+                    } else if (typeToUse === 'number') {
+                        valueStr = String(valueToUse);
+                    } else if (typeToUse === 'array' || typeToUse === 'object') {
+                        // For arrays and objects, use JSON.stringify
+                        valueStr = JSON.stringify(valueToUse);
+                    } else {
+                        // Fallback
+                        valueStr = typeof valueToUse === 'string' ? `"${valueToUse}"` : String(valueToUse);
+                    }
+                    
+                    assignmentCode = `${indent}${target} = ${valueStr}`;
                 } else if (node.isLastValue) {
                     assignmentCode = `${indent}${target} = $`;
                 }

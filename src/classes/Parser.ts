@@ -520,6 +520,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: true,
+                        literalValueType: 'boolean',
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (token === 'false') {
@@ -531,6 +532,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: false,
+                        literalValueType: 'boolean',
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (token === 'null') {
@@ -542,6 +544,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: null,
+                        literalValueType: 'null',
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isPositionalParam(token)) {
@@ -582,21 +585,25 @@ export class Parser {
                 } else if (LexerUtils.isNumber(token)) {
                     const endLine = this.currentLine;
                     this.currentLine++;
+                    const numValue = parseFloat(token);
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: parseFloat(token),
+                        literalValue: numValue,
+                        literalValueType: 'number',
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 } else if (LexerUtils.isString(token)) {
                     const endLine = this.currentLine;
                     this.currentLine++;
+                    const strValue = LexerUtils.parseString(token);
                     return { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: LexerUtils.parseString(token),
+                        literalValue: strValue,
+                        literalValueType: 'string',
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
                 }
@@ -614,6 +621,7 @@ export class Parser {
                     targetName,
                     targetPath,
                     literalValue: concatenated,
+                    literalValueType: 'string',
                     codePos: this.createCodePositionFromLines(startLine, endLine)
                 };
             }
@@ -1828,19 +1836,23 @@ export class Parser {
             if (restTokens.length === 1) {
                 const token = restTokens[0];
                 if (LexerUtils.isNumber(token)) {
+                    const numValue = parseFloat(token);
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: parseFloat(token),
+                        literalValue: numValue,
+                        literalValueType: 'number',
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (LexerUtils.isString(token)) {
+                    const strValue = LexerUtils.parseString(token);
                     finalCommand = { 
                         type: 'assignment', 
                         targetName, 
                         targetPath,
-                        literalValue: LexerUtils.parseString(token),
+                        literalValue: strValue,
+                        literalValueType: 'string',
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'true') {
@@ -1849,6 +1861,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: true,
+                        literalValueType: 'boolean',
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'false') {
@@ -1857,6 +1870,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: false,
+                        literalValueType: 'boolean',
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (token === 'null') {
@@ -1865,6 +1879,7 @@ export class Parser {
                         targetName, 
                         targetPath,
                         literalValue: null,
+                        literalValueType: 'null',
                         codePos: this.createCodePositionFromLines(startLine, startLine)
                     };
                 } else if (LexerUtils.isVariable(token)) {

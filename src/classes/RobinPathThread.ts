@@ -382,6 +382,33 @@ export class RobinPathThread {
         return null;
     }
 
+    /**
+     * Determine the type of a value
+     * @param value The value to check
+     * @returns The type string: 'string', 'number', 'boolean', 'null', 'object', or 'array'
+     */
+    private getValueType(value: Value): 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array' {
+        if (value === null) {
+            return 'null';
+        }
+        if (typeof value === 'string') {
+            return 'string';
+        }
+        if (typeof value === 'number') {
+            return 'number';
+        }
+        if (typeof value === 'boolean') {
+            return 'boolean';
+        }
+        if (Array.isArray(value)) {
+            return 'array';
+        }
+        if (typeof value === 'object') {
+            return 'object';
+        }
+        return 'string'; // Fallback
+    }
+
     private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }, currentModuleContext?: string | null): any {
         // For comment nodes, don't include codePos - derive from comments array when needed
         const base: any = {
@@ -416,6 +443,7 @@ export class RobinPathThread {
                     targetPath: stmt.targetPath,
                     command: stmt.command ? this.serializeStatement(stmt.command, undefined, currentModuleContext) : undefined,
                     literalValue: stmt.literalValue,
+                    literalValueType: stmt.literalValue !== undefined ? this.getValueType(stmt.literalValue) : (stmt.literalValueType || undefined),
                     isLastValue: stmt.isLastValue
                 };
             case 'shorthand':

@@ -1933,6 +1933,317 @@ $a = 1`;
         console.log('✓ All inline comment tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test literalValueType detection and conversion
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Literal Value Type Detection and Conversion');
+        console.log('='.repeat(60));
+        
+        {
+            const typeTestRp = new RobinPath();
+            
+            // Test 1: Detect correct type for number literal
+            const testScript1 = `$num = 42`;
+            const ast1 = typeTestRp.getAST(testScript1);
+            const assignment1 = ast1.find(node => node.type === 'assignment');
+            
+            if (!assignment1 || assignment1.literalValue === undefined) {
+                throw new Error('Literal Type Test 1 FAILED - Assignment not found');
+            }
+            
+            const test1Passed = assignment1.literalValue === 42 &&
+                assignment1.literalValueType === 'number';
+            
+            if (test1Passed) {
+                console.log('✓ Literal Type Test 1 PASSED - Number type detected correctly');
+            } else {
+                console.log('✗ Literal Type Test 1 FAILED - Number type not detected correctly');
+                console.log('  Expected: literalValueType = "number", literalValue = 42');
+                console.log('  Got: literalValueType =', assignment1.literalValueType, ', literalValue =', assignment1.literalValue);
+                throw new Error('Literal Type Test 1 FAILED - Number type not detected correctly');
+            }
+            
+            // Test 2: Detect correct type for string literal
+            const testScript2 = `$str = "hello"`;
+            const ast2 = typeTestRp.getAST(testScript2);
+            const assignment2 = ast2.find(node => node.type === 'assignment');
+            
+            if (!assignment2 || assignment2.literalValue === undefined) {
+                throw new Error('Literal Type Test 2 FAILED - Assignment not found');
+            }
+            
+            const test2Passed = assignment2.literalValue === 'hello' &&
+                assignment2.literalValueType === 'string';
+            
+            if (test2Passed) {
+                console.log('✓ Literal Type Test 2 PASSED - String type detected correctly');
+            } else {
+                console.log('✗ Literal Type Test 2 FAILED - String type not detected correctly');
+                console.log('  Expected: literalValueType = "string", literalValue = "hello"');
+                console.log('  Got: literalValueType =', assignment2.literalValueType, ', literalValue =', assignment2.literalValue);
+                throw new Error('Literal Type Test 2 FAILED - String type not detected correctly');
+            }
+            
+            // Test 3: Detect correct type for boolean true
+            const testScript3 = `$bool = true`;
+            const ast3 = typeTestRp.getAST(testScript3);
+            const assignment3 = ast3.find(node => node.type === 'assignment');
+            
+            if (!assignment3 || assignment3.literalValue === undefined) {
+                throw new Error('Literal Type Test 3 FAILED - Assignment not found');
+            }
+            
+            const test3Passed = assignment3.literalValue === true &&
+                assignment3.literalValueType === 'boolean';
+            
+            if (test3Passed) {
+                console.log('✓ Literal Type Test 3 PASSED - Boolean true type detected correctly');
+            } else {
+                console.log('✗ Literal Type Test 3 FAILED - Boolean true type not detected correctly');
+                console.log('  Expected: literalValueType = "boolean", literalValue = true');
+                console.log('  Got: literalValueType =', assignment3.literalValueType, ', literalValue =', assignment3.literalValue);
+                throw new Error('Literal Type Test 3 FAILED - Boolean true type not detected correctly');
+            }
+            
+            // Test 4: Detect correct type for boolean false
+            const testScript4 = `$bool = false`;
+            const ast4 = typeTestRp.getAST(testScript4);
+            const assignment4 = ast4.find(node => node.type === 'assignment');
+            
+            if (!assignment4 || assignment4.literalValue === undefined) {
+                throw new Error('Literal Type Test 4 FAILED - Assignment not found');
+            }
+            
+            const test4Passed = assignment4.literalValue === false &&
+                assignment4.literalValueType === 'boolean';
+            
+            if (test4Passed) {
+                console.log('✓ Literal Type Test 4 PASSED - Boolean false type detected correctly');
+            } else {
+                console.log('✗ Literal Type Test 4 FAILED - Boolean false type not detected correctly');
+                console.log('  Expected: literalValueType = "boolean", literalValue = false');
+                console.log('  Got: literalValueType =', assignment4.literalValueType, ', literalValue =', assignment4.literalValue);
+                throw new Error('Literal Type Test 4 FAILED - Boolean false type not detected correctly');
+            }
+            
+            // Test 5: Detect correct type for null
+            const testScript5 = `$null = null`;
+            const ast5 = typeTestRp.getAST(testScript5);
+            const assignment5 = ast5.find(node => node.type === 'assignment');
+            
+            if (!assignment5 || assignment5.literalValue === undefined) {
+                throw new Error('Literal Type Test 5 FAILED - Assignment not found');
+            }
+            
+            const test5Passed = assignment5.literalValue === null &&
+                assignment5.literalValueType === 'null';
+            
+            if (test5Passed) {
+                console.log('✓ Literal Type Test 5 PASSED - Null type detected correctly');
+            } else {
+                console.log('✗ Literal Type Test 5 FAILED - Null type not detected correctly');
+                console.log('  Expected: literalValueType = "null", literalValue = null');
+                console.log('  Got: literalValueType =', assignment5.literalValueType, ', literalValue =', assignment5.literalValue);
+                throw new Error('Literal Type Test 5 FAILED - Null type not detected correctly');
+            }
+            
+            // Test 6: Convert number to string via AST
+            const testScript6 = `$num = 42`;
+            const ast6 = typeTestRp.getAST(testScript6);
+            const assignment6 = ast6.find(node => node.type === 'assignment');
+            
+            if (!assignment6 || assignment6.literalValue === undefined) {
+                throw new Error('Literal Type Test 6 FAILED - Assignment not found');
+            }
+            
+            // Change type to string
+            assignment6.literalValueType = 'string';
+            const updatedScript6 = typeTestRp.updateCodeFromAST(testScript6, ast6);
+            const test6Passed = updatedScript6.includes('$num = "42"') || updatedScript6.includes('$num = 42');
+            
+            if (test6Passed) {
+                console.log('✓ Literal Type Test 6 PASSED - Number converted to string via AST');
+            } else {
+                console.log('✗ Literal Type Test 6 FAILED - Number not converted to string');
+                console.log('  Original:', testScript6);
+                console.log('  Expected: $num = "42"');
+                console.log('  Got:', updatedScript6);
+                throw new Error('Literal Type Test 6 FAILED - Number not converted to string');
+            }
+            
+            // Test 7: Convert string to number via AST (valid conversion)
+            const testScript7 = `$str = "123"`;
+            const ast7 = typeTestRp.getAST(testScript7);
+            const assignment7 = ast7.find(node => node.type === 'assignment');
+            
+            if (!assignment7 || assignment7.literalValue === undefined) {
+                throw new Error('Literal Type Test 7 FAILED - Assignment not found');
+            }
+            
+            // Change type to number
+            assignment7.literalValueType = 'number';
+            const updatedScript7 = typeTestRp.updateCodeFromAST(testScript7, ast7);
+            const test7Passed = updatedScript7.includes('$str = 123');
+            
+            if (test7Passed) {
+                console.log('✓ Literal Type Test 7 PASSED - String "123" converted to number via AST');
+            } else {
+                console.log('✗ Literal Type Test 7 FAILED - String not converted to number');
+                console.log('  Original:', testScript7);
+                console.log('  Expected: $str = 123');
+                console.log('  Got:', updatedScript7);
+                throw new Error('Literal Type Test 7 FAILED - String not converted to number');
+            }
+            
+            // Test 8: Convert string to number via AST (invalid conversion - should keep original)
+            const testScript8 = `$str = "hello"`;
+            const ast8 = typeTestRp.getAST(testScript8);
+            const assignment8 = ast8.find(node => node.type === 'assignment');
+            
+            if (!assignment8 || assignment8.literalValue === undefined) {
+                throw new Error('Literal Type Test 8 FAILED - Assignment not found');
+            }
+            
+            // Change type to number (invalid conversion)
+            assignment8.literalValueType = 'number';
+            const updatedScript8 = typeTestRp.updateCodeFromAST(testScript8, ast8);
+            // Should keep original value since conversion fails
+            const test8Passed = updatedScript8.includes('$str = "hello"');
+            
+            if (test8Passed) {
+                console.log('✓ Literal Type Test 8 PASSED - Invalid string-to-number conversion keeps original');
+            } else {
+                console.log('✗ Literal Type Test 8 FAILED - Invalid conversion should keep original');
+                console.log('  Original:', testScript8);
+                console.log('  Expected: $str = "hello" (kept original)');
+                console.log('  Got:', updatedScript8);
+                throw new Error('Literal Type Test 8 FAILED - Invalid conversion should keep original');
+            }
+            
+            // Test 9: Convert number to boolean via AST
+            const testScript9 = `$num = 1`;
+            const ast9 = typeTestRp.getAST(testScript9);
+            const assignment9 = ast9.find(node => node.type === 'assignment');
+            
+            if (!assignment9 || assignment9.literalValue === undefined) {
+                throw new Error('Literal Type Test 9 FAILED - Assignment not found');
+            }
+            
+            // Change type to boolean
+            assignment9.literalValueType = 'boolean';
+            const updatedScript9 = typeTestRp.updateCodeFromAST(testScript9, ast9);
+            const test9Passed = updatedScript9.includes('$num = true');
+            
+            if (test9Passed) {
+                console.log('✓ Literal Type Test 9 PASSED - Number 1 converted to boolean true via AST');
+            } else {
+                console.log('✗ Literal Type Test 9 FAILED - Number not converted to boolean');
+                console.log('  Original:', testScript9);
+                console.log('  Expected: $num = true');
+                console.log('  Got:', updatedScript9);
+                throw new Error('Literal Type Test 9 FAILED - Number not converted to boolean');
+            }
+            
+            // Test 10: Convert number 0 to boolean false via AST
+            const testScript10 = `$num = 0`;
+            const ast10 = typeTestRp.getAST(testScript10);
+            const assignment10 = ast10.find(node => node.type === 'assignment');
+            
+            if (!assignment10 || assignment10.literalValue === undefined) {
+                throw new Error('Literal Type Test 10 FAILED - Assignment not found');
+            }
+            
+            // Change type to boolean
+            assignment10.literalValueType = 'boolean';
+            const updatedScript10 = typeTestRp.updateCodeFromAST(testScript10, ast10);
+            const test10Passed = updatedScript10.includes('$num = false');
+            
+            if (test10Passed) {
+                console.log('✓ Literal Type Test 10 PASSED - Number 0 converted to boolean false via AST');
+            } else {
+                console.log('✗ Literal Type Test 10 FAILED - Number 0 not converted to boolean false');
+                console.log('  Original:', testScript10);
+                console.log('  Expected: $num = false');
+                console.log('  Got:', updatedScript10);
+                throw new Error('Literal Type Test 10 FAILED - Number 0 not converted to boolean false');
+            }
+            
+            // Test 11: Convert string "true" to boolean via AST
+            const testScript11 = `$str = "true"`;
+            const ast11 = typeTestRp.getAST(testScript11);
+            const assignment11 = ast11.find(node => node.type === 'assignment');
+            
+            if (!assignment11 || assignment11.literalValue === undefined) {
+                throw new Error('Literal Type Test 11 FAILED - Assignment not found');
+            }
+            
+            // Change type to boolean
+            assignment11.literalValueType = 'boolean';
+            const updatedScript11 = typeTestRp.updateCodeFromAST(testScript11, ast11);
+            const test11Passed = updatedScript11.includes('$str = true');
+            
+            if (test11Passed) {
+                console.log('✓ Literal Type Test 11 PASSED - String "true" converted to boolean via AST');
+            } else {
+                console.log('✗ Literal Type Test 11 FAILED - String "true" not converted to boolean');
+                console.log('  Original:', testScript11);
+                console.log('  Expected: $str = true');
+                console.log('  Got:', updatedScript11);
+                throw new Error('Literal Type Test 11 FAILED - String "true" not converted to boolean');
+            }
+            
+            // Test 12: Convert string "false" to boolean via AST
+            const testScript12 = `$str = "false"`;
+            const ast12 = typeTestRp.getAST(testScript12);
+            const assignment12 = ast12.find(node => node.type === 'assignment');
+            
+            if (!assignment12 || assignment12.literalValue === undefined) {
+                throw new Error('Literal Type Test 12 FAILED - Assignment not found');
+            }
+            
+            // Change type to boolean
+            assignment12.literalValueType = 'boolean';
+            const updatedScript12 = typeTestRp.updateCodeFromAST(testScript12, ast12);
+            const test12Passed = updatedScript12.includes('$str = false');
+            
+            if (test12Passed) {
+                console.log('✓ Literal Type Test 12 PASSED - String "false" converted to boolean via AST');
+            } else {
+                console.log('✗ Literal Type Test 12 FAILED - String "false" not converted to boolean');
+                console.log('  Original:', testScript12);
+                console.log('  Expected: $str = false');
+                console.log('  Got:', updatedScript12);
+                throw new Error('Literal Type Test 12 FAILED - String "false" not converted to boolean');
+            }
+            
+            // Test 13: Convert boolean to string via AST
+            const testScript13 = `$bool = true`;
+            const ast13 = typeTestRp.getAST(testScript13);
+            const assignment13 = ast13.find(node => node.type === 'assignment');
+            
+            if (!assignment13 || assignment13.literalValue === undefined) {
+                throw new Error('Literal Type Test 13 FAILED - Assignment not found');
+            }
+            
+            // Change type to string
+            assignment13.literalValueType = 'string';
+            const updatedScript13 = typeTestRp.updateCodeFromAST(testScript13, ast13);
+            const test13Passed = updatedScript13.includes('$bool = "true"');
+            
+            if (test13Passed) {
+                console.log('✓ Literal Type Test 13 PASSED - Boolean converted to string via AST');
+            } else {
+                console.log('✗ Literal Type Test 13 FAILED - Boolean not converted to string');
+                console.log('  Original:', testScript13);
+                console.log('  Expected: $bool = "true"');
+                console.log('  Got:', updatedScript13);
+                throw new Error('Literal Type Test 13 FAILED - Boolean not converted to string');
+            }
+        }
+        
+        console.log('✓ All literal value type tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Test function metadata retrieval
         console.log();
         console.log('='.repeat(60));
