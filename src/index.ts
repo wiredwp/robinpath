@@ -207,7 +207,7 @@ export interface DefineFunction {
 }
 
 export interface ScopeBlock {
-    type: 'scope';
+    type: 'do';
     paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
     comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
@@ -712,8 +712,8 @@ export class RobinPath {
             if (allNativeCommands['def']) {
                 native.push({ name: 'def', type: 'native', description: allNativeCommands['def'] });
             }
-            if (allNativeCommands['scope']) {
-                native.push({ name: 'scope', type: 'native', description: allNativeCommands['scope'] });
+            if (allNativeCommands['do']) {
+                native.push({ name: 'do', type: 'native', description: allNativeCommands['do'] });
             }
         }
         
@@ -735,9 +735,9 @@ export class RobinPath {
             if (context?.inDefBlock && allNativeCommands['enddef']) {
                 native.push({ name: 'enddef', type: 'native', description: allNativeCommands['enddef'] });
             }
-            // endscope can be used to close a scope block
-            if (allNativeCommands['endscope']) {
-                native.push({ name: 'endscope', type: 'native', description: allNativeCommands['endscope'] });
+            // enddo can be used to close a do block
+            if (allNativeCommands['enddo']) {
+                native.push({ name: 'enddo', type: 'native', description: allNativeCommands['enddo'] });
             }
         }
         
@@ -821,10 +821,10 @@ export class RobinPath {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -843,8 +843,8 @@ export class RobinPath {
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
             }
-            if (errorMessage.includes('missing endscope')) {
-                return { needsMore: true, waitingFor: 'endscope' };
+            if (errorMessage.includes('missing enddo')) {
+                return { needsMore: true, waitingFor: 'enddo' };
             }
             
             // NEW: unclosed $( ... ) subexpression – keep reading lines
@@ -1064,7 +1064,7 @@ export class RobinPath {
                     paramNames: stmt.paramNames,
                     body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
                 };
-            case 'scope':
+            case 'do':
                 return {
                     ...base,
                     body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
@@ -1808,8 +1808,8 @@ export class RobinPath {
                 parts.push(`${indent}enddef`);
                 return parts.join('\n');
             }
-            case 'scope': {
-                const parts: string[] = [`${indent}scope`];
+            case 'do': {
+                const parts: string[] = [`${indent}do`];
                 
                 if (node.body) {
                     for (const stmt of node.body) {
@@ -1818,7 +1818,7 @@ export class RobinPath {
                     }
                 }
                 
-                parts.push(`${indent}endscope`);
+                parts.push(`${indent}enddo`);
                 return parts.join('\n');
             }
             case 'forLoop': {
@@ -2240,8 +2240,8 @@ export class RobinPath {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 
-        // Handle scope - next is after the scope (scope executes immediately)
-        if (currentStmt.type === 'scope') {
+        // Handle do - next is after the do (do executes immediately)
+        if (currentStmt.type === 'do') {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 

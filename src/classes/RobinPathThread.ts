@@ -43,10 +43,10 @@ export class RobinPathThread {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'endscope' | 'subexpr' | 'paren' | 'object' | 'array' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -65,8 +65,8 @@ export class RobinPathThread {
             if (errorMessage.includes('missing endfor')) {
                 return { needsMore: true, waitingFor: 'endfor' };
             }
-            if (errorMessage.includes('missing endscope')) {
-                return { needsMore: true, waitingFor: 'endscope' };
+            if (errorMessage.includes('missing enddo')) {
+                return { needsMore: true, waitingFor: 'enddo' };
             }
             
             // NEW: unclosed $( ... ) subexpression – keep reading lines
@@ -485,7 +485,7 @@ export class RobinPathThread {
                     paramNames: stmt.paramNames,
                     body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
-            case 'scope':
+            case 'do':
                 return {
                     ...base,
                     body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
@@ -604,7 +604,7 @@ export class RobinPathThread {
             }));
             
             if (syntaxCtx.canUseBlockKeywords) {
-                filteredNative.push(...allNative.filter(n => n.name === 'if' || n.name === 'def' || n.name === 'scope'));
+                filteredNative.push(...allNative.filter(n => n.name === 'if' || n.name === 'def' || n.name === 'do'));
             }
             if (syntaxCtx.canUseConditionalKeywords) {
                 filteredNative.push(...allNative.filter(n => n.name === 'elseif' || n.name === 'else'));
@@ -616,9 +616,9 @@ export class RobinPathThread {
                 if (ctx.inDefBlock) {
                     filteredNative.push(...allNative.filter(n => n.name === 'enddef'));
                 }
-                // Note: endscope is handled by checking if we're in a scope block
+                // Note: enddo is handled by checking if we're in a do block
                 // For now, we'll include it if we can use end keywords
-                filteredNative.push(...allNative.filter(n => n.name === 'endscope'));
+                filteredNative.push(...allNative.filter(n => n.name === 'enddo'));
             }
             if (syntaxCtx.canStartStatement) {
                 filteredNative.push(...allNative.filter(n => n.name === 'iftrue' || n.name === 'iffalse'));

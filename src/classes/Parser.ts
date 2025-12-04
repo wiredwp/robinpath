@@ -170,7 +170,7 @@ export class Parser {
                     if (stmt.elseBranch) extractNestedDefs(stmt.elseBranch);
                 } else if (stmt.type === 'forLoop') {
                     if (stmt.body) extractNestedDefs(stmt.body);
-                } else if (stmt.type === 'scope') {
+                } else if (stmt.type === 'do') {
                     if (stmt.body) extractNestedDefs(stmt.body);
                 }
             }
@@ -205,7 +205,7 @@ export class Parser {
                         ...stmt,
                         body: removeNestedDefs(stmt.body)
                     };
-                } else if (stmt.type === 'scope') {
+                } else if (stmt.type === 'do') {
                     return {
                         ...stmt,
                         body: removeNestedDefs(stmt.body)
@@ -449,8 +449,8 @@ export class Parser {
             return this.parseDefine(startLine);
         }
 
-        // Check for scope block
-        if (tokens[0] === 'scope') {
+        // Check for do block
+        if (tokens[0] === 'do') {
             return this.parseScope(startLine);
         }
 
@@ -1307,10 +1307,10 @@ export class Parser {
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
-        // Parse parameter names (optional): scope $a $b
+        // Parse parameter names (optional): do $a $b
         const paramNames: string[] = [];
         
-        // Start from token index 1 (after "scope")
+        // Start from token index 1 (after "do")
         for (let i = 1; i < tokens.length; i++) {
             const token = tokens[i];
             
@@ -1376,7 +1376,7 @@ export class Parser {
 
             const bodyTokens = Lexer.tokenize(bodyLine);
             
-            if (bodyTokens[0] === 'endscope') {
+            if (bodyTokens[0] === 'enddo') {
                 this.currentLine++;
                 closed = true;
                 break;
@@ -1414,14 +1414,14 @@ export class Parser {
         }
 
         if (!closed) {
-            throw this.createError('missing endscope', this.currentLine);
+            throw this.createError('missing enddo', this.currentLine);
         }
 
-        // If parameters are declared, include them in the scope block
-        const endLine = this.currentLine - 1; // endscope line
+        // If parameters are declared, include them in the do block
+        const endLine = this.currentLine - 1; // enddo line
         const result: ScopeBlock = paramNames.length > 0 
-            ? { type: 'scope', paramNames, body, codePos: this.createCodePositionFromLines(startLine, endLine) }
-            : { type: 'scope', body, codePos: this.createCodePositionFromLines(startLine, endLine) };
+            ? { type: 'do', paramNames, body, codePos: this.createCodePositionFromLines(startLine, endLine) }
+            : { type: 'do', body, codePos: this.createCodePositionFromLines(startLine, endLine) };
         if (comments.length > 0) {
             result.comments = comments;
         }

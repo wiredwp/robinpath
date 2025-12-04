@@ -111,128 +111,128 @@ endfor
 
 # Test 16: Math module tests
 clear
-scope
+do
   math.add 5 10
   test.assertEqual $ 15 "Math.add failed"
-endscope
+enddo
 clear
-scope
+do
   math.add 1 2 3 4
   test.assertEqual $ 10 "Math.add multiple args failed"
-endscope
+enddo
 clear
-scope
+do
   math.multiply 5 3
   test.assertEqual $ 15 "Math.multiply failed"
-endscope
+enddo
 clear
-scope
+do
   math.multiply 2 3 4
   test.assertEqual $ 24 "Math.multiply multiple args failed"
-endscope
+enddo
 clear
-scope
+do
   math.subtract 10 3
   test.assertEqual $ 7 "Math.subtract failed"
-endscope
+enddo
 clear
-scope
+do
   math.divide 15 3
   test.assertEqual $ 5 "Math.divide failed"
-endscope
+enddo
 clear
-scope
+do
   math.modulo 17 5
   test.assertEqual $ 2 "Math.modulo failed"
-endscope
+enddo
 clear
-scope
+do
   math.power 2 8
   test.assertEqual $ 256 "Math.power failed"
-endscope
+enddo
 clear
-scope
+do
   math.sqrt 16
   test.assertEqual $ 4 "Math.sqrt failed"
-endscope
+enddo
 clear
-scope
+do
   math.abs -5
   test.assertEqual $ 5 "Math.abs failed"
-endscope
+enddo
 clear
-scope
+do
   math.round 3.7
   test.assertEqual $ 4 "Math.round failed"
-endscope
+enddo
 clear
-scope
+do
   math.floor 3.7
   test.assertEqual $ 3 "Math.floor failed"
-endscope
+enddo
 clear
-scope
+do
   math.ceil 3.2
   test.assertEqual $ 4 "Math.ceil failed"
-endscope
+enddo
 clear
-scope
+do
   math.min 5 2 8 1
   test.assertEqual $ 1 "Math.min failed"
-endscope
+enddo
 clear
-scope
+do
   math.max 5 2 8 1
   test.assertEqual $ 8 "Math.max failed"
-endscope
+enddo
 log "Test 16 - Math module: All passed"
 
 # Test 17: String module tests
 clear
-scope
+do
   string.length "hello"
   test.assertEqual $ 5 "String.length failed"
-endscope
+enddo
 clear
-scope
+do
   string.substring "hello" 1 4
   test.assertEqual $ "ell" "String.substring failed"
-endscope
+enddo
 clear
-scope
+do
   string.toUpperCase "hello"
   test.assertEqual $ "HELLO" "String.toUpperCase failed"
-endscope
+enddo
 clear
-scope
+do
   string.toLowerCase "HELLO"
   test.assertEqual $ "hello" "String.toLowerCase failed"
-endscope
+enddo
 clear
-scope
+do
   string.trim "  hello  "
   test.assertEqual $ "hello" "String.trim failed"
-endscope
+enddo
 clear
-scope
+do
   string.replace "hello world" "world" "universe"
   test.assertEqual $ "hello universe" "String.replace failed"
-endscope
+enddo
 clear
-scope
+do
   string.replaceAll "a b a" "a" "x"
   test.assertEqual $ "x b x" "String.replaceAll failed"
-endscope
+enddo
 
 
 string.split "a,b,c" ","
 $splitArr = $
 
 clear
-scope
+do
   array.get $splitArr 0
   test.assertEqual $ "a" "String.split first element failed"
-endscope
+enddo
 string.startsWith "hello" "he"
 test.assertTrue $ "String.startsWith failed"
 string.endsWith "hello" "lo"
@@ -240,77 +240,77 @@ test.assertTrue $ "String.endsWith failed"
 string.contains "hello" "ell"
 test.assertTrue $ "String.contains failed"
 clear
-scope
+do
   string.indexOf "hello" "l"
   test.assertEqual $ 2 "String.indexOf failed"
-endscope
+enddo
 clear
-scope
+do
   string.lastIndexOf "hello" "l"
   test.assertEqual $ 3 "String.lastIndexOf failed"
-endscope
+enddo
 clear
-scope
+do
   string.charAt "hello" 1
   test.assertEqual $ "e" "String.charAt failed"
-endscope
+enddo
 clear
-scope
+do
   string.padStart "5" 3 "0"
   test.assertEqual $ "005" "String.padStart failed"
-endscope
+enddo
 clear
-scope
+do
   string.padEnd "5" 3 "0"
   test.assertEqual $ "500" "String.padEnd failed"
-endscope
+enddo
 clear
-scope
+do
   string.repeat "ha" 3
   test.assertEqual $ "hahaha" "String.repeat failed"
-endscope
+enddo
 log "Test 17 - String module: All passed"
 
 # Test 18: Array module tests
 $arr = range 1 5
 clear
-scope
+do
   array.length $arr
   test.assertEqual $ 5 "Array.length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $arr 2
   test.assertEqual $ 3 "Array.get failed"
-endscope
+enddo
 clear
 
 array.slice $arr 1 4
 $sliced = $
 
-scope
+do
   array.length $sliced
   test.assertEqual $ 3 "Array.slice length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $sliced 0
   test.assertEqual $ 2 "Array.slice content failed"
-endscope
+enddo
 
 array.push $arr 6
 $pushed = $
 
 clear
-scope
+do
   array.length $pushed
   test.assertEqual $ 6 "Array.push length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $pushed 5
   test.assertEqual $ 6 "Array.push content failed"
-endscope
+enddo
 
 $arr1 = range 1 2
 $arr2 = range 3 4
@@ -319,76 +319,76 @@ array.concat $arr1 $arr2
 $concatted = $
 
 clear
-scope
+do
   array.length $concatted
   test.assertEqual $ 4 "Array.concat length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $concatted 0
   test.assertEqual $ 1 "Array.concat content failed"
-endscope
+enddo
 clear
-scope
+do
   array.join $arr ","
   test.assertEqual $ "1,2,3,4,5" "Array.join failed"
-endscope
+enddo
 clear
 
 array.create 1 2 3
 $created = $
 
 
-scope
+do
   array.length $created
   test.assertEqual $ 3 "Array.create length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $created 0
   test.assertEqual $ 1 "Array.create first element failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $created 1
   test.assertEqual $ 2 "Array.create second element failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $created 2
   test.assertEqual $ 3 "Array.create third element failed"
-endscope
+enddo
 
 array.create "hello" "world" 42 true
 $mixed = $
 
 clear
-scope
+do
   array.length $mixed
   test.assertEqual $ 4 "Array.create mixed types length failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $mixed 0
   test.assertEqual $ "hello" "Array.create string element failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $mixed 2
   test.assertEqual $ 42 "Array.create number element failed"
-endscope
+enddo
 clear
-scope
+do
   array.get $mixed 3
   test.assertEqual $ true "Array.create boolean element failed"
-endscope
+enddo
 clear
-scope
+do
   array.create
   $emptyCreated = $
   array.length $emptyCreated
   test.assertEqual $ 0 "Array.create empty array failed"
-endscope
+enddo
 log "Test 18 - Array module: All passed"
 
 # Test 19: Json module tests
@@ -409,12 +409,12 @@ obj
 $emptyObj = $
 test.assertType $emptyObj "object" "obj without args failed"
 clear
-scope
+do
   keys $emptyObj
   $emptyKeys = $
   array.length $emptyKeys
   test.assertEqual $ 0 "obj empty object keys failed"
-endscope
+enddo
 
 obj '{name: "John", age: 30}'
 $objCreated = $
@@ -444,18 +444,18 @@ log "Test 19a - obj command: All passed"
 array
 $emptyArray = $
 clear
-scope
+do
   array.length $emptyArray
   test.assertEqual $ 0 "array without args failed"
-endscope
+enddo
 
 array 1 2 3
 $arr1 = $
 clear
-scope
+do
   array.length $arr1
   test.assertEqual $ 3 "array command length failed"
-endscope
+enddo
 test.assertEqual $arr1[0] 1 "array command first element failed"
 test.assertEqual $arr1[1] 2 "array command second element failed"
 test.assertEqual $arr1[2] 3 "array command third element failed"
@@ -463,10 +463,10 @@ test.assertEqual $arr1[2] 3 "array command third element failed"
 array "hello" "world" 42 true
 $mixedArray = $
 clear
-scope
+do
   array.length $mixedArray
   test.assertEqual $ 4 "array command mixed types length failed"
-endscope
+enddo
 test.assertEqual $mixedArray[0] "hello" "array command string element failed"
 test.assertEqual $mixedArray[2] 42 "array command number element failed"
 test.assertEqual $mixedArray[3] true "array command boolean element failed"
@@ -474,10 +474,10 @@ test.assertEqual $mixedArray[3] true "array command boolean element failed"
 array 1 2 3 4 5
 $numbers = $
 clear
-scope
+do
   math.add $numbers[0] $numbers[1]
   test.assertEqual $ 3 "array command in expressions failed"
-endscope
+enddo
 
 log "Test 19a2 - array command: All passed"
 
@@ -488,12 +488,12 @@ log "Test 19a2 - array command: All passed"
 $emptyObjLit = $
 test.assertType $emptyObjLit "object" "Empty object literal {} failed"
 clear
-scope
+do
   keys $emptyObjLit
   $emptyKeys = $
   array.length $emptyKeys
   test.assertEqual $ 0 "Empty object literal keys failed"
-endscope
+enddo
 
 # Test basic object literal
 {name: "John", age: 30}
@@ -525,19 +525,19 @@ test.assertEqual $trailingCommaLit.allowed true "Object literal trailing comma v
 []
 $emptyArrLit = $
 clear
-scope
+do
   array.length $emptyArrLit
   test.assertEqual $ 0 "Empty array literal [] failed"
-endscope
+enddo
 
 # Test basic array literal
 [1, 2, 3]
 $arrLit = $
 clear
-scope
+do
   array.length $arrLit
   test.assertEqual $ 3 "Array literal length failed"
-endscope
+enddo
 test.assertEqual $arrLit[0] 1 "Array literal first element failed"
 test.assertEqual $arrLit[1] 2 "Array literal second element failed"
 test.assertEqual $arrLit[2] 3 "Array literal third element failed"
@@ -546,10 +546,10 @@ test.assertEqual $arrLit[2] 3 "Array literal third element failed"
 ["hello", "world", 42, true]
 $mixedArrLit = $
 clear
-scope
+do
   array.length $mixedArrLit
   test.assertEqual $ 4 "Array literal mixed types length failed"
-endscope
+enddo
 test.assertEqual $mixedArrLit[0] "hello" "Array literal string element failed"
 test.assertEqual $mixedArrLit[2] 42 "Array literal number element failed"
 test.assertEqual $mixedArrLit[3] true "Array literal boolean element failed"
@@ -558,24 +558,24 @@ test.assertEqual $mixedArrLit[3] true "Array literal boolean element failed"
 [1, 2, 3, 4, 5]
 $numbersLit = $
 clear
-scope
+do
   math.add $numbersLit[0] $numbersLit[1]
   test.assertEqual $ 3 "Array literal in expressions failed"
-endscope
+enddo
 
 # Test nested array literals
 [[1, 2], [3, 4]]
 $nestedArr = $
 clear
-scope
+do
   array.length $nestedArr
   test.assertEqual $ 2 "Nested array literal outer length failed"
-endscope
+enddo
 clear
-scope
+do
   array.length $nestedArr[0]
   test.assertEqual $ 2 "Nested array literal inner length failed"
-endscope
+enddo
 test.assertEqual $nestedArr[0][0] 1 "Nested array literal access failed"
 test.assertEqual $nestedArr[1][1] 4 "Nested array literal second array failed"
 
@@ -583,10 +583,10 @@ test.assertEqual $nestedArr[1][1] 4 "Nested array literal second array failed"
 [{name: "Alice", age: 25}, {name: "Bob", age: 30}]
 $arrWithObjs = $
 clear
-scope
+do
   array.length $arrWithObjs
   test.assertEqual $ 2 "Array with objects length failed"
-endscope
+enddo
 test.assertEqual $arrWithObjs[0].name "Alice" "Array with objects first name failed"
 test.assertEqual $arrWithObjs[1].age 30 "Array with objects second age failed"
 
@@ -608,31 +608,31 @@ test.assertEqual $assignedArr[1] 20 "Array literal in assignment second element 
 
 # Test object literal as function argument
 clear
-scope
+do
   get {name: "Test", value: 100} "name"
   test.assertEqual $ "Test" "Object literal as function argument failed"
-endscope
+enddo
 
 # Test array literal as function argument
 clear
-scope
+do
   array.length [1, 2, 3, 4]
   test.assertEqual $ 4 "Array literal as function argument failed"
-endscope
+enddo
 
 # Test object literal in parenthesized call
 clear
-scope
+do
   get({name: "John", age: 30} "name")
   test.assertEqual $ "John" "Object literal in parenthesized call failed"
-endscope
+enddo
 
 # Test array literal in parenthesized call
 clear
-scope
+do
   array.length([1, 2, 3])
   test.assertEqual $ 3 "Array literal in parenthesized call failed"
-endscope
+enddo
 
 # Test multi-line object literal
 {
@@ -653,10 +653,10 @@ test.assertEqual $multiLineObj.city "NYC" "Multi-line object literal city failed
 ]
 $multiLineArr = $
 clear
-scope
+do
   array.length $multiLineArr
   test.assertEqual $ 3 "Multi-line array literal length failed"
-endscope
+enddo
 test.assertEqual $multiLineArr[1] 2 "Multi-line array literal element failed"
 
 # Test 19a4: Comprehensive multi-line object and array literal tests
@@ -692,10 +692,10 @@ test.assertEqual $nestedMultiLineObj.settings.theme "dark" "Multi-line nested ob
 }
 $objWithArrays = $
 clear
-scope
+do
   array.length $objWithArrays.tags
   test.assertEqual $ 3 "Multi-line object with array - tags length failed"
-endscope
+enddo
 test.assertEqual $objWithArrays.tags[0] "javascript" "Multi-line object with array - first tag failed"
 test.assertEqual $objWithArrays.scores[1] 95 "Multi-line object with array - second score failed"
 
@@ -716,10 +716,10 @@ test.assertEqual $objWithArrays.scores[1] 95 "Multi-line object with array - sec
 ]
 $arrWithObjs = $
 clear
-scope
+do
   array.length $arrWithObjs
   test.assertEqual $ 3 "Multi-line array with objects - length failed"
-endscope
+enddo
 test.assertEqual $arrWithObjs[0].id 1 "Multi-line array with objects - first id failed"
 test.assertEqual $arrWithObjs[1].name "Second" "Multi-line array with objects - second name failed"
 
@@ -731,15 +731,15 @@ test.assertEqual $arrWithObjs[1].name "Second" "Multi-line array with objects - 
 ]
 $nestedMultiLineArr = $
 clear
-scope
+do
   array.length $nestedMultiLineArr
   test.assertEqual $ 3 "Multi-line nested array - outer length failed"
-endscope
+enddo
 clear
-scope
+do
   array.length $nestedMultiLineArr[0]
   test.assertEqual $ 3 "Multi-line nested array - inner length failed"
-endscope
+enddo
 test.assertEqual $nestedMultiLineArr[1][2] 6 "Multi-line nested array - access failed"
 
 # Test multi-line object literal in assignment
@@ -758,37 +758,37 @@ $assignedMultiLineArr = [
   "c"
 ]
 clear
-scope
+do
   array.length $assignedMultiLineArr
   test.assertEqual $ 3 "Multi-line array in assignment - length failed"
-endscope
+enddo
 test.assertEqual $assignedMultiLineArr[2] "c" "Multi-line array in assignment - element failed"
 
 # Test multi-line object literal as function argument (direct)
 clear
-scope
+do
   get {
     name: "Test",
     value: 100,
     active: true
   } "name"
   test.assertEqual $ "Test" "Multi-line object as function argument (direct) failed"
-endscope
+enddo
 
 # Test multi-line object literal as function argument (via variable)
 clear
-scope
+do
   get {
     name: "Test",
     value: 100,
     active: true
   } "name"
   test.assertEqual $ "Test" "Multi-line object as function argument (via variable) failed"
-endscope
+enddo
 
 # Test multi-line array literal as function argument
 clear
-scope
+do
   array.length [
     10,
     20,
@@ -796,28 +796,28 @@ scope
     40
   ]
   test.assertEqual $ 4 "Multi-line array as function argument failed"
-endscope
+enddo
 
 # Test multi-line object literal in parenthesized call
 clear
-scope
+do
   get({
     id: 123,
     status: "active"
   } "id")
   test.assertEqual $ 123 "Multi-line object in parenthesized call failed"
-endscope
+enddo
 
 # Test multi-line array literal in parenthesized call
 clear
-scope
+do
   array.length([
     "one",
     "two",
     "three"
   ])
   test.assertEqual $ 3 "Multi-line array in parenthesized call failed"
-endscope
+enddo
 
 # Test deeply nested multi-line structures
 {
@@ -851,10 +851,10 @@ test.assertEqual $trailingCommaObj.a 1 "Multi-line object with trailing comma fa
 ]
 $trailingCommaArr = $
 clear
-scope
+do
   array.length $trailingCommaArr
   test.assertEqual $ 3 "Multi-line array with trailing comma failed"
-endscope
+enddo
 
 # Test multi-line object with empty lines (should be handled gracefully)
 {
@@ -926,22 +926,22 @@ $obj2 = $
 merge $obj1 $obj2
 $merged = $
 clear
-scope
+do
   get $merged "a"
   test.assertEqual $ 1 "Object.merge failed"
-endscope
+enddo
 clear
-scope
+do
   get $merged "b"
   test.assertEqual $ 2 "Object.merge failed"
-endscope
+enddo
 clone $parsed
 $cloned = $
 clear
-scope
+do
   get $cloned "name"
   test.assertEqual $ "John" "Object.clone failed"
-endscope
+enddo
 entries $cloned
 $entries = $
 test.assertNotNull $entries "Object.entries failed"
@@ -963,10 +963,10 @@ time.addDays "2024-01-15T00:00:00.000Z" 7
 $added = $
 test.assertNotNull $added "Time.addDays failed"
 clear
-scope
+do
   time.diffDays "2024-01-01" "2024-01-08"
   test.assertEqual $ 7 "Time.diffDays failed"
-endscope
+enddo
 log "Test 20 - Time module: All passed"
 
 # Test 21: Random module tests
@@ -982,10 +982,10 @@ random.uuid
 $uuid = $
 test.assertType $uuid "string" "Random.uuid type failed"
 clear
-scope
+do
   string.length $uuid
   test.assertGreater $ 30 "Random.uuid length failed"
-endscope
+enddo
 $arr = range 1 5
 random.choice $arr
 $choice = $
@@ -1013,10 +1013,10 @@ def return_value
 enddef
 
 clear
-scope
+do
   return_value
   test.assertEqual $ 100 "Function return value failed"
-endscope
+enddo
 
 def return_variable
   $result = 200
@@ -1025,10 +1025,10 @@ def return_variable
 enddef
 
 clear
-scope
+do
   return_variable
   test.assertEqual $ 200 "Function return variable failed"
-endscope
+enddo
 
 def return_expression
   math.add 10 20
@@ -1037,10 +1037,10 @@ def return_expression
 enddef
 
 clear
-scope
+do
   return_expression
   test.assertEqual $ 30 "Function return expression failed"
-endscope
+enddo
 
 def return_early
   if true
@@ -1050,10 +1050,10 @@ def return_early
 enddef
 
 clear
-scope
+do
   return_early
   test.assertEqual $ "early" "Function early return failed"
-endscope
+enddo
 
 def return_no_value
   $temp = 50
@@ -1062,13 +1062,13 @@ def return_no_value
 enddef
 
 clear
-scope
+do
   return_no_value
   test.assertEqual $ null "Function return last value failed"
-endscope
+enddo
 log "Test 23 - Return in functions: All passed"
 
-# Test 24: Return statement in global scope
+# Test 24: Return statement in global do
 # Note: We'll test this carefully since it terminates execution
 # We'll create a separate test that can be run independently
 
@@ -1088,10 +1088,10 @@ def outer_func
 enddef
 
 clear
-scope
+do
   outer_func
   test.assertEqual $ "inner" "Nested function return failed"
-endscope
+enddo
 log "Test 24 - Return in nested contexts: All passed"
 
 # Test 25: Return with different value types
@@ -1100,50 +1100,50 @@ def return_string
 enddef
 
 clear
-scope
+do
   return_string
   test.assertEqual $ "hello" "Return string failed"
-endscope
+enddo
 
 def return_number
   return 42
 enddef
 
 clear
-scope
+do
   return_number
   test.assertEqual $ 42 "Return number failed"
-endscope
+enddo
 
 def return_boolean
   return true
 enddef
 
 clear
-scope
+do
   return_boolean
   test.assertEqual $ true "Return boolean failed"
-endscope
+enddo
 
 def return_null
   return null
 enddef
 
 clear
-scope
+do
   return_null
   test.assertEqual $ null "Return null failed"
-endscope
+enddo
 
 def return_subexpression
   return $(math.add 5 5)
 enddef
 
 clear
-scope
+do
   return_subexpression
   test.assertEqual $ 10 "Return subexpression failed"
-endscope
+enddo
 log "Test 25 - Return with different types: All passed"
 
 # Test 26: Return in conditional blocks
@@ -1155,10 +1155,10 @@ def return_in_if
 enddef
 
 clear
-scope
+do
   return_in_if
   test.assertEqual $ "if_return" "Return in if block failed"
-endscope
+enddo
 
 def return_in_else
   if false
@@ -1170,10 +1170,10 @@ def return_in_else
 enddef
 
 clear
-scope
+do
   return_in_else
   test.assertEqual $ "else_return" "Return in else block failed"
-endscope
+enddo
 log "Test 26 - Return in conditionals: All passed"
 
 # Test 27: Return in loops
@@ -1187,10 +1187,10 @@ def return_in_for
 enddef
 
 clear
-scope
+do
   return_in_for
   test.assertEqual $ 3 "Return in for loop failed"
-endscope
+enddo
 log "Test 27 - Return in loops: All passed"
 
 # Test 28: Complex variable assignment scenarios
@@ -1209,10 +1209,10 @@ test.assertEqual $result 15 "Variable assignment in expressions failed"
 $arr1 = range 1 3
 $arr2 = $arr1
 clear
-scope
+do
   array.length $arr2
   test.assertEqual $ 3 "Array variable assignment failed"
-endscope
+enddo
 log "Test 28 - Complex variable assignments: All passed"
 
 # Test 29: set command (replaces assign)
@@ -1273,70 +1273,70 @@ log "Test 29a - get command (built-in)"
 json.parse '{"name": "John", "age": 30, "address": {"city": "NYC", "zip": 10001}}'
 $user = $
 clear
-scope
+do
   get $user "name"
   test.assertEqual $ "John" "get command - basic property failed"
-endscope
+enddo
 
 clear
-scope
+do
   get $user "age"
   test.assertEqual $ 30 "get command - number property failed"
-endscope
+enddo
 
 # Test get with nested path
 clear
-scope
+do
   get $user "address.city"
   test.assertEqual $ "NYC" "get command - nested path failed"
-endscope
+enddo
 
 clear
-scope
+do
   get $user "address.zip"
   test.assertEqual $ 10001 "get command - nested path with number failed"
-endscope
+enddo
 
 # Test get with non-existent path
 clear
-scope
+do
   get $user "nonexistent"
   test.assertEqual $ null "get command - non-existent path should return null"
-endscope
+enddo
 
 clear
-scope
+do
   get $user "address.nonexistent"
   test.assertEqual $ null "get command - nested non-existent path should return null"
-endscope
+enddo
 
 # Test get with empty path
 clear
-scope
+do
   get $user ""
   test.assertEqual $ null "get command - empty path should return null"
-endscope
+enddo
 
 # Test get with object literal
 clear
-scope
+do
   get {name: "Alice", age: 25} "name"
   test.assertEqual $ "Alice" "get command - object literal failed"
-endscope
+enddo
 
 # Test get with variable object
 $testObj = {key1: "value1", key2: {nested: "nestedValue"}}
 clear
-scope
+do
   get $testObj "key1"
   test.assertEqual $ "value1" "get command - variable object failed"
-endscope
+enddo
 
 clear
-scope
+do
   get $testObj "key2.nested"
   test.assertEqual $ "nestedValue" "get command - variable object nested path failed"
-endscope
+enddo
 
 # Test get with null object (should throw error)
 # Note: This is tested manually as it throws an error
@@ -1357,10 +1357,10 @@ empty $toEmpty
 test.assertEqual $toEmpty null "empty command second time failed"
 $toEmpty = range 1 5
 clear
-scope
+do
   array.length $toEmpty
   test.assertEqual $ 5 "Array before empty failed"
-endscope
+enddo
 empty $toEmpty
 test.assertEqual $toEmpty null "empty command with array failed"
 log "Test 30 - empty command: All passed"
@@ -1368,74 +1368,74 @@ log "Test 30 - empty command: All passed"
 # Test 30b: fallback command
 $maybeEmpty = null
 clear
-scope
+do
   fallback $maybeEmpty "default value"
   test.assertEqual $ "default value" "fallback with null failed"
-endscope
+enddo
 
 $maybeEmpty = ""
 clear
-scope
+do
   fallback $maybeEmpty "default string"
   test.assertEqual $ "default string" "fallback with empty string failed"
-endscope
+enddo
 
 $maybeEmpty = null
 clear
-scope
+do
   fallback $maybeEmpty 42
   test.assertEqual $ 42 "fallback with number failed"
-endscope
+enddo
 
 $maybeEmpty = null
 clear
-scope
+do
   fallback $maybeEmpty true
   test.assertEqual $ true "fallback with boolean failed"
-endscope
+enddo
 
 json.parse '[]'
 $maybeEmpty = $
 clear
-scope
+do
   fallback $maybeEmpty "fallback for empty array"
   test.assertEqual $ "fallback for empty array" "fallback with empty array failed"
-endscope
+enddo
 
 $maybeEmpty = "not empty"
 clear
-scope
+do
   fallback $maybeEmpty "fallback"
   test.assertEqual $ "not empty" "fallback should not use fallback when value is not empty"
-endscope
+enddo
 
 $maybeEmpty = 0
 clear
-scope
+do
   fallback $maybeEmpty "fallback"
   test.assertEqual $ 0 "fallback should not use fallback for zero"
-endscope
+enddo
 
 $maybeEmpty = false
 clear
-scope
+do
   fallback $maybeEmpty "fallback"
   test.assertEqual $ false "fallback should not use fallback for false"
-endscope
+enddo
 
 $maybeEmpty = null
 clear
-scope
+do
   fallback $maybeEmpty
   test.assertEqual $ null "fallback without fallback value should return null"
-endscope
+enddo
 
 $hasValue = "Alice"
 clear
-scope
+do
   fallback $hasValue "Unknown"
   test.assertEqual $ "Alice" "fallback should return variable value when not empty"
-endscope
+enddo
 log "Test 30b - fallback command: All passed"
 
 # Test 31: Comparison functions (isEqual, isBigger, isSmaller, isEqualOrBigger, isEqualOrSmaller)
@@ -1584,10 +1584,10 @@ test.assertEqual $test7 30 "Complex multi-line subexpression failed"
 
 # Test subexpression in function call
 clear
-scope
+do
   math.add $(math.multiply 2 5) $(math.add 3 2)
   test.assertEqual $ 15 "Subexpression in function call failed"
-endscope
+enddo
 
 # Test subexpression in conditional
 if $(math.add 5 5) == 10
@@ -1605,10 +1605,10 @@ test.assertEqual $test9 "hello world" "Subexpression with string operations fail
 # Test subexpression with array operations
 $test10 = $(array.create 1 2 3)
 clear
-scope
+do
   array.length $test10
   test.assertEqual $ 3 "Subexpression with array operations failed"
-endscope
+enddo
 
 # Test deeply nested subexpressions
 $test11 = $(math.add $(math.multiply $(math.add 1 1) 2) $(math.add 1 1))
@@ -1619,10 +1619,10 @@ def test_subexpr_return
   return $(math.add 10 20)
 enddef
 clear
-scope
+do
   test_subexpr_return
   test.assertEqual $ 30 "Subexpression in return statement failed"
-endscope
+enddo
 
 # Test multi-line subexpression with multiple statements
 $test12 = $(
@@ -1632,15 +1632,15 @@ $test12 = $(
 )
 test.assertEqual $test12 7 "Multi-line subexpression with multiple statements failed"
 
-# Test subexpression with variable assignment inside (modifies parent scope)
-$testVar = 10  # Set initial value in parent scope
+# Test subexpression with variable assignment inside (modifies parent do)
+$testVar = 10  # Set initial value in parent do
 $test13 = $(
   set $testVar 42  # This should modify the parent $testVar
   math.add $testVar 8
 )
 
 test.assertEqual $test13 50 "Subexpression with variable assignment failed"
-test.assertEqual $testVar 42 "Variable assignment in subexpression should modify parent scope"
+test.assertEqual $testVar 42 "Variable assignment in subexpression should modify parent do"
 
 log "Test 32 - Subexpressions $( ): All passed"
 
@@ -1685,17 +1685,17 @@ test.assertEqual $firstIsTen true "Array access in conditional expression failed
 
 # Test property access in function calls
 clear
-scope
+do
   math.add $user.age 5
   test.assertEqual $ 35 "Property access as function argument failed"
-endscope
+enddo
 
 # Test array access in function calls
 clear
-scope
+do
   math.add $arr[0] $arr[1]
   test.assertEqual $ 21 "Array access as function arguments failed"
-endscope
+enddo
 
 # Note: Error cases (accessing property of null, indexing non-array, etc.) are tested manually
 # as they throw exceptions that would terminate test execution
@@ -1763,13 +1763,13 @@ test.assertEqual $config.database.host "localhost" "Assignment creating nested i
 json.parse '{"name": "John"}'
 $.age = 30
 
-scope 
+do 
   test.assertEqual $.name "John" "Last value property access failed"
-endscope
+enddo
 
-scope
+do
   test.assertEqual $.age 30 "Assignment to last value property path failed"
-endscope
+enddo
 
 test.assertEqual $.name "John" "Assignment to last value property path should preserve other properties"
 
@@ -1777,42 +1777,42 @@ test.assertEqual $.name "John" "Assignment to last value property path should pr
 range 1 5
 $[0] = 100
 
-scope
+do
   test.assertEqual $[0] 100 "Assignment to last value array index failed"
-endscope
+enddo
 
-scope
+do
   test.assertEqual $[1] 2 "Assignment to last value array index should preserve other elements"
-endscope
+enddo
 
 # Test assignment to last value with nested path
 json.parse '{"user": {"name": "John"}}'
 $.user.city = "Paris"
-scope
+do
   test.assertEqual $.user.city "Paris" "Assignment to last value nested path failed"
-endscope
+enddo
 
-scope
+do
   test.assertEqual $.user.name "John" "Assignment to last value nested path should preserve other properties"
-endscope
+enddo
 
 # Test assignment to last value creates intermediate objects
 json.parse '{}'
 $.settings.theme = "dark"
 
-scope
+do
   test.assertEqual $.settings.theme "dark" "Assignment to last value creating intermediate object failed"
-endscope
+enddo
 
 # Test assignment to array index out of bounds (should extend array)
 $arr = range 1 3
 $arr[5] = 100
 test.assertEqual $arr[5] 100 "Assignment to out of bounds array index failed"
 clear
-scope
+do
   array.length $arr
   test.assertEqual $ 6 "Assignment to out of bounds array index should extend array"
-endscope
+enddo
 
 # Test assignment to new property on existing object
 $user = $parsed
@@ -1905,14 +1905,14 @@ test.assertEqual $iterations 3 "Break after iterations failed"
 # Test break preserves last value
 
 clear
-scope
+do
   for $i in range 1 5
     if $i == 3
       break
     endif
   endfor
   test.assertEqual $ 3 "Break preserves last value failed"
-endscope
+enddo
 
 log "Test 35 - Break statement: All passed"
 
@@ -1923,10 +1923,10 @@ $range1 = $
 test.assertEqual $range1[0] 0 "Range with step 1 - first element failed"
 test.assertEqual $range1[5] 5 "Range with step 1 - last element failed"
 clear
-scope
+do
   array.length $range1
   test.assertEqual $ 6 "Range with step 1 - length failed"
-endscope
+enddo
 
 # Test positive step counting up with larger step
 range 0 10 2
@@ -1935,10 +1935,10 @@ test.assertEqual $range2[0] 0 "Range with step 2 - first element failed"
 test.assertEqual $range2[1] 2 "Range with step 2 - second element failed"
 test.assertEqual $range2[5] 10 "Range with step 2 - last element failed"
 clear
-scope
+do
   array.length $range2
   test.assertEqual $ 6 "Range with step 2 - length failed"
-endscope
+enddo
 
 # Test negative step counting down
 range 5 0 -1
@@ -1946,10 +1946,10 @@ $range3 = $
 test.assertEqual $range3[0] 5 "Range with step -1 - first element failed"
 test.assertEqual $range3[5] 0 "Range with step -1 - last element failed"
 clear
-scope
+do
   array.length $range3
   test.assertEqual $ 6 "Range with step -1 - length failed"
-endscope
+enddo
 
 # Test negative step counting down with larger step
 range 10 0 -2
@@ -1958,29 +1958,29 @@ test.assertEqual $range4[0] 10 "Range with step -2 - first element failed"
 test.assertEqual $range4[1] 8 "Range with step -2 - second element failed"
 test.assertEqual $range4[5] 0 "Range with step -2 - last element failed"
 clear
-scope
+do
   array.length $range4
   test.assertEqual $ 6 "Range with step -2 - length failed"
-endscope
+enddo
 
 # Test range with step when start > end (positive step should produce empty or count down)
 # Note: With positive step and start > end, the loop condition i <= end is false from start, so empty array
 range 5 0 1
 $range5 = $
 clear
-scope
+do
   array.length $range5
   test.assertEqual $ 0 "Range 5 0 1 should produce empty array (positive step can't count down)"
-endscope
+enddo
 
 # Test range with step when start < end (negative step should produce empty)
 range 0 5 -1
 $range6 = $
 clear
-scope
+do
   array.length $range6
   test.assertEqual $ 0 "Range 0 5 -1 should produce empty array (negative step can't count up)"
-endscope
+enddo
 
 # Test range with negative numbers
 range -5 0 1
@@ -1988,10 +1988,10 @@ $range7 = $
 test.assertEqual $range7[0] -5 "Range -5 0 1 - first element failed"
 test.assertEqual $range7[5] 0 "Range -5 0 1 - last element failed"
 clear
-scope
+do
   array.length $range7
   test.assertEqual $ 6 "Range -5 0 1 - length failed"
-endscope
+enddo
 
 # Test range with negative step and negative numbers
 range 0 -5 -1
@@ -1999,20 +1999,20 @@ $range8 = $
 test.assertEqual $range8[0] 0 "Range 0 -5 -1 - first element failed"
 test.assertEqual $range8[5] -5 "Range 0 -5 -1 - last element failed"
 clear
-scope
+do
   array.length $range8
   test.assertEqual $ 6 "Range 0 -5 -1 - length failed"
-endscope
+enddo
 
 log "Test 36 - Range with step parameter: All passed"
 
 # Test 37: Parenthesized function call syntax
 # Test basic one-line parenthesized call with positional arguments
 clear
-scope
+do
   math.add(5 10)
   test.assertEqual $ 15 "Parenthesized call - basic positional args failed"
-endscope
+enddo
 
 # Test parenthesized call with named arguments (if supported by function)
 # Note: Most builtin functions don't support named args, but syntax should parse correctly
@@ -2021,118 +2021,118 @@ test.assertNotNull $ "Parenthesized call - log with positional arg failed"
 
 # Test multi-line parenthesized call
 clear
-scope
+do
   math.add(
     10
     20
   )
   test.assertEqual $ 30 "Parenthesized call - multi-line positional args failed"
-endscope
+enddo
 
 # Test parenthesized call with mixed types
 array(1 2 3)
 $arrFromParen = $
 clear
-scope
+do
   array.length $arrFromParen
   test.assertEqual $ 3 "Parenthesized call - array creation failed"
-endscope
+enddo
 test.assertEqual $arrFromParen[0] 1 "Parenthesized call - array element access failed"
 
 # Test parenthesized call with variables
 $val1 = 5
 $val2 = 7
 clear
-scope
+do
   math.multiply($val1 $val2)
   test.assertEqual $ 35 "Parenthesized call - with variables failed"
-endscope
+enddo
 
 # Test parenthesized call with expressions
 clear
-scope
+do
   math.add(
     $(math.multiply 2 3)
     $(math.add 1 1)
   )
   test.assertEqual $ 8 "Parenthesized call - with subexpressions failed"
-endscope
+enddo
 
 # Test nested parenthesized calls
 clear
-scope
+do
   math.add(
     $(math.multiply(2 3))
     $(math.add(1 1))
   )
   test.assertEqual $ 8 "Parenthesized call - nested calls failed"
-endscope
+enddo
 
 # Test parenthesized call with strings
 clear
-scope
+do
   string.concat("hello" " " "world")
   test.assertEqual $ "hello world" "Parenthesized call - with strings failed"
-endscope
+enddo
 
 # Test parenthesized call with empty arguments
 array()
 $emptyFromParen = $
 clear
-scope
+do
   array.length $emptyFromParen
   test.assertEqual $ 0 "Parenthesized call - empty args failed"
-endscope
+enddo
 
 # Test parenthesized call with single argument
 clear
-scope
+do
   math.abs(-42)
   test.assertEqual $ 42 "Parenthesized call - single arg failed"
-endscope
+enddo
 
 # Test parenthesized call with module functions
 clear
-scope
+do
   math.add(10 5)
   test.assertEqual $ 15 "Parenthesized call - module function failed"
-endscope
+enddo
 
 clear
-scope
+do
   string.length("test")
   test.assertEqual $ 4 "Parenthesized call - string module function failed"
-endscope
+enddo
 
 # Test multi-line parenthesized call with module prefix
 clear
-scope
+do
   math.multiply(
     6
     7
   )
   test.assertEqual $ 42 "Parenthesized call - multi-line module function failed"
-endscope
+enddo
 
 clear
-scope
+do
   math.add(
     10
     20
     30
   )
   test.assertEqual $ 60 "Parenthesized call - multi-line module function with 3 args failed"
-endscope
+enddo
 
 clear
-scope
+do
   string.concat(
     "hello"
     " "
     "world"
   )
   test.assertEqual $ "hello world" "Parenthesized call - multi-line string module function failed"
-endscope
+enddo
 
 # Test parenthesized call in assignment
 math.add(100 200)
@@ -2141,11 +2141,11 @@ test.assertEqual $result 300 "Parenthesized call - in assignment failed"
 
 # Test parenthesized call with last value
 clear
-scope
+do
   math.add(5 5)
   math.multiply($ 2)
   test.assertEqual $ 20 "Parenthesized call - chaining with last value failed"
-endscope
+enddo
 
 # Test parenthesized call with named arguments syntax
 # Note: Most functions don't use named args yet, but syntax should parse
@@ -2181,10 +2181,10 @@ def greet $name $age
 enddef
 
 clear
-scope
+do
   greet("Alice" 25)
   test.assertEqual $ null "Function with param names - basic call failed"
-endscope
+enddo
 
 # Test parameter name aliases
 def add $a $b
@@ -2192,10 +2192,10 @@ def add $a $b
 enddef
 
 clear
-scope
+do
   add(10 20)
   test.assertEqual $ 30 "Function param aliases failed"
-endscope
+enddo
 
 # Test that $1, $2 still work
 def multiply $x $y
@@ -2203,10 +2203,10 @@ def multiply $x $y
 enddef
 
 clear
-scope
+do
   multiply(5 6)
   test.assertEqual $ 30 "Function positional params via $1 $2 failed"
-endscope
+enddo
 
 # Test function with more args than declared params
 def first $a
@@ -2215,10 +2215,10 @@ def first $a
 enddef
 
 clear
-scope
+do
   first(10 20)
   test.assertEqual $ null "Function with extra args failed"
-endscope
+enddo
 
 # Test function with fewer args than declared params
 def three $a $b $c
@@ -2228,10 +2228,10 @@ def three $a $b $c
 enddef
 
 clear
-scope
+do
   three(10 20)
   test.assertEqual $ null "Function with fewer args failed"
-endscope
+enddo
 
 # Test named arguments
 def config $env
@@ -2241,10 +2241,10 @@ def config $env
 enddef
 
 clear
-scope
+do
   config("production" key="api-key" value="secret123")
   test.assertEqual $ null "Function with named args failed"
-endscope
+enddo
 
 # Test named arguments in CLI-style call
 def test_fn $a $b
@@ -2254,10 +2254,10 @@ def test_fn $a $b
 enddef
 
 clear
-scope
+do
   test_fn "hello" "world" flag=true
   test.assertEqual $ null "Function CLI-style with named args failed"
-endscope
+enddo
 
 # Test mixed positional and named arguments
 def deploy $env
@@ -2267,10 +2267,10 @@ def deploy $env
 enddef
 
 clear
-scope
+do
   deploy("staging" replicas=3 timeout=30)
   test.assertEqual $ null "Function mixed args failed"
-endscope
+enddo
 
 # Test function without parameter names (only $1, $2)
 def simple
@@ -2279,10 +2279,10 @@ def simple
 enddef
 
 clear
-scope
+do
   simple("hello" "world")
   test.assertEqual $ null "Function without param names failed"
-endscope
+enddo
 
 # Test $args access
 def get_args
@@ -2291,10 +2291,10 @@ def get_args
 enddef
 
 clear
-scope
+do
   get_args(key1="value1" key2="value2")
   test.assertEqual $ null "Function $args access failed"
-endscope
+enddo
 
 # Test parameter name collision (param name same as named arg)
 def collision $key
@@ -2303,10 +2303,10 @@ def collision $key
 enddef
 
 clear
-scope
+do
   collision("positional" key="named")
   test.assertEqual $ null "Function param/named arg collision failed"
-endscope
+enddo
 
 log "Test 38 - Function parameters and arguments: All passed"
 
@@ -2364,30 +2364,30 @@ log "Test 40 - tag command"
 
 # Test 40a: Basic tag usage
 clear
-scope
+do
   tag "function" "calculateTotal" "Calculates the total price"
   test.assertEqual $ null "tag command should return null"
-endscope
+enddo
 
 # Test 40b: Tag with different types
 clear
-scope
+do
   tag "variable" "userCount" "Number of active users"
   test.assertEqual $ null "tag command with variable type failed"
-endscope
+enddo
 
 clear
-scope
+do
   tag "module" "payment" "Payment processing module"
   test.assertEqual $ null "tag command with module type failed"
-endscope
+enddo
 
 # Test 40c: Tag with long descriptions
 clear
-scope
+do
   tag "function" "processData" "This function processes user data and returns formatted results"
   test.assertEqual $ null "tag command with long description failed"
-endscope
+enddo
 
 # Test 40d: Tag should not affect execution
 $beforeTag = 42
@@ -2404,11 +2404,11 @@ log "Test 41 - meta command"
 # Test 41a: Meta for variables
 $testVar = 100
 clear
-scope
+do
   meta $testVar description "A variable to store test values"
   test.assertEqual $ null "meta command should return null"
   test.assertEqual $testVar 100 "meta command should not affect variable value"
-endscope
+enddo
 
 # Test 41b: Meta for functions
 def test_function
@@ -2416,42 +2416,42 @@ def test_function
 enddef
 
 clear
-scope
+do
   meta test_function description "A test function for demonstration"
   test.assertEqual $ null "meta command for function should return null"
-endscope
+enddo
 
 clear
-scope
+do
   # Test 41c: Multiple metadata entries for same variable
   meta $testVar version 5
   test.assertEqual $ null "meta command with number value failed"
-endscope
+enddo
 
 clear
-scope
+do
   meta $testVar author "Test Author"
   test.assertEqual $ null "meta command with string value failed"
-endscope
+enddo
 
 clear
-scope
+do
   meta $testVar enabled true
   test.assertEqual $ null "meta command with boolean value failed"
-endscope
+enddo
 
 # Test 41d: Multiple metadata entries for same function
 clear
-scope
+do
   meta test_function version 1
   test.assertEqual $ null "meta command for function with version failed"
-endscope
+enddo
 
 clear
-scope
+do
   meta test_function category "utility"
   test.assertEqual $ null "meta command for function with category failed"
-endscope
+enddo
 
 # Test 41e: Meta should not affect execution
 $beforeMeta = 50
@@ -2476,9 +2476,9 @@ meta another_function description "Another test function"
 meta another_function returnType "number"
 meta another_function example "another_function()"
 clear
-scope
+do
   test.assertEqual $ null "meta command for function with multiple keys failed"
-endscope
+enddo
 
 # Test 41h: Meta should work with existing variables
 $existingVar = "hello"
@@ -2492,9 +2492,9 @@ enddef
 
 meta existing_fn description "An existing function"
 clear
-scope
+do
   test.assertEqual $ null "meta command for existing function failed"
-endscope
+enddo
 
 log "Test 41 - meta command: All passed"
 
@@ -2516,22 +2516,22 @@ test.assertEqual $allMeta.author "Test Author" "getMeta all metadata - author fa
 
 # Test 42b: getMeta for variables - return specific key
 clear
-scope
+do
   getMeta $testVar description
   test.assertEqual $ "A variable to store test values" "getMeta specific key - description failed"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta $testVar version
   test.assertEqual $ 5 "getMeta specific key - version failed"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta $testVar nonexistent
   test.assertEqual $ null "getMeta nonexistent key should return null"
-endscope
+enddo
 
 # Test 42c: getMeta for functions - return all metadata
 def test_function
@@ -2551,22 +2551,22 @@ test.assertEqual $funcMeta.category "utility" "getMeta function all metadata - c
 
 # Test 42d: getMeta for functions - return specific key
 clear
-scope
+do
   getMeta test_function description
   test.assertEqual $ "A test function for demonstration" "getMeta function specific key - description failed"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta test_function version
   test.assertEqual $ 1 "getMeta function specific key - version failed"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta test_function nonexistent
   test.assertEqual $ null "getMeta function nonexistent key should return null"
-endscope
+enddo
 
 # Test 42e: getMeta for variable with no metadata
 $noMetaVar = 42
@@ -2574,11 +2574,11 @@ getMeta $noMetaVar
 $emptyMeta = $
 test.assertType $emptyMeta "object" "getMeta for variable with no metadata should return empty object"
 clear
-scope
+do
   keys $emptyMeta
   array.length $
   test.assertEqual $ 0 "getMeta for variable with no metadata should return empty object"
-endscope
+enddo
 
 # Test 42f: getMeta for function with no metadata
 def no_meta_fn
@@ -2589,11 +2589,11 @@ getMeta no_meta_fn
 $emptyfuncmeta = $
 test.assertType $emptyfuncmeta "object" "getmeta for function should return an object"
 clear
-scope
+do
   keys $emptyFuncMeta
   array.length $
   test.assertEqual $ 0 "getMeta for function with no metadata should return empty object"
-endscope
+enddo
 
 # Test 42g: getMeta preserves value types
 $typeTest = "test"
@@ -2602,22 +2602,22 @@ meta $typeTest active true
 meta $typeTest data null
 
 clear
-scope
+do
   getMeta $typeTest count
   test.assertEqual $ 42 "getMeta should preserve number type"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta $typeTest active
   test.assertEqual $ true "getMeta should preserve boolean type"
-endscope
+enddo
 
 clear
-scope
+do
   getMeta $typeTest data
   test.assertEqual $ null "getMeta should preserve null type"
-endscope
+enddo
 
 log "Test 42 - getMeta command: All passed"
 
@@ -2626,32 +2626,32 @@ log "Test 43 - clear command"
 
 # Test 43a: Basic clear - clears last value
 clear
-scope
+do
   math.add 10 20
   test.assertEqual $ 30 "Last value before clear failed"
-endscope
+enddo
 clear
-scope
+do
   test.assertEqual $ null "clear command failed to clear last value"
-endscope
+enddo
 
 # Test 43b: Clear after multiple operations
 clear
-scope
+do
   math.add 5 5
   math.multiply $ 2
   test.assertEqual $ 20 "Last value before clear (chained) failed"
-endscope
+enddo
 clear
-scope
+do
   test.assertEqual $ null "clear command failed after chained operations"
-endscope
+enddo
 
 # Test 43c: Clear with no previous value
 clear
-scope
+do
   test.assertEqual $ null "clear command should set null even with no previous value"
-endscope
+enddo
 
 # Test 43d: Clear doesn't affect variables
 $testVar = 42
@@ -2659,9 +2659,9 @@ math.add 10 20
 clear
 test.assertEqual $testVar 42 "clear command should not affect variables"
 clear
-scope
+do
   test.assertEqual $ null "clear command should clear last value"
-endscope
+enddo
 
 # Test 43e: Clear after function call
 def return_value
@@ -2670,158 +2670,158 @@ enddef
 
 return_value
 clear
-scope
+do
   test.assertEqual $ 100 "Function return before clear failed"
-endscope
+enddo
 clear
-scope
+do
   test.assertEqual $ null "clear command failed after function call"
-endscope
+enddo
 
 # Test 43f: Clear can be used multiple times
 clear
-scope
+do
   math.add 1 1
   clear
   clear
   test.assertEqual $ null "Multiple clear commands should work"
-endscope
+enddo
 
 log "Test 43 - clear command: All passed"
 
 # Test 44: forget command
 log "Test 44 - forget command"
 
-# Test 44a: Forget a variable in current scope
+# Test 44a: Forget a variable in current do
 $testVar = 100
 clear
-scope
+do
   forget $testVar
   test.assertEqual $ null "forget command should return null"
   test.assertEqual $testVar null "forgotten variable should return null"
-endscope
-# Variable should be accessible again after scope ends
-test.assertEqual $testVar 100 "forgotten variable should be accessible after scope ends"
+enddo
+# Variable should be accessible again after do ends
+test.assertEqual $testVar 100 "forgotten variable should be accessible after do ends"
 
-# Test 44b: Forget a function in current scope
+# Test 44b: Forget a function in current do
 def test_function
   return 42
 enddef
 
 clear
-scope
+do
   forget test_function
   test.assertEqual $ null "forget function should return null"
   # Note: Calling test_function here would throw an error, so we skip that test
-  # and verify it works again after scope ends
-endscope
-# Function should be accessible again after scope ends
+  # and verify it works again after do ends
+enddo
+# Function should be accessible again after do ends
 clear
-scope
+do
   test_function
-  test.assertEqual $ 42 "forgotten function should be accessible after scope ends"
-endscope
+  test.assertEqual $ 42 "forgotten function should be accessible after do ends"
+enddo
 
-# Test 44c: Forget a built-in command in current scope
+# Test 44c: Forget a built-in command in current do
 clear
-scope
+do
   forget log
   test.assertEqual $ null "forget builtin should return null"
   # Note: Calling log here would throw an error, so we skip that test
-  # and verify it works again after scope ends
-endscope
-# Built-in should be accessible again after scope ends
-log "Test 44c - Built-in accessible after scope"
+  # and verify it works again after do ends
+enddo
+# Built-in should be accessible again after do ends
+log "Test 44c - Built-in accessible after do"
 
-# Test 44d: Forget doesn't affect parent scope
+# Test 44d: Forget doesn't affect parent do
 $parentVar = 200
 clear
-scope
+do
   forget $parentVar
-  test.assertEqual $parentVar null "forgotten variable in scope should return null"
-endscope
-test.assertEqual $parentVar 200 "forgotten variable should not affect parent scope"
+  test.assertEqual $parentVar null "forgotten variable in do should return null"
+enddo
+test.assertEqual $parentVar 200 "forgotten variable should not affect parent do"
 
-# Test 44e: Forget doesn't affect child scope
+# Test 44e: Forget doesn't affect child do
 $outerVar = 300
 clear
-scope
+do
   forget $outerVar
   clear
-  scope
-    # Child scope can still access the variable (forget only affects current scope)
-    test.assertEqual $outerVar 300 "forgotten variable should be accessible in child scope"
-  endscope
-  test.assertEqual $outerVar null "forgotten variable should still be null in current scope"
-endscope
+  do
+    # Child do can still access the variable (forget only affects current do)
+    test.assertEqual $outerVar 300 "forgotten variable should be accessible in child do"
+  enddo
+  test.assertEqual $outerVar null "forgotten variable should still be null in current do"
+enddo
 
 # Test 44f: Forget multiple variables
 $var1 = 1
 $var2 = 2
 $var3 = 3
 clear
-scope
+do
   forget $var1
   forget $var2
   test.assertEqual $var1 null "first forgotten variable should return null"
   test.assertEqual $var2 null "second forgotten variable should return null"
   test.assertEqual $var3 3 "non-forgotten variable should still work"
-endscope
+enddo
 
 # Test 44g: Forget module function
 clear
-scope
+do
   forget math.add
   test.assertEqual $ null "forget module function should return null"
   # Note: Calling math.add here would throw an error, so we skip that test
-  # and verify it works again after scope ends
-endscope
-# Module function should be accessible again after scope ends
+  # and verify it works again after do ends
+enddo
+# Module function should be accessible again after do ends
 clear
-scope
+do
   math.add 5 5
-  test.assertEqual $ 10 "forgotten module function should be accessible after scope ends"
-endscope
+  test.assertEqual $ 10 "forgotten module function should be accessible after do ends"
+enddo
 
-# Test 44h: Forget in nested scopes
+# Test 44h: Forget in nested dos
 $nestedVar = 400
 clear
-scope
+do
   forget $nestedVar
   clear
-  scope
-    # Inner scope can still access (forget only affects the scope where it was called)
-    test.assertEqual $nestedVar 400 "forgotten variable should be accessible in nested scope"
-  endscope
-  test.assertEqual $nestedVar null "forgotten variable should still be null in original scope"
-endscope
+  do
+    # Inner do can still access (forget only affects the do where it was called)
+    test.assertEqual $nestedVar 400 "forgotten variable should be accessible in nested do"
+  enddo
+  test.assertEqual $nestedVar null "forgotten variable should still be null in original do"
+enddo
 
-# Test 44i: Forget and then use variable in same scope (should fail)
+# Test 44i: Forget and then use variable in same do (should fail)
 $forgetTest = 500
 clear
-scope
+do
   forget $forgetTest
   # Trying to use forgotten variable should return null
   test.assertEqual $forgetTest null "forgotten variable should return null when accessed"
-endscope
+enddo
 
-# Test 44j: Forget function and verify it works after scope
+# Test 44j: Forget function and verify it works after do
 def forget_test_fn
   return "hello"
 enddef
 
 clear
-scope
+do
   forget forget_test_fn
   test.assertEqual $ null "forget function should return null"
   # Note: Calling forget_test_fn here would throw an error
-endscope
-# Function should be accessible again after scope ends
+enddo
+# Function should be accessible again after do ends
 clear
-scope
+do
   forget_test_fn
-  test.assertEqual $ "hello" "forgotten function should be accessible after scope ends"
-endscope
+  test.assertEqual $ "hello" "forgotten function should be accessible after do ends"
+enddo
 
 # Test 44k: Forget doesn't affect other variables/functions
 $keepVar1 = 10
@@ -2831,13 +2831,13 @@ def keep_function
 enddef
 
 clear
-scope
+do
   forget $keepVar1
   test.assertEqual $keepVar1 null "forgotten variable should return null"
   test.assertEqual $keepVar2 20 "non-forgotten variable should still work"
   keep_function
   test.assertEqual $ 30 "non-forgotten function should still work"
-endscope
+enddo
 
 log "Test 44 - forget command: All passed"
 
@@ -2847,190 +2847,190 @@ log "Test 45 - getType command"
 # Test 45a: getType for string
 $strVar = "hello"
 clear
-scope
+do
   getType $strVar
   test.assertEqual $ "string" "getType for string failed"
-endscope
+enddo
 
 # Test 45b: getType for number
 $numVar = 42
 clear
-scope
+do
   getType $numVar
   test.assertEqual $ "number" "getType for number failed"
-endscope
+enddo
 
 # Test 45c: getType for boolean
 $boolVar = true
 clear
-scope
+do
   getType $boolVar
   test.assertEqual $ "boolean" "getType for boolean failed"
-endscope
+enddo
 
 $boolVar2 = false
 clear
-scope
+do
   getType $boolVar2
   test.assertEqual $ "boolean" "getType for false boolean failed"
-endscope
+enddo
 
 # Test 45d: getType for null
 $nullVar = null
 clear
-scope
+do
   getType $nullVar
   test.assertEqual $ "null" "getType for null failed"
-endscope
+enddo
 
 # Test 45e: getType for array
 $arrVar = range 1 5
 clear
-scope
+do
   getType $arrVar
   test.assertEqual $ "array" "getType for array failed"
-endscope
+enddo
 
 array 1 2 3
 $arrVar2 = $
 clear
-scope
+do
   getType $arrVar2
   test.assertEqual $ "array" "getType for array created with array command failed"
-endscope
+enddo
 
 # Test 45f: getType for object
 obj '{name: "John", age: 30}'
 $objVar = $
 clear
-scope
+do
   getType $objVar
   test.assertEqual $ "object" "getType for object failed"
-endscope
+enddo
 
 json.parse '{"key": "value"}'
 $objVar2 = $
 clear
-scope
+do
   getType $objVar2
   test.assertEqual $ "object" "getType for object from json.parse failed"
-endscope
+enddo
 
 # Test 45g: getType for empty object
 obj
 $emptyObj = $
 clear
-scope
+do
   getType $emptyObj
   test.assertEqual $ "object" "getType for empty object failed"
-endscope
+enddo
 
 # Test 45h: getType for empty array
 array
 $emptyArr = $
 clear
-scope
+do
   getType $emptyArr
   test.assertEqual $ "array" "getType for empty array failed"
-endscope
+enddo
 
 log "Test 45 - getType command: All passed"
 
-# Test 46: Isolated scopes with parameters
-log "Test 46 - Isolated scopes with parameters"
+# Test 46: Isolated dos with parameters
+log "Test 46 - Isolated dos with parameters"
 
 # Test 46a: Scope without parameters inherits from parent
 $parentVar = 100
 clear
-scope
+do
   test.assertEqual $parentVar 100 "Scope without parameters should access parent variables"
   $localVar = 200
   test.assertEqual $localVar 200 "Scope without parameters should allow local variables"
-endscope
-test.assertEqual $parentVar 100 "Parent variable should be unchanged after scope"
+enddo
+test.assertEqual $parentVar 100 "Parent variable should be unchanged after do"
 
 # Test 46b: Scope with parameters is isolated
 $outerVar = 300
 clear
-scope $a
+do $a
   # Should not be able to access $outerVar
-  test.assertEqual $outerVar null "Isolated scope should not access parent variables"
+  test.assertEqual $outerVar null "Isolated do should not access parent variables"
   test.assertEqual $a null "Parameter should be accessible (defaults to null)"
   $localVar = 400
-  test.assertEqual $localVar 400 "Isolated scope should allow local variables"
-endscope
-test.assertEqual $outerVar 300 "Parent variable should be unchanged after isolated scope"
+  test.assertEqual $localVar 400 "Isolated do should allow local variables"
+enddo
+test.assertEqual $outerVar 300 "Parent variable should be unchanged after isolated do"
 
 
 # Test 46c: Scope with multiple parameters
 $globalVar = 500
 clear
-scope $x $y
-  test.assertEqual $globalVar null "Isolated scope with multiple params should not access parent"
+do $x $y
+  test.assertEqual $globalVar null "Isolated do with multiple params should not access parent"
   test.assertEqual $x null "First parameter should be accessible"
   test.assertEqual $y null "Second parameter should be accessible"
   $z = 600
-  test.assertEqual $z 600 "Local variable should work in isolated scope"
-endscope
+  test.assertEqual $z 600 "Local variable should work in isolated do"
+enddo
 
 # Test 46d: Scope with multiple parameters
 $anotherVar = 700
 clear
-scope $a $b $c
-  test.assertEqual $anotherVar null "Isolated scope with multiple params should not access parent"
+do $a $b $c
+  test.assertEqual $anotherVar null "Isolated do with multiple params should not access parent"
   test.assertEqual $a null "First parameter should be accessible"
   test.assertEqual $b null "Second parameter should be accessible"
   test.assertEqual $c null "Third parameter should be accessible"
   $localVar = 800
-  test.assertEqual $localVar 800 "Local variable should work in isolated scope"
-endscope
+  test.assertEqual $localVar 800 "Local variable should work in isolated do"
+enddo
 
 
-# Test 46e: Nested isolated scopes
+# Test 46e: Nested isolated dos
 $nestedOuter = 800
 clear
-scope $a
-  test.assertEqual $nestedOuter null "Outer isolated scope should not access parent"
-  test.assertEqual $a null "Parameter in outer scope should be accessible"
+do $a
+  test.assertEqual $nestedOuter null "Outer isolated do should not access parent"
+  test.assertEqual $a null "Parameter in outer do should be accessible"
   clear
-  scope $b
-    test.assertEqual $nestedOuter null "Inner isolated scope should not access grandparent"
-    test.assertEqual $a null "Inner isolated scope should not access outer scope parameter"
-    test.assertEqual $b null "Parameter in inner scope should be accessible"
+  do $b
+    test.assertEqual $nestedOuter null "Inner isolated do should not access grandparent"
+    test.assertEqual $a null "Inner isolated do should not access outer do parameter"
+    test.assertEqual $b null "Parameter in inner do should be accessible"
     $innerVar = 900
-    test.assertEqual $innerVar 900 "Inner scope local variable should work"
-  endscope
-  test.assertEqual $a null "Outer scope parameter should still be accessible"
-endscope
+    test.assertEqual $innerVar 900 "Inner do local variable should work"
+  enddo
+  test.assertEqual $a null "Outer do parameter should still be accessible"
+enddo
 
 
 # Test 46f: Variables created in isolated block do not leak to parent
 clear
-scope $x
+do $x
   $isolatedVar = 1000
-  test.assertEqual $isolatedVar 1000 "Variable in isolated scope should work"
-endscope
-test.assertEqual $isolatedVar null "Variable from isolated scope should not be accessible in parent"
+  test.assertEqual $isolatedVar 1000 "Variable in isolated do should work"
+enddo
+test.assertEqual $isolatedVar null "Variable from isolated do should not be accessible in parent"
 
 
-# Test 46g: Isolated scope can use declared parameters
+# Test 46g: Isolated do can use declared parameters
 clear
-scope $value
+do $value
   set $value 42
-  test.assertEqual $value 42 "Isolated scope should be able to set parameter values"
+  test.assertEqual $value 42 "Isolated do should be able to set parameter values"
   math.add $value 8
-  test.assertEqual $ 50 "Isolated scope should be able to use parameters in operations"
-endscope
+  test.assertEqual $ 50 "Isolated do should be able to use parameters in operations"
+enddo
 
 
-log "Test 46 - Isolated scopes with parameters: All passed"
+log "Test 46 - Isolated dos with parameters: All passed"
 
 # Test 47: Fetch module tests
 log "Test 47 - Fetch module tests"
 
 # Test 47a: fetch.get with named arguments
 clear
-scope
+do
   fetch.get(url="http://localhost:3005/test/get")
   $response = $
   test.assertType $response "object" "fetch.get should return an object"
@@ -3038,20 +3038,20 @@ scope
   test.assertEqual $response.status 200 "fetch.get response.status should be 200"
   test.assertType $response.data "object" "fetch.get response.data should be an object"
   test.assertEqual $response.data.message "GET request successful" "fetch.get response.data.message failed"
-endscope
+enddo
 
 # Test 47b: fetch.get with headers
 clear
-scope
+do
   fetch.get(url="http://localhost:3005/test/get" headers={"X-Custom-Header": "test-value"})
   $response = $
   test.assertEqual $response.ok true "fetch.get with headers should succeed"
   test.assertEqual $response.status 200 "fetch.get with headers status should be 200"
-endscope
+enddo
 
 # Test 47c: fetch.post with named arguments
 clear
-scope
+do
   fetch.post(url="http://localhost:3005/test/post" body={"name": "John", "age": 30})
   $response = $
   test.assertType $response "object" "fetch.post should return an object"
@@ -3061,11 +3061,11 @@ scope
   test.assertEqual $response.data.message "POST request successful" "fetch.post response.data.message failed"
   test.assertEqual $response.data.receivedBody.name "John" "fetch.post receivedBody.name failed"
   test.assertEqual $response.data.receivedBody.age 30 "fetch.post receivedBody.age failed"
-endscope
+enddo
 
 # Test 47d: fetch.put with named arguments
 clear
-scope
+do
   fetch.put(url="http://localhost:3005/test/put" body={"id": 123, "status": "updated"})
   $response = $
   test.assertType $response "object" "fetch.put should return an object"
@@ -3075,11 +3075,11 @@ scope
   test.assertEqual $response.data.message "PUT request successful" "fetch.put response.data.message failed"
   test.assertEqual $response.data.receivedBody.id 123 "fetch.put receivedBody.id failed"
   test.assertEqual $response.data.receivedBody.status "updated" "fetch.put receivedBody.status failed"
-endscope
+enddo
 
 # Test 47e: fetch.delete with named arguments
 clear
-scope
+do
   fetch.delete(url="http://localhost:3005/test/delete")
   $response = $
   test.assertType $response "object" "fetch.delete should return an object"
@@ -3087,36 +3087,36 @@ scope
   test.assertEqual $response.status 200 "fetch.delete response.status should be 200"
   test.assertType $response.data "object" "fetch.delete response.data should be an object"
   test.assertEqual $response.data.message "DELETE request successful" "fetch.delete response.data.message failed"
-endscope
+enddo
 
 # Test 47f: fetch.get with echo endpoint to test query parameters
 clear
-scope
+do
   fetch.get(url="http://localhost:3005/test/echo?key1=value1&key2=value2")
   $response = $
   test.assertEqual $response.ok true "fetch.get echo should succeed"
   test.assertEqual $response.data.query.key1 "value1" "fetch.get query parameter key1 failed"
   test.assertEqual $response.data.query.key2 "value2" "fetch.get query parameter key2 failed"
-endscope
+enddo
 
 # Test 47i: fetch.get with 404 endpoint (should still return response object)
 clear
-scope
+do
   fetch.get(url="http://localhost:3005/test/notfound")
   $response = $
   test.assertType $response "object" "fetch.get 404 should return an object"
   test.assertEqual $response.ok false "fetch.get 404 response.ok should be false"
   test.assertEqual $response.status 404 "fetch.get 404 response.status should be 404"
-endscope
+enddo
 
 # Test 47j: fetch.post with custom headers
 clear
-scope
+do
   fetch.post(url="http://localhost:3005/test/echo" body={"test": "data"} headers={"X-Custom-Header": "custom-value", "Authorization": "Bearer token123"})
   $response = $
   test.assertEqual $response.ok true "fetch.post with custom headers should succeed"
   test.assertEqual $response.data.body.test "data" "fetch.post echo body should match"
-endscope
+enddo
 
 log "Test 47 - Fetch module: All passed"
 
@@ -3129,23 +3129,23 @@ log "Test 48 - Def blocks extracted first"
 # After all def blocks are extracted, fn should be callable
 # and it should be able to call fn2 and fn3 even though they're defined after
 clear
-scope
+do
   fn
   test.assertEqual $ 30 "Def blocks extracted first - fn should be able to call fn2 and fn3"
-endscope
+enddo
 
 # Test that fn2 and fn3 are also callable directly
 clear
-scope
+do
   fn2
   test.assertEqual $ 10 "Def blocks extracted first - fn2 should be callable"
-endscope
+enddo
 
 clear
-scope
+do
   fn3
   test.assertEqual $ 20 "Def blocks extracted first - fn3 should be callable"
-endscope
+enddo
 
 
 def fn

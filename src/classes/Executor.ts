@@ -144,7 +144,7 @@ export class Executor {
             case 'define':
                 this.registerFunction(stmt);
                 break;
-            case 'scope':
+            case 'do':
                 await this.executeScope(stmt);
                 break;
             case 'forLoop':
