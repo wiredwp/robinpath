@@ -1532,44 +1532,8 @@ export class RobinPath {
                         // Check if comment is empty (should be removed)
                     if (!comment.text || comment.text.trim() === '') {
                             // This is an empty comment - remove it by replacing with empty string
-                            if (comment.inline === true) {
-                                // For inline comments, remove from the original line including leading whitespace before #
-                                const lines = originalScript.split('\n');
-                                const commentLine = lines[comment.codePos.startRow] || '';
-                                const commentStartCol = commentLine.indexOf('#', comment.codePos.startCol);
-                                if (commentStartCol >= 0) {
-                                    // Find the start of the whitespace before the comment (but keep the code before)
-                                    let removeStartCol = commentStartCol;
-                                    // Go backwards to find where whitespace starts
-                                    for (let i = commentStartCol - 1; i >= 0; i--) {
-                                        if (/\s/.test(commentLine[i])) {
-                                            removeStartCol = i;
-                                        } else {
-                                            break;
-                                        }
-                                    }
-                                    
-                                    const startOffset = this.rowColToCharOffset(
-                                        originalScript,
-                                        comment.codePos.startRow,
-                                        removeStartCol,
-                                        false // inclusive
-                                    );
-                                    const endOffset = this.rowColToCharOffset(
-                                        originalScript,
-                                        comment.codePos.endRow,
-                                        comment.codePos.endCol,
-                                        true // exclusive (one past the end)
-                                    );
-
-                                    codePositions.push({
-                                        startOffset,
-                                        endOffset,
-                                        code: '' // Empty string removes the inline comment and leading whitespace
-                                    });
-                                }
-                            } else {
-                                // Regular comment above the node
+                            // Only process if it's not inline (inline comments are handled in node reconstruction)
+                            if (comment.inline !== true) {
                                 const startOffset = this.rowColToCharOffset(
                                     originalScript,
                                     comment.codePos.startRow,
@@ -1642,12 +1606,32 @@ export class RobinPath {
                         effectiveStartCol,
                         false // inclusive
                     );
-                    const endOffset = this.rowColToCharOffset(
-                        originalScript,
-                        effectiveEndRow,
-                        effectiveEndCol,
-                        true // exclusive (one past the end)
-                    );
+                    
+                    // When we have inline comments, we need to preserve the newline
+                    // The reconstructed code doesn't include a newline, so we need to ensure
+                    // endOffset points AFTER the newline so it's preserved
+                    let endOffset: number;
+                    if (inlineComments.length > 0) {
+                        // For nodes with inline comments, calculate endOffset to point after the newline
+                        // Get the line containing the inline comment
+                        const lines = originalScript.split('\n');
+                        const lineWithComment = lines[effectiveEndRow] || '';
+                        // Calculate offset to end of line content, then add 1 to point after newline
+                        endOffset = this.rowColToCharOffset(
+                            originalScript,
+                            effectiveEndRow,
+                            lineWithComment.length,
+                            true // Point after the newline character
+                        );
+                    } else {
+                        // No inline comments, use normal calculation
+                        endOffset = this.rowColToCharOffset(
+                            originalScript,
+                            effectiveEndRow,
+                            effectiveEndCol,
+                            true // exclusive (one past the end)
+                        );
+                    }
 
                     codePositions.push({
                         startOffset,
