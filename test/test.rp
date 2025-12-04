@@ -910,24 +910,13 @@ log "Test 19a4 - Variable Interpolation in Object and Array Literals: All passed
 
 log "Test 19a3 - Object and Array Literals {} and []: All passed"
 
-# Test 19b: Object module tests (get, set, keys, values, entries, merge, clone)
+# Test 19b: Object module tests (keys, values, entries, merge, clone)
+# Note: get and set are now built-in commands (see Test 29a and Test 29b)
 $testObj = $parsed
-clear
-scope
-  get $testObj "name"
-  test.assertEqual $ "John" "Object.get failed"
-endscope
-set $testObj "city" "NYC"
-$setObj = $
-clear
-scope
-  get $setObj "city"
-  test.assertEqual $ "NYC" "Object.set failed"
-endscope
-keys $setObj
+keys $testObj
 $keys = $
 test.assertContains $keys "name" "Object.keys failed"
-values $setObj
+values $testObj
 $values = $
 test.assertContains $values "John" "Object.values failed"
 json.parse '{"a": 1}'
@@ -1226,56 +1215,136 @@ scope
 endscope
 log "Test 28 - Complex variable assignments: All passed"
 
-# Test 29: assign command
+# Test 29: set command (replaces assign)
 $testVar = "original"
 test.assertEqual $testVar "original" "Initial assignment failed"
-assign $testVar "assigned"
-test.assertEqual $testVar "assigned" "assign command failed"
-assign $testVar 42
-test.assertEqual $testVar 42 "assign command with number failed"
-assign $testVar true
-test.assertEqual $testVar true "assign command with boolean failed"
+set $testVar "assigned"
+test.assertEqual $testVar "assigned" "set command failed"
+set $testVar 42
+test.assertEqual $testVar 42 "set command with number failed"
+set $testVar true
+test.assertEqual $testVar true "set command with boolean failed"
 $sourceVar = "source value"
-assign $testVar $sourceVar
-test.assertEqual $testVar "source value" "assign command with variable failed"
+set $testVar $sourceVar
+test.assertEqual $testVar "source value" "set command with variable failed"
 math.add 10 20
-assign $testVar $
-test.assertEqual $testVar 30 "assign command with last value failed"
+set $testVar $
+test.assertEqual $testVar 30 "set command with last value failed"
 
-# Test assign with fallback (3rd parameter)
+# Test set with fallback (3rd parameter)
 $emptyVar = null
-assign $testVar $emptyVar "fallback value"
-test.assertEqual $testVar "fallback value" "assign with fallback for null failed"
+set $testVar $emptyVar "fallback value"
+test.assertEqual $testVar "fallback value" "set with fallback for null failed"
 
 $emptyVar = ""
-assign $testVar $emptyVar "fallback string"
-test.assertEqual $testVar "fallback string" "assign with fallback for empty string failed"
+set $testVar $emptyVar "fallback string"
+test.assertEqual $testVar "fallback string" "set with fallback for empty string failed"
 
 $emptyVar = null
-assign $testVar $emptyVar 42
-test.assertEqual $testVar 42 "assign with fallback number failed"
+set $testVar $emptyVar 42
+test.assertEqual $testVar 42 "set with fallback number failed"
 
 $emptyVar = null
-assign $testVar $emptyVar true
-test.assertEqual $testVar true "assign with fallback boolean failed"
+set $testVar $emptyVar true
+test.assertEqual $testVar true "set with fallback boolean failed"
 
 json.parse '[]'
 $emptyVar = $
-assign $testVar $emptyVar "fallback for empty array"
-test.assertEqual $testVar "fallback for empty array" "assign with fallback for empty array failed"
+set $testVar $emptyVar "fallback for empty array"
+test.assertEqual $testVar "fallback for empty array" "set with fallback for empty array failed"
 
 $emptyVar = "not empty"
-assign $testVar $emptyVar "fallback"
-test.assertEqual $testVar "not empty" "assign should not use fallback when value is not empty"
+set $testVar $emptyVar "fallback"
+test.assertEqual $testVar "not empty" "set should not use fallback when value is not empty"
 
 $emptyVar = 0
-assign $testVar $emptyVar "fallback"
-test.assertEqual $testVar 0 "assign should not use fallback for zero"
+set $testVar $emptyVar "fallback"
+test.assertEqual $testVar 0 "set should not use fallback for zero"
 
 $emptyVar = false
-assign $testVar $emptyVar "fallback"
-test.assertEqual $testVar false "assign should not use fallback for false"
-log "Test 29 - assign command: All passed"
+set $testVar $emptyVar "fallback"
+test.assertEqual $testVar false "set should not use fallback for false"
+log "Test 29 - set command: All passed"
+
+# Test 29a: get command (built-in)
+log "Test 29a - get command (built-in)"
+
+# Test basic get with object
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC", "zip": 10001}}'
+$user = $
+clear
+scope
+  get $user "name"
+  test.assertEqual $ "John" "get command - basic property failed"
+endscope
+
+clear
+scope
+  get $user "age"
+  test.assertEqual $ 30 "get command - number property failed"
+endscope
+
+# Test get with nested path
+clear
+scope
+  get $user "address.city"
+  test.assertEqual $ "NYC" "get command - nested path failed"
+endscope
+
+clear
+scope
+  get $user "address.zip"
+  test.assertEqual $ 10001 "get command - nested path with number failed"
+endscope
+
+# Test get with non-existent path
+clear
+scope
+  get $user "nonexistent"
+  test.assertEqual $ null "get command - non-existent path should return null"
+endscope
+
+clear
+scope
+  get $user "address.nonexistent"
+  test.assertEqual $ null "get command - nested non-existent path should return null"
+endscope
+
+# Test get with empty path
+clear
+scope
+  get $user ""
+  test.assertEqual $ null "get command - empty path should return null"
+endscope
+
+# Test get with object literal
+clear
+scope
+  get {name: "Alice", age: 25} "name"
+  test.assertEqual $ "Alice" "get command - object literal failed"
+endscope
+
+# Test get with variable object
+$testObj = {key1: "value1", key2: {nested: "nestedValue"}}
+clear
+scope
+  get $testObj "key1"
+  test.assertEqual $ "value1" "get command - variable object failed"
+endscope
+
+clear
+scope
+  get $testObj "key2.nested"
+  test.assertEqual $ "nestedValue" "get command - variable object nested path failed"
+endscope
+
+# Test get with null object (should throw error)
+# Note: This is tested manually as it throws an error
+
+# Test get with array (should throw error for non-object)
+# Note: This is tested manually as it throws an error
+
+log "Test 29a - get command (built-in): All passed"
 
 # Test 30: empty command
 $toEmpty = "not empty"
@@ -1496,15 +1565,15 @@ $test5 = $(
 test.assertEqual $test5 30 "Multi-line subexpression failed"
 
 # Test multi-line subexpression with nested subexpression
-# Note: $test2 is 15 at this point. The nested subexpression $(assign $test2 1) 
+# Note: $test2 is 15 at this point. The nested subexpression $(set $test2 1) 
 # sets $test2 to 1 and returns 1, but $test2 is evaluated first (as 15) before 
 # the nested subexpression runs, so result is 15 * 1 = 15
 $test6 = $(
-  math.multiply $test2 $(assign $test2 1)
+  math.multiply $test2 $(set $test2 1)
 )
 
 test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed"
-test.assertEqual $test2 1 "Nested assign in subexpression failed"
+test.assertEqual $test2 1 "Nested set in subexpression failed"
 
 # Test complex multi-line subexpression
 $test7 = $(
@@ -1566,7 +1635,7 @@ test.assertEqual $test12 7 "Multi-line subexpression with multiple statements fa
 # Test subexpression with variable assignment inside (modifies parent scope)
 $testVar = 10  # Set initial value in parent scope
 $test13 = $(
-  assign $testVar 42  # This should modify the parent $testVar
+  set $testVar 42  # This should modify the parent $testVar
   math.add $testVar 8
 )
 
@@ -1761,19 +1830,19 @@ $config.api.timeout = 30
 test.assertEqual $config.api.url "https://api.example.com" "Multiple assignments to nested path failed"
 test.assertEqual $config.api.timeout 30 "Multiple assignments to nested path second property failed"
 
-# Test assignment with assign command to attribute path
-assign $user.city "Tokyo"
-test.assertEqual $user.city "Tokyo" "assign command with attribute path failed"
+# Test assignment with set command to attribute path
+set $user.city "Tokyo"
+test.assertEqual $user.city "Tokyo" "set command with attribute path failed"
 
-# Test assignment with assign command to array index
-assign $arr[0] 200
-test.assertEqual $arr[0] 200 "assign command with array index failed"
+# Test assignment with set command to array index
+set $arr[0] 200
+test.assertEqual $arr[0] 200 "set command with array index failed"
 
-# Test assignment with assign command to last value attribute path
+# Test assignment with set command to last value attribute path
 json.parse '{"name": "Alice"}'
 $
-assign $.age 25
-test.assertEqual $.age 25 "assign command with last value attribute path failed"
+set $.age 25
+test.assertEqual $.age 25 "set command with last value attribute path failed"
 
 log "Test 34 - Assignment to attribute paths and array indices: All passed"
 
@@ -1784,7 +1853,7 @@ for $i in range 1 10
   if $i == 5
     break
   endif
-  assign $breakTest $i
+  set $breakTest $i
 endfor
 test.assertEqual $breakTest 4 "Basic break statement failed"
 
@@ -1792,12 +1861,12 @@ test.assertEqual $breakTest 4 "Basic break statement failed"
 $outerCount = 0
 $innerCount = 0
 for $i in range 1 3
-  assign $outerCount $i
+  set $outerCount $i
   for $j in range 1 5
     if $j == 3
       break
     endif
-    assign $innerCount $j
+    set $innerCount $j
   endfor
 endfor
 test.assertEqual $outerCount 3 "Break in nested loop - outer loop failed"
@@ -1807,7 +1876,7 @@ test.assertEqual $innerCount 2 "Break in nested loop - inner loop failed"
 $found = false
 for $i in range 1 10
   if $i == 7
-    assign $found true
+    set $found true
     break
   endif
 endfor
@@ -1819,14 +1888,14 @@ for $i in range 1 10
   if $i == 1
     break
   endif
-  assign $earlyBreak $i
+  set $earlyBreak $i
 endfor
 test.assertEqual $earlyBreak 0 "Early break failed"
 
 # Test break after some iterations
 $iterations = 0
 for $i in range 1 10
-  assign $iterations $i
+  set $iterations $i
   if $i == 3
     break
   endif
@@ -2947,7 +3016,7 @@ test.assertEqual $isolatedVar null "Variable from isolated scope should not be a
 # Test 46g: Isolated scope can use declared parameters
 clear
 scope $value
-  assign $value 42
+  set $value 42
   test.assertEqual $value 42 "Isolated scope should be able to set parameter values"
   math.add $value 8
   test.assertEqual $ 50 "Isolated scope should be able to use parameters in operations"

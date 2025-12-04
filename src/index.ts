@@ -1521,7 +1521,7 @@ export class RobinPath {
                 if (hasComments) {
                     for (const comment of node.comments) {
                         // Check if comment is empty (should be removed)
-                        if (!comment.text || comment.text.trim() === '') {
+                    if (!comment.text || comment.text.trim() === '') {
                             // This is an empty comment - remove it by replacing with empty string
                             // Only process if it's not inline (inline comments are handled in node reconstruction)
                             if (comment.inline !== true) {

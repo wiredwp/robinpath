@@ -11,56 +11,6 @@ import type {
  */
 
 export const ObjectFunctions: Record<string, BuiltinHandler> = {
-    get: (args) => {
-        const obj = args[0];
-        const path = String(args[1] ?? '');
-        
-        if (typeof obj !== 'object' || obj === null) {
-            throw new Error('First argument must be an object');
-        }
-        
-        const keys = path.split('.');
-        let current: any = obj;
-        
-        for (const key of keys) {
-            if (current === null || current === undefined) {
-                return null;
-            }
-            if (typeof current !== 'object') {
-                return null;
-            }
-            current = current[key];
-        }
-        
-        return current;
-    },
-
-    set: (args) => {
-        const obj = args[0];
-        const path = String(args[1] ?? '');
-        const value = args[2];
-        
-        if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
-            throw new Error('First argument must be a non-array object');
-        }
-        
-        const keys = path.split('.');
-        const lastKey = keys.pop();
-        if (!lastKey) {
-            throw new Error('Path cannot be empty');
-        }
-        
-        let current: any = obj;
-        for (const key of keys) {
-            if (current[key] === null || current[key] === undefined || typeof current[key] !== 'object') {
-                current[key] = {};
-            }
-            current = current[key];
-        }
-        
-        current[lastKey] = value;
-        return obj;
-    },
 
     keyLength: (args) => {
         const obj = args[0];
@@ -119,59 +69,6 @@ export const ObjectFunctions: Record<string, BuiltinHandler> = {
 };
 
 export const ObjectFunctionMetadata: Record<string, FunctionMetadata> = {
-    get: {
-        description: 'Gets a value from an object using a dot-notation path',
-        parameters: [
-            {
-                name: 'obj',
-                dataType: 'object',
-                description: 'Object to get value from',
-                formInputType: 'json',
-                required: true
-            },
-            {
-                name: 'path',
-                dataType: 'string',
-                description: 'Dot-notation path (e.g., "user.name")',
-                formInputType: 'text',
-                required: true
-            }
-        ],
-        returnType: 'any',
-        returnDescription: 'Value at the specified path, or null if not found',
-        example: 'get {user: {name: "John"}} "user.name"  # Returns "John"'
-    },
-
-    set: {
-        description: 'Sets a value in an object using a dot-notation path',
-        parameters: [
-            {
-                name: 'obj',
-                dataType: 'object',
-                description: 'Object to set value in',
-                formInputType: 'json',
-                required: true
-            },
-            {
-                name: 'path',
-                dataType: 'string',
-                description: 'Dot-notation path (e.g., "user.name")',
-                formInputType: 'text',
-                required: true
-            },
-            {
-                name: 'value',
-                dataType: 'any',
-                description: 'Value to set',
-                formInputType: 'json',
-                required: true
-            }
-        ],
-        returnType: 'object',
-        returnDescription: 'The modified object',
-        example: 'set {user: {}} "user.name" "John"  # Returns {user: {name: "John"}}'
-    },
-
     keys: {
         description: 'Returns an array of an object\'s own enumerable property names',
         parameters: [
@@ -262,10 +159,8 @@ export const ObjectFunctionMetadata: Record<string, FunctionMetadata> = {
 };
 
 export const ObjectModuleMetadata: ModuleMetadata = {
-    description: 'Object manipulation operations (get, set, keys, values, entries, merge, clone)',
+    description: 'Object manipulation operations (keys, values, entries, merge, clone)',
     methods: [
-        'get',
-        'set',
         'keys',
         'values',
         'entries',

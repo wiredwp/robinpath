@@ -120,16 +120,45 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         return null;
     },
 
-    assign: () => {
-        // assign command: assign <variable> <value> [fallback]
+    set: () => {
+        // set command: set <variable> <value> [fallback]
         // Assigns a value to a variable, with optional fallback if value is empty/null
         // Examples:
-        //   assign $myVar "hello"           # $myVar = "hello"
-        //   assign $user.name "John"       # $user.name = "John" (attribute path)
-        //   assign $x "" "default"         # $x = "default" (fallback used)
+        //   set $myVar "hello"           # $myVar = "hello"
+        //   set $user.name "John"       # $user.name = "John" (attribute path)
+        //   set $x "" "default"         # $x = "default" (fallback used)
         // Note: The actual implementation is in executeCommand for special handling
         // This registration ensures it's recognized as a valid command
         return null;
+    },
+
+    get: (args) => {
+        // get command: get <object> <path>
+        // Gets a value from an object using a dot-notation path
+        // Examples:
+        //   get {user: {name: "John"}} "user.name"  # Returns "John"
+        //   get $myObj "property.subproperty"        # Returns value at path
+        const obj = args[0];
+        const path = String(args[1] ?? '');
+        
+        if (typeof obj !== 'object' || obj === null) {
+            throw new Error('First argument must be an object');
+        }
+        
+        const keys = path.split('.');
+        let current: any = obj;
+        
+        for (const key of keys) {
+            if (current === null || current === undefined) {
+                return null;
+            }
+            if (typeof current !== 'object') {
+                return null;
+            }
+            current = current[key];
+        }
+        
+        return current;
     },
 
     range: (args) => {
@@ -364,7 +393,7 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'scope\n  forget $x\n  $x  # Returns null\nendscope'
     },
 
-    assign: {
+    set: {
         description: 'Assigns a value to a variable, with optional fallback if value is empty/null (actual implementation handled by executeCommand)',
         parameters: [
             {
@@ -391,7 +420,30 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         ],
         returnType: 'null',
         returnDescription: 'Always returns null (does not affect last value)',
-        example: 'assign $myVar "hello"  # $myVar = "hello"\nassign $x "" "default"  # $x = "default" (fallback used)'
+        example: 'set $myVar "hello"  # $myVar = "hello"\nset $x "" "default"  # $x = "default" (fallback used)'
+    },
+
+    get: {
+        description: 'Gets a value from an object using a dot-notation path',
+        parameters: [
+            {
+                name: 'obj',
+                dataType: 'object',
+                description: 'Object to get value from',
+                formInputType: 'json',
+                required: true
+            },
+            {
+                name: 'path',
+                dataType: 'string',
+                description: 'Dot-notation path (e.g., "user.name")',
+                formInputType: 'text',
+                required: true
+            }
+        ],
+        returnType: 'any',
+        returnDescription: 'Value at the specified path, or null if not found',
+        example: 'get {user: {name: "John"}} "user.name"  # Returns "John"'
     },
 
     range: {
@@ -437,7 +489,8 @@ export const CoreModuleMetadata: ModuleMetadata = {
         'getType',
         'clear',
         'forget',
-        'assign',
+        'set',
+        'get',
         'range'
     ]
 };

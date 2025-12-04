@@ -577,10 +577,10 @@ Examples:
             return;
         }
 
-        // Special handling for "assign" command - assigns a value to a variable
-        if (cmd.name === 'assign') {
+        // Special handling for "set" command - assigns a value to a variable
+        if (cmd.name === 'set') {
             if (cmd.args.length < 2) {
-                throw new Error('assign requires at least 2 arguments: variable name and value (optional fallback as 3rd arg)');
+                throw new Error('set requires at least 2 arguments: variable name and value (optional fallback as 3rd arg)');
             }
             
             // Preserve the last value - assign should not affect $
@@ -589,7 +589,7 @@ Examples:
             // Get variable name from first arg (must be a variable reference)
             const varArg = cmd.args[0];
             if (varArg.type !== 'var') {
-                throw new Error('assign first argument must be a variable (e.g., $myVar)');
+                throw new Error('set first argument must be a variable (e.g., $myVar)');
             }
             const varName = varArg.name;
             const varPath = varArg.path; // Support attribute paths (e.g., $user.city)
@@ -615,7 +615,7 @@ Examples:
             this.setVariable(varName, value);
             }
             
-            // Restore the last value - assign command should not affect $
+            // Restore the last value - set command should not affect $
             frame.lastValue = previousLastValue;
             return;
         }
