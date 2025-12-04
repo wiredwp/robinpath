@@ -2511,6 +2511,54 @@ $a = 1`;
             throw new Error('CodePos Whitespace Test 7 FAILED - Command with mixed whitespace');
         }
         
+        // Test codePos excluding inline comments
+        console.log('Testing codePos excluding inline comments');
+        const inlineCommentTestScript = `$a = 3    # inline comment
+$b = "test"  # another comment
+log "hello"  # log comment
+math.add 5 10  # math comment`;
+        
+        const inlineCommentAST = codePosTestRp.getAST(inlineCommentTestScript);
+        const inlineCommentAssignNode = inlineCommentAST.find(node => node.type === 'assignment' && node.targetName === 'a');
+        const inlineCommentAssignNode2 = inlineCommentAST.find(node => node.type === 'assignment' && node.targetName === 'b');
+        const inlineCommentLogNode = inlineCommentAST.find(node => node.type === 'command' && node.name === 'log');
+        const inlineCommentMathNode = inlineCommentAST.find(node => node.type === 'command' && node.name === 'math.add');
+        
+        // For "$a = 3    # inline comment", endCol should be at position of '3' (index 5)
+        // Line: "$a = 3    # inline comment"
+        //       0123456789...
+        const inlineCommentTest1Passed = inlineCommentAssignNode?.codePos?.endCol === 5; // Position of '3'
+        
+        // For "$b = "test"  # another comment", endCol should be at position of closing quote (index 10)
+        // Line: "$b = "test"  # another comment"
+        //       012345678901234567890123456789
+        const inlineCommentTest2Passed = inlineCommentAssignNode2?.codePos?.endCol === 10; // Position of closing quote
+        
+        // For "log "hello"  # log comment", endCol should be at position of closing quote (index 10)
+        // Line: "log "hello"  # log comment"
+        //       012345678901234567890123456789
+        const inlineCommentTest3Passed = inlineCommentLogNode?.codePos?.endCol === 10; // Position of closing quote after "hello"
+        
+        // For "math.add 5 10  # math comment", endCol should be at position of '0' (last digit, index 12)
+        // Line: "math.add 5 10  # math comment"
+        //       012345678901234567890123456789
+        const inlineCommentTest4Passed = inlineCommentMathNode?.codePos?.endCol === 12; // Position of '0' in "10"
+        
+        if (inlineCommentTest1Passed && inlineCommentTest2Passed && inlineCommentTest3Passed && inlineCommentTest4Passed) {
+            console.log('✓ CodePos Inline Comment Test PASSED - endCol excludes inline comments');
+            console.log(`  Assignment $a endCol: ${inlineCommentAssignNode?.codePos?.endCol} (expected: 5)`);
+            console.log(`  Assignment $b endCol: ${inlineCommentAssignNode2?.codePos?.endCol} (expected: 10)`);
+            console.log(`  Command log endCol: ${inlineCommentLogNode?.codePos?.endCol} (expected: 10)`);
+            console.log(`  Command math.add endCol: ${inlineCommentMathNode?.codePos?.endCol} (expected: 12)`);
+        } else {
+            console.log('✗ CodePos Inline Comment Test FAILED - endCol should exclude inline comments');
+            console.log(`  Assignment $a endCol: ${inlineCommentAssignNode?.codePos?.endCol} (expected: 5)`);
+            console.log(`  Assignment $b endCol: ${inlineCommentAssignNode2?.codePos?.endCol} (expected: 10)`);
+            console.log(`  Command log endCol: ${inlineCommentLogNode?.codePos?.endCol} (expected: 10)`);
+            console.log(`  Command math.add endCol: ${inlineCommentMathNode?.codePos?.endCol} (expected: 12)`);
+            throw new Error('CodePos Inline Comment Test FAILED - endCol should exclude inline comments');
+        }
+        
         console.log('✓ All codePos tests PASSED!');
         console.log('='.repeat(60));
         

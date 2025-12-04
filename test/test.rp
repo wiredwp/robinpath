@@ -3265,5 +3265,15 @@ test.assertEqual $var3 3 "Mixed indentation level 3 failed"
 
 log "Test 50 - Code position with leading whitespace: All passed"
 
+# Test 51: Code position (codePos) excluding inline comments
+log "Test 51 - Code position excluding inline comments"
+
+$a = 3    # inline comment
+$b = "test"  # another comment
+log "hello"  # log comment
+math.add 5 10  # math comment
+
+log "Test 51 - Code position excluding inline comments: All passed"
+
 log "All tests completed!"
 

@@ -36,7 +36,7 @@ export class Parser {
 
     /**
      * Helper to get column positions from line content
-     * Returns start column (0 or position of first non-whitespace) and end column (line length - 1)
+     * Returns start column (0 or position of first non-whitespace) and end column (excluding inline comments)
      */
     private getColumnPositions(lineNumber: number): { startCol: number; endCol: number } {
         const line = this.lines[lineNumber] || '';
@@ -51,8 +51,60 @@ export class Parser {
                 break;
             }
         }
-        // End column is the last character index (inclusive)
-        const endCol = Math.max(0, line.length - 1);
+        
+        // Find the position of inline comment (#) if it exists (not inside a string)
+        let commentPos = -1;
+        let inString: false | '"' | "'" | '`' = false;
+        let escaped = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            // Handle string boundaries
+            if (!escaped && (char === '"' || char === "'" || char === '`')) {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
+                }
+                escaped = false;
+                continue;
+            }
+            
+            if (inString) {
+                escaped = char === '\\' && !escaped;
+                continue;
+            }
+            
+            // Check for comment character (not inside string)
+            if (char === '#') {
+                commentPos = i;
+                break;
+            }
+            
+            escaped = false;
+        }
+        
+        // If there's an inline comment, find the last non-whitespace character before it
+        let endCol: number;
+        if (commentPos >= 0) {
+            // Find the last non-whitespace character before the comment
+            endCol = commentPos - 1;
+            for (let i = commentPos - 1; i >= startCol; i--) {
+                if (!/\s/.test(line[i])) {
+                    endCol = i;
+                    break;
+                }
+            }
+            // If no non-whitespace found before comment, use startCol
+            if (endCol < startCol) {
+                endCol = startCol;
+            }
+        } else {
+            // No inline comment, use the last character index (inclusive)
+            endCol = Math.max(0, line.length - 1);
+        }
+        
         return { startCol, endCol };
     }
 
