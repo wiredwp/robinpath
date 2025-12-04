@@ -3209,5 +3209,61 @@ test.assertNotNull $ "Comment with blank line before should not be attached"
 
 log "Test 49 - Comment attachment and AST nodes: All passed"
 
+# Test 50: Code position (codePos) with leading whitespace
+log "Test 50 - Code position with leading whitespace"
+
+# Test commands with leading whitespace
+  log "test with 2 spaces"
+test.assertNotNull $ "Command with 2 leading spaces failed"
+
+    log "test with 4 spaces"
+test.assertNotNull $ "Command with 4 leading spaces failed"
+
+# Test assignments with leading whitespace
+  $spacedVar = "value with 2 spaces"
+test.assertEqual $spacedVar "value with 2 spaces" "Assignment with 2 leading spaces failed"
+
+    $spacedVar2 = 42
+test.assertEqual $spacedVar2 42 "Assignment with 4 leading spaces failed"
+
+# Test set command with leading whitespace
+  set $spacedVar "new value"
+test.assertEqual $spacedVar "new value" "set command with 2 leading spaces failed"
+
+    set $spacedVar2 100
+test.assertEqual $spacedVar2 100 "set command with 4 leading spaces failed"
+
+# Test function calls with leading whitespace
+  math.add 5 5
+test.assertEqual $ 10 "Function call with 2 leading spaces failed"
+
+    math.multiply 3 4
+test.assertEqual $ 12 "Function call with 4 leading spaces failed"
+
+# Test nested indentation (inside if block)
+if true
+    $nestedVar = "nested"
+    test.assertEqual $nestedVar "nested" "Nested assignment with indentation failed"
+    
+    math.add 10 20
+    test.assertEqual $ 30 "Nested function call with indentation failed"
+endif
+
+# Test nested indentation (inside for loop)
+for $i in range 1 3
+    $loopVar = $i
+    test.assertEqual $loopVar $i "Loop assignment with indentation failed"
+endfor
+
+# Test mixed indentation levels
+  $var1 = 1
+    $var2 = 2
+      $var3 = 3
+test.assertEqual $var1 1 "Mixed indentation level 1 failed"
+test.assertEqual $var2 2 "Mixed indentation level 2 failed"
+test.assertEqual $var3 3 "Mixed indentation level 3 failed"
+
+log "Test 50 - Code position with leading whitespace: All passed"
+
 log "All tests completed!"
 

@@ -40,9 +40,19 @@ export class Parser {
      */
     private getColumnPositions(lineNumber: number): { startCol: number; endCol: number } {
         const line = this.lines[lineNumber] || '';
-        const trimmed = line.trimStart();
-        const startCol = line.length - trimmed.length; // Position of first non-whitespace, or 0
-        const endCol = Math.max(0, line.length - 1); // End of line
+        if (!line) {
+            return { startCol: 0, endCol: 0 };
+        }
+        // Find the first non-whitespace character
+        let startCol = 0;
+        for (let i = 0; i < line.length; i++) {
+            if (!/\s/.test(line[i])) {
+                startCol = i;
+                break;
+            }
+        }
+        // End column is the last character index (inclusive)
+        const endCol = Math.max(0, line.length - 1);
         return { startCol, endCol };
     }
 
@@ -840,13 +850,19 @@ export class Parser {
      */
     private extractParenthesizedContent(): string {
         const startLine = this.currentLine;
-        const line = this.lines[startLine].trim();
+        const originalLine = this.lines[startLine];
+        const trimmedLine = originalLine.trim();
         
-        // Find the opening parenthesis position
-        const openParenIndex = line.indexOf('(');
-        if (openParenIndex === -1) {
+        // Find the opening parenthesis position in the trimmed line
+        const openParenIndexInTrimmed = trimmedLine.indexOf('(');
+        if (openParenIndexInTrimmed === -1) {
             throw this.createError('expected (', startLine);
         }
+        
+        // Find the actual position in the original line (accounting for leading whitespace)
+        // Find where the trimmed content starts in the original line
+        const trimmedStart = originalLine.length - trimmedLine.length;
+        const openParenIndex = trimmedStart + openParenIndexInTrimmed;
 
         let pos = openParenIndex + 1;
         let depth = 1;
@@ -856,6 +872,14 @@ export class Parser {
 
         while (currentLineIndex < this.lines.length && depth > 0) {
             const currentLine = this.lines[currentLineIndex];
+            
+            // On the first line, use the calculated pos. On subsequent lines, start from beginning
+            if (currentLineIndex === startLine && pos >= currentLine.length) {
+                // We've reached the end of the first line, move to next
+                currentLineIndex++;
+                pos = 0;
+                continue;
+            }
             
             while (pos < currentLine.length && depth > 0) {
                 const char = currentLine[pos];

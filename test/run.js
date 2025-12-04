@@ -2360,6 +2360,160 @@ $a = 1`;
         console.log('✓ All metadata tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test codePos with leading whitespace
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing codePos with leading whitespace');
+        console.log('='.repeat(60));
+        
+        const codePosWhitespaceTestRp = new RobinPath();
+        
+        // Test 1: Command without leading whitespace
+        const whitespaceTestScriptNoSpace = `log $a $b`;
+        const whitespaceAstNoSpace = codePosWhitespaceTestRp.getAST(whitespaceTestScriptNoSpace);
+        const whitespaceNodeNoSpace = whitespaceAstNoSpace[0];
+        const whitespaceTest1Passed = whitespaceNodeNoSpace?.codePos?.startCol === 0 && 
+                           whitespaceNodeNoSpace?.codePos?.endCol === whitespaceTestScriptNoSpace.length - 1;
+        
+        if (whitespaceTest1Passed) {
+            console.log('✓ CodePos Whitespace Test 1 PASSED - Command without leading whitespace');
+            console.log(`  startCol: ${whitespaceNodeNoSpace?.codePos?.startCol} (expected: 0)`);
+            console.log(`  endCol: ${whitespaceNodeNoSpace?.codePos?.endCol} (expected: ${whitespaceTestScriptNoSpace.length - 1})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 1 FAILED - Command without leading whitespace');
+            console.log('  AST:', JSON.stringify(whitespaceNodeNoSpace, null, 2));
+            console.log(`  Expected startCol: 0, got: ${whitespaceNodeNoSpace?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceTestScriptNoSpace.length - 1}, got: ${whitespaceNodeNoSpace?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 1 FAILED - Command without leading whitespace');
+        }
+        
+        // Test 2: Command with 2 leading spaces
+        const whitespaceTestScript2Spaces = `  log $a $b`;
+        const whitespaceAst2Spaces = codePosWhitespaceTestRp.getAST(whitespaceTestScript2Spaces);
+        const whitespaceNode2Spaces = whitespaceAst2Spaces[0];
+        const whitespaceExpectedStartCol2 = 2; // Position of 'l' after 2 spaces
+        const whitespaceExpectedEndCol2 = whitespaceTestScript2Spaces.length - 1; // Last character 'b'
+        const whitespaceTest2Passed = whitespaceNode2Spaces?.codePos?.startCol === whitespaceExpectedStartCol2 && 
+                           whitespaceNode2Spaces?.codePos?.endCol === whitespaceExpectedEndCol2;
+        
+        if (whitespaceTest2Passed) {
+            console.log('✓ CodePos Whitespace Test 2 PASSED - Command with 2 leading spaces');
+            console.log(`  startCol: ${whitespaceNode2Spaces?.codePos?.startCol} (expected: ${whitespaceExpectedStartCol2})`);
+            console.log(`  endCol: ${whitespaceNode2Spaces?.codePos?.endCol} (expected: ${whitespaceExpectedEndCol2})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 2 FAILED - Command with 2 leading spaces');
+            console.log('  AST:', JSON.stringify(whitespaceNode2Spaces, null, 2));
+            console.log(`  Expected startCol: ${whitespaceExpectedStartCol2}, got: ${whitespaceNode2Spaces?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceExpectedEndCol2}, got: ${whitespaceNode2Spaces?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 2 FAILED - Command with 2 leading spaces');
+        }
+        
+        // Test 3: Command with 4 leading spaces
+        const whitespaceTestScript4Spaces = `    log $a $b`;
+        const whitespaceAst4Spaces = codePosWhitespaceTestRp.getAST(whitespaceTestScript4Spaces);
+        const whitespaceNode4Spaces = whitespaceAst4Spaces[0];
+        const whitespaceExpectedStartCol4 = 4; // Position of 'l' after 4 spaces
+        const whitespaceExpectedEndCol4 = whitespaceTestScript4Spaces.length - 1; // Last character 'b'
+        const whitespaceTest3Passed = whitespaceNode4Spaces?.codePos?.startCol === whitespaceExpectedStartCol4 && 
+                           whitespaceNode4Spaces?.codePos?.endCol === whitespaceExpectedEndCol4;
+        
+        if (whitespaceTest3Passed) {
+            console.log('✓ CodePos Whitespace Test 3 PASSED - Command with 4 leading spaces');
+            console.log(`  startCol: ${whitespaceNode4Spaces?.codePos?.startCol} (expected: ${whitespaceExpectedStartCol4})`);
+            console.log(`  endCol: ${whitespaceNode4Spaces?.codePos?.endCol} (expected: ${whitespaceExpectedEndCol4})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 3 FAILED - Command with 4 leading spaces');
+            console.log('  AST:', JSON.stringify(whitespaceNode4Spaces, null, 2));
+            console.log(`  Expected startCol: ${whitespaceExpectedStartCol4}, got: ${whitespaceNode4Spaces?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceExpectedEndCol4}, got: ${whitespaceNode4Spaces?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 3 FAILED - Command with 4 leading spaces');
+        }
+        
+        // Test 4: Assignment without leading whitespace
+        const whitespaceTestScriptAssignNoSpace = `$var = 42`;
+        const whitespaceAstAssignNoSpace = codePosWhitespaceTestRp.getAST(whitespaceTestScriptAssignNoSpace);
+        const whitespaceNodeAssignNoSpace = whitespaceAstAssignNoSpace[0];
+        const whitespaceTest4Passed = whitespaceNodeAssignNoSpace?.codePos?.startCol === 0 && 
+                           whitespaceNodeAssignNoSpace?.codePos?.endCol === whitespaceTestScriptAssignNoSpace.length - 1;
+        
+        if (whitespaceTest4Passed) {
+            console.log('✓ CodePos Whitespace Test 4 PASSED - Assignment without leading whitespace');
+            console.log(`  startCol: ${whitespaceNodeAssignNoSpace?.codePos?.startCol} (expected: 0)`);
+            console.log(`  endCol: ${whitespaceNodeAssignNoSpace?.codePos?.endCol} (expected: ${whitespaceTestScriptAssignNoSpace.length - 1})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 4 FAILED - Assignment without leading whitespace');
+            console.log('  AST:', JSON.stringify(whitespaceNodeAssignNoSpace, null, 2));
+            console.log(`  Expected startCol: 0, got: ${whitespaceNodeAssignNoSpace?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceTestScriptAssignNoSpace.length - 1}, got: ${whitespaceNodeAssignNoSpace?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 4 FAILED - Assignment without leading whitespace');
+        }
+        
+        // Test 5: Assignment with 2 leading spaces
+        const whitespaceTestScriptAssign2Spaces = `  $var = 42`;
+        const whitespaceAstAssign2Spaces = codePosWhitespaceTestRp.getAST(whitespaceTestScriptAssign2Spaces);
+        const whitespaceNodeAssign2Spaces = whitespaceAstAssign2Spaces[0];
+        const whitespaceExpectedStartColAssign2 = 2; // Position of '$' after 2 spaces
+        const whitespaceExpectedEndColAssign2 = whitespaceTestScriptAssign2Spaces.length - 1; // Last character '2'
+        const whitespaceTest5Passed = whitespaceNodeAssign2Spaces?.codePos?.startCol === whitespaceExpectedStartColAssign2 && 
+                           whitespaceNodeAssign2Spaces?.codePos?.endCol === whitespaceExpectedEndColAssign2;
+        
+        if (whitespaceTest5Passed) {
+            console.log('✓ CodePos Whitespace Test 5 PASSED - Assignment with 2 leading spaces');
+            console.log(`  startCol: ${whitespaceNodeAssign2Spaces?.codePos?.startCol} (expected: ${whitespaceExpectedStartColAssign2})`);
+            console.log(`  endCol: ${whitespaceNodeAssign2Spaces?.codePos?.endCol} (expected: ${whitespaceExpectedEndColAssign2})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 5 FAILED - Assignment with 2 leading spaces');
+            console.log('  AST:', JSON.stringify(whitespaceNodeAssign2Spaces, null, 2));
+            console.log(`  Expected startCol: ${whitespaceExpectedStartColAssign2}, got: ${whitespaceNodeAssign2Spaces?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceExpectedEndColAssign2}, got: ${whitespaceNodeAssign2Spaces?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 5 FAILED - Assignment with 2 leading spaces');
+        }
+        
+        // Test 6: Command with tabs (should count as whitespace)
+        const whitespaceTestScriptTab = `\tlog $a $b`;
+        const whitespaceAstTab = codePosWhitespaceTestRp.getAST(whitespaceTestScriptTab);
+        const whitespaceNodeTab = whitespaceAstTab[0];
+        const whitespaceExpectedStartColTab = 1; // Position of 'l' after 1 tab
+        const whitespaceExpectedEndColTab = whitespaceTestScriptTab.length - 1; // Last character 'b'
+        const whitespaceTest6Passed = whitespaceNodeTab?.codePos?.startCol === whitespaceExpectedStartColTab && 
+                           whitespaceNodeTab?.codePos?.endCol === whitespaceExpectedEndColTab;
+        
+        if (whitespaceTest6Passed) {
+            console.log('✓ CodePos Whitespace Test 6 PASSED - Command with tab indentation');
+            console.log(`  startCol: ${whitespaceNodeTab?.codePos?.startCol} (expected: ${whitespaceExpectedStartColTab})`);
+            console.log(`  endCol: ${whitespaceNodeTab?.codePos?.endCol} (expected: ${whitespaceExpectedEndColTab})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 6 FAILED - Command with tab indentation');
+            console.log('  AST:', JSON.stringify(whitespaceNodeTab, null, 2));
+            console.log(`  Expected startCol: ${whitespaceExpectedStartColTab}, got: ${whitespaceNodeTab?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceExpectedEndColTab}, got: ${whitespaceNodeTab?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 6 FAILED - Command with tab indentation');
+        }
+        
+        // Test 7: Mixed whitespace (spaces and tabs)
+        const whitespaceTestScriptMixed = `  \tlog $a $b`;
+        const whitespaceAstMixed = codePosWhitespaceTestRp.getAST(whitespaceTestScriptMixed);
+        const whitespaceNodeMixed = whitespaceAstMixed[0];
+        const whitespaceExpectedStartColMixed = 3; // Position of 'l' after 2 spaces + 1 tab
+        const whitespaceExpectedEndColMixed = whitespaceTestScriptMixed.length - 1; // Last character 'b'
+        const whitespaceTest7Passed = whitespaceNodeMixed?.codePos?.startCol === whitespaceExpectedStartColMixed && 
+                           whitespaceNodeMixed?.codePos?.endCol === whitespaceExpectedEndColMixed;
+        
+        if (whitespaceTest7Passed) {
+            console.log('✓ CodePos Whitespace Test 7 PASSED - Command with mixed whitespace (spaces + tab)');
+            console.log(`  startCol: ${whitespaceNodeMixed?.codePos?.startCol} (expected: ${whitespaceExpectedStartColMixed})`);
+            console.log(`  endCol: ${whitespaceNodeMixed?.codePos?.endCol} (expected: ${whitespaceExpectedEndColMixed})`);
+        } else {
+            console.log('✗ CodePos Whitespace Test 7 FAILED - Command with mixed whitespace');
+            console.log('  AST:', JSON.stringify(whitespaceNodeMixed, null, 2));
+            console.log(`  Expected startCol: ${whitespaceExpectedStartColMixed}, got: ${whitespaceNodeMixed?.codePos?.startCol}`);
+            console.log(`  Expected endCol: ${whitespaceExpectedEndColMixed}, got: ${whitespaceNodeMixed?.codePos?.endCol}`);
+            throw new Error('CodePos Whitespace Test 7 FAILED - Command with mixed whitespace');
+        }
+        
+        console.log('✓ All codePos tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {

@@ -67,10 +67,11 @@ export function splitIntoLogicalLines(script: string): string[] {
         // Handle line separators (only at top level, not inside $())
         if ((char === '\n' && subexprDepth === 0) || (char === ';' && subexprDepth === 0)) {
             // End of logical line
-            // Preserve blank lines as empty strings so parser can detect them for comment attachment
+            // Preserve original line with whitespace for codePos calculation
+            // Only check if it's blank (all whitespace) for comment attachment logic
             const trimmed = current.trim();
             if (trimmed) {
-                lines.push(trimmed);
+                lines.push(current); // Preserve original line with leading whitespace
             } else {
                 // Preserve blank line as empty string
                 lines.push('');
@@ -93,11 +94,12 @@ export function splitIntoLogicalLines(script: string): string[] {
     }
 
     // Push remaining content
+    // Preserve original line with whitespace for codePos calculation
     const trimmed = current.trim();
     if (trimmed) {
-        lines.push(trimmed);
+        lines.push(current); // Preserve original line with leading whitespace
     } else if (current.length > 0 || lines.length === 0) {
-        // Preserve blank line at end, or if it's the only line
+        // Preserve blank line as empty string
         lines.push('');
     }
 
