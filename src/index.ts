@@ -52,10 +52,14 @@ import TestModule from './modules/Test';
 
 // Value type is imported from utils
 
+export type BuiltinHandler = (args: Value[]) => Promise<Value> | Value | null;
+export type DecoratorHandler = (funcName: string, func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => Promise<Value[] | Value | null | undefined>;
+
 export interface Environment {
     variables: Map<string, Value>;
     functions: Map<string, DefineFunction>;
     builtins: Map<string, BuiltinHandler>;
+    decorators: Map<string, DecoratorHandler>;
     metadata: Map<string, FunctionMetadata>;
     moduleMetadata: Map<string, ModuleMetadata>;
     currentModule: string | null; // Current module context set by "use" command
@@ -71,7 +75,6 @@ export interface Frame {
     isIsolatedScope?: boolean; // True if this frame is from a scope with parameters (isolated, no parent access)
 }
 
-export type BuiltinHandler = (args: Value[]) => Value | Promise<Value>;
 
 // extractNamedArgs is imported from utils
 export { extractNamedArgs };
@@ -199,11 +202,18 @@ export interface IfFalse {
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
+export interface DecoratorCall {
+    name: string; // Decorator function name (without @)
+    args: Arg[]; // Arguments passed to the decorator
+    codePos: CodePosition; // Code position (row/col) in source code
+}
+
 export interface DefineFunction {
     type: 'define';
     name: string;
     paramNames: string[]; // Parameter names (e.g., ['a', 'b', 'c']) - aliases for $1, $2, $3
     body: Statement[];
+    decorators?: DecoratorCall[]; // Decorators attached to this function (must be immediately before def)
     comments?: CommentWithPosition[]; // Comments attached to this function definition (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -329,6 +339,7 @@ export class RobinPath {
             variables: new Map(),
             functions: new Map(),
             builtins: new Map(),
+            decorators: new Map(),
             metadata: new Map(),
             moduleMetadata: new Map(),
             currentModule: null,
@@ -344,6 +355,9 @@ export class RobinPath {
 
         // Load native modules (includes Core module with built-in functions)
         this.loadNativeModules();
+
+        // Register built-in decorators
+        this.registerBuiltinDecorators();
 
         // Note: "use" command is handled specially in executeCommand to access the executor's environment
 
@@ -498,6 +512,82 @@ export class RobinPath {
      */
     registerBuiltin(name: string, handler: BuiltinHandler): void {
         this.environment.builtins.set(name, handler);
+    }
+
+    /**
+     * Register a decorator function that can be used to modify function calls
+     * Decorators are only available via API registration, not in scripts
+     * @param name Decorator name (without @ prefix)
+     * @param handler Decorator handler function
+     */
+    registerDecorator(name: string, handler: DecoratorHandler): void {
+        this.environment.decorators.set(name, handler);
+    }
+
+    /**
+     * Register built-in decorators (@desc/@description, @title)
+     * Note: These decorators need access to the executor's environment, which is provided
+     * via a closure that captures the environment from the executor when called.
+     */
+    private registerBuiltinDecorators(): void {
+        // @desc or @description - adds "description" metadata to function
+        // The decorator handler will receive the environment from the executor via closure
+        const descHandler: DecoratorHandler = async (funcName: string, _func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+            if (decoratorArgs.length === 0) {
+                throw new Error('@desc/@description decorator requires a value argument');
+            }
+            
+            const description = String(decoratorArgs[0]);
+            
+            // Access environment from the executor (passed via closure)
+            // This is set by Executor when calling the decorator
+            const env = (descHandler as any).__environment;
+            if (!env) {
+                throw new Error('Decorator environment not available');
+            }
+            
+            // Get or create function metadata map
+            if (!env.functionMetadata.has(funcName)) {
+                env.functionMetadata.set(funcName, new Map());
+            }
+            
+            const funcMeta = env.functionMetadata.get(funcName)!;
+            funcMeta.set('description', description);
+            
+            // Return original args unchanged
+            return originalArgs;
+        };
+        
+        this.registerDecorator('desc', descHandler);
+        this.registerDecorator('description', descHandler);
+        
+        // @title - adds "title" metadata to function
+        const titleHandler: DecoratorHandler = async (funcName: string, _func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+            if (decoratorArgs.length === 0) {
+                throw new Error('@title decorator requires a value argument');
+            }
+            
+            const title = String(decoratorArgs[0]);
+            
+            // Access environment from the executor (passed via closure)
+            const env = (titleHandler as any).__environment;
+            if (!env) {
+                throw new Error('Decorator environment not available');
+            }
+            
+            // Get or create function metadata map
+            if (!env.functionMetadata.has(funcName)) {
+                env.functionMetadata.set(funcName, new Map());
+            }
+            
+            const funcMeta = env.functionMetadata.get(funcName)!;
+            funcMeta.set('title', title);
+            
+            // Return original args unchanged
+            return originalArgs;
+        };
+        
+        this.registerDecorator('title', titleHandler);
     }
 
     /**
@@ -1069,7 +1159,8 @@ export class RobinPath {
                     ...base,
                     name: stmt.name,
                     paramNames: stmt.paramNames,
-                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
+                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext)),
+                    decorators: stmt.decorators
                 };
             case 'do':
                 return {

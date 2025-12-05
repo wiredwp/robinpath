@@ -650,8 +650,33 @@ export class ASTToCodeConverter {
                 return `${indent}iffalse ${cmdCode?.trim() || ''}`;
             }
             case 'define': {
+                // Reconstruct decorators first (if any)
+                const decoratorLines: string[] = [];
+                if (node.decorators && Array.isArray(node.decorators) && node.decorators.length > 0) {
+                    for (const decorator of node.decorators) {
+                        const decoratorArgs: string[] = [];
+                        for (const arg of decorator.args || []) {
+                            const argCode = this.reconstructArgCode(arg);
+                            if (argCode !== null) {
+                                decoratorArgs.push(argCode);
+                            }
+                        }
+                        const decoratorCode = `@${decorator.name}${decoratorArgs.length > 0 ? ' ' + decoratorArgs.join(' ') : ''}`;
+                        decoratorLines.push(decoratorCode);
+                    }
+                }
                 const params = node.paramNames.join(' ');
-                const parts: string[] = [`${indent}def ${node.name}${params ? ' ' + params : ''}`];
+                const parts: string[] = [];
+                
+                // Add decorators first (if any)
+                if (decoratorLines.length > 0) {
+                    for (const decoratorLine of decoratorLines) {
+                        parts.push(decoratorLine);
+                    }
+                }
+                
+                // Add function definition
+                parts.push(`${indent}def ${node.name}${params ? ' ' + params : ''}`);
                 
                 if (node.body) {
                     for (const stmt of node.body) {

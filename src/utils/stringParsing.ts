@@ -24,6 +24,23 @@ export function splitIntoLogicalLines(script: string): string[] {
         const nextChar = i + 1 < processedScript.length ? processedScript[i + 1] : '';
         const prevChar = i > 0 ? processedScript[i - 1] : '';
 
+        // Handle comments first (only when not inside a string)
+        // Comments start with # and continue to end of line
+        // We need to preserve comment text for the parser, but skip quote processing inside comments
+        if (!inString && char === '#' && subexprDepth === 0) {
+            // Find the end of line index first, then add the entire comment section at once
+            // This avoids character-by-character string concatenation which is slow
+            let commentEnd = i;
+            while (commentEnd < processedScript.length && processedScript[commentEnd] !== '\n') {
+                commentEnd++;
+            }
+            // Add the entire comment section (including #) to current in one operation
+            current += processedScript.slice(i, commentEnd);
+            i = commentEnd;
+            // The newline will be processed in the next iteration by the line separator logic
+            continue;
+        }
+
         // Handle strings
         if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
             if (!inString) {

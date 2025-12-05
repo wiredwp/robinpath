@@ -16,12 +16,15 @@ import type {
     ReturnStatement,
     CommentStatement,
     CommentWithPosition,
-    CodePosition
+    CodePosition,
+    DecoratorCall
 } from '../index';
 
 export class Parser {
     private lines: string[];
     private currentLine: number = 0;
+    private columnPositionsCache: Map<number, { startCol: number; endCol: number }> = new Map();
+    private inlineCommentCache: Map<number, { text: string; position: number } | null> = new Map();
 
     constructor(lines: string[]) {
         this.lines = lines;
@@ -39,59 +42,89 @@ export class Parser {
      * Returns start column (0 or position of first non-whitespace) and end column (excluding inline comments)
      */
     private getColumnPositions(lineNumber: number): { startCol: number; endCol: number } {
+        // Check cache first
+        const cached = this.columnPositionsCache.get(lineNumber);
+        if (cached !== undefined) {
+            return cached;
+        }
+        
         const line = this.lines[lineNumber] || '';
         if (!line) {
-            return { startCol: 0, endCol: 0 };
+            const result = { startCol: 0, endCol: 0 };
+            this.columnPositionsCache.set(lineNumber, result);
+            return result;
         }
-        // Find the first non-whitespace character
+        
+        // Find the first non-whitespace character (optimized: use char comparison instead of regex)
         let startCol = 0;
         for (let i = 0; i < line.length; i++) {
-            if (!/\s/.test(line[i])) {
+            const char = line[i];
+            if (char !== ' ' && char !== '\t' && char !== '\r' && char !== '\n') {
                 startCol = i;
                 break;
             }
         }
         
         // Find the position of inline comment (#) if it exists (not inside a string)
+        // Try to reuse cached comment extraction result first
         let commentPos = -1;
-        let inString: false | '"' | "'" | '`' = false;
-        let escaped = false;
-        
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
+        const cachedComment = this.inlineCommentCache.get(lineNumber);
+        if (cachedComment !== undefined) {
+            // Use cached result if available
+            commentPos = cachedComment ? cachedComment.position : -1;
+        } else if (line.indexOf('#') >= 0) {
+            // Only scan if # exists - need to verify it's not inside a string
+            // We scan the full line because there might be # inside strings before the actual comment
+            let inString: false | '"' | "'" | '`' = false;
+            let escaped = false;
             
-            // Handle string boundaries
-            if (!escaped && (char === '"' || char === "'" || char === '`')) {
-                if (!inString) {
-                    inString = char;
-                } else if (char === inString) {
-                    inString = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                // Handle string boundaries
+                if (!escaped && (char === '"' || char === "'" || char === '`')) {
+                    if (!inString) {
+                        inString = char;
+                    } else if (char === inString) {
+                        inString = false;
+                    }
+                    escaped = false;
+                    continue;
                 }
+                
+                if (inString) {
+                    escaped = char === '\\' && !escaped;
+                    continue;
+                }
+                
+                // Check for comment character (not inside string)
+                if (char === '#') {
+                    commentPos = i;
+                    // Cache the result for future use
+                    const commentText = line.slice(i + 1).trim();
+                    this.inlineCommentCache.set(lineNumber, commentText ? { text: commentText, position: i } : null);
+                    break; // Found first valid comment, stop scanning
+                }
+                
                 escaped = false;
-                continue;
             }
-            
-            if (inString) {
-                escaped = char === '\\' && !escaped;
-                continue;
+            // Cache null result if no comment found
+            if (commentPos === -1) {
+                this.inlineCommentCache.set(lineNumber, null);
             }
-            
-            // Check for comment character (not inside string)
-            if (char === '#') {
-                commentPos = i;
-                break;
-            }
-            
-            escaped = false;
+        } else {
+            // No # in line, cache null result
+            this.inlineCommentCache.set(lineNumber, null);
         }
         
         // If there's an inline comment, find the last non-whitespace character before it
         let endCol: number;
         if (commentPos >= 0) {
-            // Find the last non-whitespace character before the comment
+            // Find the last non-whitespace character before the comment (optimized: use char comparison)
             endCol = commentPos - 1;
             for (let i = commentPos - 1; i >= startCol; i--) {
-                if (!/\s/.test(line[i])) {
+                const char = line[i];
+                if (char !== ' ' && char !== '\t' && char !== '\r' && char !== '\n') {
                     endCol = i;
                     break;
                 }
@@ -105,7 +138,9 @@ export class Parser {
             endCol = Math.max(0, line.length - 1);
         }
         
-        return { startCol, endCol };
+        const result = { startCol, endCol };
+        this.columnPositionsCache.set(lineNumber, result);
+        return result;
     }
 
     /**
@@ -182,11 +217,94 @@ export class Parser {
             }
             
             const tokens = Lexer.tokenize(line);
-            if (tokens.length > 0 && tokens[0] === 'def') {
+            
+            // Check if this line starts with a decorator or def
+            // Only start decorator collection if we see a decorator or def
+            if (tokens.length > 0 && (tokens[0].startsWith('@') || tokens[0] === 'def')) {
+                // Collect decorators before def blocks
+                const decorators: DecoratorCall[] = [];
+                let decoratorScanLine = scanLine;
+                let foundDef = false;
+                while (decoratorScanLine < this.lines.length) {
+                    const decoratorLine = this.lines[decoratorScanLine].trim();
+                    if (!decoratorLine || decoratorLine.startsWith('#')) {
+                        // Blank line or comment - allowed between decorators and def
+                        decoratorScanLine++;
+                        continue;
+                    }
+                    const decoratorTokens = Lexer.tokenize(decoratorLine);
+                    if (decoratorTokens.length > 0 && decoratorTokens[0].startsWith('@')) {
+                        // Parse decorator
+                        const decoratorName = decoratorTokens[0].substring(1);
+                        if (!decoratorName || !/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/.test(decoratorName)) {
+                            break; // Invalid decorator name - stop collecting
+                        }
+                        const decoratorArgs: Arg[] = [];
+                        for (let i = 1; i < decoratorTokens.length; i++) {
+                            const token = decoratorTokens[i];
+                            let arg: Arg;
+                            if (token === '$') {
+                                arg = { type: 'lastValue' };
+                            } else if (LexerUtils.isVariable(token)) {
+                                const { name: varName, path } = LexerUtils.parseVariablePath(token);
+                                arg = { type: 'var', name: varName, path };
+                            } else if (token === 'true') {
+                                arg = { type: 'literal', value: true };
+                            } else if (token === 'false') {
+                                arg = { type: 'literal', value: false };
+                            } else if (token === 'null') {
+                                arg = { type: 'literal', value: null };
+                            } else if (LexerUtils.isString(token)) {
+                                arg = { type: 'string', value: LexerUtils.parseString(token) };
+                            } else if (LexerUtils.isNumber(token)) {
+                                arg = { type: 'number', value: parseFloat(token) };
+                            } else {
+                                arg = { type: 'literal', value: token };
+                            }
+                            decoratorArgs.push(arg);
+                        }
+                        const originalDecoratorLine = this.lines[decoratorScanLine];
+                        const decoratorStartCol = originalDecoratorLine.indexOf('@');
+                        const decoratorEndCol = originalDecoratorLine.length - 1;
+                        decorators.push({
+                            name: decoratorName,
+                            args: decoratorArgs,
+                            codePos: this.createCodePosition(
+                                decoratorScanLine,
+                                decoratorStartCol >= 0 ? decoratorStartCol : 0,
+                                decoratorScanLine,
+                                decoratorEndCol >= 0 ? decoratorEndCol : 0
+                            )
+                        });
+                        decoratorScanLine++;
+                        continue;
+                    }
+                    // Not a decorator - check if it's a def statement
+                    if (decoratorTokens.length > 0 && decoratorTokens[0] === 'def') {
+                        scanLine = decoratorScanLine; // Update scanLine to the def line
+                        foundDef = true;
+                        break;
+                    } else {
+                        // Not a decorator and not a def - orphaned decorator
+                        if (decorators.length > 0) {
+                            throw this.createError('orphaned decorator: decorator must be immediately before function definition', decorators[0].codePos.startRow);
+                        }
+                        break;
+                    }
+                }
+            
+            // Check if we found a def (either directly or after decorators)
+            const defLine = this.lines[scanLine].trim();
+            const defTokens = Lexer.tokenize(defLine);
+            if (foundDef || (defTokens.length > 0 && defTokens[0] === 'def')) {
                 // Found a def block - extract it
                 const savedCurrentLine = this.currentLine;
                 this.currentLine = scanLine;
                 const func = this.parseDefine(scanLine);
+                // Attach decorators if any
+                if (decorators.length > 0) {
+                    (func as any).decorators = decorators;
+                }
                 extractedFunctions.push(func);
                 
                 // Mark all lines in this def block (from def to enddef)
@@ -201,6 +319,10 @@ export class Parser {
             } else {
                 scanLine++;
             }
+        } else {
+            // Not a decorator or def - skip this line and continue scanning
+            scanLine++;
+        }
         }
         
         // Extract nested def blocks from function bodies
@@ -292,21 +414,39 @@ export class Parser {
     /**
      * Create a CommentWithPosition from an inline comment
      */
-    private createInlineCommentWithPosition(line: string, lineNumber: number, commentText: string): CommentWithPosition {
-        const commentCol = line.indexOf('#');
+    private createInlineCommentWithPosition(line: string, lineNumber: number, commentData: { text: string; position: number }): CommentWithPosition {
+        const commentCol = commentData.position;
         const endCol = line.length - 1;
         return {
-            text: commentText,
-            codePos: this.createCodePosition(lineNumber, commentCol >= 0 ? commentCol : 0, lineNumber, endCol >= 0 ? endCol : 0),
+            text: commentData.text,
+            codePos: this.createCodePosition(lineNumber, commentCol, lineNumber, endCol >= 0 ? endCol : 0),
             inline: true // Mark as inline comment
         };
     }
 
     /**
      * Extract inline comment from a line (comment after code on the same line)
-     * Returns the comment text without the #, or null if no inline comment found
+     * Returns an object with comment text and position, or null if no inline comment found
+     * Results are cached per line number to avoid redundant scanning
      */
-    private extractInlineComment(line: string): string | null {
+    private extractInlineComment(line: string, lineNumber?: number): { text: string; position: number } | null {
+        // Use cache if lineNumber is provided
+        if (lineNumber !== undefined) {
+            const cached = this.inlineCommentCache.get(lineNumber);
+            if (cached !== undefined) {
+                return cached;
+            }
+        }
+        
+        // Early exit optimization: if there's no # in the line at all, return null
+        // This avoids the character-by-character scan for lines without comments
+        if (line.indexOf('#') === -1) {
+            if (lineNumber !== undefined) {
+                this.inlineCommentCache.set(lineNumber, null);
+            }
+            return null;
+        }
+        
         let inString: false | '"' | "'" | '`' = false;
         let escaped = false;
         
@@ -332,12 +472,19 @@ export class Parser {
             // Check for comment character (not inside string)
             if (char === '#') {
                 const commentText = line.slice(i + 1).trim();
-                return commentText || null;
+                const result = commentText ? { text: commentText, position: i } : null;
+                if (lineNumber !== undefined) {
+                    this.inlineCommentCache.set(lineNumber, result);
+                }
+                return result;
             }
             
             escaped = false;
         }
         
+        if (lineNumber !== undefined) {
+            this.inlineCommentCache.set(lineNumber, null);
+        }
         return null;
     }
 
@@ -355,9 +502,17 @@ export class Parser {
         const statements: Statement[] = [];
         const pendingCommentLines: number[] = []; // Track line numbers for pending comments
         let hasBlankLineAfterLastComment = false; // Track if blank line appeared after last comment
+        const pendingDecorators: DecoratorCall[] = []; // Track decorators before def
+        const pendingDecoratorLines: number[] = []; // Track line numbers for decorators
         
         while (this.currentLine < this.lines.length) {
             if (shouldSkipLine && shouldSkipLine(this.currentLine)) {
+                // If we're skipping a def block line and have pending decorators,
+                // clear them because they were already handled during def extraction
+                if (pendingDecorators.length > 0) {
+                    pendingDecorators.length = 0;
+                    pendingDecoratorLines.length = 0;
+                }
                 this.currentLine++;
                 continue;
             }
@@ -366,8 +521,77 @@ export class Parser {
             const line = originalLine.trim();
             
             // Blank line: mark that blank line appeared after last comment
+            // Blank lines between decorators and def are allowed (like comments)
             if (!line) {
                 hasBlankLineAfterLastComment = true;
+                this.currentLine++;
+                continue;
+            }
+            
+            // Decorator line: @decoratorName args...
+            if (line.startsWith('@')) {
+                // Check if there are pending decorators with blank line after (orphaned)
+                if (pendingDecorators.length > 0 && hasBlankLineAfterLastComment) {
+                    throw this.createError('orphaned decorator: decorator must be immediately before function definition', pendingDecoratorLines[0]);
+                }
+                
+                // Parse decorator: @decoratorName arg1 arg2 ...
+                const decoratorTokens = Lexer.tokenize(line);
+                if (decoratorTokens.length < 1) {
+                    throw this.createError('invalid decorator syntax', this.currentLine);
+                }
+                
+                const decoratorName = decoratorTokens[0].substring(1); // Remove @
+                if (!decoratorName || !/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/.test(decoratorName)) {
+                    throw this.createError(`invalid decorator name: ${decoratorTokens[0]}`, this.currentLine);
+                }
+                
+                // Parse decorator arguments (similar to command parsing)
+                const decoratorArgs: Arg[] = [];
+                for (let i = 1; i < decoratorTokens.length; i++) {
+                    const token = decoratorTokens[i];
+                    let arg: Arg;
+                    
+                    if (token === '$') {
+                        arg = { type: 'lastValue' };
+                    } else if (LexerUtils.isVariable(token)) {
+                        const { name: varName, path } = LexerUtils.parseVariablePath(token);
+                        arg = { type: 'var', name: varName, path };
+                    } else if (token === 'true') {
+                        arg = { type: 'literal', value: true };
+                    } else if (token === 'false') {
+                        arg = { type: 'literal', value: false };
+                    } else if (token === 'null') {
+                        arg = { type: 'literal', value: null };
+                    } else if (LexerUtils.isString(token)) {
+                        arg = { type: 'string', value: LexerUtils.parseString(token) };
+                    } else if (LexerUtils.isNumber(token)) {
+                        arg = { type: 'number', value: parseFloat(token) };
+                    } else {
+                        // Treat as literal string
+                        arg = { type: 'literal', value: token };
+                    }
+                    
+                    decoratorArgs.push(arg);
+                }
+                
+                // Create codePos for decorator
+                const decoratorStartCol = originalLine.indexOf('@');
+                const decoratorEndCol = originalLine.length - 1;
+                const decoratorCodePos = this.createCodePosition(
+                    this.currentLine,
+                    decoratorStartCol >= 0 ? decoratorStartCol : 0,
+                    this.currentLine,
+                    decoratorEndCol >= 0 ? decoratorEndCol : 0
+                );
+                
+                pendingDecorators.push({
+                    name: decoratorName,
+                    args: decoratorArgs,
+                    codePos: decoratorCodePos
+                });
+                pendingDecoratorLines.push(this.currentLine);
+                hasBlankLineAfterLastComment = false; // Reset flag
                 this.currentLine++;
                 continue;
             }
@@ -376,6 +600,17 @@ export class Parser {
             // Then start a new sequence with this comment
             if (line.startsWith('#')) {
                 const commentText = line.slice(1).trim();
+                
+                // If we have pending decorators, comments between decorator and def are allowed
+                // Don't treat comments as breaking the decorator-def connection
+                if (pendingDecorators.length > 0) {
+                    // Comments between decorators and def are allowed - just add to pending comments
+                    pendingComments.push(commentText);
+                    pendingCommentLines.push(this.currentLine);
+                    hasBlankLineAfterLastComment = false; // Reset flag
+                    this.currentLine++;
+                    continue;
+                }
                 
                 // If we have pending comments and there was a blank line after them, create comment nodes
                 // This happens when: comment -> blank line -> comment (first comment becomes node)
@@ -417,6 +652,10 @@ export class Parser {
             const statementLineNumber = this.currentLine; // Save line number before parsing
             const stmt = this.parseStatement();
             if (stmt) {
+                // If we have pending decorators but this is not a def statement, it's an error
+                if (pendingDecorators.length > 0 && stmt.type !== 'define') {
+                    throw this.createError('orphaned decorator: decorator must be immediately before function definition', pendingDecoratorLines[0]);
+                }
                 const allComments: CommentWithPosition[] = [];
                 
                 // If there are still pending comments (no blank line), attach them
@@ -448,7 +687,7 @@ export class Parser {
                 }
                 
                 // Add inline comment from same line
-                const inlineComment = this.extractInlineComment(originalLine);
+                const inlineComment = this.extractInlineComment(originalLine, statementLineNumber);
                 if (inlineComment) {
                     allComments.push(this.createInlineCommentWithPosition(originalLine, statementLineNumber, inlineComment));
                 }
@@ -458,11 +697,21 @@ export class Parser {
                     (stmt as any).comments = allComments;
                 }
                 
+                // Attach decorators to def statements
+                if (stmt.type === 'define' && pendingDecorators.length > 0) {
+                    (stmt as any).decorators = [...pendingDecorators];
+                    pendingDecorators.length = 0;
+                    pendingDecoratorLines.length = 0;
+                }
+                
                 statements.push(stmt);
                 hasBlankLineAfterLastComment = false; // Reset flag
             } else {
                 // parseStatement() returned null (blank line or comment)
-                // Reset flags if needed
+                // If we have pending decorators and we're not on a blank/comment line, it's an error
+                // But blank lines and comments between decorators and def are allowed
+                // So we only check when we encounter an actual statement that's not def
+                // (This check happens above when stmt is not null and not a define)
                 hasBlankLineAfterLastComment = false;
             }
         }
@@ -474,6 +723,11 @@ export class Parser {
             const commentsToGroup = [...pendingComments];
             const linesToGroup = [...pendingCommentLines];
             statements.push(this.createGroupedCommentNode(commentsToGroup, linesToGroup));
+        }
+        
+        // Handle any remaining pending decorators at end of file (orphaned decorators)
+        if (pendingDecorators.length > 0) {
+            throw this.createError('orphaned decorator: decorator must be immediately before function definition', pendingDecoratorLines[0]);
         }
 
         return statements;
@@ -973,6 +1227,15 @@ export class Parser {
                     continue;
                 }
 
+                // Handle comments (only when not inside a string)
+                // Comments start with # and continue to end of line
+                if (char === '#') {
+                    // Skip everything until end of line - optimize by jumping directly to end
+                    pos = currentLine.length;
+                    // The newline will be added when we move to the next line
+                    continue;
+                }
+
                 // Handle nested parentheses
                 if (char === '(') {
                     depth++;
@@ -1086,9 +1349,9 @@ export class Parser {
             if (key && valueStr !== null) {
                 // This is a named argument
                 const valueArg = this.parseArgumentValue(valueStr);
-                namedArgs[key] = valueArg;
+                    namedArgs[key] = valueArg;
                 tokenIndex += tokensToSkip; // Skip processed tokens
-                continue;
+                    continue;
             }
 
             // Positional argument
@@ -1132,6 +1395,16 @@ export class Parser {
             if (inString) {
                 current += char;
                 i++;
+                continue;
+            }
+
+            // Handle comments (only when not inside a string, subexpression, object, or array)
+            // Comments start with # and continue to end of line
+            if (char === '#' && subexprDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
+                // Skip everything until end of line - optimize by finding newline index first
+                const newlineIndex = content.indexOf('\n', i);
+                i = newlineIndex >= 0 ? newlineIndex : content.length;
+                // The newline will be processed in the next iteration as a separator
                 continue;
             }
 
@@ -1301,7 +1574,7 @@ export class Parser {
         }
         
         // Extract inline comment from def line
-        const inlineComment = this.extractInlineComment(originalLine);
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
@@ -1384,9 +1657,9 @@ export class Parser {
                 }
                 
                 // Inline comment on same line
-                const inlineComment = this.extractInlineComment(originalBodyLine);
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 if (inlineComment) {
-                    allComments.push(inlineComment);
+                    allComments.push(inlineComment.text);
                 }
                 
                 if (allComments.length > 0) {
@@ -1451,7 +1724,7 @@ export class Parser {
         }
         
         // Extract inline comment from scope line
-        const inlineComment = this.extractInlineComment(originalLine);
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
@@ -1515,9 +1788,9 @@ export class Parser {
                 }
                 
                 // Inline comment on same line
-                const inlineComment = this.extractInlineComment(originalBodyLine);
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 if (inlineComment) {
-                    allComments.push(inlineComment);
+                    allComments.push(inlineComment.text);
                 }
                 
                 if (allComments.length > 0) {
@@ -1578,7 +1851,7 @@ export class Parser {
         const iterableExpr = exprTokens.join(' ');
         
         // Extract inline comment from for line
-        const inlineComment = this.extractInlineComment(originalLine);
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
@@ -1642,9 +1915,9 @@ export class Parser {
                 }
                 
                 // Inline comment on same line
-                const inlineComment = this.extractInlineComment(originalBodyLine);
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 if (inlineComment) {
-                    allComments.push(inlineComment);
+                    allComments.push(inlineComment.text);
                 }
                 
                 if (allComments.length > 0) {
@@ -1778,7 +2051,7 @@ export class Parser {
         const conditionExpr = line.slice(conditionStart).trim();
 
         // Extract inline comment from if line
-        const inlineComment = this.extractInlineComment(originalLine);
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
@@ -1848,7 +2121,7 @@ export class Parser {
                 const condition = bodyLine.slice(conditionStart).trim();
                 
                 // Extract inline comment from elseif line
-                const elseifInlineComment = this.extractInlineComment(originalBodyLine);
+                const elseifInlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 const elseifComments: string[] = [];
                 if (pendingComments.length > 0) {
                     elseifComments.push(...pendingComments);
@@ -1856,7 +2129,7 @@ export class Parser {
                     pendingCommentLines.length = 0;
                 }
                 if (elseifInlineComment) {
-                    elseifComments.push(elseifInlineComment);
+                    elseifComments.push(elseifInlineComment.text);
                 }
                 
                 elseifBranches.push({ condition, body: [] });
@@ -1870,7 +2143,7 @@ export class Parser {
             // Handle else - switch to else branch
             if (tokens[0] === 'else') {
                 // Extract inline comment from else line
-                const elseInlineComment = this.extractInlineComment(originalBodyLine);
+                const elseInlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 const elseComments: string[] = [];
                 if (pendingComments.length > 0) {
                     elseComments.push(...pendingComments);
@@ -1878,7 +2151,7 @@ export class Parser {
                     pendingCommentLines.length = 0;
                 }
                 if (elseInlineComment) {
-                    elseComments.push(elseInlineComment);
+                    elseComments.push(elseInlineComment.text);
                 }
                 
                 elseBranch = [];
@@ -1914,9 +2187,9 @@ export class Parser {
                 }
                 
                 // Inline comment on same line
-                const inlineComment = this.extractInlineComment(originalBodyLine);
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
                 if (inlineComment) {
-                    allComments.push(inlineComment);
+                    allComments.push(inlineComment.text);
                 }
                 
                 if (allComments.length > 0) {
@@ -2070,7 +2343,7 @@ export class Parser {
         }
 
         // Extract inline comment from inline if line
-        const inlineComment = this.extractInlineComment(originalLine);
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
@@ -2333,6 +2606,18 @@ export class Parser {
             
             const token = tokens[i];
             
+            // Check if this is a module function reference: math.add -> tokens: ["math", ".", "add"]
+            // Combine module name and function name if next tokens are "." and a valid identifier
+            let actualToken = token;
+            let tokensToSkip = 0;
+            if (i + 2 < tokens.length && tokens[i + 1] === '.' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(tokens[i + 2])) {
+                // Validate module name doesn't start with a number
+                if (!/^\d/.test(token) && /^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
+                    actualToken = `${token}.${tokens[i + 2]}`;
+                    tokensToSkip = 2; // Skip the "." and function name tokens
+                }
+            }
+            
             // Check if this is a named argument: key=value or $paramName=value
             // Handle both cases: $a="value" (one token) or $a = "value" (separate tokens)
             let key: string | null = null;
@@ -2358,8 +2643,9 @@ export class Parser {
                 }
             }
             // Case 2: Check if current token is $paramName or key and next token is =
+            // But skip if we already combined tokens (tokensToSkip > 0), as that means we have module.function
             let tokensSkipped = 0;
-            if (!key && i + 1 < tokens.length && tokens[i + 1] === '=') {
+            if (!key && tokensToSkip === 0 && i + 1 < tokens.length && tokens[i + 1] === '=') {
                 // Check for $paramName = value syntax
                 if (LexerUtils.isVariable(token)) {
                     const { name: paramName } = LexerUtils.parseVariablePath(token);
@@ -2391,45 +2677,47 @@ export class Parser {
             
             if (key && valueStr !== null) {
                 // This is a named argument
-                const valueArg = this.parseArgumentValue(valueStr);
-                namedArgs[key] = valueArg;
-                
-                // Advance position
-                const tokenPos = line.indexOf(token, pos);
-                if (tokenPos !== -1) {
-                    pos = tokenPos + token.length;
-                    while (pos < line.length && /\s/.test(line[pos])) {
-                        pos++;
+                    const valueArg = this.parseArgumentValue(valueStr);
+                    namedArgs[key] = valueArg;
+                    
+                    // Advance position
+                    const tokenPos = line.indexOf(token, pos);
+                    if (tokenPos !== -1) {
+                        pos = tokenPos + token.length;
+                        while (pos < line.length && /\s/.test(line[pos])) {
+                            pos++;
+                        }
                     }
+                // Skip tokens if we processed Case 2
+                if (tokensSkipped > 0) {
+                    i += tokensSkipped;
+                    continue;
                 }
-                // Skip tokens if we processed Case 2, otherwise just increment by 1
-                i += tokensSkipped > 0 ? tokensSkipped : 1;
-                continue;
             }
             
             // Parse as positional argument
             let arg: Arg;
-            if (token === '$') {
+            if (actualToken === '$') {
                 arg = { type: 'lastValue' };
-            } else if (LexerUtils.isVariable(token)) {
+            } else if (LexerUtils.isVariable(actualToken)) {
                 // This includes $.property, $[index], $var, $var.property, etc.
-                const { name: varName, path } = LexerUtils.parseVariablePath(token);
+                const { name: varName, path } = LexerUtils.parseVariablePath(actualToken);
                 arg = { type: 'var', name: varName, path };
-            } else if (token === 'true') {
+            } else if (actualToken === 'true') {
                 arg = { type: 'literal', value: true };
-            } else if (token === 'false') {
+            } else if (actualToken === 'false') {
                 arg = { type: 'literal', value: false };
-            } else if (token === 'null') {
+            } else if (actualToken === 'null') {
                 arg = { type: 'literal', value: null };
-            } else if (LexerUtils.isPositionalParam(token)) {
-                arg = { type: 'var', name: token.slice(1) };
-            } else if (LexerUtils.isString(token)) {
-                arg = { type: 'string', value: LexerUtils.parseString(token) };
-            } else if (LexerUtils.isNumber(token)) {
-                arg = { type: 'number', value: parseFloat(token) };
+            } else if (LexerUtils.isPositionalParam(actualToken)) {
+                arg = { type: 'var', name: actualToken.slice(1) };
+            } else if (LexerUtils.isString(actualToken)) {
+                arg = { type: 'string', value: LexerUtils.parseString(actualToken) };
+            } else if (LexerUtils.isNumber(actualToken)) {
+                arg = { type: 'number', value: parseFloat(actualToken) };
             } else {
-                // Treat as literal string
-                arg = { type: 'literal', value: token };
+                // Treat as literal string (handles module.function names like "math.add")
+                arg = { type: 'literal', value: actualToken };
             }
             
             positionalArgs.push(arg);
@@ -2437,13 +2725,16 @@ export class Parser {
             // Advance position in line (approximate)
             const tokenPos = line.indexOf(token, pos);
             if (tokenPos !== -1) {
-                pos = tokenPos + token.length;
+                // If we combined tokens, advance past all of them
+                const advanceLength = tokensToSkip > 0 ? 
+                    (token.length + 1 + tokens[i + 2].length) : token.length;
+                pos = tokenPos + advanceLength;
                 while (pos < line.length && /\s/.test(line[pos])) {
                     pos++;
                 }
             }
             
-            i++;
+            i += 1 + tokensToSkip;
         }
 
         // Combine positional args and named args (named args as a special object)

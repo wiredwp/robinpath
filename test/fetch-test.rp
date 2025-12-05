@@ -1,0 +1,94 @@
+# Test 47: Fetch module tests
+log "Test 47 - Fetch module tests"
+
+# Test 47a: fetch.get with named arguments
+clear
+do
+  fetch.get(url="http://localhost:3005/test/get")
+  $response = $
+  test.assertType $response "object" "fetch.get should return an object"
+  test.assertEqual $response.ok true "fetch.get response.ok should be true"
+  test.assertEqual $response.status 200 "fetch.get response.status should be 200"
+  test.assertType $response.data "object" "fetch.get response.data should be an object"
+  test.assertEqual $response.data.message "GET request successful" "fetch.get response.data.message failed"
+enddo
+
+# Test 47b: fetch.get with headers
+clear
+do
+  fetch.get(url="http://localhost:3005/test/get" headers={"X-Custom-Header": "test-value"})
+  $response = $
+  test.assertEqual $response.ok true "fetch.get with headers should succeed"
+  test.assertEqual $response.status 200 "fetch.get with headers status should be 200"
+enddo
+
+# Test 47c: fetch.post with named arguments
+clear
+do
+  fetch.post(url="http://localhost:3005/test/post" body={"name": "John", "age": 30})
+  $response = $
+  test.assertType $response "object" "fetch.post should return an object"
+  test.assertEqual $response.ok true "fetch.post response.ok should be true"
+  test.assertEqual $response.status 200 "fetch.post response.status should be 200"
+  test.assertType $response.data "object" "fetch.post response.data should be an object"
+  test.assertEqual $response.data.message "POST request successful" "fetch.post response.data.message failed"
+  test.assertEqual $response.data.receivedBody.name "John" "fetch.post receivedBody.name failed"
+  test.assertEqual $response.data.receivedBody.age 30 "fetch.post receivedBody.age failed"
+enddo
+
+# Test 47d: fetch.put with named arguments
+clear
+do
+  fetch.put(url="http://localhost:3005/test/put" body={"id": 123, "status": "updated"})
+  $response = $
+  test.assertType $response "object" "fetch.put should return an object"
+  test.assertEqual $response.ok true "fetch.put response.ok should be true"
+  test.assertEqual $response.status 200 "fetch.put response.status should be 200"
+  test.assertType $response.data "object" "fetch.put response.data should be an object"
+  test.assertEqual $response.data.message "PUT request successful" "fetch.put response.data.message failed"
+  test.assertEqual $response.data.receivedBody.id 123 "fetch.put receivedBody.id failed"
+  test.assertEqual $response.data.receivedBody.status "updated" "fetch.put receivedBody.status failed"
+enddo
+
+# Test 47e: fetch.delete with named arguments
+clear
+do
+  fetch.delete(url="http://localhost:3005/test/delete")
+  $response = $
+  test.assertType $response "object" "fetch.delete should return an object"
+  test.assertEqual $response.ok true "fetch.delete response.ok should be true"
+  test.assertEqual $response.status 200 "fetch.delete response.status should be 200"
+  test.assertType $response.data "object" "fetch.delete response.data should be an object"
+  test.assertEqual $response.data.message "DELETE request successful" "fetch.delete response.data.message failed"
+enddo
+
+# Test 47f: fetch.get with echo endpoint to test query parameters
+clear
+do
+  fetch.get(url="http://localhost:3005/test/echo?key1=value1&key2=value2")
+  $response = $
+  test.assertEqual $response.ok true "fetch.get echo should succeed"
+  test.assertEqual $response.data.query.key1 "value1" "fetch.get query parameter key1 failed"
+  test.assertEqual $response.data.query.key2 "value2" "fetch.get query parameter key2 failed"
+enddo
+
+# Test 47i: fetch.get with 404 endpoint (should still return response object)
+clear
+do
+  fetch.get(url="http://localhost:3005/test/notfound")
+  $response = $
+  test.assertType $response "object" "fetch.get 404 should return an object"
+  test.assertEqual $response.ok false "fetch.get 404 response.ok should be false"
+  test.assertEqual $response.status 404 "fetch.get 404 response.status should be 404"
+enddo
+
+# Test 47j: fetch.post with custom headers
+clear
+do
+  fetch.post(url="http://localhost:3005/test/echo" body={"test": "data"} headers={"X-Custom-Header": "custom-value", "Authorization": "Bearer token123"})
+  $response = $
+  test.assertEqual $response.ok true "fetch.post with custom headers should succeed"
+  test.assertEqual $response.data.body.test "data" "fetch.post echo body should match"
+enddo
+
+log "Test 47 - Fetch module: All passed"

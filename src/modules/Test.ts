@@ -111,6 +111,38 @@ export const TestFunctions: Record<string, BuiltinHandler> = {
         return true;
     },
 
+    assertEmpty: (args) => {
+        if (args.length === 0) {
+            throw new Error('assertEmpty requires one argument');
+        }
+        const value = args[0];
+        const expectedGot = `Expected empty value, got ${JSON.stringify(value)}`;
+        const message = args.length > 1 ? `${String(args[1])} (${expectedGot})` : expectedGot;
+        
+        // Check for null
+        if (value === null) {
+            return true;
+        }
+        // Check for empty string
+        if (typeof value === 'string' && value === '') {
+            return true;
+        }
+        // Check for empty array
+        if (Array.isArray(value) && value.length === 0) {
+            return true;
+        }
+        // Check for empty object (no keys)
+        if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+            return true;
+        }
+        // Check for number 0
+        if (typeof value === 'number' && value === 0) {
+            return true;
+        }
+        
+        throw new Error(message);
+    },
+
     assertGreater: (args) => {
         if (args.length < 2) {
             throw new Error('assertGreater requires two arguments');
@@ -525,6 +557,29 @@ export const TestFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'assertNotNull add 5 5  # Passes if result is not null'
     },
 
+    assertEmpty: {
+        description: 'Asserts that a value is empty (null, empty string "", empty array [], empty object {}, or number 0)',
+        parameters: [
+            {
+                name: 'value',
+                dataType: 'any',
+                description: 'Value to assert as empty',
+                formInputType: 'json',
+                required: true
+            },
+            {
+                name: 'message',
+                dataType: 'string',
+                description: 'Optional error message if assertion fails',
+                formInputType: 'text',
+                required: false
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if assertion passes',
+        example: 'assertEmpty null  # Passes if value is null, empty string, array, object, or 0'
+    },
+
     assertGreater: {
         description: 'Asserts that the first number is greater than the second',
         parameters: [
@@ -877,6 +932,7 @@ export const TestModuleMetadata: ModuleMetadata = {
         'assertFalse',
         'assertNull',
         'assertNotNull',
+        'assertEmpty',
         'assertGreater',
         'assertGreaterOrEqual',
         'assertLess',

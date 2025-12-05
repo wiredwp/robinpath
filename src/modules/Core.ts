@@ -202,6 +202,12 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         }
         
         return result;
+    },
+
+    has: (_args) => {
+        // has command implementation is in executeCommand for special handling
+        // This registration ensures it's recognized as a valid command
+        return null;
     }
 };
 
@@ -446,6 +452,22 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'get {user: {name: "John"}} "user.name"  # Returns "John"'
     },
 
+    has: {
+        description: 'Checks if a variable or function exists',
+        parameters: [
+            {
+                name: 'name',
+                dataType: 'string',
+                description: 'Variable name (e.g., $myVar) or function name (e.g., myFunc or math.add)',
+                formInputType: 'text',
+                required: true
+            }
+        ],
+        returnType: 'boolean',
+        returnDescription: 'Returns true if the variable or function exists, false otherwise',
+        example: 'has $myVar  # Returns true if $myVar exists'
+    },
+
     range: {
         description: 'Generates an array of numbers from start to end (inclusive)',
         parameters: [
@@ -491,7 +513,8 @@ export const CoreModuleMetadata: ModuleMetadata = {
         'forget',
         'set',
         'get',
-        'range'
+        'range',
+        'has'
     ]
 };
 

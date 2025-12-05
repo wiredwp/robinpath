@@ -31,6 +31,7 @@ export class RobinPathThread {
             variables: new Map(),                     // per-thread vars
             functions: new Map(),                     // per-thread def/enddef
             builtins: baseEnvironment.builtins,       // shared
+            decorators: baseEnvironment.decorators,   // shared
             metadata: baseEnvironment.metadata,       // shared
             moduleMetadata: baseEnvironment.moduleMetadata, // shared
             currentModule: null,                       // per-thread module context

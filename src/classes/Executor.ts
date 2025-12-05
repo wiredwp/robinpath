@@ -725,8 +725,8 @@ Examples:
                 const varMeta = this.environment.variableMetadata?.get(varName);
                 
                 if (!varMeta || varMeta.size === 0) {
-                    // Return empty object if no metadata
-                    frame.lastValue = {};
+                    // Return null if no metadata
+                    frame.lastValue = null;
                     return;
                 }
                 
@@ -751,8 +751,8 @@ Examples:
                 const funcMeta = this.environment.functionMetadata?.get(funcName);
                 
                 if (!funcMeta || funcMeta.size === 0) {
-                    // Return empty object if no metadata
-                    frame.lastValue = {};
+                    // Return null if no metadata
+                    frame.lastValue = null;
                     return;
                 }
                 
@@ -810,6 +810,75 @@ Examples:
             }
             
             frame.lastValue = type;
+            return;
+        }
+
+        // Special handling for "has" command - checks if variable or function exists
+        if (cmd.name === 'has') {
+            if (cmd.args.length < 1) {
+                throw new Error('has requires at least 1 argument: variable/function name');
+            }
+            
+            // Extract original input from cmd.args (before evaluation)
+            // For name: always use the original arg (never evaluate)
+            const nameArg = cmd.args[0];
+            let name: string | null = this.reconstructOriginalInput(nameArg);
+            
+            // Fallback: if reconstruction fails, try evaluating as string
+            // This handles cases where identifiers like "math.add" are parsed differently
+            if (name === null) {
+                // Only try fallback for literal types that might be identifiers
+                if (nameArg.type === 'literal' && typeof nameArg.value === 'string') {
+                    name = nameArg.value;
+                } else {
+                    throw new Error('has target must be a variable or string literal');
+                }
+            }
+            
+            // Check if it's a variable (starts with $)
+            if (name.startsWith('$')) {
+                const varName = name.substring(1);
+                // Use the same resolution logic as resolveVariable
+                let exists = false;
+                const currentFrame = this.getCurrentFrame();
+                
+                // Check locals first (function scope)
+                if (currentFrame.locals.has(varName)) {
+                    exists = true;
+                } else if (this.environment.variables.has(varName)) {
+                    // Check globals (outer scope)
+                    exists = true;
+                }
+                
+                frame.lastValue = exists;
+                return;
+            }
+            
+            // Check if it's a module function (contains .)
+            if (name.includes('.')) {
+                const [moduleName, funcName] = name.split('.', 2);
+                const fullName = `${moduleName}.${funcName}`;
+                // Check both builtins and metadata (like RobinPathThread does)
+                const exists = this.environment.builtins.has(fullName) || 
+                              (this.environment.metadata && this.environment.metadata.has(fullName));
+                frame.lastValue = exists;
+                return;
+            }
+            
+            // Check if it's a user-defined function
+            if (this.environment.functions.has(name)) {
+                frame.lastValue = true;
+                return;
+            }
+            
+            // Check if it's a builtin function
+            if (this.environment.builtins.has(name)) {
+                frame.lastValue = true;
+                return;
+            }
+            
+            // Not found
+            frame.lastValue = false;
             return;
         }
 
@@ -978,6 +1047,50 @@ Examples:
     }
 
     private async callFunction(func: DefineFunction, args: Value[]): Promise<Value> {
+        // Execute decorators before function execution (in order, first decorator executes first)
+        // Decorators can modify the args
+        let modifiedArgs = args;
+        if (func.decorators && func.decorators.length > 0) {
+            // Execute decorators in order (first decorator executes first)
+            for (const decorator of func.decorators) {
+                // Evaluate decorator arguments
+                const decoratorArgs: Value[] = [];
+                for (const arg of decorator.args) {
+                    const evaluatedArg = await this.evaluateArg(arg);
+                    decoratorArgs.push(evaluatedArg);
+                }
+                
+                // Call decorator handler from registry ONLY (not as a function call)
+                // Decorators can ONLY be registered via registerDecorator() API, never via 'def' in scripts
+                // Even if a function with the same name exists, it will NOT be used as a decorator
+                const decoratorHandler = this.environment.decorators.get(decorator.name);
+                if (!decoratorHandler) {
+                    throw new Error(`Unknown decorator: @${decorator.name}. Decorators must be registered via registerDecorator() API, not defined in scripts.`);
+                }
+                
+                // Provide environment to decorator handler (for built-in decorators that need it)
+                (decoratorHandler as any).__environment = this.environment;
+                
+                // Call decorator handler: decorator(funcName, func, originalArgs, ...decoratorArgs)
+                const decoratorResult = await decoratorHandler(
+                    func.name,        // Function name (string)
+                    func,             // Function object
+                    modifiedArgs,     // Current args (may have been modified by previous decorators)
+                    ...decoratorArgs  // Decorator's own arguments
+                );
+                
+                // Clean up environment reference
+                delete (decoratorHandler as any).__environment;
+                
+                // If decorator returns an array, use it as modified args
+                // Otherwise, keep current args unchanged
+                if (Array.isArray(decoratorResult)) {
+                    modifiedArgs = decoratorResult;
+                }
+                // If decorator returns non-array or null/undefined, keep current args unchanged
+            }
+        }
+        
         // Create new frame
         const frame: Frame = {
             locals: new Map(),
@@ -992,8 +1105,8 @@ Examples:
         
         // Check if last argument is a named args object (from parenthesized or CLI-style call)
         // We detect this by checking if it's an object with string keys (not array indices)
-        if (args.length > 0) {
-            const lastArg = args[args.length - 1];
+        if (modifiedArgs.length > 0) {
+            const lastArg = modifiedArgs[modifiedArgs.length - 1];
             if (typeof lastArg === 'object' && lastArg !== null && !Array.isArray(lastArg)) {
                 // Check if it looks like a named args object (has non-numeric keys)
                 const keys = Object.keys(lastArg);
@@ -1001,13 +1114,13 @@ Examples:
                 if (hasNonNumericKeys && keys.length > 0) {
                     // This is likely a named args object
                     namedArgsObj = lastArg as Record<string, Value>;
-                    positionalArgs = args.slice(0, -1);
+                    positionalArgs = modifiedArgs.slice(0, -1);
                 } else {
                     // Regular object passed as positional arg (or empty object)
-                    positionalArgs = args;
+                    positionalArgs = modifiedArgs;
                 }
             } else {
-                positionalArgs = args;
+                positionalArgs = modifiedArgs;
             }
         }
 
@@ -1192,6 +1305,12 @@ Examples:
     }
 
     private registerFunction(func: DefineFunction): void {
+        // If function already exists (from extracted functions with decorators), preserve its decorators
+        const existingFunc = this.environment.functions.get(func.name);
+        if (existingFunc && existingFunc.decorators) {
+            // Preserve decorators from the extracted function
+            func.decorators = existingFunc.decorators;
+        }
         this.environment.functions.set(func.name, func);
     }
 
@@ -1228,6 +1347,11 @@ Examples:
 
             // Scope's lastValue should not affect parent's $ - restore original value
             parentFrame.lastValue = originalLastValue;
+        } catch (error) {
+            // Scope's lastValue should not affect parent's $ - restore original value even on error
+            parentFrame.lastValue = originalLastValue;
+            // Re-throw errors to ensure they propagate properly
+            throw error;
         } finally {
             // Pop the scope frame
             this.callStack.pop();
