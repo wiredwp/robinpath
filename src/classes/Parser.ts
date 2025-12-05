@@ -1007,23 +1007,55 @@ export class Parser {
         // But we need to preserve strings and subexpressions
         const argTokens = this.tokenizeParenthesizedArguments(content);
 
-        for (const token of argTokens) {
-            // Check if it's a named argument: key=value
+        for (let tokenIndex = 0; tokenIndex < argTokens.length; tokenIndex++) {
+            const token = argTokens[tokenIndex];
+            
+            // Check if it's a named argument: key=value or $paramName=value
+            // Handle both cases: $a="value" (one token) or $a = "value" (separate tokens)
+            let key: string | null = null;
+            let valueStr: string | null = null;
+            let tokensToSkip = 0;
+            
+            // Case 1: Check if token contains = (e.g., $a="value" or key="value")
             const equalsIndex = token.indexOf('=');
             if (equalsIndex > 0 && equalsIndex < token.length - 1) {
-                // Check if = is not inside a string or subexpression
-                // Simple check: if token starts with identifier-like chars followed by =, it's named
                 const beforeEquals = token.substring(0, equalsIndex).trim();
-                const afterEquals = token.substring(equalsIndex + 1).trim();
+                valueStr = token.substring(equalsIndex + 1).trim();
                 
-                // Validate key name (must be identifier-like)
-                if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEquals)) {
-                    // This is a named argument: key=value
-                    const key = beforeEquals;
-                    const valueArg = this.parseArgumentValue(afterEquals);
-                    namedArgs[key] = valueArg;
-                    continue;
+                // Check for $paramName=value syntax (e.g., $a="value")
+                if (beforeEquals.startsWith('$') && beforeEquals.length > 1) {
+                    const paramName = beforeEquals.substring(1);
+                    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                        key = paramName;
+                    }
                 }
+                // Check for key=value syntax (e.g., key="value")
+                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEquals)) {
+                    key = beforeEquals;
+                }
+            }
+            // Case 2: Check if current token is $paramName and next token is =
+            else if (LexerUtils.isVariable(token) && tokenIndex + 1 < argTokens.length && argTokens[tokenIndex + 1] === '=') {
+                const { name: paramName } = LexerUtils.parseVariablePath(token);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    key = paramName;
+                    // Get the value token (skip =)
+                    if (tokenIndex + 2 < argTokens.length) {
+                        valueStr = argTokens[tokenIndex + 2];
+                        tokensToSkip = 2; // Skip = and value
+                    } else {
+                        valueStr = '';
+                        tokensToSkip = 1; // Skip = only
+                    }
+                }
+            }
+            
+            if (key && valueStr !== null) {
+                // This is a named argument
+                const valueArg = this.parseArgumentValue(valueStr);
+                namedArgs[key] = valueArg;
+                tokenIndex += tokensToSkip; // Skip processed tokens
+                continue;
             }
 
             // Positional argument
@@ -1115,14 +1147,18 @@ export class Parser {
                 continue;
             }
 
-            // Handle whitespace and commas (only at top level, not inside $(), {}, or [])
-            // Commas are optional separators
-            if (((char === ' ' || char === '\n' || char === '\t') || char === ',') && 
+            // Handle whitespace, commas, and = (only at top level, not inside $(), {}, or [])
+            // Commas are optional separators, = is used for named arguments
+            if (((char === ' ' || char === '\n' || char === '\t') || char === ',' || char === '=') && 
                 subexprDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
                 if (current.trim()) {
                     tokens.push(current.trim());
                 }
                 current = '';
+                // Push = as a separate token for named argument parsing
+                if (char === '=') {
+                    tokens.push('=');
+                }
                 i++;
                 continue;
             }
@@ -2264,30 +2300,63 @@ export class Parser {
             
             const token = tokens[i];
             
-            // Check if this is a named argument: key=value
+            // Check if this is a named argument: key=value or $paramName=value
+            // Handle both cases: $a="value" (one token) or $a = "value" (separate tokens)
+            let key: string | null = null;
+            let valueStr: string | null = null;
+            
+            // Case 1: Check if token contains = (e.g., $a="value" or key="value")
             const equalsIndex = token.indexOf('=');
             if (equalsIndex > 0 && equalsIndex < token.length - 1 && 
                 !token.startsWith('"') && !token.startsWith("'") && !token.startsWith('`')) {
-                const key = token.substring(0, equalsIndex).trim();
-                const valueStr = token.substring(equalsIndex + 1).trim();
+                const beforeEquals = token.substring(0, equalsIndex).trim();
+                valueStr = token.substring(equalsIndex + 1).trim();
                 
-                // Validate key name (must be identifier-like)
-                if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
-                    // This is a named argument: key=value
-                    const valueArg = this.parseArgumentValue(valueStr);
-                    namedArgs[key] = valueArg;
-                    
-                    // Advance position
-                    const tokenPos = line.indexOf(token, pos);
-                    if (tokenPos !== -1) {
-                        pos = tokenPos + token.length;
-                        while (pos < line.length && /\s/.test(line[pos])) {
-                            pos++;
-                        }
+                // Check for $paramName=value syntax (e.g., $a="value")
+                if (beforeEquals.startsWith('$') && beforeEquals.length > 1) {
+                    const paramName = beforeEquals.substring(1);
+                    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                        key = paramName;
                     }
-                    i++;
-                    continue;
                 }
+                // Check for key=value syntax (e.g., key="value")
+                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEquals)) {
+                    key = beforeEquals;
+                }
+            }
+            // Case 2: Check if current token is $paramName and next token is =
+            let tokensSkipped = 0;
+            if (!key && LexerUtils.isVariable(token) && i + 1 < tokens.length && tokens[i + 1] === '=') {
+                const { name: paramName } = LexerUtils.parseVariablePath(token);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    key = paramName;
+                    // Skip the = token and get the value
+                    if (i + 2 < tokens.length) {
+                        valueStr = tokens[i + 2];
+                        tokensSkipped = 2; // Skip = and value token
+                    } else {
+                        valueStr = '';
+                        tokensSkipped = 1; // Skip = only
+                    }
+                }
+            }
+            
+            if (key && valueStr !== null) {
+                // This is a named argument
+                const valueArg = this.parseArgumentValue(valueStr);
+                namedArgs[key] = valueArg;
+                
+                // Advance position
+                const tokenPos = line.indexOf(token, pos);
+                if (tokenPos !== -1) {
+                    pos = tokenPos + token.length;
+                    while (pos < line.length && /\s/.test(line[pos])) {
+                        pos++;
+                    }
+                }
+                // Skip tokens if we processed Case 2, otherwise just increment by 1
+                i += tokensSkipped > 0 ? tokensSkipped : 1;
+                continue;
             }
             
             // Parse as positional argument

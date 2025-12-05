@@ -1532,8 +1532,44 @@ export class RobinPath {
                         // Check if comment is empty (should be removed)
                     if (!comment.text || comment.text.trim() === '') {
                             // This is an empty comment - remove it by replacing with empty string
-                            // Only process if it's not inline (inline comments are handled in node reconstruction)
-                            if (comment.inline !== true) {
+                            if (comment.inline === true) {
+                                // For inline comments, remove from the original line including leading whitespace before #
+                                const lines = originalScript.split('\n');
+                                const commentLine = lines[comment.codePos.startRow] || '';
+                                const commentStartCol = commentLine.indexOf('#', comment.codePos.startCol);
+                                if (commentStartCol >= 0) {
+                                    // Find the start of the whitespace before the comment (but keep the code before)
+                                    let removeStartCol = commentStartCol;
+                                    // Go backwards to find where whitespace starts
+                                    for (let i = commentStartCol - 1; i >= 0; i--) {
+                                        if (/\s/.test(commentLine[i])) {
+                                            removeStartCol = i;
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    
+                                    const startOffset = this.rowColToCharOffset(
+                                        originalScript,
+                                        comment.codePos.startRow,
+                                        removeStartCol,
+                                        false // inclusive
+                                    );
+                                    const endOffset = this.rowColToCharOffset(
+                                        originalScript,
+                                        comment.codePos.endRow,
+                                        comment.codePos.endCol,
+                                        true // exclusive (one past the end)
+                                    );
+
+                                    codePositions.push({
+                                        startOffset,
+                                        endOffset,
+                                        code: '' // Empty string removes the inline comment and leading whitespace
+                                    });
+                                }
+                            } else {
+                                // Regular comment above the node
                                 const startOffset = this.rowColToCharOffset(
                                     originalScript,
                                     comment.codePos.startRow,

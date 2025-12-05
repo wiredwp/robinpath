@@ -3275,5 +3275,61 @@ math.add 5 10  # math comment
 
 log "Test 51 - Code position excluding inline comments: All passed"
 
+# Test 52: Named arguments with $paramName=value syntax
+log "Test 52 - Named arguments with $paramName=value syntax"
+
+# Define function with parameter names
+def test_fn $a $b
+  string.concat $a $b
+enddef
+
+# Test CLI-style: test_fn $a="hello" $b="world"
+test_fn $a="hello" $b="world"
+test.assertEqual $ "helloworld" "CLI-style $paramName=value failed"
+
+# Test parenthesized: test_fn($a="foo" $b="bar")
+test_fn($a="foo" $b="bar")
+test.assertEqual $ "foobar" "Parenthesized $paramName=value failed"
+
+# Test multi-line parenthesized
+test_fn(
+  $a="multi"
+  $b="line"
+)
+test.assertEqual $ "multiline" "Multi-line parenthesized $paramName=value failed"
+
+# Test with mixed positional and named args
+def greet $name $age
+  string.concat $name " is " $age
+enddef
+
+greet "Alice" $age="25"
+test.assertEqual $ "Alice is 25" "Mixed positional and named args failed"
+
+# Test with only named args (no positional)
+def add $x $y
+  math.add $x $y
+enddef
+
+add($x=10 $y=20)
+test.assertEqual $ 30 "Named args only failed"
+
+# Test with spaces around = in parenthesized calls
+def test_spaces $a $b
+  string.concat $a $b
+enddef
+
+test_spaces($a = "hello" $b = "world")
+test.assertEqual $ "helloworld" "Spaces around = in parenthesized call failed"
+
+# Test multi-line with spaces around =
+test_spaces(
+  $a = "multi"
+  $b = "line"
+)
+test.assertEqual $ "multiline" "Multi-line with spaces around = failed"
+
+log "Test 52 - Named arguments with $paramName=value syntax: All passed"
+
 log "All tests completed!"
 

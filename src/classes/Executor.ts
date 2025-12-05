@@ -1011,16 +1011,39 @@ Examples:
             }
         }
 
-        // Set positional parameters ($1, $2, $3, ...)
-        for (let i = 0; i < positionalArgs.length; i++) {
-            frame.locals.set(String(i + 1), positionalArgs[i]);
-        }
-
         // Set parameter name aliases ($a = $1, $b = $2, etc.)
+        // Named arguments override positional arguments
+        // Also set positional parameters based on parameter name order when named args are used
+        const finalPositionalValues: Value[] = [];
+        
         for (let i = 0; i < func.paramNames.length; i++) {
             const paramName = func.paramNames[i];
-            const paramValue = i < positionalArgs.length ? positionalArgs[i] : null;
+            let paramValue: Value;
+            
+            // Check if this parameter was provided as a named argument
+            if (namedArgsObj && paramName in namedArgsObj) {
+                // Use named argument value
+                paramValue = namedArgsObj[paramName];
+            } else {
+                // Use positional argument value (or null if not provided)
+                paramValue = i < positionalArgs.length ? positionalArgs[i] : null;
+            }
+            
+            // Set the parameter name alias
             frame.locals.set(paramName, paramValue);
+            // Store for setting positional parameters
+            finalPositionalValues.push(paramValue);
+        }
+        
+        // Set positional parameters ($1, $2, $3, ...)
+        // Use values from named args if available, otherwise from positional args
+        for (let i = 0; i < finalPositionalValues.length; i++) {
+            frame.locals.set(String(i + 1), finalPositionalValues[i]);
+        }
+        
+        // Also set any additional positional args beyond the named parameters
+        for (let i = func.paramNames.length; i < positionalArgs.length; i++) {
+            frame.locals.set(String(i + 1), positionalArgs[i]);
         }
 
         // Set $args variable with named arguments
