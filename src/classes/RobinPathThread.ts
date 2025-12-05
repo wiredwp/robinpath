@@ -434,7 +434,8 @@ export class RobinPathThread {
                     ...base,
                     name: stmt.name,
                     module: moduleName,
-                    args: stmt.args.map(arg => this.serializeArg(arg))
+                    args: stmt.args.map(arg => this.serializeArg(arg)),
+                    syntaxType: (stmt as any).syntaxType
                 };
             case 'assignment':
                 return {

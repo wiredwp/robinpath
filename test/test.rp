@@ -3331,5 +3331,38 @@ test.assertEqual $ "multiline" "Multi-line with spaces around = failed"
 
 log "Test 52 - Named arguments with $paramName=value syntax: All passed"
 
+# Test 53: Function call syntaxType preservation
+log "Test 53 - Function call syntaxType preservation"
+
+# Define a simple function for testing
+def echo $msg
+  $msg
+enddef
+
+# Test 1: Space-separated syntax: fn 'a' 'b'
+echo "space"
+log "Test 53.1 - Space-separated syntax executed"
+
+# Test 2: Parenthesized syntax: fn('a' 'b')
+echo("parentheses")
+log "Test 53.2 - Parenthesized syntax executed"
+
+# Test 3: Named arguments parenthesized: fn($a='a' $b='b')
+def test_named $a $b
+  string.concat $a $b
+enddef
+
+test_named($a="named" $b="args")
+log "Test 53.3 - Named arguments parenthesized syntax executed"
+
+# Test 4: Multiline parenthesized: fn(\n  $a='a'\n  $b='b'\n)
+test_named(
+  $a="multi"
+  $b="line"
+)
+log "Test 53.4 - Multiline parenthesized syntax executed"
+
+log "Test 53 - Function call syntaxType preservation: All passed"
+
 log "All tests completed!"
 

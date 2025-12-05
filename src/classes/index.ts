@@ -9,4 +9,5 @@ export { Executor } from './Executor';
 export { ExecutionStateTracker } from './ExecutionStateTracker';
 export { ReturnException, BreakException, EndException } from './exceptions';
 export { RobinPathThread } from './RobinPathThread';
+export { ASTToCodeConverter } from './ASTToCodeConverter';
 

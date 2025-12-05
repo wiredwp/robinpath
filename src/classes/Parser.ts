@@ -835,11 +835,11 @@ export class Parser {
             return command;
         }
 
-        // Regular command
+        // Regular command (space-separated)
         const command = this.parseCommandFromTokens(tokens, startLine);
         const endLine = this.currentLine;
         this.currentLine++;
-        return { ...command, codePos: this.createCodePositionFromLines(startLine, endLine) };
+        return { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) };
     }
 
     /**
@@ -876,14 +876,31 @@ export class Parser {
         }
 
         // Extract content inside parentheses (handles multi-line)
+        const parenStartLine = this.currentLine;
         const parenContent = this.extractParenthesizedContent();
+        const parenEndLine = this.currentLine - 1; // extractParenthesizedContent advances currentLine past the closing paren
+        
+        // Detect if multiline (content spans multiple lines)
+        const isMultiline = parenEndLine > parenStartLine;
         
         // Parse arguments from the content
         const { positionalArgs, namedArgs } = this.parseParenthesizedArguments(parenContent);
 
+        // Determine syntax type
+        let syntaxType: 'parentheses' | 'named-parentheses' | 'multiline-parentheses';
+        const hasNamedArgs = Object.keys(namedArgs).length > 0;
+        
+        if (isMultiline) {
+            syntaxType = 'multiline-parentheses';
+        } else if (hasNamedArgs) {
+            syntaxType = 'named-parentheses';
+        } else {
+            syntaxType = 'parentheses';
+        }
+
         // Combine positional args and named args (named args as a special object)
         const args: Arg[] = [...positionalArgs];
-        if (Object.keys(namedArgs).length > 0) {
+        if (hasNamedArgs) {
             args.push({ type: 'namedArgs', args: namedArgs });
         }
 
@@ -892,6 +909,7 @@ export class Parser {
             type: 'command', 
             name, 
             args,
+            syntaxType,
             codePos: this.createCodePositionFromLines(callStartLine, endLine)
         };
     }
@@ -1034,11 +1052,26 @@ export class Parser {
                     key = beforeEquals;
                 }
             }
-            // Case 2: Check if current token is $paramName and next token is =
-            else if (LexerUtils.isVariable(token) && tokenIndex + 1 < argTokens.length && argTokens[tokenIndex + 1] === '=') {
-                const { name: paramName } = LexerUtils.parseVariablePath(token);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    key = paramName;
+            // Case 2: Check if current token is $paramName or key and next token is =
+            else if (tokenIndex + 1 < argTokens.length && argTokens[tokenIndex + 1] === '=') {
+                // Check for $paramName = value syntax
+                if (LexerUtils.isVariable(token)) {
+                    const { name: paramName } = LexerUtils.parseVariablePath(token);
+                    if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                        key = paramName;
+                        // Get the value token (skip =)
+                        if (tokenIndex + 2 < argTokens.length) {
+                            valueStr = argTokens[tokenIndex + 2];
+                            tokensToSkip = 2; // Skip = and value
+                        } else {
+                            valueStr = '';
+                            tokensToSkip = 1; // Skip = only
+                        }
+                    }
+                }
+                // Check for key = value syntax (without $)
+                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
+                    key = token;
                     // Get the value token (skip =)
                     if (tokenIndex + 2 < argTokens.length) {
                         valueStr = argTokens[tokenIndex + 2];
@@ -2324,12 +2357,27 @@ export class Parser {
                     key = beforeEquals;
                 }
             }
-            // Case 2: Check if current token is $paramName and next token is =
+            // Case 2: Check if current token is $paramName or key and next token is =
             let tokensSkipped = 0;
-            if (!key && LexerUtils.isVariable(token) && i + 1 < tokens.length && tokens[i + 1] === '=') {
-                const { name: paramName } = LexerUtils.parseVariablePath(token);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    key = paramName;
+            if (!key && i + 1 < tokens.length && tokens[i + 1] === '=') {
+                // Check for $paramName = value syntax
+                if (LexerUtils.isVariable(token)) {
+                    const { name: paramName } = LexerUtils.parseVariablePath(token);
+                    if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                        key = paramName;
+                        // Skip the = token and get the value
+                        if (i + 2 < tokens.length) {
+                            valueStr = tokens[i + 2];
+                            tokensSkipped = 2; // Skip = and value token
+                        } else {
+                            valueStr = '';
+                            tokensSkipped = 1; // Skip = only
+                        }
+                    }
+                }
+                // Check for key = value syntax (without $)
+                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
+                    key = token;
                     // Skip the = token and get the value
                     if (i + 2 < tokens.length) {
                         valueStr = tokens[i + 2];

@@ -2562,6 +2562,135 @@ math.add 5 10  # math comment`;
         console.log('✓ All codePos tests PASSED!');
         console.log('='.repeat(60));
         
+        // Test 53: Function call syntaxType preservation
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Test 53: Function call syntaxType preservation');
+        console.log('='.repeat(60));
+        
+        const syntaxTypeTestRp = new RobinPath();
+        
+        // Test script with all 4 syntax types
+        const syntaxTypeTestScript = `def echo $msg
+  $msg
+enddef
+
+def test_named $a $b
+  string.concat $a $b
+enddef
+
+# Test 1: Space-separated syntax: fn 'a' 'b'
+echo "space"
+
+# Test 2: Parenthesized syntax: fn('a' 'b')
+echo("parentheses")
+
+# Test 3: Named arguments parenthesized: fn($a='a' $b='b')
+test_named($a="named" $b="args")
+
+# Test 4: Multiline parenthesized: fn(\n  $a='a'\n  $b='b'\n)
+test_named(
+  $a="multi"
+  $b="line"
+)`;
+        
+        const syntaxTypeAST = syntaxTypeTestRp.getAST(syntaxTypeTestScript);
+        
+        // Find command nodes (skip def nodes)
+        const echoSpaceNode = syntaxTypeAST.find(node => 
+            node.type === 'command' && node.name === 'echo' && node.args && node.args.length > 0 && node.args[0].value === 'space'
+        );
+        const echoParenNode = syntaxTypeAST.find(node => 
+            node.type === 'command' && node.name === 'echo' && node.args && node.args.length > 0 && node.args[0].value === 'parentheses'
+        );
+        const testNamedNode = syntaxTypeAST.find(node => 
+            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'named-parentheses'
+        );
+        const testMultilineNode = syntaxTypeAST.find(node => 
+            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'multiline-parentheses'
+        );
+        
+        // Test 1: Space-separated syntax
+        const syntaxTypeTest1Passed = echoSpaceNode && echoSpaceNode.syntaxType === 'space';
+        if (syntaxTypeTest1Passed) {
+            console.log('✓ SyntaxType Test 1 PASSED - Space-separated syntax detected');
+            console.log(`  syntaxType: ${echoSpaceNode.syntaxType}`);
+        } else {
+            console.log('✗ SyntaxType Test 1 FAILED - Space-separated syntax not detected');
+            console.log('  Node:', JSON.stringify(echoSpaceNode, null, 2));
+            throw new Error('SyntaxType Test 1 FAILED - Space-separated syntax not detected');
+        }
+        
+        // Test 2: Parenthesized syntax
+        const syntaxTypeTest2Passed = echoParenNode && echoParenNode.syntaxType === 'parentheses';
+        if (syntaxTypeTest2Passed) {
+            console.log('✓ SyntaxType Test 2 PASSED - Parenthesized syntax detected');
+            console.log(`  syntaxType: ${echoParenNode.syntaxType}`);
+        } else {
+            console.log('✗ SyntaxType Test 2 FAILED - Parenthesized syntax not detected');
+            console.log('  Node:', JSON.stringify(echoParenNode, null, 2));
+            throw new Error('SyntaxType Test 2 FAILED - Parenthesized syntax not detected');
+        }
+        
+        // Test 3: Named arguments parenthesized syntax
+        const syntaxTypeTest3Passed = testNamedNode && testNamedNode.syntaxType === 'named-parentheses';
+        if (syntaxTypeTest3Passed) {
+            console.log('✓ SyntaxType Test 3 PASSED - Named arguments parenthesized syntax detected');
+            console.log(`  syntaxType: ${testNamedNode.syntaxType}`);
+        } else {
+            console.log('✗ SyntaxType Test 3 FAILED - Named arguments parenthesized syntax not detected');
+            console.log('  Node:', JSON.stringify(testNamedNode, null, 2));
+            throw new Error('SyntaxType Test 3 FAILED - Named arguments parenthesized syntax not detected');
+        }
+        
+        // Test 4: Multiline parenthesized syntax
+        const syntaxTypeTest4Passed = testMultilineNode && testMultilineNode.syntaxType === 'multiline-parentheses';
+        if (syntaxTypeTest4Passed) {
+            console.log('✓ SyntaxType Test 4 PASSED - Multiline parenthesized syntax detected');
+            console.log(`  syntaxType: ${testMultilineNode.syntaxType}`);
+        } else {
+            console.log('✗ SyntaxType Test 4 FAILED - Multiline parenthesized syntax not detected');
+            console.log('  Node:', JSON.stringify(testMultilineNode, null, 2));
+            throw new Error('SyntaxType Test 4 FAILED - Multiline parenthesized syntax not detected');
+        }
+        
+        // Test 5: Code reconstruction preserves syntaxType
+        const reconstructedScript = syntaxTypeTestRp.updateCodeFromAST(syntaxTypeTestScript, syntaxTypeAST);
+        const reconstructedAST = syntaxTypeTestRp.getAST(reconstructedScript);
+        
+        const echoSpaceReconstructed = reconstructedAST.find(node => 
+            node.type === 'command' && node.name === 'echo' && node.args && node.args.length > 0 && node.args[0].value === 'space'
+        );
+        const echoParenReconstructed = reconstructedAST.find(node => 
+            node.type === 'command' && node.name === 'echo' && node.args && node.args.length > 0 && node.args[0].value === 'parentheses'
+        );
+        const testNamedReconstructed = reconstructedAST.find(node => 
+            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'named-parentheses'
+        );
+        const testMultilineReconstructed = reconstructedAST.find(node => 
+            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'multiline-parentheses'
+        );
+        
+        const syntaxTypeTest5Passed = 
+            echoSpaceReconstructed && echoSpaceReconstructed.syntaxType === 'space' &&
+            echoParenReconstructed && echoParenReconstructed.syntaxType === 'parentheses' &&
+            testNamedReconstructed && testNamedReconstructed.syntaxType === 'named-parentheses' &&
+            testMultilineReconstructed && testMultilineReconstructed.syntaxType === 'multiline-parentheses';
+        
+        if (syntaxTypeTest5Passed) {
+            console.log('✓ SyntaxType Test 5 PASSED - Code reconstruction preserves syntaxType');
+        } else {
+            console.log('✗ SyntaxType Test 5 FAILED - Code reconstruction does not preserve syntaxType');
+            console.log('  Space-separated:', echoSpaceReconstructed?.syntaxType, '(expected: space)');
+            console.log('  Parenthesized:', echoParenReconstructed?.syntaxType, '(expected: parentheses)');
+            console.log('  Named-parentheses:', testNamedReconstructed?.syntaxType, '(expected: named-parentheses)');
+            console.log('  Multiline-parentheses:', testMultilineReconstructed?.syntaxType, '(expected: multiline-parentheses)');
+            throw new Error('SyntaxType Test 5 FAILED - Code reconstruction does not preserve syntaxType');
+        }
+        
+        console.log('✓ All syntaxType tests PASSED!');
+        console.log('='.repeat(60));
+        
         // Close the test server
         await new Promise((resolve) => {
             testServer.close(() => {
