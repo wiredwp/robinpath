@@ -129,7 +129,7 @@ export class ExpressionEvaluator {
 
         let depth = 0;
         let i = startPos + 2; // Start after "$("
-        const code: string[] = [];
+        const codeStart = i; // Track start position for substring extraction
         let inString: false | '"' | "'" | '`' = false;
         let escapeNext = false;
 
@@ -137,7 +137,6 @@ export class ExpressionEvaluator {
             const char = str[i];
             
             if (escapeNext) {
-                code.push(char);
                 escapeNext = false;
                 i++;
                 continue;
@@ -145,7 +144,6 @@ export class ExpressionEvaluator {
 
             if (char === '\\' && inString) {
                 escapeNext = true;
-                code.push(char);
                 i++;
                 continue;
             }
@@ -153,20 +151,17 @@ export class ExpressionEvaluator {
             // Handle string literals
             if (!inString && (char === '"' || char === "'" || char === '`')) {
                 inString = char;
-                code.push(char);
                 i++;
                 continue;
             }
 
             if (inString && char === inString) {
                 inString = false;
-                code.push(char);
                 i++;
                 continue;
             }
 
             if (inString) {
-                code.push(char);
                 i++;
                 continue;
             }
@@ -174,7 +169,6 @@ export class ExpressionEvaluator {
             // Handle nested $(
             if (char === '$' && i + 1 < str.length && str[i + 1] === '(') {
                 depth++;
-                code.push(char);
                 i++;
                 continue;
             }
@@ -184,19 +178,18 @@ export class ExpressionEvaluator {
                 if (depth > 0) {
                     // This is a closing paren for a nested subexpr
                     depth--;
-                    code.push(char);
                     i++;
                     continue;
                 } else {
                     // This is the closing paren for our subexpression
+                    // Optimize: Use substring instead of array join
                     return {
-                        code: code.join(''),
+                        code: str.substring(codeStart, i),
                         endPos: i + 1
                     };
                 }
             }
 
-            code.push(char);
             i++;
         }
 

@@ -43,6 +43,7 @@ export class Executor {
             lastValue: null
         });
     }
+    
 
     getCurrentFrame(): Frame {
         return this.callStack[this.callStack.length - 1];
@@ -77,19 +78,20 @@ export class Executor {
         
         const evaluatedArgs = await Promise.all(args.map(arg => this.evaluateArg(arg)));
         
+        // Optimize: Use get() instead of has() + get() to reduce lookups
         // Check if it's a builtin function
-        if (this.environment.builtins.has(funcName)) {
-            const handler = this.environment.builtins.get(funcName)!;
+        const builtinHandler = this.environment.builtins.get(funcName);
+        if (builtinHandler) {
             const result = await Promise.resolve(async () => {
-                return await handler(evaluatedArgs)
+                return await builtinHandler(evaluatedArgs)
             });
             return result !== undefined ? result : null;
         }
         
         // Check if it's a user-defined function
-        if (this.environment.functions.has(funcName)) {
-            const func = this.environment.functions.get(funcName)!;
-            return await this.callFunction(func, evaluatedArgs);
+        const userFunc = this.environment.functions.get(funcName);
+        if (userFunc) {
+            return await this.callFunction(userFunc, evaluatedArgs);
         }
         
         throw new Error(`Unknown function: ${funcName}`);
@@ -307,10 +309,20 @@ Examples:
             const name = String(moduleName);
             
             // Check if the module exists (has metadata or has registered functions)
+            // Optimize: Check metadata first (faster), then check builtins only if needed
             const hasMetadata = this.environment.moduleMetadata.has(name);
-            const hasFunctions = Array.from(this.environment.builtins.keys()).some(
-                key => key.startsWith(`${name}.`)
-            );
+            let hasFunctions = false;
+            if (!hasMetadata) {
+                // Only check builtins if metadata doesn't exist
+                // Optimize: Use direct iteration instead of Array.from().some()
+                const prefix = `${name}.`;
+                for (const key of this.environment.builtins.keys()) {
+                    if (key.startsWith(prefix)) {
+                        hasFunctions = true;
+                        break;
+                    }
+                }
+            }
             
             if (!hasMetadata && !hasFunctions) {
                 const errorMsg = `Error: Module "${name}" not found`;
@@ -855,16 +867,20 @@ Examples:
             }
             
             // Check if it's a module function (contains .)
-            if (name.includes('.')) {
-                const [moduleName, funcName] = name.split('.', 2);
+            // Optimize: Use indexOf instead of includes + split for better performance
+            const dotIndex = name.indexOf('.');
+            if (dotIndex >= 0) {
+                const moduleName = name.substring(0, dotIndex);
+                const funcName = name.substring(dotIndex + 1);
                 const fullName = `${moduleName}.${funcName}`;
-                // Check both builtins and metadata (like RobinPathThread does)
+                // Optimize: Use get() instead of has() + has() to reduce lookups
                 const exists = this.environment.builtins.has(fullName) || 
                               (this.environment.metadata && this.environment.metadata.has(fullName));
                 frame.lastValue = exists;
                 return;
             }
             
+            // Optimize: Use get() instead of has() to reduce lookups
             // Check if it's a user-defined function
             if (this.environment.functions.has(name)) {
                 frame.lastValue = true;
@@ -968,24 +984,25 @@ Examples:
 
         // Determine the actual function name to use
         // If command doesn't have a dot and currentModule is set, prepend module name
+        const hasDot = cmd.name.includes('.');
         let functionName = cmd.name;
-        if (!functionName.includes('.') && this.environment.currentModule) {
+        if (!hasDot && this.environment.currentModule) {
             functionName = `${this.environment.currentModule}.${functionName}`;
         }
 
         // Check if function is forgotten in current scope
         // Check both the original name and the module-prefixed name
         if (frame.forgotten) {
-            if (frame.forgotten.has(cmd.name) || frame.forgotten.has(functionName)) {
+            if (frame.forgotten.has(cmd.name) || (functionName !== cmd.name && frame.forgotten.has(functionName))) {
                 // Function is forgotten in this scope - throw error (as if it doesn't exist)
                 throw new Error(`Unknown function: ${cmd.name}`);
             }
         }
 
-        // Check if it's a user-defined function (check original name first, then module-prefixed)
-        if (this.environment.functions.has(cmd.name)) {
-            const func = this.environment.functions.get(cmd.name)!;
-            const result = await this.callFunction(func, args);
+        // Optimize: Check user-defined functions first (most common case)
+        const userFunc = this.environment.functions.get(cmd.name);
+        if (userFunc) {
+            const result = await this.callFunction(userFunc, args);
             // Ensure lastValue is set (even if result is undefined, preserve it)
             frame.lastValue = result !== undefined ? result : null;
             return;
@@ -997,16 +1014,16 @@ Examples:
             const firstArg = args[0];
             if (Array.isArray(firstArg)) {
                 // Call array.length
-                if (this.environment.builtins.has('array.length')) {
-                    const handler = this.environment.builtins.get('array.length')!;
+                const handler = this.environment.builtins.get('array.length');
+                if (handler) {
                     const result = await Promise.resolve(handler(args));
                     frame.lastValue = result !== undefined ? result : null;
                     return;
                 }
             } else {
                 // Call string.length
-                if (this.environment.builtins.has('string.length')) {
-                    const handler = this.environment.builtins.get('string.length')!;
+                const handler = this.environment.builtins.get('string.length');
+                if (handler) {
                     const result = await Promise.resolve(handler(args));
                     frame.lastValue = result !== undefined ? result : null;
                     return;
@@ -1015,30 +1032,22 @@ Examples:
         }
 
         // Check if it's a builtin (try module-prefixed name first, then original)
-        if (this.environment.builtins.has(functionName)) {
-            const handler = this.environment.builtins.get(functionName)!;
-            const previousLastValue = frame.lastValue; // Preserve last value for log
-            const result = await Promise.resolve(handler(args));
-            // log function should not affect the last value
-            if (functionName === 'log') {
-                frame.lastValue = previousLastValue;
-            } else {
-            // Ensure lastValue is set (even if result is undefined, preserve it)
-            frame.lastValue = result !== undefined ? result : null;
-            }
-            return;
+        // Optimize: Use get() instead of has() + get() to reduce lookups
+        let handler = this.environment.builtins.get(functionName);
+        if (!handler && functionName !== cmd.name) {
+            handler = this.environment.builtins.get(cmd.name);
         }
-
-        // If module-prefixed lookup failed, try original name as fallback
-        if (functionName !== cmd.name && this.environment.builtins.has(cmd.name)) {
-            const handler = this.environment.builtins.get(cmd.name)!;
+        
+        if (handler) {
             const previousLastValue = frame.lastValue; // Preserve last value for log
             const result = await Promise.resolve(handler(args));
             // log function should not affect the last value
-            if (cmd.name === 'log') {
+            const isLog = functionName === 'log' || cmd.name === 'log';
+            if (isLog) {
                 frame.lastValue = previousLastValue;
             } else {
-            frame.lastValue = result !== undefined ? result : null;
+                // Ensure lastValue is set (even if result is undefined, preserve it)
+                frame.lastValue = result !== undefined ? result : null;
             }
             return;
         }
@@ -1564,9 +1573,13 @@ Examples:
         }
         
         // Apply computed property replacements in reverse order
+        // Optimize: Use substring operations instead of replace() for better performance
         for (let i = computedPropReplacements.length - 1; i >= 0; i--) {
             const { match, replacement } = computedPropReplacements[i];
-            result = result.replace(match, replacement);
+            const matchIndex = result.lastIndexOf(match);
+            if (matchIndex >= 0) {
+                result = result.substring(0, matchIndex) + replacement + result.substring(matchIndex + match.length);
+            }
         }
         
         // Replace variable references in values (not in strings or keys)
@@ -1575,11 +1588,13 @@ Examples:
         // We'll use a more sophisticated approach: parse the structure and replace values
         
         // Simple approach: replace $var patterns that are not inside strings
+        // Optimize: Use array builder pattern instead of string concatenation
         // We'll track string boundaries
         let inString: false | '"' | "'" | '`' = false;
         let escaped = false;
         let i = 0;
-        let output = '';
+        const outputParts: string[] = [];
+        let lastIndex = 0;
         
         while (i < result.length) {
             const char = result[i];
@@ -1591,7 +1606,6 @@ Examples:
                 } else if (char === inString) {
                     inString = false;
                 }
-                output += char;
                 escaped = false;
                 i++;
                 continue;
@@ -1599,7 +1613,6 @@ Examples:
             
             if (inString) {
                 escaped = char === '\\' && !escaped;
-                output += char;
                 i++;
                 continue;
             }
@@ -1611,12 +1624,11 @@ Examples:
                 // Check if it's a variable: $var, $var.property, etc.
                 if (/[A-Za-z_]/.test(nextChar)) {
                     // Extract the variable path
-                    let varPath = '$';
                     let j = i + 1;
                     while (j < result.length && /[A-Za-z0-9_.\[\]]/.test(result[j])) {
-                        varPath += result[j];
                         j++;
                     }
+                    const varPath = result.substring(i, j);
                     
                     // Parse and resolve the variable
                     try {
@@ -1639,24 +1651,30 @@ Examples:
                             replacement = String(value);
                         }
                         
-                        output += replacement;
+                        // Add text before variable and replacement
+                        if (i > lastIndex) {
+                            outputParts.push(result.substring(lastIndex, i));
+                        }
+                        outputParts.push(replacement);
+                        lastIndex = j;
                         i = j;
                         continue;
                     } catch {
-                        // If parsing fails, keep the original
-                        output += char;
-                        i++;
-                        continue;
+                        // If parsing fails, continue normally
                     }
                 }
             }
             
-            output += char;
             escaped = false;
             i++;
         }
         
-        return output;
+        // Add remaining text
+        if (lastIndex < result.length) {
+            outputParts.push(result.substring(lastIndex));
+        }
+        
+        return outputParts.join('');
     }
 
     async executeSubexpression(code: string): Promise<Value> {

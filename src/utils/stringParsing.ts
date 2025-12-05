@@ -246,25 +246,40 @@ export class LexerUtils {
             let remaining = name;
             
             // Parse path segments (.property or [index])
-            while (remaining.length > 0) {
-                if (remaining.startsWith('.')) {
+            // Optimize: Use character-by-character parsing instead of regex in loop
+            let pos = 0;
+            while (pos < remaining.length) {
+                if (remaining[pos] === '.') {
                     // Property access: .propertyName
-                    const propMatch = remaining.match(/^\.([A-Za-z_][A-Za-z0-9_]*)/);
-                    if (!propMatch) {
+                    pos++; // Skip '.'
+                    let propStart = pos;
+                    // Find end of property name (alphanumeric + underscore)
+                    while (pos < remaining.length && 
+                           ((remaining[pos] >= 'a' && remaining[pos] <= 'z') ||
+                            (remaining[pos] >= 'A' && remaining[pos] <= 'Z') ||
+                            (remaining[pos] >= '0' && remaining[pos] <= '9') ||
+                            remaining[pos] === '_')) {
+                        pos++;
+                    }
+                    if (pos === propStart) {
                         throw new Error(`Invalid property access: ${remaining}`);
                     }
-                    path.push({ type: 'property', name: propMatch[1] });
-                    remaining = remaining.slice(propMatch[0].length);
-                } else if (remaining.startsWith('[')) {
+                    path.push({ type: 'property', name: remaining.substring(propStart, pos) });
+                } else if (remaining[pos] === '[') {
                     // Array index: [number]
-                    const indexMatch = remaining.match(/^\[(\d+)\]/);
-                    if (!indexMatch) {
+                    pos++; // Skip '['
+                    let indexStart = pos;
+                    // Find end of number
+                    while (pos < remaining.length && remaining[pos] >= '0' && remaining[pos] <= '9') {
+                        pos++;
+                    }
+                    if (pos === indexStart || pos >= remaining.length || remaining[pos] !== ']') {
                         throw new Error(`Invalid array index: ${remaining}`);
                     }
-                    path.push({ type: 'index', index: parseInt(indexMatch[1], 10) });
-                    remaining = remaining.slice(indexMatch[0].length);
+                    path.push({ type: 'index', index: parseInt(remaining.substring(indexStart, pos), 10) });
+                    pos++; // Skip ']'
                 } else {
-                    throw new Error(`Unexpected character in variable path: ${remaining}`);
+                    throw new Error(`Unexpected character in variable path: ${remaining.substring(pos)}`);
                 }
             }
             
@@ -282,25 +297,40 @@ export class LexerUtils {
         let remaining = name.slice(baseName.length);
         
         // Parse path segments (.property or [index])
-        while (remaining.length > 0) {
-            if (remaining.startsWith('.')) {
+        // Optimize: Use character-by-character parsing instead of regex in loop
+        let pos = 0;
+        while (pos < remaining.length) {
+            if (remaining[pos] === '.') {
                 // Property access: .propertyName
-                const propMatch = remaining.match(/^\.([A-Za-z_][A-Za-z0-9_]*)/);
-                if (!propMatch) {
+                pos++; // Skip '.'
+                let propStart = pos;
+                // Find end of property name (alphanumeric + underscore)
+                while (pos < remaining.length && 
+                       ((remaining[pos] >= 'a' && remaining[pos] <= 'z') ||
+                        (remaining[pos] >= 'A' && remaining[pos] <= 'Z') ||
+                        (remaining[pos] >= '0' && remaining[pos] <= '9') ||
+                        remaining[pos] === '_')) {
+                    pos++;
+                }
+                if (pos === propStart) {
                     throw new Error(`Invalid property access: ${remaining}`);
                 }
-                path.push({ type: 'property', name: propMatch[1] });
-                remaining = remaining.slice(propMatch[0].length);
-            } else if (remaining.startsWith('[')) {
+                path.push({ type: 'property', name: remaining.substring(propStart, pos) });
+            } else if (remaining[pos] === '[') {
                 // Array index: [number]
-                const indexMatch = remaining.match(/^\[(\d+)\]/);
-                if (!indexMatch) {
+                pos++; // Skip '['
+                let indexStart = pos;
+                // Find end of number
+                while (pos < remaining.length && remaining[pos] >= '0' && remaining[pos] <= '9') {
+                    pos++;
+                }
+                if (pos === indexStart || pos >= remaining.length || remaining[pos] !== ']') {
                     throw new Error(`Invalid array index: ${remaining}`);
                 }
-                path.push({ type: 'index', index: parseInt(indexMatch[1], 10) });
-                remaining = remaining.slice(indexMatch[0].length);
+                path.push({ type: 'index', index: parseInt(remaining.substring(indexStart, pos), 10) });
+                pos++; // Skip ']'
             } else {
-                throw new Error(`Unexpected character in variable path: ${remaining}`);
+                throw new Error(`Unexpected character in variable path: ${remaining.substring(pos)}`);
             }
         }
         

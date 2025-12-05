@@ -22,12 +22,24 @@ import type {
 
 export class Parser {
     private lines: string[];
+    private trimmedLinesCache: Map<number, string> = new Map(); // Cache trimmed lines
     private currentLine: number = 0;
     private columnPositionsCache: Map<number, { startCol: number; endCol: number }> = new Map();
     private inlineCommentCache: Map<number, { text: string; position: number } | null> = new Map();
 
     constructor(lines: string[]) {
         this.lines = lines;
+    }
+    
+    // Optimize: Cache trimmed lines to avoid repeated trimming
+    private getTrimmedLine(lineNumber: number): string {
+        const cached = this.trimmedLinesCache.get(lineNumber);
+        if (cached !== undefined) {
+            return cached;
+        }
+        const trimmed = this.lines[lineNumber]?.trim() || '';
+        this.trimmedLinesCache.set(lineNumber, trimmed);
+        return trimmed;
     }
 
     /**
@@ -190,7 +202,7 @@ export class Parser {
 
     private getLineContent(lineNumber: number): string {
         if (lineNumber >= 0 && lineNumber < this.lines.length) {
-            return this.lines[lineNumber].trim();
+            return this.getTrimmedLine(lineNumber);
         }
         return '';
     }
@@ -208,7 +220,7 @@ export class Parser {
         let scanLine = 0;
         
         while (scanLine < this.lines.length) {
-            const line = this.lines[scanLine].trim();
+            const line = this.getTrimmedLine(scanLine);
             
             // Skip empty lines and comments when scanning for def blocks
             if (!line || line.startsWith('#')) {
@@ -226,7 +238,7 @@ export class Parser {
                 let decoratorScanLine = scanLine;
                 let foundDef = false;
                 while (decoratorScanLine < this.lines.length) {
-                    const decoratorLine = this.lines[decoratorScanLine].trim();
+                    const decoratorLine = this.getTrimmedLine(decoratorScanLine);
                     if (!decoratorLine || decoratorLine.startsWith('#')) {
                         // Blank line or comment - allowed between decorators and def
                         decoratorScanLine++;
@@ -294,7 +306,7 @@ export class Parser {
                 }
             
             // Check if we found a def (either directly or after decorators)
-            const defLine = this.lines[scanLine].trim();
+            const defLine = this.getTrimmedLine(scanLine);
             const defTokens = Lexer.tokenize(defLine);
             if (foundDef || (defTokens.length > 0 && defTokens[0] === 'def')) {
                 // Found a def block - extract it
@@ -518,7 +530,7 @@ export class Parser {
             }
             
             const originalLine = this.lines[this.currentLine];
-            const line = originalLine.trim();
+            const line = this.getTrimmedLine(this.currentLine);
             
             // Blank line: mark that blank line appeared after last comment
             // Blank lines between decorators and def are allowed (like comments)
@@ -1268,7 +1280,9 @@ export class Parser {
         // Update currentLine to skip past the line with the closing paren
         this.currentLine = currentLineIndex + 1;
 
-        return content.join('').trim();
+        // Optimize: Use join directly, trim only if needed
+        const joined = content.join('');
+        return joined.trim();
     }
 
     /**
@@ -1279,14 +1293,16 @@ export class Parser {
         const positionalArgs: Arg[] = [];
         const namedArgs: Record<string, Arg> = {};
 
-        if (!content.trim()) {
+        // Optimize: Check length first before trimming
+        const trimmedContent = content.trim();
+        if (!trimmedContent) {
             return { positionalArgs, namedArgs };
         }
 
         // Split content into argument tokens
         // Arguments are separated by whitespace (spaces or newlines)
         // But we need to preserve strings and subexpressions
-        const argTokens = this.tokenizeParenthesizedArguments(content);
+        const argTokens = this.tokenizeParenthesizedArguments(trimmedContent);
 
         for (let tokenIndex = 0; tokenIndex < argTokens.length; tokenIndex++) {
             const token = argTokens[tokenIndex];
@@ -1457,8 +1473,10 @@ export class Parser {
             // Commas are optional separators, = is used for named arguments
             if (((char === ' ' || char === '\n' || char === '\t') || char === ',' || char === '=') && 
                 subexprDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
-                if (current.trim()) {
-                    tokens.push(current.trim());
+                // Optimize: Only push non-empty tokens
+                const trimmed = current.trim();
+                if (trimmed) {
+                    tokens.push(trimmed);
                 }
                 current = '';
                 // Push = as a separate token for named argument parsing
@@ -1473,11 +1491,13 @@ export class Parser {
             i++;
         }
 
-        if (current.trim()) {
-            tokens.push(current.trim());
+        // Optimize: Only push non-empty tokens, avoiding filter at the end
+        const trimmed = current.trim();
+        if (trimmed) {
+            tokens.push(trimmed);
         }
 
-        return tokens.filter(t => t.length > 0);
+        return tokens;
     }
 
     /**

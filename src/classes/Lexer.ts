@@ -5,10 +5,28 @@
 export class Lexer {
     static tokenize(line: string): string[] {
         const tokens: string[] = [];
-        let current = '';
+        // Optimize: Use array builder pattern instead of string concatenation
+        const currentChars: string[] = [];
+        let currentStart = 0; // Track start of current token (for trimming optimization)
         let inString = false;
         let stringChar = '';
         let i = 0;
+
+        // Helper to flush current token
+        const flushCurrent = () => {
+            if (currentChars.length > 0) {
+                // Find first non-whitespace and last non-whitespace
+                let start = 0;
+                let end = currentChars.length;
+                while (start < end && /\s/.test(currentChars[start])) start++;
+                while (end > start && /\s/.test(currentChars[end - 1])) end--;
+                if (start < end) {
+                    tokens.push(currentChars.slice(start, end).join(''));
+                }
+                currentChars.length = 0;
+                currentStart = 0;
+            }
+        };
 
         while (i < line.length) {
             const char = line[i];
@@ -24,81 +42,60 @@ export class Lexer {
                 if (!inString) {
                     inString = true;
                     stringChar = char;
-                    if (current.trim()) {
-                        tokens.push(current.trim());
-                        current = '';
-                    }
-                    current += char;
+                    flushCurrent();
+                    currentChars.push(char);
                 } else if (char === stringChar) {
                     inString = false;
-                    current += char;
-                    tokens.push(current);
-                    current = '';
+                    currentChars.push(char);
+                    tokens.push(currentChars.join(''));
+                    currentChars.length = 0;
                     stringChar = '';
                 } else {
-                    current += char;
+                    currentChars.push(char);
                 }
                 i++;
                 continue;
             }
 
             if (inString) {
-                current += char;
+                currentChars.push(char);
                 i++;
                 continue;
             }
 
             // Handle operators (==, !=, >=, <=, &&, ||)
             if (char === '=' && nextChar === '=') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('==');
                 i += 2;
                 continue;
             }
             if (char === '!' && nextChar === '=') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('!=');
                 i += 2;
                 continue;
             }
             if (char === '>' && nextChar === '=') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('>=');
                 i += 2;
                 continue;
             }
             if (char === '<' && nextChar === '=') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('<=');
                 i += 2;
                 continue;
             }
             if (char === '&' && nextChar === '&') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('&&');
                 i += 2;
                 continue;
             }
             if (char === '|' && nextChar === '|') {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push('||');
                 i += 2;
                 continue;
@@ -108,16 +105,13 @@ export class Lexer {
             // Note: '.' and '[' ']' are handled specially for attribute access and array indexing
             if (['=', '>', '<', '!', '(', ')', ']'].includes(char)) {
                 // Special handling for ']' - it might be part of a variable like $arr[0]
-                if (char === ']' && current.trim().startsWith('$')) {
+                if (char === ']' && currentChars.length > 0 && currentChars[0] === '$') {
                     // This is part of a variable - keep it in current
-                    current += char;
+                    currentChars.push(char);
                     i++;
                     continue;
                 }
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push(char);
                 i++;
                 continue;
@@ -126,16 +120,13 @@ export class Lexer {
             // Handle '[' - might be part of variable or standalone
             if (char === '[') {
                 // If current starts with $, it's part of a variable
-                if (current.trim().startsWith('$')) {
-                    current += char;
+                if (currentChars.length > 0 && currentChars[0] === '$') {
+                    currentChars.push(char);
                     i++;
                     continue;
                 }
                 // Otherwise, it's a standalone token
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push(char);
                 i++;
                 continue;
@@ -144,34 +135,33 @@ export class Lexer {
             // Handle '.' - might be part of variable attribute access or decimal number
             if (char === '.') {
                 // If current starts with $, it's part of a variable attribute access
-                if (current.trim().startsWith('$')) {
-                    current += char;
+                if (currentChars.length > 0 && currentChars[0] === '$') {
+                    currentChars.push(char);
                     i++;
                     continue;
                 }
-                // If current is a number (starts with digit), check if next char is also a digit
-                const currentTrimmed = current.trim();
-                if (/^-?\d+$/.test(currentTrimmed)) {
-                    // Check if next character is a digit (for decimal numbers)
-                    if (i + 1 < line.length && /\d/.test(line[i + 1])) {
-                        // This is a decimal number - keep the dot as part of the number
-                        current += char;
+                // Check if current is a number (starts with digit)
+                if (currentChars.length > 0) {
+                    const currentStr = currentChars.join('');
+                    const trimmed = currentStr.trim();
+                    if (/^-?\d+$/.test(trimmed)) {
+                        // Check if next character is a digit (for decimal numbers)
+                        if (i + 1 < line.length && /\d/.test(line[i + 1])) {
+                            // This is a decimal number - keep the dot as part of the number
+                            currentChars.push(char);
+                            i++;
+                            continue;
+                        }
+                        // If next char is not a digit, push the number and treat . as separate token
+                        tokens.push(trimmed);
+                        currentChars.length = 0;
+                        tokens.push(char);
                         i++;
                         continue;
                     }
-                    // If next char is not a digit, this might be end of number (like "3.") or module.function
-                    // Push the number and treat . as separate token
-                    tokens.push(currentTrimmed);
-                    current = '';
-                    tokens.push(char);
-                    i++;
-                    continue;
                 }
                 // Otherwise, it's a standalone token (for module.function syntax)
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 tokens.push(char);
                 i++;
                 continue;
@@ -179,23 +169,18 @@ export class Lexer {
 
             // Handle whitespace
             if (/\s/.test(char)) {
-                if (current.trim()) {
-                    tokens.push(current.trim());
-                    current = '';
-                }
+                flushCurrent();
                 i++;
                 continue;
             }
 
-            current += char;
+            currentChars.push(char);
             i++;
         }
 
-        if (current.trim()) {
-            tokens.push(current.trim());
-        }
+        flushCurrent();
 
-        return tokens.filter(t => t.length > 0);
+        return tokens;
     }
 }
 
