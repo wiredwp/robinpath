@@ -7,7 +7,6 @@ export class Lexer {
         const tokens: string[] = [];
         // Optimize: Use array builder pattern instead of string concatenation
         const currentChars: string[] = [];
-        let currentStart = 0; // Track start of current token (for trimming optimization)
         let inString = false;
         let stringChar = '';
         let i = 0;
@@ -24,7 +23,6 @@ export class Lexer {
                     tokens.push(currentChars.slice(start, end).join(''));
                 }
                 currentChars.length = 0;
-                currentStart = 0;
             }
         };
 

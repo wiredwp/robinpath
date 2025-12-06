@@ -739,6 +739,770 @@ log "test"
         
         console.log('='.repeat(60));
         
+        // Test editing comments in AST
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Testing Comment Editing in AST');
+        console.log('='.repeat(60));
+        
+        const editCommentRp = new RobinPath();
+        
+        // Test 13: Edit a single comment above a command (no blank line - attached to command)
+        const editTestScript13 = `
+# original comment
+add 5 5
+`;
+        const ast13 = editCommentRp.getAST(editTestScript13);
+        const addNode13 = ast13.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode13 && addNode13.comments && addNode13.comments.length > 0) {
+            // Edit the comment text
+            addNode13.comments[0].text = 'edited comment';
+            const updatedCode13 = editCommentRp.updateCodeFromAST(editTestScript13, ast13);
+            const editTest13Passed = updatedCode13.includes('# edited comment') && 
+                                    !updatedCode13.includes('# original comment') &&
+                                    updatedCode13.includes('add 5 5');
+            
+            if (editTest13Passed) {
+                console.log('✓ Test 13 PASSED - Single comment above command edited successfully');
+            } else {
+                console.log('✗ Test 13 FAILED - Single comment should be edited');
+                console.log('  Updated code:', updatedCode13);
+                throw new Error('Comment Edit Test 13 FAILED - Single comment should be edited');
+            }
+        } else {
+            console.log('✗ Test 13 FAILED - Could not find comment to edit');
+            console.log('  AST nodes:', ast13.map(n => ({ type: n.type, name: n.name, comments: n.comments?.length || 0 })));
+            throw new Error('Comment Edit Test 13 FAILED - Could not find comment to edit');
+        }
+        
+        // Test 14: Edit multiple consecutive comments above a command (preserve blank lines)
+        // Note: comment 1 is standalone (blank line before), comments 2-3 are attached to command
+        // This test verifies that blank lines between standalone comment nodes and attached comments are preserved
+        const editTestScript14 = `
+# comment 1
+
+# comment 2
+# comment 3
+add 5 5
+`;
+        const ast14 = editCommentRp.getAST(editTestScript14);
+        const addNode14 = ast14.find(node => node.type === 'command' && node.name === 'add');
+        const standaloneCommentNode14 = ast14.find(node => 
+            node.type === 'comment' && 
+            node.comments && 
+            node.comments.length > 0 && 
+            node.comments[0].text === 'comment 1'
+        );
+        
+        if (addNode14 && addNode14.comments && addNode14.comments.length > 0 && standaloneCommentNode14) {
+            // Edit the comments attached to the command (which contains consecutive comments)
+            addNode14.comments[0].text = 'edited comment 2\nedited comment 3';
+            const updatedCode14 = editCommentRp.updateCodeFromAST(editTestScript14, ast14);
+            
+            // Check that blank line between comment groups is preserved
+            // The blank line should be preserved by the standalone comment node's replacement
+            const lines14 = updatedCode14.split('\n').filter((line, i, arr) => {
+                // Filter out leading/trailing empty lines from template string
+                if (i === 0 && line === '') return false;
+                if (i === arr.length - 1 && line === '') return false;
+                return true;
+            });
+            
+            const comment1Index = lines14.findIndex(line => line.trim() === '# comment 1');
+            const comment2Index = lines14.findIndex(line => line.includes('# edited comment 2'));
+            const blankLineBetween = comment2Index > comment1Index + 1 && lines14[comment1Index + 1].trim() === '';
+            
+            const editTest14Passed = updatedCode14.includes('# edited comment 2') && 
+                                    updatedCode14.includes('# edited comment 3') &&
+                                    !updatedCode14.includes('# comment 2') &&
+                                    !updatedCode14.includes('# comment 3') &&
+                                    blankLineBetween &&
+                                    updatedCode14.includes('add 5 5') &&
+                                    updatedCode14.includes('# comment 1');
+            
+            if (editTest14Passed) {
+                console.log('✓ Test 14 PASSED - Multiple consecutive comments edited, blank lines preserved');
+            } else {
+                console.log('✗ Test 14 FAILED - Multiple consecutive comments should be edited with blank lines preserved');
+                console.log('  Updated code:', JSON.stringify(updatedCode14));
+                console.log('  Blank line preserved:', blankLineBetween);
+                console.log('  Comment 1 index:', comment1Index);
+                console.log('  Comment 2 index:', comment2Index);
+                console.log('  Lines:', lines14.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                throw new Error('Comment Edit Test 14 FAILED - Multiple consecutive comments should be edited');
+            }
+        } else {
+            console.log('✗ Test 14 FAILED - Could not find comments to edit');
+            console.log('  Add node:', addNode14);
+            console.log('  Standalone comment node:', standaloneCommentNode14);
+            throw new Error('Comment Edit Test 14 FAILED - Could not find comments to edit');
+        }
+        
+        // Test 15: Edit inline comment
+        const editTestScript15 = `
+add 5 5  # original inline comment
+`;
+        const ast15 = editCommentRp.getAST(editTestScript15);
+        const addNode15 = ast15.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode15 && addNode15.comments) {
+            const inlineComment = addNode15.comments.find(c => c.inline === true);
+            if (inlineComment) {
+                inlineComment.text = 'edited inline comment';
+                const updatedCode15 = editCommentRp.updateCodeFromAST(editTestScript15, ast15);
+                const editTest15Passed = updatedCode15.includes('# edited inline comment') && 
+                                        !updatedCode15.includes('# original inline comment') &&
+                                        updatedCode15.includes('add 5 5');
+                
+                if (editTest15Passed) {
+                    console.log('✓ Test 15 PASSED - Inline comment edited successfully');
+                } else {
+                    console.log('✗ Test 15 FAILED - Inline comment should be edited');
+                    console.log('  Updated code:', updatedCode15);
+                    throw new Error('Comment Edit Test 15 FAILED - Inline comment should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 15 FAILED - Could not find inline comment to edit');
+            }
+        } else {
+            throw new Error('Comment Edit Test 15 FAILED - Could not find command with inline comment');
+        }
+        
+        // Test 16: Edit standalone comment node (preserve blank lines)
+        const editTestScript16 = `
+# standalone comment 1
+
+# standalone comment 2
+
+add 5 5
+`;
+        const ast16 = editCommentRp.getAST(editTestScript16);
+        const commentNodes16 = ast16.filter(node => node.type === 'comment');
+        
+        if (commentNodes16.length > 0) {
+            // Edit the first standalone comment
+            const firstCommentNode = commentNodes16[0];
+            if (firstCommentNode.comments && firstCommentNode.comments.length > 0) {
+                firstCommentNode.comments[0].text = 'edited standalone comment 1';
+                const updatedCode16 = editCommentRp.updateCodeFromAST(editTestScript16, ast16);
+                
+                // Check that blank lines are preserved
+                const lines16 = updatedCode16.split('\n');
+                const editedCommentIndex = lines16.findIndex(line => line.includes('# edited standalone comment 1'));
+                const secondCommentIndex = lines16.findIndex(line => line.includes('# standalone comment 2'));
+                const blankLineBetween = secondCommentIndex > editedCommentIndex + 1 && lines16[editedCommentIndex + 1].trim() === '';
+                
+                const editTest16Passed = updatedCode16.includes('# edited standalone comment 1') && 
+                                        !updatedCode16.includes('# standalone comment 1') &&
+                                        updatedCode16.includes('# standalone comment 2') &&
+                                        blankLineBetween &&
+                                        updatedCode16.includes('add 5 5');
+                
+                if (editTest16Passed) {
+                    console.log('✓ Test 16 PASSED - Standalone comment edited, blank lines preserved');
+                } else {
+                    console.log('✗ Test 16 FAILED - Standalone comment should be edited with blank lines preserved');
+                    console.log('  Updated code:', updatedCode16);
+                    console.log('  Blank line preserved:', blankLineBetween);
+                    throw new Error('Comment Edit Test 16 FAILED - Standalone comment should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 16 FAILED - Could not find comment text to edit');
+            }
+        } else {
+            throw new Error('Comment Edit Test 16 FAILED - Could not find standalone comment node');
+        }
+        
+        // Test 17: Edit comment with blank line between comment groups
+        // Note: comment group 1 is standalone, comment group 2 is also standalone (blank line before add)
+        const editTestScript17 = `
+# comment group 1
+
+# comment group 2
+
+add 5 5
+`;
+        const ast17 = editCommentRp.getAST(editTestScript17);
+        const commentNodes17 = ast17.filter(node => node.type === 'comment');
+        const commentGroup2Node = commentNodes17.find(node => 
+            node.comments && 
+            node.comments.length > 0 && 
+            node.comments[0].text === 'comment group 2'
+        );
+        
+        if (commentGroup2Node && commentGroup2Node.comments && commentGroup2Node.comments.length > 0) {
+            // Edit the standalone comment node
+            commentGroup2Node.comments[0].text = 'edited comment group 2';
+            const updatedCode17 = editCommentRp.updateCodeFromAST(editTestScript17, ast17);
+            
+            // Check that blank lines are preserved
+            const lines17 = updatedCode17.split('\n').filter((line, i, arr) => {
+                if (i === 0 && line === '') return false;
+                if (i === arr.length - 1 && line === '') return false;
+                return true;
+            });
+            const comment1Index = lines17.findIndex(line => line.includes('# comment group 1'));
+            const comment2Index = lines17.findIndex(line => line.includes('# edited comment group 2'));
+            const blankLineBetween = comment2Index > comment1Index + 1 && lines17[comment1Index + 1].trim() === '';
+            
+            const editTest17Passed = updatedCode17.includes('# edited comment group 2') && 
+                                    !updatedCode17.includes('# comment group 2') &&
+                                    blankLineBetween &&
+                                    updatedCode17.includes('add 5 5') &&
+                                    updatedCode17.includes('# comment group 1');
+            
+            if (editTest17Passed) {
+                console.log('✓ Test 17 PASSED - Comment edited with blank lines between groups preserved');
+            } else {
+                console.log('✗ Test 17 FAILED - Comment should be edited with blank lines preserved');
+                console.log('  Updated code:', JSON.stringify(updatedCode17));
+                console.log('  Blank line preserved:', blankLineBetween);
+                console.log('  Comment 1 index:', comment1Index);
+                console.log('  Comment 2 index:', comment2Index);
+                console.log('  Lines:', lines17.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                throw new Error('Comment Edit Test 17 FAILED - Comment should be edited with blank lines preserved');
+            }
+        } else {
+            console.log('✗ Test 17 FAILED - Could not find comment to edit');
+            console.log('  Comment nodes:', commentNodes17);
+            console.log('  Comment group 2 node:', commentGroup2Node);
+            throw new Error('Comment Edit Test 17 FAILED - Could not find comment to edit');
+        }
+        
+        // Test 18: Delete a comment (set text to empty string)
+        // Note: comment is attached to command (no blank line before add)
+        const editTestScript18 = `
+# comment to delete
+add 5 5
+`;
+        const ast18 = editCommentRp.getAST(editTestScript18);
+        const addNode18 = ast18.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode18 && addNode18.comments && addNode18.comments.length > 0) {
+            // Delete the comment by setting text to empty string
+            addNode18.comments[0].text = '';
+            const updatedCode18 = editCommentRp.updateCodeFromAST(editTestScript18, ast18);
+            
+            const editTest18Passed = !updatedCode18.includes('# comment to delete') && 
+                                    updatedCode18.includes('add 5 5');
+            
+            if (editTest18Passed) {
+                console.log('✓ Test 18 PASSED - Comment deleted successfully');
+            } else {
+                console.log('✗ Test 18 FAILED - Comment should be deleted');
+                console.log('  Updated code:', updatedCode18);
+                throw new Error('Comment Edit Test 18 FAILED - Comment should be deleted');
+            }
+        } else {
+            console.log('✗ Test 18 FAILED - Could not find comment to delete');
+            console.log('  Add node:', addNode18);
+            throw new Error('Comment Edit Test 18 FAILED - Could not find comment to delete');
+        }
+        
+        // Test 19: Edit comment that spans multiple lines (consecutive comments)
+        const editTestScript19 = `
+# line 1
+# line 2
+# line 3
+add 5 5
+`;
+        const ast19 = editCommentRp.getAST(editTestScript19);
+        const addNode19 = ast19.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode19 && addNode19.comments && addNode19.comments.length > 0) {
+            // Edit the multi-line comment
+            addNode19.comments[0].text = 'edited line 1\nedited line 2\nedited line 3';
+            const updatedCode19 = editCommentRp.updateCodeFromAST(editTestScript19, ast19);
+            
+            const editTest19Passed = updatedCode19.includes('# edited line 1') && 
+                                    updatedCode19.includes('# edited line 2') &&
+                                    updatedCode19.includes('# edited line 3') &&
+                                    !updatedCode19.includes('# line 1') &&
+                                    !updatedCode19.includes('# line 2') &&
+                                    !updatedCode19.includes('# line 3') &&
+                                    updatedCode19.includes('add 5 5');
+            
+            if (editTest19Passed) {
+                console.log('✓ Test 19 PASSED - Multi-line comment edited successfully');
+            } else {
+                console.log('✗ Test 19 FAILED - Multi-line comment should be edited');
+                console.log('  Updated code:', updatedCode19);
+                throw new Error('Comment Edit Test 19 FAILED - Multi-line comment should be edited');
+            }
+        } else {
+            throw new Error('Comment Edit Test 19 FAILED - Could not find multi-line comment to edit');
+        }
+        
+        // Test 20: Edit comment and preserve blank line before next statement
+        // Note: comment is attached to command (no blank line before add)
+        const editTestScript20 = `
+# comment before
+add 5 5
+
+multiply 3 4
+`;
+        const ast20 = editCommentRp.getAST(editTestScript20);
+        const addNode20 = ast20.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode20 && addNode20.comments && addNode20.comments.length > 0) {
+            // Edit the comment
+            addNode20.comments[0].text = 'edited comment before';
+            const updatedCode20 = editCommentRp.updateCodeFromAST(editTestScript20, ast20);
+            
+            // Check that blank line after comment is preserved (between add and multiply)
+            const lines20 = updatedCode20.split('\n').filter((line, i, arr) => {
+                if (i === 0 && line === '') return false;
+                if (i === arr.length - 1 && line === '') return false;
+                return true;
+            });
+            const editedCommentIndex = lines20.findIndex(line => line.includes('# edited comment before'));
+            const addIndex = lines20.findIndex(line => line.includes('add 5 5'));
+            const multiplyIndex = lines20.findIndex(line => line.includes('multiply 3 4'));
+            const blankLineAfter = multiplyIndex > addIndex + 1 && lines20[addIndex + 1].trim() === '';
+            
+            const editTest20Passed = updatedCode20.includes('# edited comment before') && 
+                                    !updatedCode20.includes('# comment before') &&
+                                    blankLineAfter &&
+                                    updatedCode20.includes('add 5 5') &&
+                                    updatedCode20.includes('multiply 3 4');
+            
+            if (editTest20Passed) {
+                console.log('✓ Test 20 PASSED - Comment edited, blank line before statement preserved');
+            } else {
+                console.log('✗ Test 20 FAILED - Comment should be edited with blank line preserved');
+                console.log('  Updated code:', JSON.stringify(updatedCode20));
+                console.log('  Blank line preserved:', blankLineAfter);
+                console.log('  Lines:', lines20.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                throw new Error('Comment Edit Test 20 FAILED - Comment should be edited with blank line preserved');
+            }
+        } else {
+            console.log('✗ Test 20 FAILED - Could not find comment to edit');
+            console.log('  Add node:', addNode20);
+            throw new Error('Comment Edit Test 20 FAILED - Could not find comment to edit');
+        }
+        
+        // Test 21: Edit inline comment and preserve newline after the line
+        const editTestScript21 = `
+$a = $b  # original inline comment
+$c = $d
+`;
+        const ast21 = editCommentRp.getAST(editTestScript21);
+        const assignNode21 = ast21.find(node => node.type === 'assignment' && node.targetName === 'a');
+        
+        if (assignNode21 && assignNode21.comments) {
+            const inlineComment = assignNode21.comments.find(c => c.inline === true);
+            if (inlineComment) {
+                inlineComment.text = 'edited inline comment';
+                const updatedCode21 = editCommentRp.updateCodeFromAST(editTestScript21, ast21);
+                
+                // Check that newline is preserved after the line with inline comment
+                const lines21 = updatedCode21.split('\n').filter((line, i, arr) => {
+                    if (i === 0 && line === '') return false;
+                    if (i === arr.length - 1 && line === '') return false;
+                    return true;
+                });
+                
+                const assignLineIndex = lines21.findIndex(line => line.includes('$a = $b'));
+                const nextLineIndex = lines21.findIndex(line => line.includes('$c = $d'));
+                const hasNewlineBetween = nextLineIndex === assignLineIndex + 1;
+                
+                const editTest21Passed = updatedCode21.includes('# edited inline comment') && 
+                                        !updatedCode21.includes('# original inline comment') &&
+                                        updatedCode21.includes('$a = $b') &&
+                                        updatedCode21.includes('$c = $d') &&
+                                        hasNewlineBetween &&
+                                        !updatedCode21.includes('$a = $b  # edited inline comment$c = $d');
+                
+                if (editTest21Passed) {
+                    console.log('✓ Test 21 PASSED - Inline comment edited, newline preserved');
+                } else {
+                    console.log('✗ Test 21 FAILED - Inline comment should be edited with newline preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode21));
+                    console.log('  Has newline between:', hasNewlineBetween);
+                    console.log('  Assign line index:', assignLineIndex);
+                    console.log('  Next line index:', nextLineIndex);
+                    console.log('  Lines:', lines21.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                    throw new Error('Comment Edit Test 21 FAILED - Inline comment should be edited with newline preserved');
+                }
+            } else {
+                throw new Error('Comment Edit Test 21 FAILED - Could not find inline comment to edit');
+            }
+        } else {
+            throw new Error('Comment Edit Test 21 FAILED - Could not find assignment with inline comment');
+        }
+        
+        // Test 22: Edit both comment above and inline comment together
+        const editTestScript22 = `
+# comment above
+add 5 5  # inline comment
+`;
+        const ast22 = editCommentRp.getAST(editTestScript22);
+        const addNode22 = ast22.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode22 && addNode22.comments && addNode22.comments.length >= 2) {
+            // Edit both comments
+            const commentAbove = addNode22.comments.find(c => !c.inline);
+            const inlineComment = addNode22.comments.find(c => c.inline === true);
+            
+            if (commentAbove && inlineComment) {
+                commentAbove.text = 'edited comment above';
+                inlineComment.text = 'edited inline comment';
+                const updatedCode22 = editCommentRp.updateCodeFromAST(editTestScript22, ast22);
+                
+                const editTest22Passed = updatedCode22.includes('# edited comment above') && 
+                                        updatedCode22.includes('# edited inline comment') &&
+                                        !updatedCode22.includes('# comment above') &&
+                                        !updatedCode22.includes('# inline comment') &&
+                                        updatedCode22.includes('add 5 5');
+                
+                if (editTest22Passed) {
+                    console.log('✓ Test 22 PASSED - Both comment above and inline comment edited together');
+                } else {
+                    console.log('✗ Test 22 FAILED - Both comments should be edited');
+                    console.log('  Updated code:', JSON.stringify(updatedCode22));
+                    throw new Error('Comment Edit Test 22 FAILED - Both comments should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 22 FAILED - Could not find both comment types');
+            }
+        } else {
+            throw new Error('Comment Edit Test 22 FAILED - Could not find command with both comment types');
+        }
+        
+        // Test 23: Edit comment above while preserving inline comment
+        const editTestScript23 = `
+# original comment above
+add 5 5  # keep this inline
+`;
+        const ast23 = editCommentRp.getAST(editTestScript23);
+        const addNode23 = ast23.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode23 && addNode23.comments && addNode23.comments.length >= 2) {
+            // Edit only the comment above, keep inline comment unchanged
+            const commentAbove = addNode23.comments.find(c => !c.inline);
+            
+            if (commentAbove) {
+                commentAbove.text = 'edited comment above';
+                const updatedCode23 = editCommentRp.updateCodeFromAST(editTestScript23, ast23);
+                
+                const editTest23Passed = updatedCode23.includes('# edited comment above') && 
+                                        updatedCode23.includes('# keep this inline') &&
+                                        !updatedCode23.includes('# original comment above') &&
+                                        updatedCode23.includes('add 5 5');
+                
+                if (editTest23Passed) {
+                    console.log('✓ Test 23 PASSED - Comment above edited, inline comment preserved');
+                } else {
+                    console.log('✗ Test 23 FAILED - Comment above should be edited, inline preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode23));
+                    throw new Error('Comment Edit Test 23 FAILED - Comment above should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 23 FAILED - Could not find comment above');
+            }
+        } else {
+            throw new Error('Comment Edit Test 23 FAILED - Could not find command with both comments');
+        }
+        
+        // Test 24: Edit inline comment while preserving comment above
+        const editTestScript24 = `
+# keep this comment above
+add 5 5  # original inline comment
+`;
+        const ast24 = editCommentRp.getAST(editTestScript24);
+        const addNode24 = ast24.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode24 && addNode24.comments && addNode24.comments.length >= 2) {
+            // Edit only the inline comment, keep comment above unchanged
+            const inlineComment = addNode24.comments.find(c => c.inline === true);
+            
+            if (inlineComment) {
+                inlineComment.text = 'edited inline comment';
+                const updatedCode24 = editCommentRp.updateCodeFromAST(editTestScript24, ast24);
+                
+                const editTest24Passed = updatedCode24.includes('# keep this comment above') && 
+                                        updatedCode24.includes('# edited inline comment') &&
+                                        !updatedCode24.includes('# original inline comment') &&
+                                        updatedCode24.includes('add 5 5');
+                
+                if (editTest24Passed) {
+                    console.log('✓ Test 24 PASSED - Inline comment edited, comment above preserved');
+                } else {
+                    console.log('✗ Test 24 FAILED - Inline comment should be edited, comment above preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode24));
+                    throw new Error('Comment Edit Test 24 FAILED - Inline comment should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 24 FAILED - Could not find inline comment');
+            }
+        } else {
+            throw new Error('Comment Edit Test 24 FAILED - Could not find command with both comments');
+        }
+        
+        // Test 25: Edit multiple consecutive comments above with inline comment
+        const editTestScript25 = `
+# comment 1
+# comment 2
+add 5 5  # inline comment
+`;
+        const ast25 = editCommentRp.getAST(editTestScript25);
+        const addNode25 = ast25.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode25 && addNode25.comments && addNode25.comments.length >= 2) {
+            // Edit the consecutive comments above (they're combined into one comment object)
+            const commentAbove = addNode25.comments.find(c => !c.inline);
+            const inlineComment = addNode25.comments.find(c => c.inline === true);
+            
+            if (commentAbove && inlineComment) {
+                commentAbove.text = 'edited comment 1\nedited comment 2';
+                inlineComment.text = 'edited inline comment';
+                const updatedCode25 = editCommentRp.updateCodeFromAST(editTestScript25, ast25);
+                
+                const editTest25Passed = updatedCode25.includes('# edited comment 1') && 
+                                        updatedCode25.includes('# edited comment 2') &&
+                                        updatedCode25.includes('# edited inline comment') &&
+                                        !updatedCode25.includes('# comment 1') &&
+                                        !updatedCode25.includes('# comment 2') &&
+                                        !updatedCode25.includes('# inline comment') &&
+                                        updatedCode25.includes('add 5 5');
+                
+                if (editTest25Passed) {
+                    console.log('✓ Test 25 PASSED - Multiple consecutive comments above and inline comment edited');
+                } else {
+                    console.log('✗ Test 25 FAILED - Multiple consecutive comments and inline should be edited');
+                    console.log('  Updated code:', JSON.stringify(updatedCode25));
+                    throw new Error('Comment Edit Test 25 FAILED - Multiple comments should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 25 FAILED - Could not find both comment types');
+            }
+        } else {
+            throw new Error('Comment Edit Test 25 FAILED - Could not find command with comments');
+        }
+        
+        // Test 26: Delete comment above while keeping inline comment
+        const editTestScript26 = `
+# comment to delete
+add 5 5  # keep this inline
+`;
+        const ast26 = editCommentRp.getAST(editTestScript26);
+        const addNode26 = ast26.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode26 && addNode26.comments && addNode26.comments.length >= 2) {
+            // Delete the comment above by setting text to empty
+            const commentAbove = addNode26.comments.find(c => !c.inline);
+            
+            if (commentAbove) {
+                commentAbove.text = '';
+                const updatedCode26 = editCommentRp.updateCodeFromAST(editTestScript26, ast26);
+                
+                const editTest26Passed = !updatedCode26.includes('# comment to delete') && 
+                                        updatedCode26.includes('# keep this inline') &&
+                                        updatedCode26.includes('add 5 5');
+                
+                if (editTest26Passed) {
+                    console.log('✓ Test 26 PASSED - Comment above deleted, inline comment preserved');
+                } else {
+                    console.log('✗ Test 26 FAILED - Comment above should be deleted, inline preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode26));
+                    throw new Error('Comment Edit Test 26 FAILED - Comment above should be deleted');
+                }
+            } else {
+                throw new Error('Comment Edit Test 26 FAILED - Could not find comment above');
+            }
+        } else {
+            throw new Error('Comment Edit Test 26 FAILED - Could not find command with both comments');
+        }
+        
+        // Test 27: Delete inline comment while keeping comment above
+        const editTestScript27 = `
+# keep this comment above
+add 5 5  # inline to delete
+`;
+        const ast27 = editCommentRp.getAST(editTestScript27);
+        const addNode27 = ast27.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode27 && addNode27.comments && addNode27.comments.length >= 2) {
+            // Delete the inline comment by setting text to empty
+            const inlineComment = addNode27.comments.find(c => c.inline === true);
+            
+            if (inlineComment) {
+                inlineComment.text = '';
+                const updatedCode27 = editCommentRp.updateCodeFromAST(editTestScript27, ast27);
+                
+                const editTest27Passed = updatedCode27.includes('# keep this comment above') && 
+                                        !updatedCode27.includes('# inline to delete') &&
+                                        updatedCode27.includes('add 5 5');
+                
+                if (editTest27Passed) {
+                    console.log('✓ Test 27 PASSED - Inline comment deleted, comment above preserved');
+                } else {
+                    console.log('✗ Test 27 FAILED - Inline comment should be deleted, comment above preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode27));
+                    throw new Error('Comment Edit Test 27 FAILED - Inline comment should be deleted');
+                }
+            } else {
+                throw new Error('Comment Edit Test 27 FAILED - Could not find inline comment');
+            }
+        } else {
+            throw new Error('Comment Edit Test 27 FAILED - Could not find command with both comments');
+        }
+        
+        // Test 28: Edit standalone comment above with blank line, preserve inline comment
+        // Note: comment above is standalone (blank line before command), inline comment is attached
+        const editTestScript28 = `
+# comment above
+
+add 5 5  # inline comment
+`;
+        const ast28 = editCommentRp.getAST(editTestScript28);
+        const addNode28 = ast28.find(node => node.type === 'command' && node.name === 'add');
+        const standaloneCommentNode28 = ast28.find(node => 
+            node.type === 'comment' && 
+            node.comments && 
+            node.comments.length > 0 && 
+            node.comments[0].text === 'comment above'
+        );
+        
+        if (addNode28 && addNode28.comments && addNode28.comments.length >= 1 && standaloneCommentNode28) {
+            // Edit the standalone comment above
+            const inlineComment = addNode28.comments.find(c => c.inline === true);
+            
+            if (standaloneCommentNode28.comments && standaloneCommentNode28.comments.length > 0 && inlineComment) {
+                standaloneCommentNode28.comments[0].text = 'edited comment above';
+                const updatedCode28 = editCommentRp.updateCodeFromAST(editTestScript28, ast28);
+                
+                // Check that blank line is preserved
+                const lines28 = updatedCode28.split('\n').filter((line, i, arr) => {
+                    if (i === 0 && line === '') return false;
+                    if (i === arr.length - 1 && line === '') return false;
+                    return true;
+                });
+                const commentIndex = lines28.findIndex(line => line.includes('# edited comment above'));
+                const addIndex = lines28.findIndex(line => line.includes('add 5 5'));
+                const blankLineBetween = addIndex > commentIndex + 1 && lines28[commentIndex + 1].trim() === '';
+                
+                const editTest28Passed = updatedCode28.includes('# edited comment above') && 
+                                        updatedCode28.includes('# inline comment') &&
+                                        !updatedCode28.includes('# comment above') &&
+                                        blankLineBetween &&
+                                        updatedCode28.includes('add 5 5');
+                
+                if (editTest28Passed) {
+                    console.log('✓ Test 28 PASSED - Standalone comment above edited with blank line, inline comment preserved');
+                } else {
+                    console.log('✗ Test 28 FAILED - Standalone comment above should be edited with blank line preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode28));
+                    console.log('  Blank line preserved:', blankLineBetween);
+                    console.log('  Lines:', lines28.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                    throw new Error('Comment Edit Test 28 FAILED - Standalone comment above should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 28 FAILED - Could not find standalone comment or inline comment');
+            }
+        } else {
+            console.log('✗ Test 28 FAILED - Could not find command with inline comment and standalone comment');
+            console.log('  Add node:', addNode28);
+            console.log('  Standalone comment node:', standaloneCommentNode28);
+            throw new Error('Comment Edit Test 28 FAILED - Could not find command with both comments');
+        }
+        
+        // Test 29: Edit assignment with comment above and inline comment
+        const editTestScript29 = `
+# comment above assignment
+$a = $b  # inline comment
+`;
+        const ast29 = editCommentRp.getAST(editTestScript29);
+        const assignNode29 = ast29.find(node => node.type === 'assignment' && node.targetName === 'a');
+        
+        if (assignNode29 && assignNode29.comments && assignNode29.comments.length >= 2) {
+            // Edit both comments
+            const commentAbove = assignNode29.comments.find(c => !c.inline);
+            const inlineComment = assignNode29.comments.find(c => c.inline === true);
+            
+            if (commentAbove && inlineComment) {
+                commentAbove.text = 'edited comment above';
+                inlineComment.text = 'edited inline comment';
+                const updatedCode29 = editCommentRp.updateCodeFromAST(editTestScript29, ast29);
+                
+                const editTest29Passed = updatedCode29.includes('# edited comment above') && 
+                                        updatedCode29.includes('# edited inline comment') &&
+                                        !updatedCode29.includes('# comment above assignment') &&
+                                        !updatedCode29.includes('# inline comment') &&
+                                        updatedCode29.includes('$a = $b');
+                
+                if (editTest29Passed) {
+                    console.log('✓ Test 29 PASSED - Assignment with both comment types edited');
+                } else {
+                    console.log('✗ Test 29 FAILED - Assignment comments should be edited');
+                    console.log('  Updated code:', JSON.stringify(updatedCode29));
+                    throw new Error('Comment Edit Test 29 FAILED - Assignment comments should be edited');
+                }
+            } else {
+                throw new Error('Comment Edit Test 29 FAILED - Could not find both comment types');
+            }
+        } else {
+            throw new Error('Comment Edit Test 29 FAILED - Could not find assignment with both comments');
+        }
+        
+        // Test 30: Edit comment above and inline comment, preserve newline after line
+        const editTestScript30 = `
+# comment above
+add 5 5  # inline comment
+multiply 3 4
+`;
+        const ast30 = editCommentRp.getAST(editTestScript30);
+        const addNode30 = ast30.find(node => node.type === 'command' && node.name === 'add');
+        
+        if (addNode30 && addNode30.comments && addNode30.comments.length >= 2) {
+            // Edit both comments
+            const commentAbove = addNode30.comments.find(c => !c.inline);
+            const inlineComment = addNode30.comments.find(c => c.inline === true);
+            
+            if (commentAbove && inlineComment) {
+                commentAbove.text = 'edited comment above';
+                inlineComment.text = 'edited inline comment';
+                const updatedCode30 = editCommentRp.updateCodeFromAST(editTestScript30, ast30);
+                
+                // Check that newline is preserved after the line with inline comment
+                const lines30 = updatedCode30.split('\n').filter((line, i, arr) => {
+                    if (i === 0 && line === '') return false;
+                    if (i === arr.length - 1 && line === '') return false;
+                    return true;
+                });
+                const addLineIndex = lines30.findIndex(line => line.includes('add 5 5'));
+                const multiplyLineIndex = lines30.findIndex(line => line.includes('multiply 3 4'));
+                const hasNewlineBetween = multiplyLineIndex === addLineIndex + 1;
+                
+                const editTest30Passed = updatedCode30.includes('# edited comment above') && 
+                                        updatedCode30.includes('# edited inline comment') &&
+                                        hasNewlineBetween &&
+                                        updatedCode30.includes('add 5 5') &&
+                                        updatedCode30.includes('multiply 3 4') &&
+                                        !updatedCode30.includes('add 5 5  # edited inline commentmultiply 3 4');
+                
+                if (editTest30Passed) {
+                    console.log('✓ Test 30 PASSED - Both comments edited, newline preserved after line');
+                } else {
+                    console.log('✗ Test 30 FAILED - Both comments should be edited with newline preserved');
+                    console.log('  Updated code:', JSON.stringify(updatedCode30));
+                    console.log('  Has newline between:', hasNewlineBetween);
+                    console.log('  Lines:', lines30.map((l, i) => `${i}: ${JSON.stringify(l)}`));
+                    throw new Error('Comment Edit Test 30 FAILED - Newline should be preserved');
+                }
+            } else {
+                throw new Error('Comment Edit Test 30 FAILED - Could not find both comment types');
+            }
+        } else {
+            throw new Error('Comment Edit Test 30 FAILED - Could not find command with both comments');
+        }
+        
+        console.log();
+        console.log('='.repeat(60));
+        console.log('All Comment Editing Tests Completed');
+        console.log('='.repeat(60));
+        
         // Test AST line range tracking
         console.log();
         console.log('='.repeat(60));

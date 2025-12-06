@@ -41,17 +41,76 @@ export class ASTToCodeConverter {
                                 firstComment.codePos.startCol,
                                 false // inclusive
                             );
+                            
+                            // Include blank lines after the last comment until the next node
+                            const lines = originalScript.split('\n');
+                            let endRow = lastComment.codePos.endRow;
+                            let endCol = lastComment.codePos.endCol;
+                            
+                            // Track blank lines to preserve them in the replacement
+                            const blankLinesAfter: string[] = [];
+                            
+                            // Find the next non-comment node to determine where blank lines end
+                            // Include blank lines after the comment until we hit a non-blank, non-comment line
+                            // or until we hit the next node's actual code (not its attached comments)
+                            const currentNodeIndex = ast.indexOf(node);
+                            let stopRow = lines.length; // Default: end of script
+                            
+                            if (currentNodeIndex >= 0 && currentNodeIndex < ast.length - 1) {
+                                const nextNode = ast[currentNodeIndex + 1];
+                                if (nextNode && nextNode.codePos) {
+                                    // If next node has attached comments, they come before the node's codePos.startRow
+                                    // We want to include blank lines up to (but not including) those attached comments
+                                    // So we check for blank lines until we hit a comment line or the node's code
+                                    stopRow = nextNode.codePos.startRow;
+                                    
+                                    // Check if there are attached comments before the node
+                                    if (nextNode.comments && Array.isArray(nextNode.comments) && nextNode.comments.length > 0) {
+                                        const firstAttachedComment = nextNode.comments.find((c: any) => !c.inline);
+                                        if (firstAttachedComment && firstAttachedComment.codePos) {
+                                            // Stop before the attached comments start
+                                            stopRow = firstAttachedComment.codePos.startRow;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Include blank lines until we hit the stop row or a non-blank line
+                            for (let row = endRow + 1; row < stopRow; row++) {
+                                const line = lines[row] || '';
+                                if (line.trim() === '') {
+                                    // Blank line - include it
+                                    blankLinesAfter.push('');
+                                    endRow = row;
+                                    endCol = line.length;
+                                } else if (line.trim().startsWith('#')) {
+                                    // Comment line - this is an attached comment, stop here
+                                    // The blank line before it has been included
+                                    break;
+                                } else {
+                                    // Non-blank, non-comment line - stop here
+                                    break;
+                                }
+                            }
+                            
+                            // Preserve blank lines in the replacement code
+                            // Each empty string in blankLinesAfter represents a blank line
+                            // We need to add a newline for each blank line
+                            const commentCodeWithBlanks = blankLinesAfter.length > 0
+                                ? commentCode + '\n' + '\n'.repeat(blankLinesAfter.length)
+                                : commentCode;
+                            
                             const endOffset = this.rowColToCharOffset(
                                 originalScript,
-                                lastComment.codePos.endRow,
-                                lastComment.codePos.endCol,
+                                endRow,
+                                endCol,
                                 true // exclusive (one past the end)
                             );
 
                             codePositions.push({
                                 startOffset,
                                 endOffset,
-                                code: commentCode
+                                code: commentCodeWithBlanks
                             });
                         }
                     }
@@ -221,12 +280,38 @@ export class ASTToCodeConverter {
                 if (reconstructed !== null) {
                     // Build combined code: comments above + statement
                     // Filter out empty comments before reconstructing
+                    // Preserve blank lines between comment groups by including them in the range
                     const commentCodes = commentsAbove
                         .map(c => this.reconstructCommentCode(c, 0))
                         .filter(code => code !== '');
+                    
+                    // Join comments with newlines (blank lines are preserved via the range calculation)
                     const combinedCode = commentCodes.length > 0 
                         ? [...commentCodes, reconstructed].join('\n')
                         : reconstructed;
+                    
+                    // Calculate endOffset to include blank lines after the last comment
+                    // until the statement starts
+                    const lines = originalScript.split('\n');
+                    let effectiveEndRow = combinedEndRow;
+                    let effectiveEndCol = combinedEndCol;
+                    
+                    // If there are comments above, check for blank lines between last comment and statement
+                    if (commentsAbove.length > 0) {
+                        const lastCommentAbove = commentsAbove[commentsAbove.length - 1];
+                        // Include blank lines between last comment and the statement
+                        for (let row = lastCommentAbove.codePos.endRow + 1; row < node.codePos.startRow; row++) {
+                            const line = lines[row] || '';
+                            if (line.trim() === '') {
+                                // Blank line - include it in the range
+                                effectiveEndRow = row;
+                                effectiveEndCol = line.length;
+                            } else {
+                                // Non-blank line - stop here
+                                break;
+                            }
+                        }
+                    }
                     
                     const startOffset = this.rowColToCharOffset(
                         originalScript,
@@ -236,8 +321,8 @@ export class ASTToCodeConverter {
                     );
                     const endOffset = this.rowColToCharOffset(
                         originalScript,
-                        combinedEndRow,
-                        combinedEndCol,
+                        effectiveEndRow,
+                        effectiveEndCol,
                         true // exclusive (one past the end)
                     );
 
@@ -317,29 +402,132 @@ export class ASTToCodeConverter {
                 }
                 
                 // Now process non-empty comments above
-                for (const comment of commentsAbove) {
-                    const commentCode = this.reconstructCommentCode(comment, 0);
-                    // Skip empty comments (defensive check)
-                    if (commentCode === '') {
-                        continue;
+                // We need to preserve blank lines between comment groups
+                // Process all comments as a single group to preserve blank lines between them
+                const lines = originalScript.split('\n');
+                
+                if (commentsAbove.length > 0) {
+                    const firstComment = commentsAbove[0];
+                    const lastComment = commentsAbove[commentsAbove.length - 1];
+                    
+                    // Check for blank lines before the first comment (in case there's a standalone comment node before)
+                    // Look backwards from the first comment to find blank lines
+                    let effectiveStartRow = firstComment.codePos.startRow;
+                    let effectiveStartCol = firstComment.codePos.startCol;
+                    let hasStandaloneCommentBefore = false;
+                    
+                    // Check if there are blank lines before the first comment
+                    // (This handles the case where there's a standalone comment node before these attached comments)
+                    for (let row = firstComment.codePos.startRow - 1; row >= 0; row--) {
+                        const line = lines[row] || '';
+                        if (line.trim() === '') {
+                            // Blank line - check if there's a standalone comment node before it
+                            // Continue checking backwards
+                            continue;
+                        } else if (line.trim().startsWith('#')) {
+                            // Found a comment line - this is a standalone comment node
+                            // The blank lines between it and our first comment are already handled
+                            // by the standalone comment node's replacement, so we don't need to include them
+                            hasStandaloneCommentBefore = true;
+                            break;
+                        } else {
+                            // Non-blank, non-comment line - stop here
+                            break;
+                        }
                     }
+                    
+                    // Reconstruct all comments, preserving blank lines between comment groups
+                    const commentParts: string[] = [];
+                    
+                    // Only add blank lines before if there's NO standalone comment node before
+                    // (If there is one, the blank lines are already included in its replacement)
+                    if (!hasStandaloneCommentBefore) {
+                        // Check for blank lines before the first comment
+                        for (let row = firstComment.codePos.startRow - 1; row >= 0; row--) {
+                            const line = lines[row] || '';
+                            if (line.trim() === '') {
+                                effectiveStartRow = row;
+                                effectiveStartCol = 0;
+                                commentParts.push('');
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    for (let i = 0; i < commentsAbove.length; i++) {
+                        const comment = commentsAbove[i];
+                        const commentCode = this.reconstructCommentCode(comment, 0);
+                        // Skip empty comments (defensive check)
+                        if (commentCode === '') {
+                            continue;
+                        }
+                        
+                        // Add the comment code
+                        commentParts.push(commentCode);
+                        
+                        // Check if there's a next comment and if there are blank lines between them
+                        if (i < commentsAbove.length - 1) {
+                            const nextComment = commentsAbove[i + 1];
+                            // Check for blank lines between this comment and the next
+                            for (let row = comment.codePos.endRow + 1; row < nextComment.codePos.startRow; row++) {
+                                const line = lines[row] || '';
+                                if (line.trim() === '') {
+                                    // Blank line - preserve it by adding an empty string
+                                    commentParts.push('');
+                                } else {
+                                    // Non-blank line - stop here
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Include blank lines after the last comment until the node
+                    let endRow = lastComment.codePos.endRow;
+                    let endCol = lastComment.codePos.endCol;
+                    for (let row = endRow + 1; row < node.codePos.startRow; row++) {
+                        const line = lines[row] || '';
+                        if (line.trim() === '') {
+                            // Blank line - include it
+                            commentParts.push('');
+                            endRow = row;
+                            endCol = line.length;
+                        } else {
+                            // Non-blank line - stop here
+                            break;
+                        }
+                    }
+                    
+                    const combinedCommentCode = commentParts.join('\n');
+                    
+                    // Check if effectiveStartRow is before firstComment.codePos.startRow
+                    // If so, we're including blank lines before, so we need to start from effectiveStartRow
+                    // Otherwise, start from the first comment's position
+                    const actualStartRow = effectiveStartRow < firstComment.codePos.startRow 
+                        ? effectiveStartRow 
+                        : firstComment.codePos.startRow;
+                    const actualStartCol = effectiveStartRow < firstComment.codePos.startRow 
+                        ? effectiveStartCol 
+                        : firstComment.codePos.startCol;
+                    
                     const startOffset = this.rowColToCharOffset(
                         originalScript,
-                        comment.codePos.startRow,
-                        comment.codePos.startCol,
+                        actualStartRow,
+                        actualStartCol,
                         false // inclusive
                     );
                     const endOffset = this.rowColToCharOffset(
                         originalScript,
-                        comment.codePos.endRow,
-                        comment.codePos.endCol,
-                        true // exclusive (one past the end)
+                        endRow,
+                        endCol,
+                        true // exclusive (one past the end, includes newline)
                     );
 
                     codePositions.push({
                         startOffset,
                         endOffset,
-                        code: commentCode
+                        code: combinedCommentCode
                     });
                 }
                 
@@ -370,18 +558,36 @@ export class ASTToCodeConverter {
                     // The reconstructed code doesn't include a newline, so we need to ensure
                     // endOffset points AFTER the newline so it's preserved
                     let endOffset: number;
+                    let codeToInsert = reconstructed;
                     if (inlineComments.length > 0) {
                         // For nodes with inline comments, calculate endOffset to point after the newline
                         // Get the line containing the inline comment
                         const lines = originalScript.split('\n');
                         const lineWithComment = lines[effectiveEndRow] || '';
-                        // Calculate offset to end of line content, then add 1 to point after newline
-                        endOffset = this.rowColToCharOffset(
-                            originalScript,
-                            effectiveEndRow,
-                            lineWithComment.length,
-                            true // Point after the newline character
-                        );
+                        const isLastLine = effectiveEndRow === lines.length - 1;
+                        
+                        if (isLastLine) {
+                            // This is the last line - don't include newline in endOffset or replacement
+                            endOffset = this.rowColToCharOffset(
+                                originalScript,
+                                effectiveEndRow,
+                                effectiveEndCol,
+                                true // exclusive (one past the end, but no newline)
+                            );
+                            codeToInsert = reconstructed; // No newline needed
+                        } else {
+                            // There's a next line - preserve the newline
+                            // Calculate offset to end of line content, then add 1 to point after newline
+                            endOffset = this.rowColToCharOffset(
+                                originalScript,
+                                effectiveEndRow,
+                                lineWithComment.length,
+                                true // Point after the newline character
+                            );
+                            // Since endOffset includes the newline, we need to append it to the replacement code
+                            // to preserve it
+                            codeToInsert = reconstructed + '\n';
+                        }
                     } else {
                         // No inline comments, use normal calculation
                         endOffset = this.rowColToCharOffset(
@@ -395,7 +601,7 @@ export class ASTToCodeConverter {
                     codePositions.push({
                         startOffset,
                         endOffset,
-                        code: reconstructed
+                        code: codeToInsert
                     });
                 }
             }
