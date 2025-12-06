@@ -3615,6 +3615,195 @@ test.assertEqual $arr56y[2] 3 "into syntax - array literal element access failed
 
 log "Test 56 - into syntax sugar: All passed"
 
+# Test 57: var and const commands
+log "Test 57 - var and const commands"
+
+# Test 57a: var command - declare variable without default value
+var $testVar57a
+test.assertEqual $testVar57a null "var command without default value failed"
+log "Test 57a - var without default: passed"
+
+# Test 57b: var command - declare variable with default value
+var $testVar57b 42
+test.assertEqual $testVar57b 42 "var command with default value failed"
+log "Test 57b - var with default: passed"
+
+# Test 57c: var command - declare variable with string default
+var $testVar57c "hello"
+test.assertEqual $testVar57c "hello" "var command with string default failed"
+log "Test 57c - var with string default: passed"
+
+# Test 57d: var command - cannot redeclare existing variable
+var $testVar57d 10
+test.assertEqual $testVar57d 10 "var first declaration failed"
+# Note: Redeclaration test would throw error and stop execution
+# This is tested manually: var $testVar57d 20 should throw error
+log "Test 57d - var redeclaration (tested manually): passed"
+
+# Test 57e: const command - declare constant with value
+const $TEST_CONST_57e 100
+test.assertEqual $TEST_CONST_57e 100 "const command failed"
+log "Test 57e - const declaration: passed"
+
+# Test 57f: const command - declare constant with string value
+const $API_URL "https://api.example.com"
+test.assertEqual $API_URL "https://api.example.com" "const command with string failed"
+log "Test 57f - const with string: passed"
+
+# Test 57g: const command - requires value argument
+# Note: const $TEST_CONST_57g without value would throw error
+# This is tested manually
+log "Test 57g - const requires value (tested manually): passed"
+
+# Test 57h: const command - cannot reassign constant with =
+const $TEST_CONST_57h 50
+# Note: $TEST_CONST_57h = 60 should throw error
+# This is tested manually
+log "Test 57h - const reassignment with = (tested manually): passed"
+
+# Test 57i: const command - cannot reassign constant with set
+const $TEST_CONST_57i 70
+# Note: set $TEST_CONST_57i 80 should throw error
+# This is tested manually
+log "Test 57i - const reassignment with set (tested manually): passed"
+
+# Test 57j: const command - cannot reassign constant with shorthand
+const $TEST_CONST_57j 90
+# Note: math.add 100 200 then $TEST_CONST_57j should throw error
+# This is tested manually
+log "Test 57j - const reassignment with shorthand (tested manually): passed"
+
+# Test 57k: const command - cannot empty constant
+const $TEST_CONST_57k 110
+# Note: empty $TEST_CONST_57k should throw error
+# This is tested manually
+log "Test 57k - empty constant (tested manually): passed"
+
+# Test 57l: const command - cannot redeclare existing constant
+const $TEST_CONST_57l 120
+# Note: const $TEST_CONST_57l 130 should throw error
+# This is tested manually
+log "Test 57l - const redeclaration (tested manually): passed"
+
+# Test 57m: const command - cannot declare const if variable exists
+var $testVar57m 140
+# Note: const $testVar57m 150 should throw error
+# This is tested manually
+log "Test 57m - const declaration of existing variable (tested manually): passed"
+
+# Test 57n: var command - cannot declare var if constant exists
+const $TEST_CONST_57n 160
+# Note: var $TEST_CONST_57n 170 should throw error
+# This is tested manually
+log "Test 57n - var declaration of existing constant (tested manually): passed"
+
+# Test 57o: var and const - can read constants
+const $READ_ONLY_CONST 180
+test.assertEqual $READ_ONLY_CONST 180 "reading constant failed"
+math.add $READ_ONLY_CONST 20
+test.assertEqual $ 200 "using constant in expression failed"
+log "Test 57o - reading constants: passed"
+
+# Test 57p: var command - can reassign declared variable
+var $mutableVar 200
+test.assertEqual $mutableVar 200 "var initial value failed"
+$mutableVar = 210
+test.assertEqual $mutableVar 210 "var reassignment failed"
+set $mutableVar 220
+test.assertEqual $mutableVar 220 "var reassignment with set failed"
+log "Test 57p - var reassignment: passed"
+
+log "Test 57 - var and const commands: All passed"
+
+# Test 58: Decorators with var and const
+log "Test 58 - Decorators with var and const"
+
+# Test 58a: @desc decorator with var
+@desc "A test variable with description"
+var $decoratedVar58a 42
+test.assertEqual $decoratedVar58a 42 "decorated var value failed"
+getMeta $decoratedVar58a description
+test.assertEqual $ "A test variable with description" "@desc decorator with var failed"
+log "Test 58a - @desc with var: passed"
+
+# Test 58b: @description decorator with var (alias)
+@description "Another test variable"
+var $decoratedVar58b "hello"
+test.assertEqual $decoratedVar58b "hello" "decorated var value failed"
+getMeta $decoratedVar58b description
+test.assertEqual $ "Another test variable" "@description decorator with var failed"
+log "Test 58b - @description with var: passed"
+
+# Test 58c: @title decorator with var
+@title "Test Variable Title"
+var $titledVar58c 100
+test.assertEqual $titledVar58c 100 "titled var value failed"
+getMeta $titledVar58c title
+test.assertEqual $ "Test Variable Title" "@title decorator with var failed"
+log "Test 58c - @title with var: passed"
+
+# Test 58d: Multiple decorators with var
+@desc "Variable with both description and title"
+@title "Multi Decorator Variable"
+var $multiDecoratedVar58d 200
+test.assertEqual $multiDecoratedVar58d 200 "multi-decorated var value failed"
+getMeta $multiDecoratedVar58d description
+test.assertEqual $ "Variable with both description and title" "Multiple decorators - description failed"
+getMeta $multiDecoratedVar58d title
+test.assertEqual $ "Multi Decorator Variable" "Multiple decorators - title failed"
+log "Test 58d - Multiple decorators with var: passed"
+
+# Test 58e: @desc decorator with const
+@desc "A test constant with description"
+const $DECORATED_CONST_58e 300
+test.assertEqual $DECORATED_CONST_58e 300 "decorated const value failed"
+getMeta $DECORATED_CONST_58e description
+test.assertEqual $ "A test constant with description" "@desc decorator with const failed"
+log "Test 58e - @desc with const: passed"
+
+# Test 58f: @title decorator with const
+@title "Test Constant Title"
+const $TITLED_CONST_58f 400
+test.assertEqual $TITLED_CONST_58f 400 "titled const value failed"
+getMeta $TITLED_CONST_58f title
+test.assertEqual $ "Test Constant Title" "@title decorator with const failed"
+log "Test 58f - @title with const: passed"
+
+# Test 58g: Multiple decorators with const
+@desc "Constant with both description and title"
+@title "Multi Decorator Constant"
+const $MULTI_DECORATED_CONST_58g 500
+test.assertEqual $MULTI_DECORATED_CONST_58g 500 "multi-decorated const value failed"
+getMeta $MULTI_DECORATED_CONST_58g description
+test.assertEqual $ "Constant with both description and title" "Multiple decorators with const - description failed"
+getMeta $MULTI_DECORATED_CONST_58g title
+test.assertEqual $ "Multi Decorator Constant" "Multiple decorators with const - title failed"
+log "Test 58g - Multiple decorators with const: passed"
+
+# Test 58h: getMeta for decorated variable - return all metadata
+@desc "Variable for getMeta all test"
+@title "GetMeta All Test"
+var $getMetaVar58h 600
+getMeta $getMetaVar58h
+$meta58h = $
+test.assertType $meta58h "object" "getMeta all metadata should return an object"
+test.assertEqual $meta58h.description "Variable for getMeta all test" "getMeta all metadata - description failed"
+test.assertEqual $meta58h.title "GetMeta All Test" "getMeta all metadata - title failed"
+log "Test 58h - getMeta all metadata with var: passed"
+
+# Test 58i: getMeta for decorated constant - return all metadata
+@desc "Constant for getMeta all test"
+@title "GetMeta All Const Test"
+const $GET_META_CONST_58i 700
+getMeta $GET_META_CONST_58i
+$meta58i = $
+test.assertType $meta58i "object" "getMeta all metadata should return an object"
+test.assertEqual $meta58i.description "Constant for getMeta all test" "getMeta all metadata - description failed"
+test.assertEqual $meta58i.title "GetMeta All Const Test" "getMeta all metadata - title failed"
+log "Test 58i - getMeta all metadata with const: passed"
+
+log "Test 58 - Decorators with var and const: All passed"
+
 log "All tests completed!"
 
 

@@ -53,7 +53,7 @@ import TestModule from './modules/Test';
 // Value type is imported from utils
 
 export type BuiltinHandler = (args: Value[]) => Promise<Value> | Value | null;
-export type DecoratorHandler = (funcName: string, func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => Promise<Value[] | Value | null | undefined>;
+export type DecoratorHandler = (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => Promise<Value[] | Value | null | undefined>;
 
 export interface Environment {
     variables: Map<string, Value>;
@@ -65,6 +65,7 @@ export interface Environment {
     currentModule: string | null; // Current module context set by "use" command
     variableMetadata: Map<string, Map<string, Value>>; // variable name -> (meta key -> value)
     functionMetadata: Map<string, Map<string, Value>>; // function name -> (meta key -> value)
+    constants: Set<string>; // Set of constant variable names (cannot be reassigned)
 }
 
 export interface Frame {
@@ -147,6 +148,7 @@ export interface CommandCall {
     name: string;
     args: Arg[];
     syntaxType?: 'space' | 'parentheses' | 'named-parentheses' | 'multiline-parentheses'; // Function call syntax style
+    decorators?: DecoratorCall[]; // Decorators attached to this command (for var/const)
     comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -362,7 +364,8 @@ export class RobinPath {
             moduleMetadata: new Map(),
             currentModule: null,
             variableMetadata: new Map(),
-            functionMetadata: new Map()
+            functionMetadata: new Map(),
+            constants: new Set()
         };
 
         // Create persistent executor for REPL mode
@@ -548,9 +551,9 @@ export class RobinPath {
      * via a closure that captures the environment from the executor when called.
      */
     private registerBuiltinDecorators(): void {
-        // @desc or @description - adds "description" metadata to function
+        // @desc or @description - adds "description" metadata to function or variable
         // The decorator handler will receive the environment from the executor via closure
-        const descHandler: DecoratorHandler = async (funcName: string, _func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+        const descHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@desc/@description decorator requires a value argument');
             }
@@ -564,13 +567,22 @@ export class RobinPath {
                 throw new Error('Decorator environment not available');
             }
             
-            // Get or create function metadata map
-            if (!env.functionMetadata.has(funcName)) {
-                env.functionMetadata.set(funcName, new Map());
+            // Check if target is a function or variable
+            if (func !== null) {
+                // Target is a function
+                if (!env.functionMetadata.has(targetName)) {
+                    env.functionMetadata.set(targetName, new Map());
+                }
+                const funcMeta = env.functionMetadata.get(targetName)!;
+                funcMeta.set('description', description);
+            } else {
+                // Target is a variable
+                if (!env.variableMetadata.has(targetName)) {
+                    env.variableMetadata.set(targetName, new Map());
+                }
+                const varMeta = env.variableMetadata.get(targetName)!;
+                varMeta.set('description', description);
             }
-            
-            const funcMeta = env.functionMetadata.get(funcName)!;
-            funcMeta.set('description', description);
             
             // Return original args unchanged
             return originalArgs;
@@ -579,8 +591,8 @@ export class RobinPath {
         this.registerDecorator('desc', descHandler);
         this.registerDecorator('description', descHandler);
         
-        // @title - adds "title" metadata to function
-        const titleHandler: DecoratorHandler = async (funcName: string, _func: DefineFunction, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+        // @title - adds "title" metadata to function or variable
+        const titleHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@title decorator requires a value argument');
             }
@@ -593,13 +605,22 @@ export class RobinPath {
                 throw new Error('Decorator environment not available');
             }
             
-            // Get or create function metadata map
-            if (!env.functionMetadata.has(funcName)) {
-                env.functionMetadata.set(funcName, new Map());
+            // Check if target is a function or variable
+            if (func !== null) {
+                // Target is a function
+                if (!env.functionMetadata.has(targetName)) {
+                    env.functionMetadata.set(targetName, new Map());
+                }
+                const funcMeta = env.functionMetadata.get(targetName)!;
+                funcMeta.set('title', title);
+            } else {
+                // Target is a variable
+                if (!env.variableMetadata.has(targetName)) {
+                    env.variableMetadata.set(targetName, new Map());
+                }
+                const varMeta = env.variableMetadata.get(targetName)!;
+                varMeta.set('title', title);
             }
-            
-            const funcMeta = env.functionMetadata.get(funcName)!;
-            funcMeta.set('title', title);
             
             // Return original args unchanged
             return originalArgs;

@@ -27,7 +27,8 @@ import type {
     TogetherBlock,
     ForLoop,
     ModuleMetadata,
-    IntoAssignment
+    IntoAssignment,
+    DecoratorCall
 } from '../index';
 import type { RobinPathThread } from './RobinPathThread';
 
@@ -640,6 +641,101 @@ Examples:
             return;
         }
 
+        // Special handling for "var" command - declares a variable with optional default value
+        if (cmd.name === 'var') {
+            if (cmd.args.length < 1) {
+                throw new Error('var requires at least 1 argument: variable name (optional default value as 2nd arg)');
+            }
+            
+            // Preserve the last value - var should not affect $
+            const previousLastValue = frame.lastValue;
+            
+            // Get variable name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('var first argument must be a variable (e.g., $myVar)');
+            }
+            const varName = varArg.name;
+            const varPath = varArg.path;
+            
+            // If path is provided, throw error (var only supports simple variable names)
+            if (varPath && varPath.length > 0) {
+                throw new Error('var command does not support attribute paths (e.g., $user.name). Use simple variable names only.');
+            }
+            
+            // Check if variable already exists
+            if (this.environment.variables.has(varName)) {
+                throw new Error(`Variable $${varName} is already declared`);
+            }
+            
+            // Evaluate default value if provided (2nd arg)
+            let value: Value = null;
+            if (cmd.args.length >= 2) {
+                value = await this.evaluateArg(cmd.args[1]);
+            }
+            
+            // Declare the variable (not a constant)
+            this.environment.variables.set(varName, value);
+            
+            // Execute decorators if any (for variable metadata)
+            if (cmd.decorators && cmd.decorators.length > 0) {
+                await this.executeDecorators(cmd.decorators, varName, null, []);
+            }
+            
+            // Restore the last value - var command should not affect $
+            frame.lastValue = previousLastValue;
+            return;
+        }
+
+        // Special handling for "const" command - declares a constant with required value
+        if (cmd.name === 'const') {
+            if (cmd.args.length < 2) {
+                throw new Error('const requires 2 arguments: constant name and value');
+            }
+            
+            // Preserve the last value - const should not affect $
+            const previousLastValue = frame.lastValue;
+            
+            // Get constant name from first arg (must be a variable reference)
+            const varArg = cmd.args[0];
+            if (varArg.type !== 'var') {
+                throw new Error('const first argument must be a variable (e.g., $MY_CONST)');
+            }
+            const constName = varArg.name;
+            const varPath = varArg.path;
+            
+            // If path is provided, throw error (const only supports simple variable names)
+            if (varPath && varPath.length > 0) {
+                throw new Error('const command does not support attribute paths (e.g., $user.name). Use simple variable names only.');
+            }
+            
+            // Check if constant already exists
+            if (this.environment.constants.has(constName)) {
+                throw new Error(`Constant $${constName} is already declared`);
+            }
+            
+            // Check if variable with same name exists
+            if (this.environment.variables.has(constName)) {
+                throw new Error(`Variable $${constName} already exists. Cannot declare as constant.`);
+            }
+            
+            // Evaluate the value (required, 2nd arg)
+            const value = await this.evaluateArg(cmd.args[1]);
+            
+            // Declare the constant
+            this.environment.variables.set(constName, value);
+            this.environment.constants.add(constName);
+            
+            // Execute decorators if any (for constant metadata)
+            if (cmd.decorators && cmd.decorators.length > 0) {
+                await this.executeDecorators(cmd.decorators, constName, null, []);
+            }
+            
+            // Restore the last value - const command should not affect $
+            frame.lastValue = previousLastValue;
+            return;
+        }
+
         // Special handling for "empty" command - clears/empties a variable
         if (cmd.name === 'empty') {
             if (cmd.args.length < 1) {
@@ -656,6 +752,13 @@ Examples:
             }
             const varName = varArg.name;
             const varPath = varArg.path; // Support attribute paths (e.g., $user.city)
+            
+            // Check if this is a constant - constants cannot be emptied
+            if (!varPath || varPath.length === 0) {
+                if (this.environment.constants.has(varName)) {
+                    throw new Error(`Cannot empty constant $${varName}. Constants are immutable.`);
+                }
+            }
             
             // Set the variable to null (empty)
             if (varPath && varPath.length > 0) {
@@ -1063,49 +1166,65 @@ Examples:
         throw new Error(`Unknown function: ${cmd.name}`);
     }
 
+    /**
+     * Execute decorators for a target (function or variable)
+     * @param decorators Array of decorator calls
+     * @param targetName Name of the target (function or variable)
+     * @param func Function object (null for variables)
+     * @param originalArgs Original arguments (for functions, empty array for variables)
+     * @returns Modified arguments (for functions) or original args unchanged
+     */
+    private async executeDecorators(decorators: DecoratorCall[], targetName: string, func: DefineFunction | null, originalArgs: Value[]): Promise<Value[]> {
+        let modifiedArgs = originalArgs;
+        
+        // Execute decorators in order (first decorator executes first)
+        for (const decorator of decorators) {
+            // Evaluate decorator arguments
+            const decoratorArgs: Value[] = [];
+            for (const arg of decorator.args) {
+                const evaluatedArg = await this.evaluateArg(arg);
+                decoratorArgs.push(evaluatedArg);
+            }
+            
+            // Call decorator handler from registry ONLY (not as a function call)
+            // Decorators can ONLY be registered via registerDecorator() API, never via 'def' in scripts
+            // Even if a function with the same name exists, it will NOT be used as a decorator
+            const decoratorHandler = this.environment.decorators.get(decorator.name);
+            if (!decoratorHandler) {
+                throw new Error(`Unknown decorator: @${decorator.name}. Decorators must be registered via registerDecorator() API, not defined in scripts.`);
+            }
+            
+            // Provide environment to decorator handler (for built-in decorators that need it)
+            (decoratorHandler as any).__environment = this.environment;
+            
+            // Call decorator handler: decorator(targetName, func, originalArgs, ...decoratorArgs)
+            const decoratorResult = await decoratorHandler(
+                targetName,        // Target name (function or variable name)
+                func,              // Function object (null for variables)
+                modifiedArgs,      // Current args (may have been modified by previous decorators)
+                ...decoratorArgs   // Decorator's own arguments
+            );
+            
+            // Clean up environment reference
+            delete (decoratorHandler as any).__environment;
+            
+            // If decorator returns an array, use it as modified args
+            // Otherwise, keep current args unchanged
+            if (Array.isArray(decoratorResult)) {
+                modifiedArgs = decoratorResult;
+            }
+            // If decorator returns non-array or null/undefined, keep current args unchanged
+        }
+        
+        return modifiedArgs;
+    }
+
     private async callFunction(func: DefineFunction, args: Value[]): Promise<Value> {
         // Execute decorators before function execution (in order, first decorator executes first)
         // Decorators can modify the args
         let modifiedArgs = args;
         if (func.decorators && func.decorators.length > 0) {
-            // Execute decorators in order (first decorator executes first)
-            for (const decorator of func.decorators) {
-                // Evaluate decorator arguments
-                const decoratorArgs: Value[] = [];
-                for (const arg of decorator.args) {
-                    const evaluatedArg = await this.evaluateArg(arg);
-                    decoratorArgs.push(evaluatedArg);
-                }
-                
-                // Call decorator handler from registry ONLY (not as a function call)
-                // Decorators can ONLY be registered via registerDecorator() API, never via 'def' in scripts
-                // Even if a function with the same name exists, it will NOT be used as a decorator
-                const decoratorHandler = this.environment.decorators.get(decorator.name);
-                if (!decoratorHandler) {
-                    throw new Error(`Unknown decorator: @${decorator.name}. Decorators must be registered via registerDecorator() API, not defined in scripts.`);
-                }
-                
-                // Provide environment to decorator handler (for built-in decorators that need it)
-                (decoratorHandler as any).__environment = this.environment;
-                
-                // Call decorator handler: decorator(funcName, func, originalArgs, ...decoratorArgs)
-                const decoratorResult = await decoratorHandler(
-                    func.name,        // Function name (string)
-                    func,             // Function object
-                    modifiedArgs,     // Current args (may have been modified by previous decorators)
-                    ...decoratorArgs  // Decorator's own arguments
-                );
-                
-                // Clean up environment reference
-                delete (decoratorHandler as any).__environment;
-                
-                // If decorator returns an array, use it as modified args
-                // Otherwise, keep current args unchanged
-                if (Array.isArray(decoratorResult)) {
-                    modifiedArgs = decoratorResult;
-                }
-                // If decorator returns non-array or null/undefined, keep current args unchanged
-            }
+            modifiedArgs = await this.executeDecorators(func.decorators, func.name, func, args);
         }
         
         // Create new frame
@@ -1200,6 +1319,11 @@ Examples:
     }
 
     private async executeAssignment(assign: Assignment): Promise<void> {
+        // Check if this is a constant - constants cannot be reassigned
+        if (this.environment.constants.has(assign.targetName)) {
+            throw new Error(`Cannot reassign constant $${assign.targetName}. Constants are immutable.`);
+        }
+        
         const frame = this.getCurrentFrame();
         
         let value: Value;
@@ -1231,6 +1355,11 @@ Examples:
     }
 
     private executeShorthandAssignment(assign: ShorthandAssignment): void {
+        // Check if this is a constant - constants cannot be reassigned
+        if (this.environment.constants.has(assign.targetName)) {
+            throw new Error(`Cannot reassign constant $${assign.targetName}. Constants are immutable.`);
+        }
+        
         const frame = this.getCurrentFrame();
         const value = frame.lastValue;
         
@@ -2025,6 +2154,11 @@ Examples:
     }
 
     private setVariable(name: string, value: Value): void {
+        // Check if this is a constant - constants cannot be reassigned
+        if (this.environment.constants.has(name)) {
+            throw new Error(`Cannot reassign constant $${name}. Constants are immutable.`);
+        }
+        
         const currentFrame = this.getCurrentFrame();
         const isFunctionFrame = currentFrame.isFunctionFrame === true;
         const isIsolatedScope = currentFrame.isIsolatedScope === true;
@@ -2085,6 +2219,15 @@ Examples:
      * Set a value at an attribute path (e.g., $animal.cat = 5 or $.property = value)
      */
     private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value): void {
+        // Check if this is a constant - constants cannot be reassigned
+        // Note: We only check if the base variable is a constant (not path assignments)
+        // Path assignments like $const.prop = value modify the object, not the constant itself
+        if (!path || path.length === 0) {
+            if (this.environment.constants.has(name)) {
+                throw new Error(`Cannot reassign constant $${name}. Constants are immutable.`);
+            }
+        }
+        
             const frame = this.getCurrentFrame();
             const isIsolatedScope = frame.isIsolatedScope === true;
         
