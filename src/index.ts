@@ -572,9 +572,9 @@ export class RobinPath {
                 // Target is a function
                 if (!env.functionMetadata.has(targetName)) {
                     env.functionMetadata.set(targetName, new Map());
-                }
+            }
                 const funcMeta = env.functionMetadata.get(targetName)!;
-                funcMeta.set('description', description);
+            funcMeta.set('description', description);
             } else {
                 // Target is a variable
                 if (!env.variableMetadata.has(targetName)) {
@@ -610,9 +610,9 @@ export class RobinPath {
                 // Target is a function
                 if (!env.functionMetadata.has(targetName)) {
                     env.functionMetadata.set(targetName, new Map());
-                }
+            }
                 const funcMeta = env.functionMetadata.get(targetName)!;
-                funcMeta.set('title', title);
+            funcMeta.set('title', title);
             } else {
                 // Target is a variable
                 if (!env.variableMetadata.has(targetName)) {

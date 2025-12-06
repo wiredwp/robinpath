@@ -1177,45 +1177,45 @@ Examples:
     private async executeDecorators(decorators: DecoratorCall[], targetName: string, func: DefineFunction | null, originalArgs: Value[]): Promise<Value[]> {
         let modifiedArgs = originalArgs;
         
-        // Execute decorators in order (first decorator executes first)
+            // Execute decorators in order (first decorator executes first)
         for (const decorator of decorators) {
-            // Evaluate decorator arguments
-            const decoratorArgs: Value[] = [];
-            for (const arg of decorator.args) {
-                const evaluatedArg = await this.evaluateArg(arg);
-                decoratorArgs.push(evaluatedArg);
-            }
-            
-            // Call decorator handler from registry ONLY (not as a function call)
-            // Decorators can ONLY be registered via registerDecorator() API, never via 'def' in scripts
-            // Even if a function with the same name exists, it will NOT be used as a decorator
-            const decoratorHandler = this.environment.decorators.get(decorator.name);
-            if (!decoratorHandler) {
-                throw new Error(`Unknown decorator: @${decorator.name}. Decorators must be registered via registerDecorator() API, not defined in scripts.`);
-            }
-            
-            // Provide environment to decorator handler (for built-in decorators that need it)
-            (decoratorHandler as any).__environment = this.environment;
-            
+                // Evaluate decorator arguments
+                const decoratorArgs: Value[] = [];
+                for (const arg of decorator.args) {
+                    const evaluatedArg = await this.evaluateArg(arg);
+                    decoratorArgs.push(evaluatedArg);
+                }
+                
+                // Call decorator handler from registry ONLY (not as a function call)
+                // Decorators can ONLY be registered via registerDecorator() API, never via 'def' in scripts
+                // Even if a function with the same name exists, it will NOT be used as a decorator
+                const decoratorHandler = this.environment.decorators.get(decorator.name);
+                if (!decoratorHandler) {
+                    throw new Error(`Unknown decorator: @${decorator.name}. Decorators must be registered via registerDecorator() API, not defined in scripts.`);
+                }
+                
+                // Provide environment to decorator handler (for built-in decorators that need it)
+                (decoratorHandler as any).__environment = this.environment;
+                
             // Call decorator handler: decorator(targetName, func, originalArgs, decoratorArgs, originalDecoratorArgs)
-            const decoratorResult = await decoratorHandler(
+                const decoratorResult = await decoratorHandler(
                 targetName,        // Target name (function or variable name)
                 func,              // Function object (null for variables)
                 modifiedArgs,      // Current args (may have been modified by previous decorators)
                 decoratorArgs,     // Decorator's own arguments (evaluated)
                 decorator.args     // Original decorator args (AST nodes, for extracting variable names)
-            );
-            
-            // Clean up environment reference
-            delete (decoratorHandler as any).__environment;
-            
-            // If decorator returns an array, use it as modified args
-            // Otherwise, keep current args unchanged
-            if (Array.isArray(decoratorResult)) {
-                modifiedArgs = decoratorResult;
+                );
+                
+                // Clean up environment reference
+                delete (decoratorHandler as any).__environment;
+                
+                // If decorator returns an array, use it as modified args
+                // Otherwise, keep current args unchanged
+                if (Array.isArray(decoratorResult)) {
+                    modifiedArgs = decoratorResult;
+                }
+                // If decorator returns non-array or null/undefined, keep current args unchanged
             }
-            // If decorator returns non-array or null/undefined, keep current args unchanged
-        }
         
         return modifiedArgs;
     }
@@ -1550,16 +1550,16 @@ Examples:
             } finally {
                 // Pop the scope frame
                 this.callStack.pop();
-            }
+                }
 
-            // If this do block has "into", assign the last value to the target variable in parent scope
+                // If this do block has "into", assign the last value to the target variable in parent scope
             // Set the variable directly in the parent scope (together has no scope)
-            if (intoInfo) {
+                if (intoInfo) {
                 // Set variable in parent scope - check parent frame first, then globals
-                if (intoInfo.targetPath && intoInfo.targetPath.length > 0) {
+                    if (intoInfo.targetPath && intoInfo.targetPath.length > 0) {
                     // Path assignment - need to handle base value and path traversal
                     this.setVariableAtPathInParentScope(parentFrame, intoInfo.targetName, intoInfo.targetPath, value);
-                } else {
+                    } else {
                     // Simple assignment - check parent frame locals, then globals
                     if (parentFrame.locals.has(intoInfo.targetName)) {
                         parentFrame.locals.set(intoInfo.targetName, value);
