@@ -24,8 +24,10 @@ import type {
     ReturnStatement,
     BreakStatement,
     ScopeBlock,
+    TogetherBlock,
     ForLoop,
-    ModuleMetadata
+    ModuleMetadata,
+    IntoAssignment
 } from '../index';
 import type { RobinPathThread } from './RobinPathThread';
 
@@ -149,6 +151,9 @@ export class Executor {
             case 'do':
                 await this.executeScope(stmt);
                 break;
+            case 'together':
+                await this.executeTogether(stmt);
+                break;
             case 'forLoop':
                 await this.executeForLoop(stmt);
                 break;
@@ -157,6 +162,9 @@ export class Executor {
                 break;
             case 'break':
                 await this.executeBreak(stmt);
+                break;
+            case 'into':
+                await this.executeInto(stmt);
                 break;
             case 'comment':
                 // Comments are no-ops during execution
@@ -1367,6 +1375,194 @@ Examples:
         }
     }
 
+    private async executeTogether(together: TogetherBlock): Promise<void> {
+        // Execute all do blocks in parallel
+        // together doesn't have its own scope - variables set inside do blocks are in parent scope
+        
+        // Capture the parent frame before executing do blocks
+        // This is the frame that contains the together block (together has no scope)
+        const parentFrame = this.getCurrentFrame();
+        
+        // Create promises for each do block
+        const promises = together.blocks.map(async (doBlock) => {
+            // Check if this do block has an "into" assignment (from "do into $var")
+            const intoInfo = (doBlock as any).__intoAssignment;
+            
+            const isIsolated = doBlock.paramNames && doBlock.paramNames.length > 0;
+            
+            const frame: Frame = {
+                locals: new Map(),
+                lastValue: null, // Start with null for do blocks
+                isFunctionFrame: true,
+                isIsolatedScope: isIsolated
+            };
+
+            // If scope has parameters, initialize them
+            if (doBlock.paramNames) {
+                for (const paramName of doBlock.paramNames) {
+                    frame.locals.set(paramName, null);
+                }
+            }
+
+            this.callStack.push(frame);
+
+            let value: Value = null;
+            try {
+                // Execute scope body
+                for (const stmt of doBlock.body) {
+                    await this.executeStatement(stmt);
+                }
+
+                // Capture the value before popping the frame
+                if (intoInfo) {
+                    value = frame.lastValue;
+                }
+            } finally {
+                // Pop the scope frame
+                this.callStack.pop();
+            }
+
+            // If this do block has "into", assign the last value to the target variable in parent scope
+            // Set the variable directly in the parent scope (together has no scope)
+            if (intoInfo) {
+                // Set variable in parent scope - check parent frame first, then globals
+                if (intoInfo.targetPath && intoInfo.targetPath.length > 0) {
+                    // Path assignment - need to handle base value and path traversal
+                    this.setVariableAtPathInParentScope(parentFrame, intoInfo.targetName, intoInfo.targetPath, value);
+                } else {
+                    // Simple assignment - check parent frame locals, then globals
+                    if (parentFrame.locals.has(intoInfo.targetName)) {
+                        parentFrame.locals.set(intoInfo.targetName, value);
+                    } else if (this.environment.variables.has(intoInfo.targetName)) {
+                        this.environment.variables.set(intoInfo.targetName, value);
+                    } else {
+                        // Variable doesn't exist - create in parent scope or globals
+                        if (parentFrame.isFunctionFrame) {
+                            parentFrame.locals.set(intoInfo.targetName, value);
+                        } else {
+                            this.environment.variables.set(intoInfo.targetName, value);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Wait for all do blocks to complete
+        await Promise.all(promises);
+    }
+
+    /**
+     * Set a variable at a path in the parent scope (for together blocks)
+     */
+    private setVariableAtPathInParentScope(parentFrame: Frame, name: string, path: AttributePathSegment[], value: Value): void {
+        // Get the base variable value from parent scope
+        let baseValue: Value;
+        
+        if (parentFrame.locals.has(name)) {
+            baseValue = parentFrame.locals.get(name)!;
+        } else if (this.environment.variables.has(name)) {
+            baseValue = this.environment.variables.get(name)!;
+        } else {
+            // Variable doesn't exist - create it as an object or array based on first path segment
+            if (path[0].type === 'index') {
+                baseValue = [];
+            } else {
+                baseValue = {};
+            }
+            // Set it in the appropriate scope
+            if (parentFrame.isFunctionFrame) {
+                parentFrame.locals.set(name, baseValue);
+            } else {
+                this.environment.variables.set(name, baseValue);
+            }
+        }
+        
+        // If variable exists but is a primitive, convert it to object/array
+        if (baseValue !== null && baseValue !== undefined && typeof baseValue !== 'object') {
+            // Convert primitive to object or array based on first path segment
+            if (path[0].type === 'index') {
+                baseValue = [];
+            } else {
+                baseValue = {};
+            }
+            // Update the variable in the appropriate scope
+            if (parentFrame.locals.has(name)) {
+                parentFrame.locals.set(name, baseValue);
+            } else {
+                this.environment.variables.set(name, baseValue);
+            }
+        }
+        
+        // Ensure baseValue is an object (not null, not primitive)
+        if (baseValue === null || baseValue === undefined) {
+            throw new Error(`Cannot set property on null or undefined`);
+        }
+        if (typeof baseValue !== 'object') {
+            throw new Error(`Cannot set property on ${typeof baseValue}`);
+        }
+        
+        // Traverse the path to the parent of the target property/index
+        let current: any = baseValue;
+        for (let i = 0; i < path.length - 1; i++) {
+            const segment = path[i];
+            const nextSegment = path[i + 1];
+            
+            if (segment.type === 'property') {
+                // Property access: .propertyName
+                if (current[segment.name] === null || current[segment.name] === undefined) {
+                    // Create intermediate object or array based on next segment
+                    if (nextSegment.type === 'index') {
+                        current[segment.name] = [];
+                    } else {
+                        current[segment.name] = {};
+                    }
+                } else if (typeof current[segment.name] !== 'object') {
+                    throw new Error(`Cannot access property '${segment.name}' of ${typeof current[segment.name]}`);
+                }
+                current = current[segment.name];
+            } else if (segment.type === 'index') {
+                // Array index access: [index]
+                if (!Array.isArray(current)) {
+                    throw new Error(`Cannot access index ${segment.index} of non-array value`);
+                }
+                if (segment.index < 0) {
+                    throw new Error(`Index ${segment.index} must be non-negative`);
+                }
+                // Extend array if needed
+                while (current.length <= segment.index) {
+                    current.push(null);
+                }
+                if (current[segment.index] === null || current[segment.index] === undefined) {
+                    // Create intermediate object or array based on next segment
+                    if (nextSegment.type === 'index') {
+                        current[segment.index] = [];
+                    } else {
+                        current[segment.index] = {};
+                    }
+                }
+                current = current[segment.index];
+            }
+        }
+        
+        // Set the value at the final path segment
+        const finalSegment = path[path.length - 1];
+        if (finalSegment.type === 'property') {
+            current[finalSegment.name] = value;
+        } else if (finalSegment.type === 'index') {
+            if (!Array.isArray(current)) {
+                throw new Error(`Cannot set index ${finalSegment.index} on non-array value`);
+            }
+            if (finalSegment.index < 0) {
+                throw new Error(`Index ${finalSegment.index} must be non-negative`);
+            }
+            // Extend array if index is beyond current length
+            while (current.length <= finalSegment.index) {
+                current.push(null);
+            }
+            current[finalSegment.index] = value;
+        }
+    }
+
     private async executeForLoop(forLoop: ForLoop): Promise<void> {
         const frame = this.getCurrentFrame();
         
@@ -2046,6 +2242,81 @@ Examples:
             }
             current[finalSegment.index] = value;
         }
+    }
+
+    private async executeInto(intoStmt: IntoAssignment): Promise<void> {
+        const frame = this.getCurrentFrame();
+        
+        // Preserve the last value - into should not affect $ until assignment
+        const previousLastValue = frame.lastValue;
+        
+        // Get the result (last value after execution)
+        let value: Value;
+        
+        // Special handling for ScopeBlock (do blocks) - need to capture lastValue before it's restored
+        if (intoStmt.statement.type === 'do') {
+            const scope = intoStmt.statement;
+            const parentFrame = this.getCurrentFrame();
+            const originalLastValue = parentFrame.lastValue;
+            
+            // If parameters are declared, create an isolated scope (no parent variable access)
+            const isIsolated = scope.paramNames && scope.paramNames.length > 0;
+            
+            const scopeFrame: Frame = {
+                locals: new Map(),
+                lastValue: null, // Initialize to null - empty do blocks should return null
+                isFunctionFrame: true,
+                isIsolatedScope: isIsolated
+            };
+
+            // If scope has parameters, initialize them
+            if (scope.paramNames) {
+                for (const paramName of scope.paramNames) {
+                    scopeFrame.locals.set(paramName, null);
+                }
+            }
+
+            this.callStack.push(scopeFrame);
+
+            try {
+                // Execute scope body
+                for (const stmt of scope.body) {
+                    await this.executeStatement(stmt);
+                }
+
+                // Capture the scope's lastValue BEFORE restoring parent's $
+                value = scopeFrame.lastValue;
+
+                // Scope's lastValue should not affect parent's $ - restore original value
+                parentFrame.lastValue = originalLastValue;
+            } catch (error) {
+                // Scope's lastValue should not affect parent's $ - restore original value even on error
+                parentFrame.lastValue = originalLastValue;
+                throw error;
+            } finally {
+                // Pop the scope frame
+                this.callStack.pop();
+            }
+        } else {
+            // For other statements (commands), execute and get result from frame.lastValue
+            // Get the current frame reference before execution
+            const currentFrame = this.getCurrentFrame();
+            // Execute the statement - this should set currentFrame.lastValue
+            await this.executeStatement(intoStmt.statement);
+            // Immediately capture the result from the same frame reference
+            // The command should have set frame.lastValue to its result
+            value = currentFrame.lastValue;
+        }
+        
+        // Set the variable (with path support)
+        if (intoStmt.targetPath && intoStmt.targetPath.length > 0) {
+            this.setVariableAtPath(intoStmt.targetName, intoStmt.targetPath, value);
+        } else {
+            this.setVariable(intoStmt.targetName, value);
+        }
+        
+        // Restore the last value - into command should not affect $
+        frame.lastValue = previousLastValue;
     }
 
     // isTruthy isTruthy is imported from utils

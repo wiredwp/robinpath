@@ -12,12 +12,15 @@ import type {
     IfBlock,
     DefineFunction,
     ScopeBlock,
+    TogetherBlock,
     ForLoop,
     ReturnStatement,
     CommentStatement,
     CommentWithPosition,
     CodePosition,
-    DecoratorCall
+    DecoratorCall,
+    IntoAssignment,
+    AttributePathSegment
 } from '../index';
 
 export class Parser {
@@ -767,6 +770,11 @@ export class Parser {
             return this.parseDefine(startLine);
         }
 
+        // Check for together block
+        if (tokens[0] === 'together') {
+            return this.parseTogether(startLine);
+        }
+
         // Check for do block
         if (tokens[0] === 'do') {
             return this.parseScope(startLine);
@@ -1096,12 +1104,51 @@ export class Parser {
         if ((tokens.length >= 2 && tokens[1] === '(') || 
             (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(')) {
             // This is a parenthesized call - parse it specially
-            // Note: parseParenthesizedCall already updates this.currentLine via extractParenthesizedContent
-            const command = this.parseParenthesizedCall(tokens, startLine);
-            return command;
+            // Note: parseParenthesizedCall already checks for "into" internally and returns IntoAssignment if found
+            // So we can just return whatever it returns (either CommandCall or IntoAssignment)
+            return this.parseParenthesizedCall(tokens, startLine);
         }
 
         // Regular command (space-separated)
+        // Check for "into $var" in the tokens first
+        const intoIndex = tokens.indexOf('into');
+        if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+            const varToken = tokens[intoIndex + 1];
+            if (LexerUtils.isVariable(varToken)) {
+                // This is an "into" assignment
+                const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(varToken);
+                // Parse command without the "into $var" part
+                const commandTokens = tokens.slice(0, intoIndex);
+                // Find the position of "into" in the original line to limit argument parsing
+                const originalLine = this.lines[this.currentLine];
+                const intoPosInLine = originalLine.indexOf('into');
+                // Temporarily modify the line to exclude "into $var" for argument parsing
+                // This prevents parseCommandFromTokens from trying to parse "into" as an argument
+                const lineBeforeInto = intoPosInLine >= 0 ? originalLine.substring(0, intoPosInLine).trim() : originalLine;
+                const originalLineBackup = this.lines[this.currentLine];
+                const currentLineBackup = this.currentLine;
+                this.lines[this.currentLine] = lineBeforeInto;
+                try {
+                    const command = this.parseCommandFromTokens(commandTokens, startLine);
+                    const endLine = this.currentLine;
+                    // Only advance if we're still on the same line (parseCommandFromTokens might advance for multi-line args)
+                    if (this.currentLine === currentLineBackup) {
+                        this.currentLine++;
+                    }
+                    return {
+                        type: 'into',
+                        statement: { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) },
+                        targetName,
+                        targetPath,
+                        codePos: this.createCodePositionFromLines(startLine, endLine)
+                    };
+                } finally {
+                    // Restore original line
+                    this.lines[currentLineBackup] = originalLineBackup;
+                }
+            }
+        }
+        
         const command = this.parseCommandFromTokens(tokens, startLine);
         const endLine = this.currentLine;
         this.currentLine++;
@@ -1113,7 +1160,7 @@ export class Parser {
      * Supports both positional and named arguments (key=value)
      * Handles multi-line calls
      */
-    private parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall {
+    private parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall | IntoAssignment {
         const callStartLine = startLine !== undefined ? startLine : this.currentLine;
         // Get function name (handle module.function syntax)
         let name: string;
@@ -1143,6 +1190,8 @@ export class Parser {
 
         // Extract content inside parentheses (handles multi-line)
         const parenStartLine = this.currentLine;
+        // Save the original line before extractParenthesizedContent modifies currentLine
+        const originalLineAtStart = this.lines[parenStartLine];
         const parenContent = this.extractParenthesizedContent();
         const parenEndLine = this.currentLine - 1; // extractParenthesizedContent advances currentLine past the closing paren
         
@@ -1170,14 +1219,115 @@ export class Parser {
             args.push({ type: 'namedArgs', args: namedArgs });
         }
 
-        const endLine = this.currentLine;
-        return { 
+        // Check for "into $var" after parenthesized call (on same line as closing paren or next line)
+        // For single-line calls, check the original line directly
+        let intoInfo: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        if (!isMultiline && parenEndLine === parenStartLine) {
+            // Single-line call - check the original line directly
+            const closingParenIndex = originalLineAtStart.lastIndexOf(')');
+            if (closingParenIndex >= 0) {
+                const afterParen = originalLineAtStart.slice(closingParenIndex + 1).trim();
+                if (afterParen) {
+                    const tokens = Lexer.tokenize(afterParen);
+                    const intoIndex = tokens.indexOf('into');
+                    if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+                        const varToken = tokens[intoIndex + 1];
+                        if (LexerUtils.isVariable(varToken)) {
+                            const { name, path } = LexerUtils.parseVariablePath(varToken);
+                            // currentLine is already past this line, so no need to advance
+                            intoInfo = { targetName: name, targetPath: path };
+                        }
+                    }
+                }
+            }
+        }
+        
+        // If not found on same line (or multiline), check using the helper method
+        if (!intoInfo) {
+            intoInfo = this.checkForIntoAfterParen(parenEndLine);
+        }
+        
+        const endLine = intoInfo ? (this.currentLine - 1) : this.currentLine;
+        const command: CommandCall = { 
             type: 'command', 
             name, 
             args,
             syntaxType,
             codePos: this.createCodePositionFromLines(callStartLine, endLine)
         };
+        
+        if (intoInfo) {
+            // Return IntoAssignment wrapping the command
+            return {
+                type: 'into',
+                statement: command,
+                targetName: intoInfo.targetName,
+                targetPath: intoInfo.targetPath,
+                codePos: this.createCodePositionFromLines(callStartLine, endLine)
+            };
+        }
+        
+        return command;
+    }
+
+    /**
+     * Check for "into $var" after a parenthesized call
+     * This handles the case where "into" might be on the same line as the closing paren
+     * or on the next line
+     */
+    private checkForIntoAfterParen(parenEndLine: number): { targetName: string; targetPath?: AttributePathSegment[] } | null {
+        // Check the line containing the closing paren
+        if (parenEndLine >= 0 && parenEndLine < this.lines.length) {
+            const line = this.lines[parenEndLine];
+            // Find the closing paren position
+            const closingParenIndex = line.lastIndexOf(')');
+            if (closingParenIndex >= 0) {
+                // Check for "into" after the closing paren on the same line
+                const afterParen = line.slice(closingParenIndex + 1);
+                // Don't trim here - we want to preserve the original structure for tokenization
+                // But we do need to check if there's any content after the paren
+                if (afterParen.trim()) {
+                    const tokens = Lexer.tokenize(afterParen.trim());
+                    const intoIndex = tokens.indexOf('into');
+                    if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+                        const varToken = tokens[intoIndex + 1];
+                        if (LexerUtils.isVariable(varToken)) {
+                            const { name, path } = LexerUtils.parseVariablePath(varToken);
+                            // Advance currentLine past this line if needed
+                            // extractParenthesizedContent already advanced currentLine past the closing paren,
+                            // so we just need to ensure we don't go backwards
+                            if (parenEndLine + 1 > this.currentLine) {
+                                this.currentLine = parenEndLine + 1;
+                            }
+                            return { targetName: name, targetPath: path };
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Check next line if not found on same line
+        const nextLineNumber = parenEndLine + 1;
+        if (nextLineNumber < this.lines.length) {
+            const line = this.lines[nextLineNumber].trim();
+            const tokens = Lexer.tokenize(line);
+            
+            // Look for "into" keyword followed by a variable
+            const intoIndex = tokens.indexOf('into');
+            if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+                const varToken = tokens[intoIndex + 1];
+                if (LexerUtils.isVariable(varToken)) {
+                    const { name, path } = LexerUtils.parseVariablePath(varToken);
+                    // Advance currentLine past this line
+                    if (nextLineNumber >= this.currentLine) {
+                        this.currentLine = nextLineNumber + 1;
+                    }
+                    return { targetName: name, targetPath: path };
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -1716,16 +1866,31 @@ export class Parser {
         return result;
     }
 
-    private parseScope(startLine: number): ScopeBlock {
+    private parseScope(startLine: number): ScopeBlock | IntoAssignment {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
-        // Parse parameter names (optional): do $a $b
+        // Check for "into $var" after "do" (can be after parameters)
+        const intoIndex = tokens.indexOf('into');
+        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        let paramEndIndex = tokens.length;
+        
+        if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+            const varToken = tokens[intoIndex + 1];
+            if (LexerUtils.isVariable(varToken)) {
+                const { name, path } = LexerUtils.parseVariablePath(varToken);
+                intoTarget = { targetName: name, targetPath: path };
+                // Parameters end before "into"
+                paramEndIndex = intoIndex;
+            }
+        }
+        
+        // Parse parameter names (optional): do $a $b or do $a $b into $var
         const paramNames: string[] = [];
         
-        // Start from token index 1 (after "do")
-        for (let i = 1; i < tokens.length; i++) {
+        // Start from token index 1 (after "do"), stop before "into" if present
+        for (let i = 1; i < paramEndIndex; i++) {
             const token = tokens[i];
             
             // Parameter names must be variables (e.g., $a, $b, $c)
@@ -1832,14 +1997,128 @@ export class Parser {
         }
 
         // If parameters are declared, include them in the do block
-        const endLine = this.currentLine - 1; // enddo line
-        const result: ScopeBlock = paramNames.length > 0 
+        const endLine = this.currentLine - 1;
+        const scopeBlock: ScopeBlock = paramNames.length > 0 
             ? { type: 'do', paramNames, body, codePos: this.createCodePositionFromLines(startLine, endLine) }
             : { type: 'do', body, codePos: this.createCodePositionFromLines(startLine, endLine) };
         if (comments.length > 0) {
-            result.comments = comments;
+            scopeBlock.comments = comments;
         }
-        return result;
+        
+        // If "into" was found after "do", wrap the scope block
+        if (intoTarget) {
+            return {
+                type: 'into',
+                statement: scopeBlock,
+                targetName: intoTarget.targetName,
+                targetPath: intoTarget.targetPath,
+                codePos: this.createCodePositionFromLines(startLine, endLine)
+            };
+        }
+        
+        return scopeBlock;
+    }
+
+    private parseTogether(startLine: number): TogetherBlock {
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
+        const tokens = Lexer.tokenize(line);
+
+        // Must start with "together"
+        if (tokens[0] !== 'together') {
+            throw this.createError('expected together', this.currentLine);
+        }
+
+        // Collect comments above the together block
+        const comments: CommentWithPosition[] = [];
+        let commentStartLine = startLine;
+        while (commentStartLine > 0) {
+            const prevLine = this.lines[commentStartLine - 1].trim();
+            if (prevLine.startsWith('#')) {
+                const lineNum = commentStartLine - 1;
+                const cols = this.getColumnPositions(lineNum);
+                comments.unshift({
+                    text: prevLine.slice(1).trim(),
+                    codePos: this.createCodePosition(lineNum, cols.startCol, lineNum, cols.endCol)
+                });
+                commentStartLine--;
+            } else if (prevLine === '') {
+                commentStartLine--;
+            } else {
+                break;
+            }
+        }
+
+        this.currentLine++; // Move past "together" line
+
+        const blocks: ScopeBlock[] = [];
+        let closed = false;
+
+        // Parse do blocks until we find "endtogether"
+        while (this.currentLine < this.lines.length) {
+            const bodyLine = this.lines[this.currentLine];
+            const trimmedBodyLine = bodyLine.trim();
+
+            // Skip empty lines
+            if (!trimmedBodyLine || trimmedBodyLine.startsWith('#')) {
+                this.currentLine++;
+                continue;
+            }
+
+            const bodyTokens = Lexer.tokenize(trimmedBodyLine);
+
+            // Check for endtogether
+            if (bodyTokens[0] === 'endtogether') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            // Only allow "do" blocks inside together
+            if (bodyTokens[0] !== 'do') {
+                throw this.createError('together block can only contain do blocks', this.currentLine);
+            }
+
+            // Parse the do block (can be regular do or do into $var)
+            const doBlock = this.parseScope(this.currentLine);
+            
+            // parseScope returns ScopeBlock | IntoAssignment
+            // For together, we accept both:
+            // - ScopeBlock (regular do block)
+            // - IntoAssignment wrapping a ScopeBlock (do into $var)
+            if (doBlock.type === 'into' && doBlock.statement.type === 'do') {
+                // This is "do into $var" - we need to store it as IntoAssignment
+                // But TogetherBlock expects ScopeBlock[], so we need to change the type
+                // Actually, let's store the IntoAssignment info in the ScopeBlock
+                // For now, let's just store the do block and handle "into" during execution
+                // We'll need to track which blocks have "into" assignments
+                blocks.push(doBlock.statement);
+                // Store the into info on the block for later use
+                (doBlock.statement as any).__intoAssignment = {
+                    targetName: doBlock.targetName,
+                    targetPath: doBlock.targetPath
+                };
+            } else if (doBlock.type === 'do') {
+                blocks.push(doBlock);
+            } else {
+                throw this.createError('together block can only contain do blocks', this.currentLine);
+            }
+        }
+
+        if (!closed) {
+            throw this.createError('missing endtogether', this.currentLine);
+        }
+
+        const endLine = this.currentLine - 1;
+        const togetherBlock: TogetherBlock = {
+            type: 'together',
+            blocks,
+            codePos: this.createCodePositionFromLines(startLine, endLine)
+        };
+        if (comments.length > 0) {
+            togetherBlock.comments = comments;
+        }
+        return togetherBlock;
     }
 
     private parseForLoop(startLine: number): ForLoop {

@@ -3403,6 +3403,218 @@ enddef
 
 log "Test 55 - has command: All passed"
 
+# Test 56: into syntax sugar
+log "Test 56 - into syntax sugar"
+
+# Test 56a: Basic command with into
+add 1 2 into $result56a
+test.assertEqual $result56a 3 "into syntax - basic command failed"
+
+# Test 56b: Command with into should not affect last value
+math.add 10 20
+$beforeInto = $
+add 5 5 into $result56b
+test.assertEqual $beforeInto 30 "into syntax - should preserve last value before into"
+test.assertEqual $result56b 10 "into syntax - basic command result failed"
+
+# Test 56c: Module function with into
+math.add 15 25 into $result56c
+test.assertEqual $result56c 40 "into syntax - module function failed"
+
+math.multiply 6 7 into $result56c2
+test.assertEqual $result56c2 42 "into syntax - module function multiply failed"
+
+# Test 56d: String function with into
+string.concat "hello" " " "world" into $result56d
+test.assertEqual $result56d "hello world" "into syntax - string function failed"
+
+# Test 56e: Array function with into
+array.create 1 2 3 into $result56e
+clear
+do
+  array.length $result56e
+  test.assertEqual $ 3 "into syntax - array function length failed"
+enddo
+test.assertEqual $result56e[0] 1 "into syntax - array function element access failed"
+
+# Test 56f: Do block with into
+do into $result56f
+  math.add 20 30
+  math.multiply $ 2
+enddo
+test.assertEqual $result56f 100 "into syntax - do block failed"
+
+# Test 56g: Do block with into should not affect last value
+math.add 1 1
+$beforeDoInto = $
+do into $result56g
+  math.add 5 5
+enddo
+test.assertEqual $beforeDoInto 2 "into syntax - do block should preserve last value"
+test.assertEqual $result56g 10 "into syntax - do block result failed"
+
+# Test 56g2: Do block with parameters and into
+$outerVar56g2 = 300
+clear
+do $a $b into $result56g2
+  # Should not be able to access $outerVar56g2 (isolated scope)
+  test.assertEqual $outerVar56g2 null "do with params and into - should not access parent variables"
+  test.assertEqual $a null "do with params and into - first param should be accessible"
+  test.assertEqual $b null "do with params and into - second param should be accessible"
+  # Set values and compute result
+  set $a 5
+  set $b 3
+  math.add $a $b
+enddo
+test.assertEqual $outerVar56g2 300 "do with params and into - parent variable should be unchanged"
+test.assertEqual $result56g2 8 "do with params and into - should return computed result"
+
+# Test 56h: Parenthesized function call with into (single line)
+math.add(10 20) into $result56h
+test.assertEqual $result56h 30 "into syntax - parenthesized call single line failed"
+
+# Test 56i: Parenthesized function call with into (multiline)
+math.add(
+  15
+  25
+) into $result56i
+test.assertEqual $result56i 40 "into syntax - parenthesized call multiline failed"
+
+# Test 56j: Parenthesized function call with named arguments and into
+def testIntoFn $a $b
+  math.add $a $b
+enddef
+
+testIntoFn($a=10 $b=20) into $result56j
+test.assertEqual $result56j 30 "into syntax - parenthesized call with named args failed"
+
+# Test 56k: Multiline parenthesized call with named arguments and into
+testIntoFn(
+  $a=5
+  $b=15
+) into $result56k
+test.assertEqual $result56k 20 "into syntax - multiline parenthesized call with named args failed"
+
+# Test 56l: Parenthesized call with into on same line as closing paren
+math.multiply(6 7) into $result56l
+test.assertEqual $result56l 42 "into syntax - into on same line as closing paren failed"
+
+# Test 56m: Parenthesized call with into on next line
+math.add(8 9)
+into $result56m
+test.assertEqual $result56m 17 "into syntax - into on next line after parenthesized call failed"
+
+# Test 56n: Do block with into
+do into $result56n
+  math.add 3 4
+enddo
+test.assertEqual $result56n 7 "into syntax - do block with into failed"
+
+# Test 56o: Do block with into (same syntax as 56n)
+do into $result56o
+  math.add 2 3
+enddo
+test.assertEqual $result56o 5 "into syntax - do block with into failed"
+
+# Test 56p: Complex nested operations with into
+do into $result56p
+  math.add 1 2
+  math.multiply $ 3
+  math.add $ 1
+enddo
+
+
+test.assertEqual $result56p 10 "into syntax - complex nested operations failed"
+
+# Test 56q: Into with attribute path assignment
+json.parse '{"value": 0}'
+$obj56q = $
+math.add 10 20 into $obj56q.result
+test.assertEqual $obj56q.result 30 "into syntax - attribute path assignment failed"
+test.assertEqual $obj56q.value 0 "into syntax - attribute path should preserve other properties"
+
+# Test 56r: Into should work with user-defined functions
+def addTen $x
+  math.add $x 10
+enddef
+
+addTen(15) into $result56r
+test.assertEqual $result56r 25 "into syntax - user-defined function failed"
+
+# Test 56s: Into with array indexing
+range 1 5
+$arr56s = $
+array.length($arr56s) into $arr56s.length
+test.assertEqual $arr56s.length 5 "into syntax - array indexing assignment failed"
+
+# Test 56t: Multiple into statements in sequence
+math.add 1 1 into $a56t
+math.add 2 2 into $b56t
+math.add 3 3 into $c56t
+test.assertEqual $a56t 2 "into syntax - multiple statements first failed"
+test.assertEqual $b56t 4 "into syntax - multiple statements second failed"
+test.assertEqual $c56t 6 "into syntax - multiple statements third failed"
+
+# Test 56u: Into with empty do block
+do into $result56u
+enddo
+test.assertEqual $result56u null "into syntax - empty do block should return null"
+
+# Test 56v: Into with do block that has parameters
+do $x $y into $result56v
+  math.add $x $y
+enddo
+test.assertEqual $result56v 0 "into syntax - do block with parameters (no args) should return 0"
+
+# Test 56v2: Do block with parameters and into - isolated scope
+$outerVar56v2 = 300
+clear
+do $a into $result56v2
+  # Should not be able to access $outerVar56v2
+  test.assertEqual $outerVar56v2 null "Isolated do with into should not access parent variables"
+  test.assertEqual $a null "Parameter should be accessible (defaults to null)"
+  $localVar = 400
+  test.assertEqual $localVar 400 "Isolated do with into should allow local variables"
+  math.add $a 10
+enddo
+test.assertEqual $outerVar56v2 300 "Parent variable should be unchanged after isolated do with into"
+test.assertEqual $result56v2 10 "into syntax - isolated do with parameters should return result"
+
+# Test 56v3: Do block with multiple parameters and into
+$outerVar56v3 = 500
+clear
+do $x $y into $result56v3
+  test.assertEqual $outerVar56v3 null "Isolated do with multiple params and into should not access parent"
+  test.assertEqual $x null "First parameter should be accessible"
+  test.assertEqual $y null "Second parameter should be accessible"
+  math.add $x $y
+enddo
+test.assertEqual $outerVar56v3 500 "Parent variable should be unchanged"
+test.assertEqual $result56v3 0 "into syntax - isolated do with multiple params (no args) should return 0"
+
+# Test 56w: Into preserves last value after assignment
+math.add 100 200
+$beforeInto56w = $
+math.add 5 5 into $result56w
+test.assertEqual $beforeInto56w 300 "into syntax - should preserve last value"
+test.assertEqual $result56w 10 "into syntax - should assign result correctly"
+
+# Test 56x: Into with object literal
+obj '{name: "Test", value: 42}' into $obj56x
+test.assertEqual $obj56x.name "Test" "into syntax - object literal failed"
+test.assertEqual $obj56x.value 42 "into syntax - object literal value failed"
+
+# Test 56y: Into with array literal
+array(1 2 3 4 5) into $arr56y
+clear
+do
+  array.length $arr56y
+  test.assertEqual $ 5 "into syntax - array literal length failed"
+enddo
+test.assertEqual $arr56y[2] 3 "into syntax - array literal element access failed"
+
+log "Test 56 - into syntax sugar: All passed"
+
 log "All tests completed!"
 
 

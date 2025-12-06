@@ -1,0 +1,191 @@
+# RobinPath Together Command Test Script
+# This script tests the "together" command for parallel execution
+
+# Test 57: together command - parallel execution
+log "Test 57 - together command"
+
+# Test 57a: Basic together with two do blocks
+together
+  do
+    math.add 10 20
+  enddo
+  do
+    math.multiply 5 6
+  enddo
+endtogether
+log "Test 57a - Basic together executed"
+
+# Test 57b: Together with do blocks - variables are scoped to do blocks (not accessible in parent)
+together
+  do
+    $togetherVar1 = 100
+  enddo
+  do
+    $togetherVar2 = 200
+  enddo
+endtogether
+# Variables created inside do blocks are scoped to those blocks, not parent
+# They should not be accessible in the parent scope
+test.assertEqual $togetherVar1 null "together - variable from first do block should be null (scoped to do block)"
+test.assertEqual $togetherVar2 null "together - variable from second do block should be null (scoped to do block)"
+
+# Test 57c: Together with do into syntax
+together
+  do into $result57c1
+    math.add 5 5
+  enddo
+  do into $result57c2
+    math.multiply 6 7
+  enddo
+endtogether
+test.assertEqual $result57c1 10 "together - do into first block failed"
+test.assertEqual $result57c2 42 "together - do into second block failed"
+
+# Test 57d: Together with parallel execution timing (using time.sleep)
+# If parallel, total time should be ~max(sleep times), not sum
+time.timestamp
+$startTime57d = $
+together
+  do into $block1Done
+    time.sleep 500
+    return true
+  enddo
+  do into $block2Done
+    time.sleep 500
+    return true
+  enddo
+endtogether
+time.timestamp
+$endTime57d = $
+$duration57d = $(math.subtract $endTime57d $startTime57d)
+test.assertTrue $block1Done "together - first block should complete"
+test.assertTrue $block2Done "together - second block should complete"
+# Duration should be roughly 500ms (parallel), not 1000ms (sequential)
+# Allow some margin for execution overhead (should be < 800ms for parallel)
+test.assertLess $duration57d 800 "together - parallel execution timing failed (should be < 800ms, got ${duration57d}ms)"
+
+# Test 57e: Together with different sleep times (should take max time)
+time.timestamp
+$startTime57e = $
+together
+  do into $fastBlock
+    time.sleep 300
+    return true
+  enddo
+  do into $slowBlock
+    time.sleep 600
+    return true
+  enddo
+endtogether
+time.timestamp
+$endTime57e = $
+$duration57e = $(math.subtract $endTime57e $startTime57e)
+test.assertTrue $fastBlock "together - fast block should complete"
+test.assertTrue $slowBlock "together - slow block should complete"
+# Duration should be roughly 600ms (max), not 900ms (sum)
+test.assertLess $duration57e 800 "together - parallel execution with different times failed (should be < 800ms, got ${duration57e}ms)"
+
+# Test 57f: Together with three do blocks
+together
+  do into $result57f1
+    math.add 1 1
+  enddo
+  do into $result57f2
+    math.add 2 2
+  enddo
+  do into $result57f3
+    math.add 3 3
+  enddo
+endtogether
+test.assertEqual $result57f1 2 "together - three blocks first failed"
+test.assertEqual $result57f2 4 "together - three blocks second failed"
+test.assertEqual $result57f3 6 "together - three blocks third failed"
+
+# Test 57g: Together with do blocks that have parameters
+together
+  do $a into $result57g1
+    set $a 10
+    math.multiply $a 2
+  enddo
+  do $b into $result57g2
+    set $b 5
+    math.multiply $b 3
+  enddo
+endtogether
+test.assertEqual $result57g1 20 "together - do with params first block failed"
+test.assertEqual $result57g2 15 "together - do with params second block failed"
+
+# Test 57h: Together with empty do blocks
+together
+  do
+  enddo
+  do
+  enddo
+endtogether
+log "Test 57h - Together with empty do blocks executed"
+
+# Test 57i: Together with do blocks that modify parent variables
+$sharedVar57i = 0
+together
+  do
+    set $sharedVar57i $(math.add $sharedVar57i 10)
+  enddo
+  do
+    set $sharedVar57i $(math.add $sharedVar57i 20)
+  enddo
+endtogether
+# Note: Due to parallel execution, final value could be 10 or 20 depending on timing
+# Both blocks read 0, then write 10 or 20, so final should be one of them
+test.assertTrue $(test.isEqual $sharedVar57i 10) || $(test.isEqual $sharedVar57i 20) "together - shared variable modification (race condition expected)"
+
+# Test 57j: Together preserves last value ($) - should not affect parent's $
+math.add 100 200
+$beforeTogether57j = $
+together
+  do
+    math.add 5 5
+  enddo
+  do
+    math.multiply 6 7
+  enddo
+endtogether
+test.assertEqual $beforeTogether57j 300 "together - should preserve parent's last value"
+
+# Test 57k: Together with complex operations in parallel
+together
+  do into $sum57k
+    math.add 10 20
+    math.add $ 30
+  enddo
+  do into $product57k
+    math.multiply 5 6
+    math.multiply $ 2
+  enddo
+endtogether
+test.assertEqual $sum57k 60 "together - complex operations sum failed"
+test.assertEqual $product57k 60 "together - complex operations product failed"
+
+# Test 57l: Together with time.sleep to verify all blocks complete
+$block57l1 = false
+$block57l2 = false
+$block57l3 = false
+together
+  do
+    time.sleep 200
+    set $block57l1 true
+  enddo
+  do
+    time.sleep 200
+    set $block57l2 true
+  enddo
+  do
+    time.sleep 200
+    set $block57l3 true
+  enddo
+endtogether
+test.assertTrue $block57l1 "together - parallel execution block 1 failed"
+test.assertTrue $block57l2 "together - parallel execution block 2 failed"
+test.assertTrue $block57l3 "together - parallel execution block 3 failed"
+
+log "Test 57 - together command: All passed"
+

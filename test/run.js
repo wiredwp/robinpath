@@ -12,6 +12,10 @@ const __dirname = dirname(__filename);
 const fetchTestScriptPath = join(__dirname, 'fetch-test.rp');
 const fetchTestScript = readFileSync(fetchTestScriptPath, 'utf-8');
 
+// Read the together test script (runs before test.rp)
+const togetherTestScriptPath = join(__dirname, 'together-test.rp');
+const togetherTestScript = readFileSync(togetherTestScriptPath, 'utf-8');
+
 // Read the main test script
 const testScriptPath = join(__dirname, 'test.rp');
 const testScript = readFileSync(testScriptPath, 'utf-8');
@@ -3802,7 +3806,24 @@ test_named(
         const fetchExecutionTime = fetchEndTime - fetchStartTime;
         console.log(`Fetch test execution time: ${fetchExecutionTime}ms (${(fetchExecutionTime / 1000).toFixed(3)}s)`);
         
-        // Execute the test.rp script (run after fetch tests)
+        // Execute the together-test.rp script (run before test.rp)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Together Test Script (together-test.rp)');
+        console.log('='.repeat(60));
+        
+        // Create interpreter instance for together tests
+        const togetherRp = new RobinPath();
+        const togetherStartTime = Date.now();
+        
+        // Execute the together test script
+        await togetherRp.executeScript(togetherTestScript);
+        
+        const togetherEndTime = Date.now();
+        const togetherExecutionTime = togetherEndTime - togetherStartTime;
+        console.log(`Together test execution time: ${togetherExecutionTime}ms (${(togetherExecutionTime / 1000).toFixed(3)}s)`);
+        
+        // Execute the test.rp script (run after together tests)
         console.log();
         console.log('='.repeat(60));
         console.log('Running RobinPath Test Script (test.rp)');

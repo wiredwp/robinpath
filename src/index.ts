@@ -226,6 +226,13 @@ export interface ScopeBlock {
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
+export interface TogetherBlock {
+    type: 'together';
+    blocks: ScopeBlock[]; // Only do blocks are allowed
+    comments?: CommentWithPosition[]; // Comments attached to this together block (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
+}
+
 export interface ForLoop {
     type: 'forLoop';
     varName: string;
@@ -261,6 +268,15 @@ export interface CommentStatement {
     // codePos is derived from comments array - no need to store it separately
 }
 
+export interface IntoAssignment {
+    type: 'into';
+    statement: Statement; // The statement to execute
+    targetName: string; // Variable name (without $)
+    targetPath?: AttributePathSegment[]; // Optional path for attribute access (e.g., $user.city)
+    comments?: CommentWithPosition[]; // Comments attached to this into assignment (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
+}
+
 export type Statement = 
     | CommandCall 
     | Assignment 
@@ -271,10 +287,12 @@ export type Statement =
     | IfFalse 
     | DefineFunction
     | ScopeBlock
+    | TogetherBlock
     | ForLoop
     | ReturnStatement
     | BreakStatement
-    | CommentStatement;
+    | CommentStatement
+    | IntoAssignment;
 
 // ============================================================================
 // Logical Line Splitter
@@ -1189,6 +1207,18 @@ export class RobinPath {
                     comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
+            case 'into':
+                return {
+                    ...base,
+                    statement: this.serializeStatement(stmt.statement, currentModuleContext),
+                    targetName: stmt.targetName,
+                    targetPath: stmt.targetPath
+                };
+            case 'together':
+                return {
+                    ...base,
+                    blocks: stmt.blocks.map(block => this.serializeStatement(block, currentModuleContext))
+                };
         }
     }
 
@@ -1563,6 +1593,11 @@ export class RobinPath {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 
+        // Handle together - next is after the together block (all do blocks execute in parallel)
+        if (currentStmt.type === 'together') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
         // Handle inlineIf - next is after the inlineIf
         if (currentStmt.type === 'inlineIf') {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
@@ -1570,6 +1605,11 @@ export class RobinPath {
 
         // Handle ifTrue/ifFalse - next is after the statement
         if (currentStmt.type === 'ifTrue' || currentStmt.type === 'ifFalse') {
+            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
+        }
+
+        // Handle into - next is after the into statement
+        if (currentStmt.type === 'into') {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 
