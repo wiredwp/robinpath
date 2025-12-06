@@ -53,7 +53,7 @@ import TestModule from './modules/Test';
 // Value type is imported from utils
 
 export type BuiltinHandler = (args: Value[]) => Promise<Value> | Value | null;
-export type DecoratorHandler = (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => Promise<Value[] | Value | null | undefined>;
+export type DecoratorHandler = (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => Promise<Value[] | Value | null | undefined>;
 
 export interface Environment {
     variables: Map<string, Value>;
@@ -553,7 +553,7 @@ export class RobinPath {
     private registerBuiltinDecorators(): void {
         // @desc or @description - adds "description" metadata to function or variable
         // The decorator handler will receive the environment from the executor via closure
-        const descHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+        const descHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@desc/@description decorator requires a value argument');
             }
@@ -592,7 +592,7 @@ export class RobinPath {
         this.registerDecorator('description', descHandler);
         
         // @title - adds "title" metadata to function or variable
-        const titleHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], ...decoratorArgs: Value[]) => {
+        const titleHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@title decorator requires a value argument');
             }
@@ -627,6 +627,367 @@ export class RobinPath {
         };
         
         this.registerDecorator('title', titleHandler);
+        
+        // @param - adds parameter metadata to functions
+        // Syntax: @param [type] [$name] [default] [description]
+        // type: array|number|string|object|bool (no quotes needed)
+        // $name: parameter name starting with $ (no quotes needed)
+        // default: optional default value
+        // description: optional description
+        const paramHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => {
+            if (decoratorArgs.length < 2) {
+                throw new Error('@param decorator requires at least 2 arguments: type and $name');
+            }
+            
+            // Only works for functions, not variables
+            if (func === null) {
+                throw new Error('@param decorator can only be used on functions, not variables');
+            }
+            
+            // First arg is type (unquoted, so it's evaluated as a literal string)
+            const type = String(decoratorArgs[0]);
+            
+            // Second arg is $name - extract variable name from original AST arg if it's a variable
+            let keyName: string;
+            if (originalDecoratorArgs && originalDecoratorArgs.length >= 2 && originalDecoratorArgs[1].type === 'var') {
+                // Extract variable name from original AST arg
+                keyName = originalDecoratorArgs[1].name;
+            } else {
+                // Fallback: try to extract from evaluated value
+                const secondArg = decoratorArgs[1];
+                if (secondArg === null || secondArg === undefined) {
+                    throw new Error('@param decorator: $name argument evaluated to null. Make sure to use $name syntax (e.g., @param string $name)');
+                } else if (typeof secondArg === 'string') {
+                    keyName = secondArg;
+                    // Remove $ if present
+                    if (keyName.startsWith('$')) {
+                        keyName = keyName.slice(1);
+                    }
+                } else {
+                    keyName = String(secondArg);
+                }
+            }
+            
+            // Determine default value and description based on argument count and types
+            // Syntax: @param [type] [$name] [default] [description]
+            // If 3 args: type, $name, description (no default)
+            // If 4 args: type, $name, default, description
+            let defaultValue: Value | undefined;
+            let description: string;
+            
+            if (decoratorArgs.length === 3) {
+                // 3 args: type, $name, description (no default)
+                defaultValue = undefined;
+                description = String(decoratorArgs[2]);
+            } else if (decoratorArgs.length >= 4) {
+                // 4+ args: type, $name, default, description
+                defaultValue = decoratorArgs[2];
+                description = String(decoratorArgs[3]);
+            } else {
+                // 2 args: type, $name (no default, no description)
+                defaultValue = undefined;
+                description = '';
+            }
+            
+            // Validate type
+            const validTypes = ['array', 'number', 'string', 'object', 'bool', 'boolean', 'any'];
+            if (!validTypes.includes(type.toLowerCase())) {
+                throw new Error(`@param decorator: invalid type "${type}". Must be one of: array, number, string, object, bool, boolean, any`);
+            }
+            
+            // Normalize type (bool -> boolean)
+            const normalizedType = type.toLowerCase() === 'bool' ? 'boolean' : type.toLowerCase();
+            
+            // Access environment from the executor (passed via closure)
+            const env = (paramHandler as any).__environment;
+            if (!env) {
+                throw new Error('Decorator environment not available');
+            }
+            
+            // Get or create function metadata map
+            if (!env.functionMetadata.has(targetName)) {
+                env.functionMetadata.set(targetName, new Map());
+            }
+            const funcMeta = env.functionMetadata.get(targetName)!;
+            
+            // Get or create parameters array
+            let parameters: any[] = [];
+            if (funcMeta.has('parameters')) {
+                const existingParams = funcMeta.get('parameters');
+                if (Array.isArray(existingParams)) {
+                    parameters = [...existingParams];
+                }
+            }
+            
+            // Create parameter object
+            const paramObj: any = {
+                name: keyName,
+                dataType: normalizedType,
+                description: description || '',
+                formInputType: normalizedType === 'number' ? 'number' : 
+                              normalizedType === 'string' ? 'text' : 
+                              normalizedType === 'boolean' ? 'checkbox' : 
+                              normalizedType === 'array' ? 'json' : 
+                              normalizedType === 'object' ? 'json' : 'json',
+                required: defaultValue === undefined
+            };
+            
+            // Add default value if provided
+            if (defaultValue !== undefined) {
+                paramObj.defaultValue = defaultValue;
+            }
+            
+            // Add parameter to array
+            parameters.push(paramObj);
+            
+            // Store updated parameters array
+            funcMeta.set('parameters', parameters);
+            
+            // Return original args unchanged
+            return originalArgs;
+        };
+        
+        this.registerDecorator('param', paramHandler);
+        
+        // @arg - adds child parameter to the "args" parameter (for variadic arguments)
+        // Syntax: @arg [dataType] [defaultValue] [description]
+        // Multiple @arg decorators add multiple children to the "args" parameter
+        const argHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
+            if (decoratorArgs.length < 1) {
+                throw new Error('@arg decorator requires at least 1 argument: dataType');
+            }
+            
+            // Only works for functions, not variables
+            if (func === null) {
+                throw new Error('@arg decorator can only be used on functions, not variables');
+            }
+            
+            // First arg is dataType (unquoted, so it's evaluated as a literal string)
+            const dataType = String(decoratorArgs[0]);
+            
+            // Validate type
+            const validTypes = ['array', 'number', 'string', 'object', 'bool', 'boolean', 'any'];
+            if (!validTypes.includes(dataType.toLowerCase())) {
+                throw new Error(`@arg decorator: invalid dataType "${dataType}". Must be one of: array, number, string, object, bool, boolean, any`);
+            }
+            
+            // Normalize type (bool -> boolean)
+            const normalizedType = dataType.toLowerCase() === 'bool' ? 'boolean' : dataType.toLowerCase();
+            
+            // Determine default value and description
+            // Syntax: @arg [dataType] [defaultValue] [description]
+            // If 2 args: dataType, description (no default)
+            // If 3 args: dataType, defaultValue, description
+            // If only 1 arg: dataType (no default, no description)
+            let defaultValue: Value | undefined;
+            let description: string;
+            
+            if (decoratorArgs.length === 2) {
+                // 2 args: dataType, description (no default)
+                // Check if second arg is a string (description) or other type (default value)
+                if (typeof decoratorArgs[1] === 'string') {
+                    // Likely a description
+                    defaultValue = undefined;
+                    description = String(decoratorArgs[1]);
+                } else {
+                    // Likely a default value
+                    defaultValue = decoratorArgs[1];
+                    description = '';
+                }
+            } else if (decoratorArgs.length >= 3) {
+                // 3+ args: dataType, defaultValue, description
+                defaultValue = decoratorArgs[1];
+                description = String(decoratorArgs[2]);
+            } else {
+                // 1 arg: dataType (no default, no description)
+                defaultValue = undefined;
+                description = '';
+            }
+            
+            // Access environment from the executor (passed via closure)
+            const env = (argHandler as any).__environment;
+            if (!env) {
+                throw new Error('Decorator environment not available');
+            }
+            
+            // Get or create function metadata map
+            if (!env.functionMetadata.has(targetName)) {
+                env.functionMetadata.set(targetName, new Map());
+            }
+            const funcMeta = env.functionMetadata.get(targetName)!;
+            
+            // Get or create parameters array
+            let parameters: any[] = [];
+            if (funcMeta.has('parameters')) {
+                const existingParams = funcMeta.get('parameters');
+                if (Array.isArray(existingParams)) {
+                    parameters = [...existingParams];
+                }
+            }
+            
+            // Find or create the "args" parameter
+            let argsParam: any = null;
+            let argsParamIndex = -1;
+            for (let i = 0; i < parameters.length; i++) {
+                if (parameters[i].name === 'args') {
+                    argsParam = parameters[i];
+                    argsParamIndex = i;
+                    break;
+                }
+            }
+            
+            // If "args" parameter doesn't exist, create it
+            if (!argsParam) {
+                argsParam = {
+                    name: 'args',
+                    label: 'Arguments',
+                    dataType: 'array',
+                    description: '',
+                    formInputType: 'json',
+                    required: true,
+                    children: []
+                };
+                argsParamIndex = parameters.length;
+                parameters.push(argsParam);
+            }
+            
+            // Ensure children array exists
+            if (!argsParam.children) {
+                argsParam.children = [];
+            }
+            
+            // Create child parameter object
+            const childObj: any = {
+                name: 'value',
+                dataType: normalizedType,
+                description: description || '',
+                formInputType: normalizedType === 'number' ? 'number' : 
+                              normalizedType === 'string' ? 'text' : 
+                              normalizedType === 'boolean' ? 'checkbox' : 
+                              normalizedType === 'array' ? 'json' : 
+                              normalizedType === 'object' ? 'json' : 'json',
+                required: defaultValue === undefined
+            };
+            
+            // Add default value if provided
+            if (defaultValue !== undefined) {
+                childObj.defaultValue = defaultValue;
+            }
+            
+            // Add child to children array
+            argsParam.children.push(childObj);
+            
+            // Update the args parameter in the parameters array
+            parameters[argsParamIndex] = argsParam;
+            
+            // Store updated parameters array
+            funcMeta.set('parameters', parameters);
+            
+            // Return original args unchanged
+            return originalArgs;
+        };
+        
+        this.registerDecorator('arg', argHandler);
+        
+        // @required - marks specific parameters as required
+        // Syntax: @required $param1 $param2 ...
+        // Updates the specified parameters to have required: true
+        const requiredHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => {
+            if (decoratorArgs.length < 1) {
+                throw new Error('@required decorator requires at least 1 argument: parameter name(s)');
+            }
+            
+            // Only works for functions, not variables
+            if (func === null) {
+                throw new Error('@required decorator can only be used on functions, not variables');
+            }
+            
+            // Extract parameter names from decorator arguments
+            const paramNames: string[] = [];
+            for (let i = 0; i < decoratorArgs.length; i++) {
+                let paramName: string;
+                
+                // Extract variable name from original AST arg if it's a variable
+                if (originalDecoratorArgs && originalDecoratorArgs.length > i && originalDecoratorArgs[i].type === 'var') {
+                    paramName = (originalDecoratorArgs[i] as { type: 'var'; name: string }).name;
+                } else {
+                    // Fallback: try to extract from evaluated value
+                    const arg = decoratorArgs[i];
+                    if (arg === null || arg === undefined) {
+                        // Variable doesn't exist, extract name from original AST
+                        if (originalDecoratorArgs && originalDecoratorArgs.length > i && originalDecoratorArgs[i].type === 'var') {
+                            paramName = (originalDecoratorArgs[i] as { type: 'var'; name: string }).name;
+                        } else {
+                            throw new Error(`@required decorator: parameter name at index ${i} evaluated to null. Make sure to use $paramName syntax (e.g., @required $a $b)`);
+                        }
+                    } else if (typeof arg === 'string') {
+                        paramName = arg;
+                        // Remove $ if present
+                        if (paramName.startsWith('$')) {
+                            paramName = paramName.slice(1);
+                        }
+                    } else {
+                        throw new Error(`@required decorator: parameter name at index ${i} must be a variable name (e.g., $paramName)`);
+                    }
+                }
+                
+                paramNames.push(paramName);
+            }
+            
+            // Access environment from the executor (passed via closure)
+            const env = (requiredHandler as any).__environment;
+            if (!env) {
+                throw new Error('Decorator environment not available');
+            }
+            
+            // Get or create function metadata map
+            if (!env.functionMetadata.has(targetName)) {
+                env.functionMetadata.set(targetName, new Map());
+            }
+            const funcMeta = env.functionMetadata.get(targetName)!;
+            
+            // Get or create parameters array
+            let parameters: any[] = [];
+            if (funcMeta.has('parameters')) {
+                const existingParams = funcMeta.get('parameters');
+                if (Array.isArray(existingParams)) {
+                    parameters = [...existingParams];
+                }
+            }
+            
+            // Update required flag for specified parameters
+            for (const paramName of paramNames) {
+                let found = false;
+                for (let i = 0; i < parameters.length; i++) {
+                    if (parameters[i].name === paramName) {
+                        parameters[i].required = true;
+                        // Note: defaultValue is preserved - required parameters can have defaults
+                        found = true;
+                        break;
+                    }
+                }
+                
+                if (!found) {
+                    // Parameter doesn't exist yet, create it with required: true
+                    // We'll create a basic parameter structure
+                    parameters.push({
+                        name: paramName,
+                        dataType: 'any',
+                        description: '',
+                        formInputType: 'json',
+                        required: true
+                    });
+                }
+            }
+            
+            // Store updated parameters array
+            funcMeta.set('parameters', parameters);
+            
+            // Return original args unchanged
+            return originalArgs;
+        };
+        
+        this.registerDecorator('required', requiredHandler);
     }
 
     /**

@@ -1197,12 +1197,13 @@ Examples:
             // Provide environment to decorator handler (for built-in decorators that need it)
             (decoratorHandler as any).__environment = this.environment;
             
-            // Call decorator handler: decorator(targetName, func, originalArgs, ...decoratorArgs)
+            // Call decorator handler: decorator(targetName, func, originalArgs, decoratorArgs, originalDecoratorArgs)
             const decoratorResult = await decoratorHandler(
                 targetName,        // Target name (function or variable name)
                 func,              // Function object (null for variables)
                 modifiedArgs,      // Current args (may have been modified by previous decorators)
-                ...decoratorArgs   // Decorator's own arguments
+                decoratorArgs,     // Decorator's own arguments (evaluated)
+                decorator.args     // Original decorator args (AST nodes, for extracting variable names)
             );
             
             // Clean up environment reference
