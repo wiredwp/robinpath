@@ -651,6 +651,13 @@ export class ASTToCodeConverter {
                     return varCode;
                 }
                 
+                // Special handling for _subexpr command - convert back to $(...) syntax
+                if (node.name === '_subexpr' && node.args && node.args.length === 1 && node.args[0].type === 'subexpr') {
+                    const subexprArg = node.args[0];
+                    // The code field contains the inner command code (e.g., "add 5 2")
+                    return `$(${subexprArg.code})`;
+                }
+                
                 // If node.name contains a dot, it already has a module prefix
                 // Extract just the command name (after the last dot) if module is set
                 let commandName = node.name;

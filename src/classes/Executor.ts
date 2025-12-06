@@ -43,7 +43,7 @@ export class Executor {
             lastValue: null
         });
     }
-    
+
 
     getCurrentFrame(): Frame {
         return this.callStack[this.callStack.length - 1];
@@ -1047,7 +1047,7 @@ Examples:
                 frame.lastValue = previousLastValue;
             } else {
                 // Ensure lastValue is set (even if result is undefined, preserve it)
-                frame.lastValue = result !== undefined ? result : null;
+            frame.lastValue = result !== undefined ? result : null;
             }
             return;
         }

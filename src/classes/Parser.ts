@@ -87,38 +87,38 @@ export class Parser {
         } else if (line.indexOf('#') >= 0) {
             // Only scan if # exists - need to verify it's not inside a string
             // We scan the full line because there might be # inside strings before the actual comment
-            let inString: false | '"' | "'" | '`' = false;
-            let escaped = false;
+        let inString: false | '"' | "'" | '`' = false;
+        let escaped = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
             
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                
-                // Handle string boundaries
-                if (!escaped && (char === '"' || char === "'" || char === '`')) {
-                    if (!inString) {
-                        inString = char;
-                    } else if (char === inString) {
-                        inString = false;
-                    }
-                    escaped = false;
-                    continue;
+            // Handle string boundaries
+            if (!escaped && (char === '"' || char === "'" || char === '`')) {
+                if (!inString) {
+                    inString = char;
+                } else if (char === inString) {
+                    inString = false;
                 }
-                
-                if (inString) {
-                    escaped = char === '\\' && !escaped;
-                    continue;
-                }
-                
-                // Check for comment character (not inside string)
-                if (char === '#') {
-                    commentPos = i;
+                escaped = false;
+                continue;
+            }
+            
+            if (inString) {
+                escaped = char === '\\' && !escaped;
+                continue;
+            }
+            
+            // Check for comment character (not inside string)
+            if (char === '#') {
+                commentPos = i;
                     // Cache the result for future use
                     const commentText = line.slice(i + 1).trim();
                     this.inlineCommentCache.set(lineNumber, commentText ? { text: commentText, position: i } : null);
                     break; // Found first valid comment, stop scanning
-                }
-                
-                escaped = false;
+            }
+            
+            escaped = false;
             }
             // Cache null result if no comment found
             if (commentPos === -1) {
@@ -801,18 +801,18 @@ export class Parser {
 
         // Check for iftrue/iffalse
         if (tokens[0] === 'iftrue') {
-            this.currentLine++;
             const restTokens = tokens.slice(1);
             const command = this.parseCommandFromTokens(restTokens, startLine);
-            const endLine = this.currentLine - 1; // Already incremented
+            const endLine = this.currentLine;
+            this.currentLine++;
             return { type: 'ifTrue', command, codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
         if (tokens[0] === 'iffalse') {
-            this.currentLine++;
             const restTokens = tokens.slice(1);
             const command = this.parseCommandFromTokens(restTokens, startLine);
-            const endLine = this.currentLine - 1; // Already incremented
+            const endLine = this.currentLine;
+            this.currentLine++;
             return { type: 'ifFalse', command, codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 

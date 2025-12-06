@@ -2067,9 +2067,8 @@ endif`;
                     updateAssignCmd10c.args[1] = { type: 'object', code: 'name: "John", age: 30' };
                     const updateUpdatedScript10c = updateTestRp.updateCodeFromAST(updateTestScript10, updateAssignNode10c);
                     const updateExpected10c = 'assign $myVar {name: "John", age: 30}';
-                    const updateTest10cPassed = updateUpdatedScript10c === updateExpected10c;
                     
-                    if (updateTest10cPassed) {
+                    if (updateUpdatedScript10c === updateExpected10c) {
                         console.log('✓ Update Test 10c PASSED - Assign command value update to object literal');
                     } else {
                         console.log('✗ Update Test 10c FAILED - Assign command value update to object literal');
@@ -2079,10 +2078,356 @@ endif`;
                         throw new Error('Update Test 10c FAILED - Assign command value update to object literal');
                     }
                 }
+                
+                // Test 10d: Assignment statement with subexpression - verify _subexpr is converted back to $(...)
+                const updateTestScript10d = `$a = $(add 5 2)`;
+                const updateAst10d = updateTestRp.getAST(updateTestScript10d);
+                const updateAssignNode10d = updateAst10d.find(node => node.type === 'assignment' && node.targetName === 'a');
+                
+                if (updateAssignNode10d && updateAssignNode10d.command && updateAssignNode10d.command.name === '_subexpr') {
+                    // Verify the AST has _subexpr command
+                    const updateUpdatedScript10d = updateTestRp.updateCodeFromAST(updateTestScript10d, updateAst10d);
+                    const updateExpected10d = '$a = $(add 5 2)';
+                    const updateTest10dPassed = updateUpdatedScript10d === updateExpected10d && !updateUpdatedScript10d.includes('_subexpr');
+                    
+                    if (updateTest10dPassed) {
+                        console.log('✓ Update Test 10d PASSED - Assignment statement with subexpression converts _subexpr back to $(...)');
+                    } else {
+                        console.log('✗ Update Test 10d FAILED - Assignment statement with subexpression should convert _subexpr back to $(...)');
+                        console.log('  Original:', updateTestScript10d);
+                        console.log('  Expected:', updateExpected10d);
+                        console.log('  Got:', updateUpdatedScript10d);
+                        console.log('  Contains _subexpr:', updateUpdatedScript10d.includes('_subexpr'));
+                        console.log('  AST command:', JSON.stringify(updateAssignNode10d.command, null, 2));
+                        throw new Error('Update Test 10d FAILED - Assignment statement with subexpression should convert _subexpr back to $(...)');
+                    }
+                } else {
+                    console.log('✗ Update Test 10d FAILED - Could not find assignment with _subexpr command');
+                    console.log('  AST:', JSON.stringify(updateAst10d, null, 2));
+                    throw new Error('Update Test 10d FAILED - Could not find assignment with _subexpr command');
+                }
+                
+                // Test 10e: Assignment statement with subexpression - round trip test
+                const updateTestScript10e = `$result = $(math.add 10 20)`;
+                const updateAst10e = updateTestRp.getAST(updateTestScript10e);
+                const updateUpdatedScript10e = updateTestRp.updateCodeFromAST(updateTestScript10e, updateAst10e);
+                const updateTest10ePassed = updateUpdatedScript10e === updateTestScript10e && !updateUpdatedScript10e.includes('_subexpr');
+                
+                if (updateTest10ePassed) {
+                    console.log('✓ Update Test 10e PASSED - Assignment statement with subexpression round trip');
+                } else {
+                    console.log('✗ Update Test 10e FAILED - Assignment statement with subexpression round trip');
+                    console.log('  Original:', updateTestScript10e);
+                    console.log('  Got:', updateUpdatedScript10e);
+                    console.log('  Contains _subexpr:', updateUpdatedScript10e.includes('_subexpr'));
+                    throw new Error('Update Test 10e FAILED - Assignment statement with subexpression round trip');
+                }
+                
+                // Test 10f: Update assignment statement subexpression
+                const updateTestScript10f = `$x = $(add 5 2)`;
+                const updateAst10f = updateTestRp.getAST(updateTestScript10f);
+                const updateAssignNode10f = updateAst10f.find(node => node.type === 'assignment' && node.targetName === 'x');
+                
+                if (updateAssignNode10f && updateAssignNode10f.command && updateAssignNode10f.command.name === '_subexpr') {
+                    // Update the subexpression code
+                    if (updateAssignNode10f.command.args && updateAssignNode10f.command.args.length > 0 && updateAssignNode10f.command.args[0].type === 'subexpr') {
+                        updateAssignNode10f.command.args[0].code = 'multiply 3 4';
+                        const updateUpdatedScript10f = updateTestRp.updateCodeFromAST(updateTestScript10f, updateAst10f);
+                        const updateExpected10f = '$x = $(multiply 3 4)';
+                        const updateTest10fPassed = updateUpdatedScript10f === updateExpected10f && !updateUpdatedScript10f.includes('_subexpr');
+                        
+                        if (updateTest10fPassed) {
+                            console.log('✓ Update Test 10f PASSED - Update assignment statement subexpression');
+                        } else {
+                            console.log('✗ Update Test 10f FAILED - Update assignment statement subexpression');
+                            console.log('  Original:', updateTestScript10f);
+                            console.log('  Expected:', updateExpected10f);
+                            console.log('  Got:', updateUpdatedScript10f);
+                            console.log('  Contains _subexpr:', updateUpdatedScript10f.includes('_subexpr'));
+                            throw new Error('Update Test 10f FAILED - Update assignment statement subexpression');
+                        }
+                    }
+                }
             } else {
                 console.log('✗ Update Test 10 FAILED - Assign command node not found');
                 console.log('  AST:', JSON.stringify(updateAst10, null, 2));
                 throw new Error('Update Test 10 FAILED - Assign command node not found');
+            }
+            
+            // Note: Function definitions (def/enddef) are parsed separately and stored in the function registry,
+            // but are not included in the top-level AST returned by getAST(). Therefore, we skip tests 11-13
+            // for function definitions and focus on other AST node types.
+            
+            // Test 11: Update do block body
+            const updateTestScript11 = `do
+  log "old"
+enddo`;
+            const updateAst11 = updateTestRp.getAST(updateTestScript11);
+            const doNode11 = updateAst11.find(node => node.type === 'do');
+            if (doNode11 && doNode11.body && doNode11.body.length > 0) {
+                doNode11.body[0].name = 'print';
+                doNode11.body[0].args[0].value = 'new';
+                const updateUpdatedScript11 = updateTestRp.updateCodeFromAST(updateTestScript11, updateAst11);
+                const updateExpected11 = `do
+  print "new"
+enddo`;
+                const updateTest11Passed = updateUpdatedScript11 === updateExpected11;
+                
+                if (updateTest11Passed) {
+                    console.log('✓ Update Test 11 PASSED - Do block body update');
+                } else {
+                    console.log('✗ Update Test 11 FAILED - Do block body update');
+                    console.log('  Original:', updateTestScript11);
+                    console.log('  Expected:', updateExpected11);
+                    console.log('  Got:', updateUpdatedScript11);
+                    throw new Error('Update Test 11 FAILED - Do block body update');
+                }
+            } else {
+                throw new Error('Update Test 11 FAILED - Do block node not found');
+            }
+            
+            // Test 12: Update for loop variable and iterable
+            const updateTestScript12 = `for $i in $arr
+  log $i
+endfor`;
+            const updateAst12 = updateTestRp.getAST(updateTestScript12);
+            const forNode12 = updateAst12.find(node => node.type === 'forLoop');
+            if (forNode12) {
+                forNode12.varName = 'item';
+                forNode12.iterableExpr = '$list';
+                const updateUpdatedScript12 = updateTestRp.updateCodeFromAST(updateTestScript12, updateAst12);
+                const updateExpected12 = `for $item in $list
+  log $i
+endfor`;
+                const updateTest12Passed = updateUpdatedScript12 === updateExpected12;
+                
+                if (updateTest12Passed) {
+                    console.log('✓ Update Test 12 PASSED - For loop variable and iterable update');
+                } else {
+                    console.log('✗ Update Test 12 FAILED - For loop variable and iterable update');
+                    console.log('  Original:', updateTestScript12);
+                    console.log('  Expected:', updateExpected12);
+                    console.log('  Got:', updateUpdatedScript12);
+                    throw new Error('Update Test 12 FAILED - For loop variable and iterable update');
+                }
+            } else {
+                throw new Error('Update Test 12 FAILED - For loop node not found');
+            }
+            
+            // Test 13: Update inlineIf condition and command
+            const updateTestScript13 = `if $x > 5 then log "yes"`;
+            const updateAst13 = updateTestRp.getAST(updateTestScript13);
+            const inlineIfNode13 = updateAst13.find(node => node.type === 'inlineIf');
+            if (inlineIfNode13) {
+                inlineIfNode13.conditionExpr = '$x > 10';
+                inlineIfNode13.command.name = 'print';
+                inlineIfNode13.command.args[0].value = 'maybe';
+                const updateUpdatedScript13 = updateTestRp.updateCodeFromAST(updateTestScript13, updateAst13);
+                const updateExpected13 = `if $x > 10 print "maybe"`;
+                const updateTest13Passed = updateUpdatedScript13 === updateExpected13;
+                
+                if (updateTest13Passed) {
+                    console.log('✓ Update Test 13 PASSED - InlineIf condition and command update');
+                } else {
+                    console.log('✗ Update Test 13 FAILED - InlineIf condition and command update');
+                    console.log('  Original:', updateTestScript13);
+                    console.log('  Expected:', updateExpected13);
+                    console.log('  Got:', updateUpdatedScript13);
+                    throw new Error('Update Test 13 FAILED - InlineIf condition and command update');
+                }
+            } else {
+                throw new Error('Update Test 13 FAILED - InlineIf node not found');
+            }
+            
+            // Test 14: Update ifBlock with elseif and else branches
+            const updateTestScript14 = `if $x > 5
+  log "greater"
+elseif $x < 5
+  log "less"
+else
+  log "equal"
+endif`;
+            const updateAst14 = updateTestRp.getAST(updateTestScript14);
+            const ifBlockNode14 = updateAst14.find(node => node.type === 'ifBlock');
+            if (ifBlockNode14) {
+                ifBlockNode14.conditionExpr = '$x > 10';
+                ifBlockNode14.thenBranch[0].args[0].value = 'much greater';
+                if (ifBlockNode14.elseifBranches && ifBlockNode14.elseifBranches.length > 0) {
+                    ifBlockNode14.elseifBranches[0].condition = '$x < 10';
+                    ifBlockNode14.elseifBranches[0].body[0].args[0].value = 'much less';
+                }
+                if (ifBlockNode14.elseBranch && ifBlockNode14.elseBranch.length > 0) {
+                    ifBlockNode14.elseBranch[0].args[0].value = 'exactly equal';
+                }
+                const updateUpdatedScript14 = updateTestRp.updateCodeFromAST(updateTestScript14, updateAst14);
+                const updateExpected14 = `if $x > 10
+  log "much greater"
+elseif $x < 10
+  log "much less"
+else
+  log "exactly equal"
+endif`;
+                const updateTest14Passed = updateUpdatedScript14 === updateExpected14;
+                
+                if (updateTest14Passed) {
+                    console.log('✓ Update Test 14 PASSED - IfBlock with elseif and else branches update');
+                } else {
+                    console.log('✗ Update Test 14 FAILED - IfBlock with elseif and else branches update');
+                    console.log('  Original:', updateTestScript14);
+                    console.log('  Expected:', updateExpected14);
+                    console.log('  Got:', updateUpdatedScript14);
+                    throw new Error('Update Test 14 FAILED - IfBlock with elseif and else branches update');
+                }
+            } else {
+                throw new Error('Update Test 14 FAILED - IfBlock node not found');
+            }
+            
+            // Test 15: Update assignment with variable path (property access)
+            const updateTestScript15 = `$obj.prop = 10`;
+            const updateAst15 = updateTestRp.getAST(updateTestScript15);
+            const assignNode15 = updateAst15.find(node => node.type === 'assignment' && node.targetName === 'obj');
+            if (assignNode15 && assignNode15.targetPath && assignNode15.targetPath.length > 0) {
+                assignNode15.targetPath[0].name = 'newProp';
+                assignNode15.literalValue = 20;
+                const updateUpdatedScript15 = updateTestRp.updateCodeFromAST(updateTestScript15, updateAst15);
+                const updateExpected15 = '$obj.newProp = 20';
+                const updateTest15Passed = updateUpdatedScript15 === updateExpected15;
+                
+                if (updateTest15Passed) {
+                    console.log('✓ Update Test 15 PASSED - Assignment with property path update');
+                } else {
+                    console.log('✗ Update Test 15 FAILED - Assignment with property path update');
+                    console.log('  Original:', updateTestScript15);
+                    console.log('  Expected:', updateExpected15);
+                    console.log('  Got:', updateUpdatedScript15);
+                    throw new Error('Update Test 15 FAILED - Assignment with property path update');
+                }
+            } else {
+                throw new Error('Update Test 15 FAILED - Assignment with property path not found');
+            }
+            
+            // Test 16: Update assignment with array index
+            const updateTestScript16 = `$arr[0] = "first"`;
+            const updateAst16 = updateTestRp.getAST(updateTestScript16);
+            const assignNode16 = updateAst16.find(node => node.type === 'assignment' && node.targetName === 'arr');
+            if (assignNode16 && assignNode16.targetPath && assignNode16.targetPath.length > 0) {
+                assignNode16.targetPath[0].index = 1;
+                assignNode16.literalValue = 'second';
+                const updateUpdatedScript16 = updateTestRp.updateCodeFromAST(updateTestScript16, updateAst16);
+                const updateExpected16 = '$arr[1] = "second"';
+                const updateTest16Passed = updateUpdatedScript16 === updateExpected16;
+                
+                if (updateTest16Passed) {
+                    console.log('✓ Update Test 16 PASSED - Assignment with array index update');
+                } else {
+                    console.log('✗ Update Test 16 FAILED - Assignment with array index update');
+                    console.log('  Original:', updateTestScript16);
+                    console.log('  Expected:', updateExpected16);
+                    console.log('  Got:', updateUpdatedScript16);
+                    throw new Error('Update Test 16 FAILED - Assignment with array index update');
+                }
+            } else {
+                throw new Error('Update Test 16 FAILED - Assignment with array index not found');
+            }
+            
+            // Test 17: Update command with variable path
+            const updateTestScript17 = `log $obj.prop`;
+            const updateAst17 = updateTestRp.getAST(updateTestScript17);
+            const cmdNode17 = updateAst17.find(node => node.type === 'command' && node.name === 'log');
+            if (cmdNode17 && cmdNode17.args && cmdNode17.args.length > 0 && cmdNode17.args[0].type === 'var') {
+                // Update the existing property name
+                if (cmdNode17.args[0].path && cmdNode17.args[0].path.length > 0) {
+                    cmdNode17.args[0].path[0].name = 'newProp';
+                } else {
+                    cmdNode17.args[0].path = [{ type: 'property', name: 'newProp' }];
+                }
+                const updateUpdatedScript17 = updateTestRp.updateCodeFromAST(updateTestScript17, updateAst17);
+                const updateExpected17 = 'log $obj.newProp';
+                const updateTest17Passed = updateUpdatedScript17 === updateExpected17;
+                
+                if (updateTest17Passed) {
+                    console.log('✓ Update Test 17 PASSED - Command with variable path update');
+                } else {
+                    console.log('✗ Update Test 17 FAILED - Command with variable path update');
+                    console.log('  Original:', updateTestScript17);
+                    console.log('  Expected:', updateExpected17);
+                    console.log('  Got:', updateUpdatedScript17);
+                    console.log('  AST arg:', JSON.stringify(cmdNode17.args[0], null, 2));
+                    throw new Error('Update Test 17 FAILED - Command with variable path update');
+                }
+            } else {
+                throw new Error('Update Test 17 FAILED - Command with variable not found');
+            }
+            
+            // Test 18: Update shorthand assignment (assignment with isLastValue)
+            const updateTestScript18 = `$x = $`;
+            const updateAst18 = updateTestRp.getAST(updateTestScript18);
+            const assignNode18 = updateAst18.find(node => node.type === 'assignment' && node.isLastValue === true);
+            if (assignNode18) {
+                assignNode18.targetName = 'y';
+                const updateUpdatedScript18 = updateTestRp.updateCodeFromAST(updateTestScript18, updateAst18);
+                const updateExpected18 = '$y = null';
+                const updateTest18Passed = updateUpdatedScript18 === updateExpected18;
+                
+                if (updateTest18Passed) {
+                    console.log('✓ Update Test 18 PASSED - Shorthand assignment update');
+                } else {
+                    console.log('✗ Update Test 18 FAILED - Shorthand assignment update');
+                    console.log('  Original:', updateTestScript18);
+                    console.log('  Expected:', updateExpected18);
+                    console.log('  Got:', updateUpdatedScript18);
+                    throw new Error('Update Test 18 FAILED - Shorthand assignment update');
+                }
+            } else {
+                throw new Error('Update Test 18 FAILED - Shorthand assignment node not found');
+            }
+            
+            // Test 19: Update ifTrue command
+            const updateTestScript19 = `iftrue log "yes"`;
+            const updateAst19 = updateTestRp.getAST(updateTestScript19);
+            const ifTrueNode19 = updateAst19.find(node => node.type === 'ifTrue');
+            if (ifTrueNode19) {
+                ifTrueNode19.command.name = 'print';
+                ifTrueNode19.command.args[0].value = 'maybe';
+                const updateUpdatedScript19 = updateTestRp.updateCodeFromAST(updateTestScript19, updateAst19);
+                const updateExpected19 = `iftrue print "maybe"`;
+                const updateTest19Passed = updateUpdatedScript19 === updateExpected19;
+                
+                if (updateTest19Passed) {
+                    console.log('✓ Update Test 19 PASSED - IfTrue command update');
+                } else {
+                    console.log('✗ Update Test 19 FAILED - IfTrue command update');
+                    console.log('  Original:', updateTestScript19);
+                    console.log('  Expected:', updateExpected19);
+                    console.log('  Got:', updateUpdatedScript19);
+                    throw new Error('Update Test 19 FAILED - IfTrue command update');
+                }
+            } else {
+                throw new Error('Update Test 19 FAILED - IfTrue node not found');
+            }
+            
+            // Test 20: Update ifFalse command
+            const updateTestScript20 = `iffalse log "no"`;
+            const updateAst20 = updateTestRp.getAST(updateTestScript20);
+            const ifFalseNode20 = updateAst20.find(node => node.type === 'ifFalse');
+            if (ifFalseNode20) {
+                ifFalseNode20.command.name = 'print';
+                ifFalseNode20.command.args[0].value = 'maybe not';
+                const updateUpdatedScript20 = updateTestRp.updateCodeFromAST(updateTestScript20, updateAst20);
+                const updateExpected20 = `iffalse print "maybe not"`;
+                const updateTest20Passed = updateUpdatedScript20 === updateExpected20;
+                
+                if (updateTest20Passed) {
+                    console.log('✓ Update Test 20 PASSED - IfFalse command update');
+                } else {
+                    console.log('✗ Update Test 20 FAILED - IfFalse command update');
+                    console.log('  Original:', updateTestScript20);
+                    console.log('  Expected:', updateExpected20);
+                    console.log('  Got:', updateUpdatedScript20);
+                    throw new Error('Update Test 20 FAILED - IfFalse command update');
+                }
+            } else {
+                throw new Error('Update Test 20 FAILED - IfFalse node not found');
             }
         }
         
