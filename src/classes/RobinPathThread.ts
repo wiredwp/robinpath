@@ -9,7 +9,8 @@ import { ExecutionStateTracker } from './ExecutionStateTracker';
 import type { 
     Environment, 
     Statement, 
-    Arg
+    Arg,
+    TogetherBlock
 } from '../index';
 import type { RobinPath } from '../index';
 
@@ -499,6 +500,12 @@ export class RobinPathThread {
                     varName: stmt.varName,
                     iterableExpr: stmt.iterableExpr,
                     body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
+                };
+            case 'together':
+                const togetherStmt = stmt as TogetherBlock;
+                return {
+                    ...base,
+                    blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, undefined, currentModuleContext))
                 };
             case 'return':
                 return {

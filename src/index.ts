@@ -1597,9 +1597,10 @@ export class RobinPath {
                     targetPath: stmt.targetPath
                 };
             case 'together':
+                const togetherStmt = stmt as TogetherBlock;
                 return {
                     ...base,
-                    blocks: stmt.blocks.map(block => this.serializeStatement(block, currentModuleContext))
+                    blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, currentModuleContext))
                 };
         }
     }
