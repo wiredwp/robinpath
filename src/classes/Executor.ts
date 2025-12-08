@@ -1495,9 +1495,18 @@ Examples:
             // Scope's lastValue should not affect parent's $ - restore original value
             parentFrame.lastValue = originalLastValue;
         } catch (error) {
+            // Handle return statements inside do blocks
+            if (error instanceof ReturnException) {
+                // Set the frame's lastValue to the return value
+                frame.lastValue = error.value;
+                // Scope's lastValue should not affect parent's $ - restore original value
+                parentFrame.lastValue = originalLastValue;
+                // Exit normally (don't re-throw) - the return value is stored in frame.lastValue
+                return;
+            }
             // Scope's lastValue should not affect parent's $ - restore original value even on error
             parentFrame.lastValue = originalLastValue;
-            // Re-throw errors to ensure they propagate properly
+            // Re-throw other errors to ensure they propagate properly
             throw error;
         } finally {
             // Pop the scope frame

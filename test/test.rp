@@ -3613,6 +3613,39 @@ do
 enddo
 test.assertEqual $arr56y[2] 3 "into syntax - array literal element access failed"
 
+# Test 56z: Return statement in do block
+do into $result56z
+  math.add 10 20
+  return 100
+  math.add 1 1  # This should not execute
+enddo
+test.assertEqual $result56z 100 "return in do block - should return specified value"
+
+# Test 56z2: Return statement in do block without value (returns $)
+do into $result56z2
+  math.add 5 5
+  return  # Should return $ (which is 10)
+enddo
+test.assertEqual $result56z2 10 "return in do block - should return last value when no value specified"
+
+# Test 56z3: Return stops execution of remaining code
+$testVar56z3 = 0
+do into $result56z3
+  set $testVar56z3 1
+  return 42
+  set $testVar56z3 2  # This should not execute
+enddo
+test.assertEqual $result56z3 42 "return in do block - should return correct value"
+test.assertEqual $testVar56z3 1 "return in do block - should stop execution before remaining statements"
+
+# Test 56z4: Return in do block with parameters
+do $x into $result56z4
+  math.add $x 10
+  return 50
+  math.add $ 5  # This should not execute
+enddo
+test.assertEqual $result56z4 50 "return in do block with parameters - should return specified value"
+
 log "Test 56 - into syntax sugar: All passed"
 
 # Test 57: var and const commands
