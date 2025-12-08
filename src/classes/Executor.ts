@@ -2443,9 +2443,19 @@ Examples:
                 // Scope's lastValue should not affect parent's $ - restore original value
                 parentFrame.lastValue = originalLastValue;
             } catch (error) {
-                // Scope's lastValue should not affect parent's $ - restore original value even on error
-                parentFrame.lastValue = originalLastValue;
-                throw error;
+                // Handle return statements inside do blocks
+                if (error instanceof ReturnException) {
+                    // Set the return value and exit normally
+                    value = error.value;
+                    // Scope's lastValue should not affect parent's $ - restore original value
+                    parentFrame.lastValue = originalLastValue;
+                    // Don't re-throw - exit normally so execution continues
+                } else {
+                    // Scope's lastValue should not affect parent's $ - restore original value even on error
+                    parentFrame.lastValue = originalLastValue;
+                    // Re-throw other errors
+                    throw error;
+                }
             } finally {
                 // Pop the scope frame
                 this.callStack.pop();

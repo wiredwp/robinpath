@@ -3646,6 +3646,19 @@ do $x into $result56z4
 enddo
 test.assertEqual $result56z4 50 "return in do block with parameters - should return specified value"
 
+# Test 56z5: Return in do block with into should continue execution after block
+$testVar56z5 = 0
+do into $result56z5
+  log "inside do block"
+  return 99
+  log "this should not execute"
+enddo
+test.assertEqual $result56z5 99 "return in do block with into - should return value"
+test.assertEqual $testVar56z5 0 "return in do block with into - should continue execution after block"
+log "this should execute after do into with return"
+$testVar56z5 = 1
+test.assertEqual $testVar56z5 1 "return in do block with into - code after block should execute"
+
 log "Test 56 - into syntax sugar: All passed"
 
 # Test 57: var and const commands
