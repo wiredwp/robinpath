@@ -12,6 +12,10 @@ const __dirname = dirname(__filename);
 const fetchTestScriptPath = join(__dirname, 'fetch-test.rp');
 const fetchTestScript = readFileSync(fetchTestScriptPath, 'utf-8');
 
+// Read the into test script (runs before other tests)
+const intoTestScriptPath = join(__dirname, 'test-into.rp');
+const intoTestScript = readFileSync(intoTestScriptPath, 'utf-8');
+
 // Read the together test script (runs before test.rp)
 const togetherTestScriptPath = join(__dirname, 'together-test.rp');
 const togetherTestScript = readFileSync(togetherTestScriptPath, 'utf-8');
@@ -159,6 +163,31 @@ const PORT = 3005;
                 }
             });
         });
+        
+        // Execute the test-into.rp script FIRST (before all other tests)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running RobinPath Into Test Script (test-into.rp)');
+        console.log('='.repeat(60));
+        
+        // Create interpreter instance for into tests
+        const intoRp = new RobinPath();
+        const intoStartTime = Date.now();
+        
+        // Execute the into test script
+        const intoResult = await intoRp.executeScript(intoTestScript);
+        
+        // Calculate execution time
+        const intoEndTime = Date.now();
+        const intoExecutionTime = intoEndTime - intoStartTime;
+        
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Into Test Script Execution Complete');
+        console.log('='.repeat(60));
+        console.log(`Execution time: ${intoExecutionTime}ms`);
+        console.log(`Final result ($): ${intoResult}`);
+        console.log('='.repeat(60));
         
         // Test getASTWithState
         console.log();
@@ -3942,7 +3971,7 @@ log "after together"`;
         console.log(`  Block 2 body statements: ${block2.body.length}`);
         console.log('='.repeat(60));
         
-        // Execute the test.rp script (run after together tests)
+        // Execute the test.rp script (run after into and together tests)
         console.log();
         console.log('='.repeat(60));
         console.log('Running RobinPath Test Script (test.rp)');
@@ -3963,7 +3992,6 @@ log "after together"`;
         console.log();
         console.log('='.repeat(60));
         console.log('Test execution completed successfully!');
-        console.log('Final result ($):', result);
         console.log(`Total execution time: ${executionTime}ms (${(executionTime / 1000).toFixed(3)}s)`);
         console.log('='.repeat(60));
         

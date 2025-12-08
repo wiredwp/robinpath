@@ -106,10 +106,12 @@ together
   do $a into $result57g1
     set $a 10
     math.multiply $a 2
+    log "aaa" $
   enddo
   do $b into $result57g2
     set $b 5
     math.multiply $b 3
+    log "bbb" $
   enddo
 endtogether
 test.assertEqual $result57g1 20 "together - do with params first block failed"
@@ -136,7 +138,16 @@ together
 endtogether
 # Note: Due to parallel execution, final value could be 10 or 20 depending on timing
 # Both blocks read 0, then write 10 or 20, so final should be one of them
-test.assertTrue $(test.isEqual $sharedVar57i 10) || $(test.isEqual $sharedVar57i 20) "together - shared variable modification (race condition expected)"
+$is10 = $(test.isEqual $sharedVar57i 10)
+$is20 = $(test.isEqual $sharedVar57i 20)
+# Check if either condition is true (at least one should be true)
+if $is10
+  test.assertTrue true "together - shared variable modification (race condition expected)"
+elseif $is20
+  test.assertTrue true "together - shared variable modification (race condition expected)"
+else
+  test.assertTrue false "together - shared variable modification failed (expected 10 or 20, got ${sharedVar57i})"
+endif
 
 # Test 57j: Together preserves last value ($) - should not affect parent's $
 math.add 100 200
@@ -187,5 +198,113 @@ test.assertTrue $block57l1 "together - parallel execution block 1 failed"
 test.assertTrue $block57l2 "together - parallel execution block 2 failed"
 test.assertTrue $block57l3 "together - parallel execution block 3 failed"
 
+# Test 57m: Return statements in together blocks with do into should continue execution
+$testVar57m = 0
+together
+  do into $a57m
+    return 3
+  enddo
+  do into $b57m
+    return 5
+  enddo
+endtogether
+test.assertEqual $a57m 3 "together with return - first do block should return value"
+test.assertEqual $b57m 5 "together with return - second do block should return value"
+test.assertEqual $testVar57m 0 "together with return - should continue execution after block"
+log "this should execute after together with return"
+$testVar57m = 1
+test.assertEqual $testVar57m 1 "together with return - code after block should execute"
+
 log "Test 57 - together command: All passed"
+
+# Test 62: lastValue scoping in together blocks
+log "Test 62 - lastValue scoping in together blocks"
+
+# Test 62a: Basic lastValue scoping in do blocks
+clear
+do
+  math.add 10 10
+  $localLastValue = $
+  test.assertEqual $localLastValue 20 "do block - lastValue should be scoped"
+enddo
+# Parent scope's lastValue should not be affected by do block's lastValue
+# (test functions now preserve lastValue, so this should work correctly)
+test.assertEqual $ null "do block - parent lastValue should not be affected"
+
+# Test 62b: lastValue scoping in together blocks with do into
+together
+  do $a into $result62b1
+    set $a 10
+    math.multiply $a 2
+    # test.assertEqual should preserve lastValue, so $ should still be 20
+    test.assertEqual $ 20 "together - do into first block lastValue should be 20"
+  enddo
+  do $b into $result62b2
+    set $b 5
+    math.multiply $b 3
+    # test.assertEqual should preserve lastValue, so $ should still be 15
+    test.assertEqual $ 15 "together - do into second block lastValue should be 15"
+  enddo
+endtogether
+test.assertEqual $result62b1 20 "together - do into first block result failed"
+test.assertEqual $result62b2 15 "together - do into second block result failed"
+
+# Test 62c: lastValue scoping in together blocks with log
+together
+  do $a into $result62c1
+    set $a 10
+    math.multiply $a 2
+    log "Test 62c - Block 1 lastValue:" $
+    # $ should be 20 here
+    test.assertEqual $ 20 "together - log in first block should show 20"
+  enddo
+  do $b into $result62c2
+    set $b 5
+    math.multiply $b 3
+    log "Test 62c - Block 2 lastValue:" $
+    # $ should be 15 here
+    test.assertEqual $ 15 "together - log in second block should show 15"
+  enddo
+endtogether
+test.assertEqual $result62c1 20 "together - do into first block with log failed"
+test.assertEqual $result62c2 15 "together - do into second block with log failed"
+
+# Test 62d: lastValue scoping in nested do blocks within together
+together
+  do into $result62d1
+    do
+      math.add 5 5
+      test.assertEqual $ 10 "together - nested do block lastValue should be 10"
+    enddo
+    # Outer do block's lastValue should still be null (nested do doesn't affect it)
+    test.assertEqual $ null "together - outer do block lastValue should be null"
+    math.add 10 10
+  enddo
+  do into $result62d2
+    math.add 3 3
+  enddo
+endtogether
+test.assertEqual $result62d1 20 "together - nested do blocks result failed"
+test.assertEqual $result62d2 6 "together - second block with nested do failed"
+
+# Test 62e: lastValue scoping with multiple operations in together blocks
+together
+  do $x into $result62e1
+    set $x 2
+    math.multiply $x 3
+    math.add $ 1
+    math.multiply $ 2
+    test.assertEqual $ 14 "together - multiple operations lastValue should be 14"
+  enddo
+  do $y into $result62e2
+    set $y 4
+    math.multiply $y 2
+    math.add $ 2
+    test.assertEqual $ 10 "together - multiple operations lastValue should be 10"
+  enddo
+endtogether
+test.assertEqual $result62e1 14 "together - multiple operations first block failed"
+test.assertEqual $result62e2 10 "together - multiple operations second block failed"
+
+log "Test 62 - lastValue scoping in together blocks: All passed"
 

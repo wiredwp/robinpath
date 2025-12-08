@@ -27,7 +27,6 @@ import type {
     TogetherBlock,
     ForLoop,
     ModuleMetadata,
-    IntoAssignment,
     DecoratorCall
 } from '../index';
 import type { RobinPathThread } from './RobinPathThread';
@@ -48,7 +47,11 @@ export class Executor {
     }
 
 
-    getCurrentFrame(): Frame {
+    getCurrentFrame(frameOverride?: Frame): Frame {
+        // If a frame is explicitly provided (for parallel execution), use it
+        if (frameOverride !== undefined) {
+            return frameOverride;
+        }
         return this.callStack[this.callStack.length - 1];
     }
 
@@ -123,49 +126,46 @@ export class Executor {
         }
     }
 
-    private async executeStatement(stmt: Statement): Promise<void> {
+    private async executeStatement(stmt: Statement, frameOverride?: Frame): Promise<void> {
         switch (stmt.type) {
             case 'command':
-                await this.executeCommand(stmt);
+                await this.executeCommand(stmt, frameOverride);
                 break;
             case 'assignment':
-                await this.executeAssignment(stmt);
+                await this.executeAssignment(stmt, frameOverride);
                 break;
             case 'shorthand':
-                this.executeShorthandAssignment(stmt);
+                this.executeShorthandAssignment(stmt, frameOverride);
                 break;
             case 'inlineIf':
-                await this.executeInlineIf(stmt);
+                await this.executeInlineIf(stmt, frameOverride);
                 break;
             case 'ifBlock':
-                await this.executeIfBlock(stmt);
+                await this.executeIfBlock(stmt, frameOverride);
                 break;
             case 'ifTrue':
-                await this.executeIfTrue(stmt);
+                await this.executeIfTrue(stmt, frameOverride);
                 break;
             case 'ifFalse':
-                await this.executeIfFalse(stmt);
+                await this.executeIfFalse(stmt, frameOverride);
                 break;
             case 'define':
                 this.registerFunction(stmt);
                 break;
             case 'do':
-                await this.executeScope(stmt);
+                await this.executeScope(stmt, frameOverride);
                 break;
             case 'together':
                 await this.executeTogether(stmt);
                 break;
             case 'forLoop':
-                await this.executeForLoop(stmt);
+                await this.executeForLoop(stmt, frameOverride);
                 break;
             case 'return':
-                await this.executeReturn(stmt);
+                await this.executeReturn(stmt, frameOverride);
                 break;
             case 'break':
-                await this.executeBreak(stmt);
-                break;
-            case 'into':
-                await this.executeInto(stmt);
+                await this.executeBreak(stmt, frameOverride);
                 break;
             case 'comment':
                 // Comments are no-ops during execution
@@ -223,8 +223,8 @@ export class Executor {
         return null;
     }
 
-    private async executeCommand(cmd: CommandCall): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeCommand(cmd: CommandCall, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         
         // Separate positional args and named args
         const positionalArgs: Value[] = [];
@@ -233,10 +233,10 @@ export class Executor {
         for (const arg of cmd.args) {
             if (arg.type === 'namedArgs') {
                 // Evaluate named arguments into an object
-                namedArgsObj = await this.evaluateArg(arg) as Record<string, Value>;
+                namedArgsObj = await this.evaluateArg(arg, frameOverride) as Record<string, Value>;
             } else {
                 // Positional argument
-                const value = await this.evaluateArg(arg);
+                const value = await this.evaluateArg(arg, frameOverride);
                 positionalArgs.push(value);
             }
         }
@@ -616,7 +616,7 @@ Examples:
             const varPath = varArg.path; // Support attribute paths (e.g., $user.city)
             
             // Evaluate the second arg as the value to assign
-            let value = await this.evaluateArg(cmd.args[1]);
+            let value = await this.evaluateArg(cmd.args[1], frameOverride);
             
             // Check if value is empty or null, and if so, use fallback (3rd arg) if provided
             const isEmpty = value === null || value === undefined || 
@@ -626,7 +626,7 @@ Examples:
             
             if (isEmpty && cmd.args.length >= 3) {
                 // Use fallback value (3rd argument)
-                value = await this.evaluateArg(cmd.args[2]);
+                value = await this.evaluateArg(cmd.args[2], frameOverride);
             }
             
             // Set the variable (with path support)
@@ -671,7 +671,7 @@ Examples:
             // Evaluate default value if provided (2nd arg)
             let value: Value = null;
             if (cmd.args.length >= 2) {
-                value = await this.evaluateArg(cmd.args[1]);
+                value = await this.evaluateArg(cmd.args[1], frameOverride);
             }
             
             // Declare the variable (not a constant)
@@ -679,7 +679,7 @@ Examples:
             
             // Execute decorators if any (for variable metadata)
             if (cmd.decorators && cmd.decorators.length > 0) {
-                await this.executeDecorators(cmd.decorators, varName, null, []);
+                await this.executeDecorators(cmd.decorators, varName, null, [], frameOverride);
             }
             
             // Restore the last value - var command should not affect $
@@ -728,7 +728,7 @@ Examples:
             
             // Execute decorators if any (for constant metadata)
             if (cmd.decorators && cmd.decorators.length > 0) {
-                await this.executeDecorators(cmd.decorators, constName, null, []);
+                await this.executeDecorators(cmd.decorators, constName, null, [], frameOverride);
             }
             
             // Restore the last value - const command should not affect $
@@ -794,10 +794,10 @@ Examples:
             const target: string = targetOriginal;
             
             // Extract metaKey from original arg
-            const metaKey = String(await this.evaluateArg(cmd.args[1]));
+            const metaKey = String(await this.evaluateArg(cmd.args[1], frameOverride));
             
             // Evaluate metaValue (this should be evaluated)
-            const metaValue = await this.evaluateArg(cmd.args[2]);
+            const metaValue = await this.evaluateArg(cmd.args[2], frameOverride);
 
             // Check if target is a variable (starts with $)
             if (target.startsWith('$')) {
@@ -855,7 +855,7 @@ Examples:
                 
                 // If second argument provided, return specific key value
                 if (cmd.args.length >= 2) {
-                    const metaKey = String(await this.evaluateArg(cmd.args[1]));
+                    const metaKey = String(await this.evaluateArg(cmd.args[1], frameOverride));
                     const value = varMeta.get(metaKey);
                     frame.lastValue = value !== undefined ? value : null;
                     return;
@@ -881,7 +881,7 @@ Examples:
                 
                 // If second argument provided, return specific key value
                 if (cmd.args.length >= 2) {
-                    const metaKey = String(await this.evaluateArg(cmd.args[1]));
+                    const metaKey = String(await this.evaluateArg(cmd.args[1], frameOverride));
                     const value = funcMeta.get(metaKey);
                     frame.lastValue = value !== undefined ? value : null;
                     return;
@@ -910,7 +910,7 @@ Examples:
             }
             
             // Evaluate the variable to get its value
-            const value = await this.evaluateArg(varArg);
+            const value = await this.evaluateArg(varArg, frameOverride);
             
             // Determine the type
             let type: string;
@@ -1032,7 +1032,7 @@ Examples:
                 name = nameArg.name;
             } else if (nameArg.type === 'string' || nameArg.type === 'literal') {
                 // String literal or literal: function name
-                name = String(await this.evaluateArg(nameArg));
+                name = String(await this.evaluateArg(nameArg, frameOverride));
             } else {
                 throw new Error('forget argument must be a variable (e.g., $var) or function name (string)');
             }
@@ -1062,7 +1062,7 @@ Examples:
             }
             
             // Evaluate the variable to get its value
-            const varValue = await this.evaluateArg(varArg);
+            const varValue = await this.evaluateArg(varArg, frameOverride);
             
             // Check if value is empty or null
             const isEmpty = varValue === null || varValue === undefined || 
@@ -1072,7 +1072,7 @@ Examples:
             
             // If empty and fallback is provided, use fallback; otherwise use variable value
             if (isEmpty && cmd.args.length >= 2) {
-                const fallbackValue = await this.evaluateArg(cmd.args[1]);
+                const fallbackValue = await this.evaluateArg(cmd.args[1], frameOverride);
                 frame.lastValue = fallbackValue;
                 return;
             }
@@ -1113,9 +1113,24 @@ Examples:
         // Optimize: Check user-defined functions first (most common case)
         const userFunc = this.environment.functions.get(cmd.name);
         if (userFunc) {
+            const previousLastValue = frame.lastValue; // Preserve last value for into handling
             const result = await this.callFunction(userFunc, args);
-            // Ensure lastValue is set (even if result is undefined, preserve it)
-            frame.lastValue = result !== undefined ? result : null;
+            
+            // Handle "into" assignment if present - use the actual result value
+            if (cmd.into) {
+                const value = result !== undefined ? result : null;
+                // // console.log('====> Executor: user function with into, setting variable', cmd.into.targetName, 'to', value);
+                if (cmd.into.targetPath && cmd.into.targetPath.length > 0) {
+                    this.setVariableAtPath(cmd.into.targetName, cmd.into.targetPath, value);
+                } else {
+                    this.setVariable(cmd.into.targetName, value);
+                }
+                // Restore the last value - into command should not affect $
+                frame.lastValue = previousLastValue;
+            } else {
+                // Ensure lastValue is set (even if result is undefined, preserve it)
+                frame.lastValue = result !== undefined ? result : null;
+            }
             return;
         }
 
@@ -1150,16 +1165,36 @@ Examples:
         }
         
         if (handler) {
-            const previousLastValue = frame.lastValue; // Preserve last value for log
+            const previousLastValue = frame.lastValue; // Preserve last value for log and assertion functions
             const result = await Promise.resolve(handler(args));
-            // log function should not affect the last value
+            // log and assertion functions (assert*) should not affect the last value
+            // Helper functions like isEqual, isBigger should set lastValue normally
             const isLog = functionName === 'log' || cmd.name === 'log';
-            if (isLog) {
+            const isAssertion = (functionName.startsWith('test.assert') || cmd.name.startsWith('test.assert')) ||
+                               (functionName === 'assert' || cmd.name === 'assert');
+            
+            // Handle "into" assignment if present - use the actual result value
+            // console.log('====> Executor: cmd.into:', cmd.into, 'result:', result, 'cmd.name:', cmd.name);
+            if (cmd.into) {
+                const value = result !== undefined ? result : null;
+                // console.log('====> Executor: setting variable', cmd.into.targetName, 'to', value, 'result was:', result);
+                if (cmd.into.targetPath && cmd.into.targetPath.length > 0) {
+                    this.setVariableAtPath(cmd.into.targetName, cmd.into.targetPath, value);
+                } else {
+                    this.setVariable(cmd.into.targetName, value);
+                }
+                // Restore the last value - into command should not affect $
                 frame.lastValue = previousLastValue;
             } else {
-                // Ensure lastValue is set (even if result is undefined, preserve it)
-            frame.lastValue = result !== undefined ? result : null;
+                // Only set lastValue if there's no "into" assignment
+                if (isLog || isAssertion) {
+                    frame.lastValue = previousLastValue;
+                } else {
+                    // Ensure lastValue is set (even if result is undefined, preserve it)
+                    frame.lastValue = result !== undefined ? result : null;
+                }
             }
+            
             return;
         }
 
@@ -1174,7 +1209,7 @@ Examples:
      * @param originalArgs Original arguments (for functions, empty array for variables)
      * @returns Modified arguments (for functions) or original args unchanged
      */
-    private async executeDecorators(decorators: DecoratorCall[], targetName: string, func: DefineFunction | null, originalArgs: Value[]): Promise<Value[]> {
+    private async executeDecorators(decorators: DecoratorCall[], targetName: string, func: DefineFunction | null, originalArgs: Value[], frameOverride?: Frame): Promise<Value[]> {
         let modifiedArgs = originalArgs;
         
             // Execute decorators in order (first decorator executes first)
@@ -1182,7 +1217,7 @@ Examples:
                 // Evaluate decorator arguments
                 const decoratorArgs: Value[] = [];
                 for (const arg of decorator.args) {
-                    const evaluatedArg = await this.evaluateArg(arg);
+                    const evaluatedArg = await this.evaluateArg(arg, frameOverride);
                     decoratorArgs.push(evaluatedArg);
                 }
                 
@@ -1319,13 +1354,13 @@ Examples:
         }
     }
 
-    private async executeAssignment(assign: Assignment): Promise<void> {
+    private async executeAssignment(assign: Assignment, frameOverride?: Frame): Promise<void> {
         // Check if this is a constant - constants cannot be reassigned
         if (this.environment.constants.has(assign.targetName)) {
             throw new Error(`Cannot reassign constant $${assign.targetName}. Constants are immutable.`);
         }
         
-        const frame = this.getCurrentFrame();
+        const frame = this.getCurrentFrame(frameOverride);
         
         let value: Value;
         if (assign.isLastValue) {
@@ -1337,7 +1372,7 @@ Examples:
         } else if (assign.command) {
             // Command-based assignment
             const previousLastValue = frame.lastValue; // Preserve last value
-            await this.executeCommand(assign.command);
+            await this.executeCommand(assign.command, frameOverride);
             value = frame.lastValue;
             frame.lastValue = previousLastValue; // Restore last value (assignments don't affect $)
         } else {
@@ -1355,13 +1390,13 @@ Examples:
         }
     }
 
-    private executeShorthandAssignment(assign: ShorthandAssignment): void {
+    private executeShorthandAssignment(assign: ShorthandAssignment, frameOverride?: Frame): void {
         // Check if this is a constant - constants cannot be reassigned
         if (this.environment.constants.has(assign.targetName)) {
             throw new Error(`Cannot reassign constant $${assign.targetName}. Constants are immutable.`);
         }
         
-        const frame = this.getCurrentFrame();
+        const frame = this.getCurrentFrame(frameOverride);
         const value = frame.lastValue;
         
         // Check if this is a positional parameter (numeric name)
@@ -1376,24 +1411,24 @@ Examples:
         this.setVariable(assign.targetName, value);
     }
 
-    private async executeInlineIf(ifStmt: InlineIf): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeInlineIf(ifStmt: InlineIf, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         const evaluator = new ExpressionEvaluator(frame, this.environment, this);
         const condition = await evaluator.evaluate(ifStmt.conditionExpr);
         
         if (condition) {
-            await this.executeStatement(ifStmt.command);
+            await this.executeStatement(ifStmt.command, frameOverride);
         }
     }
 
-    private async executeIfBlock(ifStmt: IfBlock): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeIfBlock(ifStmt: IfBlock, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         const evaluator = new ExpressionEvaluator(frame, this.environment, this);
         
         // Check main condition
         if (await evaluator.evaluate(ifStmt.conditionExpr)) {
             for (const stmt of ifStmt.thenBranch) {
-                await this.executeStatement(stmt);
+                await this.executeStatement(stmt, frameOverride);
             }
             return;
         }
@@ -1403,7 +1438,7 @@ Examples:
             for (const branch of ifStmt.elseifBranches) {
                 if (await evaluator.evaluate(branch.condition)) {
                     for (const stmt of branch.body) {
-                        await this.executeStatement(stmt);
+                        await this.executeStatement(stmt, frameOverride);
                     }
                     return;
                 }
@@ -1413,31 +1448,31 @@ Examples:
         // Execute else branch if present
         if (ifStmt.elseBranch) {
             for (const stmt of ifStmt.elseBranch) {
-                await this.executeStatement(stmt);
+                await this.executeStatement(stmt, frameOverride);
             }
         }
     }
 
-    private async executeIfTrue(ifStmt: IfTrue): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeIfTrue(ifStmt: IfTrue, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         if (isTruthy(frame.lastValue)) {
-            await this.executeStatement(ifStmt.command);
+            await this.executeStatement(ifStmt.command, frameOverride);
         }
     }
 
-    private async executeIfFalse(ifStmt: IfFalse): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeIfFalse(ifStmt: IfFalse, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         if (!isTruthy(frame.lastValue)) {
-            await this.executeStatement(ifStmt.command);
+            await this.executeStatement(ifStmt.command, frameOverride);
         }
     }
 
-    private async executeReturn(returnStmt: ReturnStatement): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeReturn(returnStmt: ReturnStatement, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         
         // If a value is specified, evaluate it; otherwise use lastValue ($)
         if (returnStmt.value !== undefined) {
-            const value = await this.evaluateArg(returnStmt.value);
+            const value = await this.evaluateArg(returnStmt.value, frameOverride);
             throw new ReturnException(value);
         } else {
             // No value specified - return $ (last value)
@@ -1445,7 +1480,7 @@ Examples:
         }
     }
 
-    private async executeBreak(_breakStmt: BreakStatement): Promise<void> {
+    private async executeBreak(_breakStmt: BreakStatement, _frameOverride?: Frame): Promise<void> {
         // Throw BreakException to exit the current loop
         // This will be caught by executeForLoop
         throw new BreakException();
@@ -1461,9 +1496,11 @@ Examples:
         this.environment.functions.set(func.name, func);
     }
 
-    private async executeScope(scope: ScopeBlock): Promise<void> {
-        const parentFrame = this.getCurrentFrame();
+    private async executeScope(scope: ScopeBlock, frameOverride?: Frame): Promise<void> {
+        const parentFrame = this.getCurrentFrame(frameOverride);
         const originalLastValue = parentFrame.lastValue; // Preserve parent's $
+        
+        // console.log('====> Executor: executeScope called, scope.into:', scope.into);
         
         // If parameters are declared, create an isolated scope (no parent variable access)
         // Otherwise, create a scope that inherits from parent (current behavior)
@@ -1471,7 +1508,7 @@ Examples:
         
         const frame: Frame = {
             locals: new Map(),
-            lastValue: parentFrame.lastValue, // Start with parent's $ (will be overwritten)
+            lastValue: isIsolated ? null : parentFrame.lastValue, // Inherit parent's $ unless isolated scope
             isFunctionFrame: true, // Scope uses function-like scoping rules
             isIsolatedScope: isIsolated // Mark as isolated if parameters are declared
         };
@@ -1486,12 +1523,21 @@ Examples:
 
         this.callStack.push(frame);
 
+        let scopeValue: Value = null;
         try {
-            // Execute scope body
+            // Execute scope body - pass frame directly to avoid race conditions in parallel execution
             for (const stmt of scope.body) {
-                await this.executeStatement(stmt);
+                await this.executeStatement(stmt, frame);
             }
 
+            // Capture the scope's lastValue before restoring parent's $
+            // If body is empty, scopeValue should be null (not parent's last value)
+            if (scope.body.length === 0) {
+                scopeValue = null;
+            } else {
+                scopeValue = frame.lastValue;
+            }
+            // console.log('====> Executor: executeScope scopeValue after body:', scopeValue);
             // Scope's lastValue should not affect parent's $ - restore original value
             parentFrame.lastValue = originalLastValue;
         } catch (error) {
@@ -1499,18 +1545,31 @@ Examples:
             if (error instanceof ReturnException) {
                 // Set the frame's lastValue to the return value
                 frame.lastValue = error.value;
+                scopeValue = error.value;
                 // Scope's lastValue should not affect parent's $ - restore original value
                 parentFrame.lastValue = originalLastValue;
                 // Exit normally (don't re-throw) - the return value is stored in frame.lastValue
-                return;
+            } else {
+                // Scope's lastValue should not affect parent's $ - restore original value even on error
+                parentFrame.lastValue = originalLastValue;
+                // Re-throw other errors to ensure they propagate properly
+                throw error;
             }
-            // Scope's lastValue should not affect parent's $ - restore original value even on error
-            parentFrame.lastValue = originalLastValue;
-            // Re-throw other errors to ensure they propagate properly
-            throw error;
         } finally {
-            // Pop the scope frame
+            // Pop the scope frame first (before setting variable in parent scope)
             this.callStack.pop();
+            
+            // Handle "into" assignment if present - set in parent scope AFTER popping frame
+            // console.log('====> Executor: executeScope finally, scope.into:', scope.into, 'scopeValue:', scopeValue);
+            if (scope.into) {
+                // console.log('====> Executor: Setting variable', scope.into.targetName, 'to', scopeValue, 'in parent scope');
+                // Now that the scope frame is popped, setVariable will use the parent frame
+                if (scope.into.targetPath && scope.into.targetPath.length > 0) {
+                    this.setVariableAtPath(scope.into.targetName, scope.into.targetPath, scopeValue);
+                } else {
+                    this.setVariable(scope.into.targetName, scopeValue);
+                }
+            }
         }
     }
 
@@ -1524,9 +1583,6 @@ Examples:
         
         // Create promises for each do block
         const promises = together.blocks.map(async (doBlock) => {
-            // Check if this do block has an "into" assignment (from "do into $var")
-            const intoInfo = (doBlock as any).__intoAssignment;
-            
             const isIsolated = doBlock.paramNames && doBlock.paramNames.length > 0;
             
             const frame: Frame = {
@@ -1547,39 +1603,53 @@ Examples:
 
             let value: Value = null;
             try {
-                // Execute scope body
+                // Execute scope body - pass frame directly to avoid race conditions
+                // This ensures each parallel block uses its own frame, not the shared callStack
                 for (const stmt of doBlock.body) {
-                    await this.executeStatement(stmt);
+                    await this.executeStatement(stmt, frame);
                 }
-
-                // Capture the value before popping the frame
-                if (intoInfo) {
-                    value = frame.lastValue;
+            } catch (error) {
+                // Handle return statements inside do blocks
+                if (error instanceof ReturnException) {
+                    // Set frame.lastValue to the return value
+                    // We'll capture this in the finally block
+                    frame.lastValue = error.value;
+                    // Don't re-throw - exit normally so execution continues
+                } else {
+                    // Re-throw other errors
+                    throw error;
                 }
             } finally {
+                // Capture the value before popping the frame (after all statements execute)
+                // This ensures we get the last value whether there was a return statement or not
+                // Use the frame variable directly (not getCurrentFrame()) to avoid race conditions
+                // when blocks execute in parallel - each block has its own frame reference
+                if (doBlock.into) {
+                    value = frame.lastValue;
+                }
                 // Pop the scope frame
                 this.callStack.pop();
                 }
 
                 // If this do block has "into", assign the last value to the target variable in parent scope
             // Set the variable directly in the parent scope (together has no scope)
-                if (intoInfo) {
+                if (doBlock.into) {
                 // Set variable in parent scope - check parent frame first, then globals
-                    if (intoInfo.targetPath && intoInfo.targetPath.length > 0) {
+                    if (doBlock.into.targetPath && doBlock.into.targetPath.length > 0) {
                     // Path assignment - need to handle base value and path traversal
-                    this.setVariableAtPathInParentScope(parentFrame, intoInfo.targetName, intoInfo.targetPath, value);
+                    this.setVariableAtPathInParentScope(parentFrame, doBlock.into.targetName, doBlock.into.targetPath, value);
                     } else {
                     // Simple assignment - check parent frame locals, then globals
-                    if (parentFrame.locals.has(intoInfo.targetName)) {
-                        parentFrame.locals.set(intoInfo.targetName, value);
-                    } else if (this.environment.variables.has(intoInfo.targetName)) {
-                        this.environment.variables.set(intoInfo.targetName, value);
+                    if (parentFrame.locals.has(doBlock.into.targetName)) {
+                        parentFrame.locals.set(doBlock.into.targetName, value);
+                    } else if (this.environment.variables.has(doBlock.into.targetName)) {
+                        this.environment.variables.set(doBlock.into.targetName, value);
                     } else {
                         // Variable doesn't exist - create in parent scope or globals
                         if (parentFrame.isFunctionFrame) {
-                            parentFrame.locals.set(intoInfo.targetName, value);
+                            parentFrame.locals.set(doBlock.into.targetName, value);
                         } else {
-                            this.environment.variables.set(intoInfo.targetName, value);
+                            this.environment.variables.set(doBlock.into.targetName, value);
                         }
                     }
                 }
@@ -1702,8 +1772,8 @@ Examples:
         }
     }
 
-    private async executeForLoop(forLoop: ForLoop): Promise<void> {
-        const frame = this.getCurrentFrame();
+    private async executeForLoop(forLoop: ForLoop, frameOverride?: Frame): Promise<void> {
+        const frame = this.getCurrentFrame(frameOverride);
         
         // Evaluate the iterable expression
         // We need to evaluate it as a command/expression to get the iterable value
@@ -1724,10 +1794,10 @@ Examples:
             frame.locals.set(forLoop.varName, element);
             frame.lastValue = element;
             
-            // Execute body
+            // Execute body - pass frame directly to avoid race conditions
             try {
             for (const stmt of forLoop.body) {
-                await this.executeStatement(stmt);
+                await this.executeStatement(stmt, frameOverride);
                 }
             } catch (error) {
                 if (error instanceof BreakException) {
@@ -1776,8 +1846,8 @@ Examples:
         return this.getCurrentFrame().lastValue;
     }
 
-    private async evaluateArg(arg: Arg): Promise<Value> {
-        const frame = this.getCurrentFrame();
+    private async evaluateArg(arg: Arg, frameOverride?: Frame): Promise<Value> {
+        const frame = this.getCurrentFrame(frameOverride);
 
         switch (arg.type) {
             case 'subexpr':
@@ -1825,7 +1895,7 @@ Examples:
                 // Evaluate all named arguments and return as object
                 const obj: Record<string, Value> = {};
                 for (const [key, valueArg] of Object.entries(arg.args)) {
-                    obj[key] = await this.evaluateArg(valueArg);
+                    obj[key] = await this.evaluateArg(valueArg, frameOverride);
                 }
                 return obj;
         }
@@ -2397,90 +2467,6 @@ Examples:
         }
     }
 
-    private async executeInto(intoStmt: IntoAssignment): Promise<void> {
-        const frame = this.getCurrentFrame();
-        
-        // Preserve the last value - into should not affect $ until assignment
-        const previousLastValue = frame.lastValue;
-        
-        // Get the result (last value after execution)
-        let value: Value;
-        
-        // Special handling for ScopeBlock (do blocks) - need to capture lastValue before it's restored
-        if (intoStmt.statement.type === 'do') {
-            const scope = intoStmt.statement;
-            const parentFrame = this.getCurrentFrame();
-            const originalLastValue = parentFrame.lastValue;
-            
-            // If parameters are declared, create an isolated scope (no parent variable access)
-            const isIsolated = scope.paramNames && scope.paramNames.length > 0;
-            
-            const scopeFrame: Frame = {
-                locals: new Map(),
-                lastValue: null, // Initialize to null - empty do blocks should return null
-                isFunctionFrame: true,
-                isIsolatedScope: isIsolated
-            };
-
-            // If scope has parameters, initialize them
-            if (scope.paramNames) {
-                for (const paramName of scope.paramNames) {
-                    scopeFrame.locals.set(paramName, null);
-                }
-            }
-
-            this.callStack.push(scopeFrame);
-
-            try {
-                // Execute scope body
-                for (const stmt of scope.body) {
-                    await this.executeStatement(stmt);
-                }
-
-                // Capture the scope's lastValue BEFORE restoring parent's $
-                value = scopeFrame.lastValue;
-
-                // Scope's lastValue should not affect parent's $ - restore original value
-                parentFrame.lastValue = originalLastValue;
-            } catch (error) {
-                // Handle return statements inside do blocks
-                if (error instanceof ReturnException) {
-                    // Set the return value and exit normally
-                    value = error.value;
-                    // Scope's lastValue should not affect parent's $ - restore original value
-                    parentFrame.lastValue = originalLastValue;
-                    // Don't re-throw - exit normally so execution continues
-                } else {
-                    // Scope's lastValue should not affect parent's $ - restore original value even on error
-                    parentFrame.lastValue = originalLastValue;
-                    // Re-throw other errors
-                    throw error;
-                }
-            } finally {
-                // Pop the scope frame
-                this.callStack.pop();
-            }
-        } else {
-            // For other statements (commands), execute and get result from frame.lastValue
-            // Get the current frame reference before execution
-            const currentFrame = this.getCurrentFrame();
-            // Execute the statement - this should set currentFrame.lastValue
-            await this.executeStatement(intoStmt.statement);
-            // Immediately capture the result from the same frame reference
-            // The command should have set frame.lastValue to its result
-            value = currentFrame.lastValue;
-        }
-        
-        // Set the variable (with path support)
-        if (intoStmt.targetPath && intoStmt.targetPath.length > 0) {
-            this.setVariableAtPath(intoStmt.targetName, intoStmt.targetPath, value);
-        } else {
-            this.setVariable(intoStmt.targetName, value);
-        }
-        
-        // Restore the last value - into command should not affect $
-        frame.lastValue = previousLastValue;
-    }
 
     // isTruthy isTruthy is imported from utils
 }

@@ -149,6 +149,7 @@ export interface CommandCall {
     args: Arg[];
     syntaxType?: 'space' | 'parentheses' | 'named-parentheses' | 'multiline-parentheses'; // Function call syntax style
     decorators?: DecoratorCall[]; // Decorators attached to this command (for var/const)
+    into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
     comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -224,6 +225,7 @@ export interface ScopeBlock {
     type: 'do';
     paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
+    into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
     comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -270,15 +272,6 @@ export interface CommentStatement {
     // codePos is derived from comments array - no need to store it separately
 }
 
-export interface IntoAssignment {
-    type: 'into';
-    statement: Statement; // The statement to execute
-    targetName: string; // Variable name (without $)
-    targetPath?: AttributePathSegment[]; // Optional path for attribute access (e.g., $user.city)
-    comments?: CommentWithPosition[]; // Comments attached to this into assignment (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
 export type Statement = 
     | CommandCall 
     | Assignment 
@@ -293,8 +286,7 @@ export type Statement =
     | ForLoop
     | ReturnStatement
     | BreakStatement
-    | CommentStatement
-    | IntoAssignment;
+    | CommentStatement;
 
 // ============================================================================
 // Logical Line Splitter
@@ -1510,7 +1502,8 @@ export class RobinPath {
                     name: stmt.name,
                     module: moduleName,
                     args: stmt.args.map(arg => this.serializeArg(arg)),
-                    syntaxType: (stmt as any).syntaxType
+                    syntaxType: (stmt as any).syntaxType,
+                    into: stmt.into
                 };
             case 'assignment':
                 return {
@@ -1588,13 +1581,6 @@ export class RobinPath {
                     ...base,
                     comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
-                };
-            case 'into':
-                return {
-                    ...base,
-                    statement: this.serializeStatement(stmt.statement, currentModuleContext),
-                    targetName: stmt.targetName,
-                    targetPath: stmt.targetPath
                 };
             case 'together':
                 const togetherStmt = stmt as TogetherBlock;
@@ -1988,11 +1974,6 @@ export class RobinPath {
 
         // Handle ifTrue/ifFalse - next is after the statement
         if (currentStmt.type === 'ifTrue' || currentStmt.type === 'ifFalse') {
-            return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
-        }
-
-        // Handle into - next is after the into statement
-        if (currentStmt.type === 'into') {
             return currentIndex + 1 < statements.length ? currentIndex + 1 : -1;
         }
 

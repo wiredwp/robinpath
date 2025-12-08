@@ -19,7 +19,6 @@ import type {
     CommentWithPosition,
     CodePosition,
     DecoratorCall,
-    IntoAssignment,
     AttributePathSegment
 } from '../index';
 
@@ -1129,19 +1128,22 @@ export class Parser {
         if ((tokens.length >= 2 && tokens[1] === '(') || 
             (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(')) {
             // This is a parenthesized call - parse it specially
-            // Note: parseParenthesizedCall already checks for "into" internally and returns IntoAssignment if found
-            // So we can just return whatever it returns (either CommandCall or IntoAssignment)
+            // Note: parseParenthesizedCall already checks for "into" internally and sets the into property on the command
             return this.parseParenthesizedCall(tokens, startLine);
         }
 
         // Regular command (space-separated)
         // Check for "into $var" in the tokens first
         const intoIndex = tokens.indexOf('into');
+
+        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        
         if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
             const varToken = tokens[intoIndex + 1];
             if (LexerUtils.isVariable(varToken)) {
-                // This is an "into" assignment
+                // This is an "into" assignment - parse the target variable
                 const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(varToken);
+                intoTarget = { targetName, targetPath };
                 // Parse command without the "into $var" part
                 const commandTokens = tokens.slice(0, intoIndex);
                 // Find the position of "into" in the original line to limit argument parsing
@@ -1160,13 +1162,14 @@ export class Parser {
                     if (this.currentLine === currentLineBackup) {
                         this.currentLine++;
                     }
-                    return {
-                        type: 'into',
-                        statement: { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) },
-                        targetName,
-                        targetPath,
+                    // Set the into property on the command instead of wrapping it
+                    const result = {
+                        ...command,
+                        syntaxType: 'space' as const,
+                        into: intoTarget,
                         codePos: this.createCodePositionFromLines(startLine, endLine)
                     };
+                    return result;
                 } finally {
                     // Restore original line
                     this.lines[currentLineBackup] = originalLineBackup;
@@ -1177,7 +1180,8 @@ export class Parser {
         const command = this.parseCommandFromTokens(tokens, startLine);
         const endLine = this.currentLine;
         this.currentLine++;
-        return { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) };
+        const result = { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) };
+        return result;
     }
 
     /**
@@ -1185,7 +1189,7 @@ export class Parser {
      * Supports both positional and named arguments (key=value)
      * Handles multi-line calls
      */
-    private parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall | IntoAssignment {
+    private parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall {
         const callStartLine = startLine !== undefined ? startLine : this.currentLine;
         // Get function name (handle module.function syntax)
         let name: string;
@@ -1278,19 +1282,9 @@ export class Parser {
             name, 
             args,
             syntaxType,
+            into: intoInfo || undefined,
             codePos: this.createCodePositionFromLines(callStartLine, endLine)
         };
-        
-        if (intoInfo) {
-            // Return IntoAssignment wrapping the command
-            return {
-                type: 'into',
-                statement: command,
-                targetName: intoInfo.targetName,
-                targetPath: intoInfo.targetPath,
-                codePos: this.createCodePositionFromLines(callStartLine, endLine)
-            };
-        }
         
         return command;
     }
@@ -1891,7 +1885,7 @@ export class Parser {
         return result;
     }
 
-    private parseScope(startLine: number): ScopeBlock | IntoAssignment {
+    private parseScope(startLine: number): ScopeBlock {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
         const tokens = Lexer.tokenize(line);
@@ -2024,21 +2018,21 @@ export class Parser {
         // If parameters are declared, include them in the do block
         const endLine = this.currentLine - 1;
         const scopeBlock: ScopeBlock = paramNames.length > 0 
-            ? { type: 'do', paramNames, body, codePos: this.createCodePositionFromLines(startLine, endLine) }
-            : { type: 'do', body, codePos: this.createCodePositionFromLines(startLine, endLine) };
+            ? { 
+                type: 'do', 
+                paramNames, 
+                body, 
+                into: intoTarget || undefined,
+                codePos: this.createCodePositionFromLines(startLine, endLine) 
+            }
+            : { 
+                type: 'do', 
+                body, 
+                into: intoTarget || undefined,
+                codePos: this.createCodePositionFromLines(startLine, endLine) 
+            };
         if (comments.length > 0) {
             scopeBlock.comments = comments;
-        }
-        
-        // If "into" was found after "do", wrap the scope block
-        if (intoTarget) {
-            return {
-                type: 'into',
-                statement: scopeBlock,
-                targetName: intoTarget.targetName,
-                targetPath: intoTarget.targetPath,
-                codePos: this.createCodePositionFromLines(startLine, endLine)
-            };
         }
         
         return scopeBlock;
@@ -2107,23 +2101,8 @@ export class Parser {
             // Parse the do block (can be regular do or do into $var)
             const doBlock = this.parseScope(this.currentLine);
             
-            // parseScope returns ScopeBlock | IntoAssignment
-            // For together, we accept both:
-            // - ScopeBlock (regular do block)
-            // - IntoAssignment wrapping a ScopeBlock (do into $var)
-            if (doBlock.type === 'into' && doBlock.statement.type === 'do') {
-                // This is "do into $var" - we need to store it as IntoAssignment
-                // But TogetherBlock expects ScopeBlock[], so we need to change the type
-                // Actually, let's store the IntoAssignment info in the ScopeBlock
-                // For now, let's just store the do block and handle "into" during execution
-                // We'll need to track which blocks have "into" assignments
-                blocks.push(doBlock.statement);
-                // Store the into info on the block for later use
-                (doBlock.statement as any).__intoAssignment = {
-                    targetName: doBlock.targetName,
-                    targetPath: doBlock.targetPath
-                };
-            } else if (doBlock.type === 'do') {
+            // parseScope now returns ScopeBlock with optional into property
+            if (doBlock.type === 'do') {
                 blocks.push(doBlock);
             } else {
                 throw this.createError('together block can only contain do blocks', this.currentLine);

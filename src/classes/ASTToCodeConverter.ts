@@ -737,6 +737,21 @@ export class ASTToCodeConverter {
                     commandCode = `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
                 }
                 
+                // Add "into $var" if present
+                if (node.into) {
+                    let intoTarget = '$' + node.into.targetName;
+                    if (node.into.targetPath) {
+                        for (const seg of node.into.targetPath) {
+                            if (seg.type === 'property') {
+                                intoTarget += '.' + seg.name;
+                            } else if (seg.type === 'index') {
+                                intoTarget += '[' + seg.index + ']';
+                            }
+                        }
+                    }
+                    commandCode += ` into ${intoTarget}`;
+                }
+                
                 // Add inline comment if present (comments above are handled separately in updateCodeFromAST)
                 if (node.comments && Array.isArray(node.comments)) {
                     const inlineComment = node.comments.find((c: CommentWithPosition) => c.inline === true && c.text && c.text.trim() !== '');
@@ -902,7 +917,29 @@ export class ASTToCodeConverter {
                 return parts.join('\n');
             }
             case 'do': {
-                const parts: string[] = [`${indent}do`];
+                let doLine = `${indent}do`;
+                
+                // Add parameter names if present
+                if (node.paramNames && node.paramNames.length > 0) {
+                    doLine += ' ' + node.paramNames.map((name: string) => `$${name}`).join(' ');
+                }
+                
+                // Add "into $var" if present
+                if (node.into) {
+                    let intoTarget = '$' + node.into.targetName;
+                    if (node.into.targetPath) {
+                        for (const seg of node.into.targetPath) {
+                            if (seg.type === 'property') {
+                                intoTarget += '.' + seg.name;
+                            } else if (seg.type === 'index') {
+                                intoTarget += '[' + seg.index + ']';
+                            }
+                        }
+                    }
+                    doLine += ` into ${intoTarget}`;
+                }
+                
+                const parts: string[] = [doLine];
                 
                 if (node.body) {
                     for (const stmt of node.body) {
