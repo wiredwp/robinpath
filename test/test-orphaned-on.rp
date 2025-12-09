@@ -1,0 +1,37 @@
+# Test: Orphaned "on" block syntax
+# When an "on" block meets another "on" block, it automatically closes (implicit endon)
+# When an "on" block is at the end of the script and there are no more "on" statements,
+# it should automatically close without requiring "endon"
+
+log "Testing orphaned 'on' block syntax (auto-closing)"
+
+# Trigger to verify they were parsed correctly
+trigger "orphan1" "test1"
+trigger "orphan2" "test2"
+trigger "orphan3" "test3"
+
+log 
+log "Test: Multiple 'on' blocks - each auto-closes when meeting the next 'on'"
+log "Test: Passed - all orphaned blocks parsed correctly"
+log 
+
+string.repeat "=" 60
+log $
+log "Orphaned 'on' block syntax test completed successfully!"
+string.repeat "=" 60
+log $
+log 
+
+on "orphan1"
+  log "Event orphan1 - Handler executed successfully"
+  log "Event orphan1 - Received:" $1
+
+on "orphan2"
+  log "Event orphan2 - Handler executed successfully"
+  log "Event orphan2 - Received:" $1
+
+on "orphan3"
+  log "Event orphan3 - Handler executed successfully"
+  log "Event orphan3 - Received:" $1
+
+

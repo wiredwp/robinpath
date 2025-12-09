@@ -353,11 +353,17 @@ export class Parser {
             const onBlock = this.parseOnBlock(scanLine);
             extractedEventHandlers.push(onBlock);
             
-            // Mark all lines in this on block (from on to endon)
+            // Mark all lines in this on block (from on to endon, or to end of script if auto-closed)
             const startLine = scanLine;
-            const endLine = this.currentLine - 1; // parseOnBlock advances past endon
+            // parseOnBlock advances past endon if found, or stays at end of script if auto-closed
+            const endLine = this.currentLine <= this.lines.length ? (this.currentLine - 1) : (this.lines.length - 1);
             for (let i = startLine; i <= endLine; i++) {
                 onBlockLines.add(i);
+            }
+            
+            // If we've reached the end of the script, stop scanning
+            if (this.currentLine >= this.lines.length) {
+                break;
             }
             
             scanLine = this.currentLine;
@@ -3081,6 +3087,13 @@ export class Parser {
                 closed = true;
                 break;
             }
+            
+            // If we encounter another "on" statement, auto-close the current block
+            if (bodyTokens[0] === 'on') {
+                // Don't advance currentLine - the next parseOnBlock call will handle it
+                closed = true;
+                break;
+            }
 
             const stmt = this.parseStatement();
             if (stmt) {
@@ -3129,10 +3142,36 @@ export class Parser {
         }
 
         if (!closed) {
-            throw this.createError('missing endon', this.currentLine);
+            // Check if there are any more "on" statements after the current position
+            // If not, auto-close the block (end of script acts as implicit endon)
+            let hasMoreOnStatements = false;
+            for (let i = this.currentLine; i < this.lines.length; i++) {
+                const line = this.getTrimmedLine(i);
+                if (!line || line.startsWith('#')) {
+                    continue; // Skip empty lines and comments
+                }
+                const tokens = Lexer.tokenize(line);
+                if (tokens.length > 0 && tokens[0] === 'on') {
+                    hasMoreOnStatements = true;
+                    break;
+                }
+            }
+            
+            if (!hasMoreOnStatements) {
+                // No more "on" statements found - auto-close at end of script
+                closed = true;
+                // this.currentLine is already at this.lines.length from the while loop
+            } else {
+                // There are more "on" statements, so endon is required
+                throw this.createError('missing endon', this.currentLine);
+            }
         }
 
-        const endLine = this.currentLine - 1; // endon line
+        // Calculate end line: if closed normally, it's the line before endon (currentLine - 1)
+        // If auto-closed, it's the last line of the script (this.lines.length - 1)
+        const endLine = closed && this.currentLine < this.lines.length 
+            ? (this.currentLine - 1)  // Normal closure: endon line
+            : (this.lines.length - 1); // Auto-closure: end of script
         const result: OnBlock = { 
             type: 'onBlock', 
             eventName, 

@@ -28,6 +28,10 @@ const togetherTestScript = readFileSync(togetherTestScriptPath, 'utf-8');
 const eventTestScriptPath = join(__dirname, 'test-event.rp');
 const eventTestScript = readFileSync(eventTestScriptPath, 'utf-8');
 
+// Read the orphaned-on test script (runs at the beginning)
+const orphanedOnTestScriptPath = join(__dirname, 'test-orphaned-on.rp');
+const orphanedOnTestScript = readFileSync(orphanedOnTestScriptPath, 'utf-8');
+
 // Read the main test script
 const testScriptPath = join(__dirname, 'test.rp');
 const testScript = readFileSync(testScriptPath, 'utf-8');
@@ -4114,6 +4118,29 @@ log "after together"`;
         console.log('Test execution completed successfully!');
         console.log(`Total execution time: ${executionTime}ms (${(executionTime / 1000).toFixed(3)}s)`);
         console.log('='.repeat(60));
+        
+        // Execute the orphaned-on test script last (tests auto-closing "on" blocks)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Orphaned On Block Test Script (test-orphaned-on.rp)');
+        console.log('='.repeat(60));
+        
+        const orphanedOnRp = new RobinPath();
+        const orphanedOnStartTime = Date.now();
+        
+        try {
+            await orphanedOnRp.executeScript(orphanedOnTestScript);
+            const orphanedOnEndTime = Date.now();
+            const orphanedOnExecutionTime = orphanedOnEndTime - orphanedOnStartTime;
+            console.log(`✓ Orphaned-on tests completed in ${orphanedOnExecutionTime}ms`);
+        } catch (error) {
+            console.error('✗ Orphaned-on tests FAILED');
+            console.error('Error:', error);
+            throw error;
+        }
+        
+        console.log('='.repeat(60));
+        console.log();
         
         // Close the test server
         await new Promise((resolve) => {
