@@ -1,7 +1,7 @@
 {
   "name": "@wiredwp/robinpath",
   "description": "RobinPath - A lightweight, fast, and easy-to-use scripting language for automation and data processing.",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "author": "Ryan Lee <ryan@wiredwp.com>",
   "type": "module",
   "main": "./dist/index.js",

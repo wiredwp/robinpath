@@ -4077,6 +4077,86 @@ test.assertNull $nullResult "dom.click callback return null should be assigned t
 
 log "Test 62 - dom.click with callback block: passed"
 
+# Test 63: repeat function with callback
+# $1 = index (0, 1, 2, ...), $2 = accumulated value (null on first iteration)
+
+# Test 63a: Basic repeat - add 1 to accumulated value
+clear
+repeat 5 with
+  add $2 1
+endwith
+test.assertEqual $ 5 "repeat should iterate 5 times and add 1 each time (add null 1 = 1, then 1+1=2, etc.)"
+
+# Test 63a2: Basic repeat with explicit null handling
+clear
+repeat 5 with
+  if $2 == null
+    return 1
+  endif
+  add $2 1
+endwith
+test.assertEqual $ 5 "repeat should iterate 5 times and add 1 each time with explicit null check"
+
+# Test 63b: repeat with explicit return and index usage
+clear
+repeat 3 with
+  if $2 == null
+    return 10
+  endif
+  add $2 5
+  return $
+endwith
+test.assertEqual $ 20 "repeat with explicit return should accumulate correctly (10 + 5 + 5)"
+
+# Test 63c: repeat with into assignment
+clear
+repeat 4 with into $result
+  if $2 == null
+    return 2
+  endif
+  math.multiply $2 2
+endwith
+test.assertEqual $result 16 "repeat with into assignment should work (2 * 2 * 2 * 2 = 16)"
+
+# Test 63d: repeat with 0 iterations
+clear
+repeat 0 with
+  return 100
+endwith
+test.assertNull $ "repeat with 0 iterations should return null"
+
+# Test 63e: repeat building a string using index
+clear
+repeat 3 with
+  if $2 == null
+    return "a"
+  endif
+  string.concat $2 "b"
+endwith
+test.assertEqual $ "abb" "repeat should build string correctly"
+
+# Test 63f: repeat with multiplication starting from 2
+clear
+repeat 5 with
+  if $2 == null
+    return 2
+  endif
+  math.multiply $2 2
+endwith
+test.assertEqual $ 32 "repeat should multiply by 2 five times (2^5 = 32)"
+
+# Test 63g: repeat using index $1
+clear
+repeat 5 with
+  if $2 == null
+    return 0
+  endif
+  add $2 $1
+endwith
+test.assertEqual $ 10 "repeat should accumulate index values (0+1+2+3+4 = 10)"
+
+log "Test 63 - repeat function: passed"
+
 log "All tests completed!"
 
 

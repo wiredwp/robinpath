@@ -1,8 +1,10 @@
 import type { 
     BuiltinHandler, 
+    BuiltinCallback,
     FunctionMetadata, 
     ModuleMetadata,
-    ModuleAdapter
+    ModuleAdapter,
+    Value
 } from '../index';
 import JSON5 from 'json5';
 
@@ -208,6 +210,38 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         // has command implementation is in executeCommand for special handling
         // This registration ensures it's recognized as a valid command
         return null;
+    },
+
+    repeat: async (args, callback?: BuiltinCallback | null) => {
+        const count = Number(args[0] ?? 0);
+        
+        if (isNaN(count) || count < 0) {
+            throw new Error('repeat requires a non-negative number');
+        }
+        
+        if (!callback) {
+            throw new Error('repeat requires a with callback block');
+        }
+        
+        // Start with null for the first iteration (no previous accumulated value)
+        let accumulatedValue: Value = null;
+        
+        // Execute the callback 'count' times
+        for (let i = 0; i < count; i++) {
+            // Pass the index as $1 and accumulated value as $2 to the callback
+            // $1 = current iteration index (0, 1, 2, ...)
+            // $2 = accumulated value from previous iteration (null on first iteration)
+            const callbackArgs: Value[] = [i, accumulatedValue];
+            
+            // Execute the callback and get the result
+            const result = await Promise.resolve(callback(callbackArgs));
+            
+            // The result becomes the accumulatedValue for the next iteration
+            accumulatedValue = result !== undefined ? result : null;
+        }
+        
+        // Return the final accumulated value
+        return accumulatedValue;
     }
 };
 
@@ -496,6 +530,22 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         returnType: 'array',
         returnDescription: 'Array of numbers from start to end',
         example: 'range 1 5  # Returns [1, 2, 3, 4, 5]'
+    },
+
+    repeat: {
+        description: 'Repeats a callback block a specified number of times. The callback receives $1 (current iteration index, starting from 0) and $2 (accumulated value from previous iteration, null on first iteration).',
+        parameters: [
+            {
+                name: 'count',
+                dataType: 'number',
+                description: 'Number of times to repeat the callback',
+                formInputType: 'number',
+                required: true
+            }
+        ],
+        returnType: 'any',
+        returnDescription: 'Returns the last value returned by the callback after all iterations',
+        example: 'repeat 5 with\n  add $2 1\nendwith  # Adds 1 to the accumulated value 5 times'
     }
 };
 
@@ -514,7 +564,8 @@ export const CoreModuleMetadata: ModuleMetadata = {
         'set',
         'get',
         'range',
-        'has'
+        'has',
+        'repeat'
     ]
 };
 
