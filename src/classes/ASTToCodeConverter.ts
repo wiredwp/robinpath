@@ -687,7 +687,9 @@ export class ASTToCodeConverter {
                 
                 if (syntaxType === 'space') {
                     // Space-separated: fn 'a' 'b'
-                    const argsStr = node.args.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
+                    // Filter out namedArgs from space-separated syntax (they should not appear here)
+                    const spaceArgs = node.args.filter((arg: any) => arg.type !== 'namedArgs');
+                    const argsStr = spaceArgs.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
                     commandCode = `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
                 } else if (syntaxType === 'parentheses') {
                     // Parenthesized single-line: fn('a' 'b')
@@ -708,7 +710,14 @@ export class ASTToCodeConverter {
                             }
                         }
                     }
-                    commandCode = `${indent}${modulePrefix}${commandName}(${parts.join(' ')})`;
+                    // Ensure we have at least one named arg to preserve named-parentheses syntax
+                    // If no named args but syntaxType is named-parentheses, we still need to preserve the syntax
+                    if (parts.length > 0) {
+                        commandCode = `${indent}${modulePrefix}${commandName}(${parts.join(' ')})`;
+                    } else {
+                        // Fallback: if no args but syntaxType is named-parentheses, use empty parentheses
+                        commandCode = `${indent}${modulePrefix}${commandName}()`;
+                    }
                 } else if (syntaxType === 'multiline-parentheses') {
                     // Multiline parenthesized: fn(\n  $a='a'\n  $b='b'\n)
                     const parts: string[] = [];
@@ -1029,14 +1038,10 @@ export class ASTToCodeConverter {
             case 'array':
                 return `[${arg.code || ''}]`;
             case 'namedArgs': {
-                const pairs: string[] = [];
-                for (const [key, valueArg] of Object.entries(arg.args || {})) {
-                    const valueCode = this.reconstructArgCode(valueArg as any);
-                    if (valueCode !== null) {
-                        pairs.push(`${key}=${valueCode}`);
-                    }
-                }
-                return pairs.join(' ');
+                // This case is handled in reconstructCodeFromASTNode for command nodes
+                // It should not be called directly for namedArgs
+                // Return null to indicate this should be handled by the parent
+                return null;
             }
             default:
                 return null;

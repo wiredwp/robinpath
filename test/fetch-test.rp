@@ -27,6 +27,7 @@ clear
 do
   fetch.post(url="http://localhost:3005/test/post" body={"name": "John", "age": 30})
   $response = $
+  
   test.assertType $response "object" "fetch.post should return an object"
   test.assertEqual $response.ok true "fetch.post response.ok should be true"
   test.assertEqual $response.status 200 "fetch.post response.status should be 200"

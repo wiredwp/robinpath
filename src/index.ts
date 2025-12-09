@@ -45,6 +45,7 @@ import RandomModule from './modules/Random';
 import ArrayModule from './modules/Array';
 import FetchModule from './modules/Fetch';
 import TestModule from './modules/Test';
+import DomModule from './modules/Dom';
 
 // ============================================================================
 // Types
@@ -52,7 +53,8 @@ import TestModule from './modules/Test';
 
 // Value type is imported from utils
 
-export type BuiltinHandler = (args: Value[]) => Promise<Value> | Value | null;
+export type BuiltinCallback = (callbackArgs: Value[]) => Promise<Value> | Value | null;
+export type BuiltinHandler = (args: Value[], callback?: BuiltinCallback | null) => Promise<Value> | Value | null;
 export type DecoratorHandler = (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => Promise<Value[] | Value | null | undefined>;
 
 export interface Environment {
@@ -66,6 +68,7 @@ export interface Environment {
     variableMetadata: Map<string, Map<string, Value>>; // variable name -> (meta key -> value)
     functionMetadata: Map<string, Map<string, Value>>; // function name -> (meta key -> value)
     constants: Set<string>; // Set of constant variable names (cannot be reassigned)
+    eventHandlers: Map<string, OnBlock[]>; // event name -> array of event handlers
 }
 
 export interface Frame {
@@ -150,6 +153,7 @@ export interface CommandCall {
     syntaxType?: 'space' | 'parentheses' | 'named-parentheses' | 'multiline-parentheses'; // Function call syntax style
     decorators?: DecoratorCall[]; // Decorators attached to this command (for var/const)
     into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
+    callback?: ScopeBlock; // Optional callback do block (for module functions)
     comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -259,6 +263,14 @@ export interface BreakStatement {
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
+export interface OnBlock {
+    type: 'onBlock';
+    eventName: string; // Event name (e.g., "test1")
+    body: Statement[]; // Body statements that execute when event is triggered
+    comments?: CommentWithPosition[]; // Comments attached to this on block (above and inline)
+    codePos: CodePosition; // Code position (row/col) in source code
+}
+
 export interface CommentWithPosition {
     text: string; // Comment text without the #
     codePos: CodePosition; // Code position (row/col) in source code
@@ -286,6 +298,7 @@ export type Statement =
     | ForLoop
     | ReturnStatement
     | BreakStatement
+    | OnBlock
     | CommentStatement;
 
 // ============================================================================
@@ -357,7 +370,8 @@ export class RobinPath {
             currentModule: null,
             variableMetadata: new Map(),
             functionMetadata: new Map(),
-            constants: new Set()
+            constants: new Set(),
+            eventHandlers: new Map()
         };
 
         // Create persistent executor for REPL mode
@@ -458,6 +472,28 @@ export class RobinPath {
                 return result;
             }
         });
+
+        // Register trigger builtin command
+        // Usage: trigger "eventName" [arg1] [arg2] ...
+        // This allows triggering events from within RobinPath scripts
+        this.registerBuiltin('trigger', async (args) => {
+            if (args.length === 0) {
+                const errorMsg = 'Error: trigger requires an event name';
+                console.log(errorMsg);
+                return errorMsg;
+            }
+
+            // First argument is the event name
+            const eventName = String(args[0]);
+            
+            // Remaining arguments are passed to event handlers
+            const eventArgs = args.slice(1);
+
+            // Trigger the event
+            await this.trigger(eventName, ...eventArgs);
+            
+            return null;
+        });
     }
 
     /**
@@ -474,7 +510,8 @@ export class RobinPath {
         RandomModule,
         ArrayModule,
         FetchModule,
-        TestModule
+        TestModule,
+        DomModule
     ];
 
     /**
@@ -1309,10 +1346,10 @@ export class RobinPath {
 
     /**
      * Check if a script needs more input (incomplete block)
-     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
+     * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } {
+    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
             const lines = splitIntoLogicalLines(script);
             const parser = new Parser(lines);
@@ -1333,6 +1370,9 @@ export class RobinPath {
             }
             if (errorMessage.includes('missing enddo')) {
                 return { needsMore: true, waitingFor: 'enddo' };
+            }
+            if (errorMessage.includes('missing endon')) {
+                return { needsMore: true, waitingFor: 'endon' };
             }
             
             // NEW: unclosed $( ... ) subexpression – keep reading lines
@@ -1497,7 +1537,7 @@ export class RobinPath {
         switch (stmt.type) {
             case 'command':
                 const moduleName = this.findModuleName(stmt.name, currentModuleContext);
-                return {
+                const serializedCmd: any = {
                     ...base,
                     name: stmt.name,
                     module: moduleName,
@@ -1505,6 +1545,15 @@ export class RobinPath {
                     syntaxType: (stmt as any).syntaxType,
                     into: stmt.into
                 };
+                if (stmt.callback) {
+                    serializedCmd.callback = {
+                        type: 'do',
+                        paramNames: stmt.callback.paramNames,
+                        body: stmt.callback.body.map(s => this.serializeStatement(s, currentModuleContext)),
+                        into: stmt.callback.into
+                    };
+                }
+                return serializedCmd;
             case 'assignment':
                 return {
                     ...base,
@@ -1587,6 +1636,13 @@ export class RobinPath {
                 return {
                     ...base,
                     blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, currentModuleContext))
+                };
+            case 'onBlock':
+                const onBlockStmt = stmt as OnBlock;
+                return {
+                    ...base,
+                    eventName: onBlockStmt.eventName,
+                    body: onBlockStmt.body.map(s => this.serializeStatement(s, currentModuleContext))
                 };
         }
     }
@@ -1671,7 +1727,17 @@ export class RobinPath {
             this.environment.functions.set(func.name, func);
         }
         
+        // Register extracted event handlers first (before executing other statements)
+        // This allows trigger commands to work anywhere in the script
+        const extractedEventHandlers = parser.getExtractedEventHandlers();
+        for (const handler of extractedEventHandlers) {
+            const handlers = this.environment.eventHandlers.get(handler.eventName) || [];
+            handlers.push(handler);
+            this.environment.eventHandlers.set(handler.eventName, handlers);
+        }
+        
         const executor = new Executor(this.environment, null);
+        
         this.lastExecutor = executor;
         const result = await executor.execute(statements);
         return result;
@@ -1852,6 +1918,37 @@ export class RobinPath {
         
         // Remove from threads map
         this.threads.delete(id);
+    }
+
+    /**
+     * Trigger an event, executing all registered event handlers for the event name
+     * @param eventName The name of the event to trigger
+     * @param args Arguments to pass to event handlers (available as $1, $2, $3, etc.)
+     * @returns Promise that resolves when all handlers have executed
+     */
+    async trigger(eventName: string, ...args: Value[]): Promise<void> {
+        // Get all handlers for this event name
+        const handlers = this.environment.eventHandlers.get(eventName) || [];
+        
+        if (handlers.length === 0) {
+            // No handlers registered for this event - silently return
+            return;
+        }
+        
+        // Execute each handler
+        for (const handler of handlers) {
+            // Create a new executor for each handler execution
+            // This ensures each handler has its own execution context
+            const executor = new Executor(this.environment, null);
+            
+            try {
+                // Execute handler with arguments
+                await executor.executeEventHandler(handler, args);
+            } catch (error) {
+                // If handler throws an error, log it but continue with other handlers
+                console.error(`Error executing event handler for "${eventName}":`, error);
+            }
+        }
     }
 
     /**

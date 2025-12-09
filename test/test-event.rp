@@ -1,0 +1,235 @@
+# Event System Tests
+# These event handlers will be triggered from run.js using the trigger() method
+
+# Event Test 1: Basic event handler with arguments
+on "test1"
+  log "Event Test 1 - Received args:" $1 $2 $3
+endon
+
+# Event Test 2: Multiple handlers for the same event
+on "test2"
+  log "Event Test 2a - Handler 1:" $1
+endon
+
+on "test2"
+  log "Event Test 2b - Handler 2:" $1
+endon
+
+# Event Test 3: Event handler with calculations
+on "test3"
+  math.add $1 $2
+  log "Event Test 3 - Sum:" $
+endon
+
+# Event Test 4: Event handler with conditional logic
+on "test4"
+  if $1 > 10
+    log "Event Test 4 - Value is greater than 10:" $1
+  else
+    log "Event Test 4 - Value is 10 or less:" $1
+  endif
+endon
+
+# Event Test 5: Event handler with string operations
+on "test5"
+  string.concat "Hello, " $1
+  log "Event Test 5 - Greeting:" $
+endon
+
+# Event Test 6: Event handler with object argument
+on "test6"
+  log "Event Test 6 - Received object:" $1
+  log "Event Test 6 - Object property name:" $1.name
+  log "Event Test 6 - Object property age:" $1.age
+endon
+
+# Event Test 7: Event handler with array argument
+on "test7"
+  log "Event Test 7 - Received array:" $1
+  log "Event Test 7 - Array length:" $1.length
+  log "Event Test 7 - First element:" $1[0]
+  log "Event Test 7 - Second element:" $1[1]
+endon
+
+# Event Test 8: Event handler with mixed arguments (object and array)
+on "test8"
+  log "Event Test 8 - Received object:" $1
+  log "Event Test 8 - Received array:" $2
+  log "Event Test 8 - Object property:" $1.key
+  log "Event Test 8 - Array first element:" $2[0]
+endon
+
+# ============================================================================
+# Trigger Command Tests (trigger command used within script)
+# ============================================================================
+
+# Event Test 9: Handler defined AFTER trigger command (should work because handlers are collected first)
+on "test9"
+  log "Event Test 9 - Handler executed:" $1 $2
+endon
+
+# Event Test 10: Handler defined BEFORE trigger command
+on "test10"
+  log "Event Test 10 - Handler executed:" $1
+endon
+
+# Event Test 11: Handler with multiple arguments
+on "test11"
+  log "Event Test 11 - Args:" $1 $2 $3 $4
+endon
+
+# Event Test 12: Handler with object argument
+on "test12"
+  log "Event Test 12 - Object name:" $1.name
+  log "Event Test 12 - Object age:" $1.age
+endon
+
+# Event Test 13: Handler with array argument
+on "test13"
+  log "Event Test 13 - Array length:" $1.length
+  log "Event Test 13 - First item:" $1[0]
+  log "Event Test 13 - Second item:" $1[1]
+endon
+
+# Event Test 14: Multiple handlers for same event
+on "test14"
+  log "Event Test 14a - Handler 1:" $1
+endon
+
+on "test14"
+  log "Event Test 14b - Handler 2:" $1
+endon
+
+on "test14"
+  log "Event Test 14c - Handler 3:" $1
+endon
+
+# Event Test 15: Handler that triggers another event (nested triggers)
+on "test15"
+  log "Event Test 15 - Triggering test15a from test15"
+  trigger "test15a" "nested" "trigger"
+endon
+
+on "test15a"
+  log "Event Test 15a - Nested trigger executed:" $1 $2
+endon
+
+# Event Test 16: Handler with calculations
+on "test16"
+  math.add $1 $2
+  log "Event Test 16 - Sum:" $
+  math.multiply $ 2
+  log "Event Test 16 - Doubled:" $
+endon
+
+# Event Test 17: Handler with conditional logic
+on "test17"
+  if $1 > 50
+    log "Event Test 17 - Value is greater than 50:" $1
+  else
+    log "Event Test 17 - Value is 50 or less:" $1
+  endif
+endon
+
+# Event Test 18: Handler that uses variables from outer scope
+on "test18"
+  log "Event Test 18 - Received:" $1
+  log "Event Test 18 - Outer variable testVar:" $testVar
+endon
+
+# ============================================================================
+# Execute Trigger Command Tests
+# ============================================================================
+
+log ""
+log "=".repeat(60)
+log "Testing trigger command from within script"
+log "=".repeat(60)
+log ""
+
+# Test 1: Trigger handler defined AFTER trigger command
+log "Test 1: Triggering test9 (handler defined after trigger)"
+trigger "test9" "hello" "world"
+log ""
+
+# Test 2: Trigger handler defined BEFORE trigger command
+log "Test 2: Triggering test10 (handler defined before trigger)"
+trigger "test10" "works"
+log ""
+
+# Test 3: Trigger with multiple arguments
+log "Test 3: Triggering test11 with 4 arguments"
+trigger "test11" 1 2 3 4
+log ""
+
+# Test 4: Trigger with object argument
+log "Test 4: Triggering test12 with object"
+obj '{name: "Alice", age: 30}'
+$testObj = $
+trigger "test12" $testObj
+log ""
+
+# Test 5: Trigger with array argument
+log "Test 5: Triggering test13 with array"
+$testArray = range 5 7
+trigger "test13" $testArray
+log ""
+
+# Test 6: Trigger event with multiple handlers
+log "Test 6: Triggering test14 (has 3 handlers)"
+trigger "test14" "multiple"
+log ""
+
+# Test 7: Nested triggers (handler triggers another event)
+log "Test 7: Triggering test15 (which triggers test15a)"
+trigger "test15" "parent"
+log ""
+
+# Test 8: Trigger with calculations in handler
+log "Test 8: Triggering test16 with calculations"
+trigger "test16" 10 20
+log ""
+
+# Test 9: Trigger with conditional logic in handler
+log "Test 9: Triggering test17 with conditional logic"
+trigger "test17" 75
+trigger "test17" 25
+log ""
+
+# Test 10: Trigger with variable from outer scope
+log "Test 10: Triggering test18 (uses outer variable)"
+$testVar = "outer scope value"
+trigger "test18" "inner"
+log ""
+
+# Test 11: Trigger non-existent event (should silently return)
+log "Test 11: Triggering non-existent event (should do nothing)"
+trigger "nonexistent" "arg1" "arg2"
+log "Test 11: No error occurred (expected)"
+log ""
+
+# Test 12: Trigger with no arguments
+on "test19"
+  log "Event Test 19 - No arguments received"
+endon
+
+log "Test 12: Triggering test19 with no arguments"
+trigger "test19"
+log ""
+
+# Test 13: Trigger with mixed types (string, number, boolean, null)
+on "test20"
+  log "Event Test 20 - String:" $1
+  log "Event Test 20 - Number:" $2
+  log "Event Test 20 - Boolean:" $3
+  log "Event Test 20 - Null:" $4
+endon
+
+log "Test 13: Triggering test20 with mixed types"
+trigger "test20" "text" 42 true null
+log ""
+
+log "=".repeat(60)
+log "All trigger command tests completed"
+log "=".repeat(60)
+log ""

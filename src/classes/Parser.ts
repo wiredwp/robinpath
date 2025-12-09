@@ -15,6 +15,7 @@ import type {
     TogetherBlock,
     ForLoop,
     ReturnStatement,
+    OnBlock,
     CommentStatement,
     CommentWithPosition,
     CodePosition,
@@ -216,9 +217,11 @@ export class Parser {
     }
 
     parse(): Statement[] {
-        // First pass: extract all def/enddef blocks and mark their line numbers
+        // First pass: extract all def/enddef blocks and on/endon blocks, and mark their line numbers
         const defBlockLines = new Set<number>();
+        const onBlockLines = new Set<number>();
         const extractedFunctions: DefineFunction[] = [];
+        const extractedEventHandlers: OnBlock[] = [];
         let scanLine = 0;
         
         while (scanLine < this.lines.length) {
@@ -343,12 +346,28 @@ export class Parser {
             } else {
                 scanLine++;
             }
+        } else if (tokens.length > 0 && tokens[0] === 'on') {
+            // Found an on block - extract it
+            const savedCurrentLine = this.currentLine;
+            this.currentLine = scanLine;
+            const onBlock = this.parseOnBlock(scanLine);
+            extractedEventHandlers.push(onBlock);
+            
+            // Mark all lines in this on block (from on to endon)
+            const startLine = scanLine;
+            const endLine = this.currentLine - 1; // parseOnBlock advances past endon
+            for (let i = startLine; i <= endLine; i++) {
+                onBlockLines.add(i);
+            }
+            
+            scanLine = this.currentLine;
+            this.currentLine = savedCurrentLine;
         } else if (tokens.length > 0 && (tokens[0] === 'var' || tokens[0] === 'const')) {
             // Line starts directly with var or const (no decorators) - skip it
             // These will be handled in the main parse() method
             scanLine++;
         } else {
-            // Not a decorator, def, var, or const - skip this line and continue scanning
+            // Not a decorator, def, var, const, or on - skip this line and continue scanning
             scanLine++;
         }
         }
@@ -420,13 +439,16 @@ export class Parser {
         // Store all extracted functions (including nested ones) for later registration
         (this as any).extractedFunctions = allExtractedFunctions;
         
-        // Second pass: parse remaining statements (excluding def blocks)
+        // Store all extracted event handlers for later registration
+        (this as any).extractedEventHandlers = extractedEventHandlers;
+        
+        // Second pass: parse remaining statements (excluding def blocks and on blocks)
         // Collect comments and attach them to the following statement
         this.currentLine = 0;
         const pendingComments: string[] = [];
         const statements = this.parseStatementsWithComments(
             pendingComments,
-            (lineNumber) => defBlockLines.has(lineNumber)
+            (lineNumber) => defBlockLines.has(lineNumber) || onBlockLines.has(lineNumber)
         );
 
         return statements;
@@ -437,6 +459,13 @@ export class Parser {
      */
     getExtractedFunctions(): DefineFunction[] {
         return (this as any).extractedFunctions || [];
+    }
+    
+    /**
+     * Get extracted event handlers (on/endon blocks) that were parsed separately
+     */
+    getExtractedEventHandlers(): OnBlock[] {
+        return (this as any).extractedEventHandlers || [];
     }
 
     /**
@@ -821,6 +850,11 @@ export class Parser {
             return { type: 'break', codePos: this.createCodePositionFromLines(startLine, endLine) };
         }
 
+        // Check for on block
+        if (tokens[0] === 'on') {
+            return this.parseOnBlock(startLine);
+        }
+
         // Check for block if
         if (tokens[0] === 'if' && !tokens.includes('then')) {
             return this.parseIfBlock(startLine);
@@ -1178,9 +1212,85 @@ export class Parser {
         }
         
         const command = this.parseCommandFromTokens(tokens, startLine);
-        const endLine = this.currentLine;
-        this.currentLine++;
-        const result = { ...command, syntaxType: 'space' as const, codePos: this.createCodePositionFromLines(startLine, endLine) };
+        // parseCommandFromTokens may have advanced currentLine if there were multi-line arguments
+        // So we need to check from the current line position
+        const commandEndLine = this.currentLine;
+        
+        // Check if next line is a "do" block (callback)
+        // Look ahead to see if next non-empty, non-comment line is "do"
+        // CRITICAL: Always start from the line AFTER where the command ended
+        // This ensures we don't accidentally skip the next statement when there's no blank line
+        let callback: ScopeBlock | undefined = undefined;
+        // Start looking from the line after the command ended
+        // For single-line commands, commandEndLine equals startLine, so we look at startLine + 1
+        // For multi-line commands, parseCommandFromTokens already advanced currentLine, so we look at commandEndLine + 1
+        let lookAheadLine = startLine + 1;
+        // But if parseCommandFromTokens advanced currentLine (multi-line args), use that instead
+        if (commandEndLine > startLine) {
+            lookAheadLine = commandEndLine + 1;
+        }
+        
+        while (lookAheadLine < this.lines.length) {
+            const lookAheadLineContent = this.lines[lookAheadLine]?.trim();
+            if (!lookAheadLineContent || lookAheadLineContent.startsWith('#')) {
+                lookAheadLine++;
+                continue;
+            }
+            
+            const lookAheadTokens = Lexer.tokenize(lookAheadLineContent);
+            if (lookAheadTokens.length > 0 && lookAheadTokens[0] === 'do') {
+                // Check if this is a standalone "do into" block (not a callback)
+                // "do into $var" is a standalone statement, not a callback
+                const hasInto = lookAheadTokens.includes('into');
+                if (hasInto) {
+                    // This is a standalone "do into" block, not a callback - stop looking
+                    break;
+                }
+                // Check if the command supports callbacks
+                // Currently, only dom.* commands support callbacks (e.g., dom.click)
+                // Other commands like "clear" don't support callbacks, so "do" blocks after them
+                // should be treated as standalone statements, not callbacks
+                const commandName = command.name;
+                const supportsCallbacks = commandName.startsWith('dom.');
+                if (!supportsCallbacks) {
+                    // Command doesn't support callbacks - treat "do" as standalone statement
+                    break;
+                }
+                // Found a simple "do" block after a command that supports callbacks - parse it as callback
+                this.currentLine = lookAheadLine;
+                callback = this.parseScope(lookAheadLine);
+                // parseScope advances currentLine past enddo
+                break;
+            } else {
+                // Not a do block - stop looking
+                break;
+            }
+        }
+        
+        const endLine = callback ? (this.currentLine - 1) : commandEndLine;
+        // If no callback, advance past the command line
+        // CRITICAL: For single-line commands, commandEndLine equals startLine
+        // So we need to advance to startLine + 1, not commandEndLine + 1
+        // But if parseCommandFromTokens advanced currentLine (multi-line), use commandEndLine + 1
+        if (!callback) {
+            // Always advance to the line after where the command started
+            // This ensures we don't skip the next statement when there's no blank line
+            if (commandEndLine > startLine) {
+                // Multi-line command - parseCommandFromTokens already advanced
+                this.currentLine = commandEndLine + 1;
+            } else {
+                // Single-line command - advance to startLine + 1
+                this.currentLine = startLine + 1;
+            }
+        }
+        // If callback was found, currentLine is already advanced by parseScope
+        
+        const result: CommandCall = { 
+            ...command, 
+            syntaxType: 'space' as const, 
+            callback,
+            codePos: this.createCodePositionFromLines(startLine, endLine) 
+        };
         return result;
     }
 
@@ -1276,13 +1386,58 @@ export class Parser {
             intoInfo = this.checkForIntoAfterParen(parenEndLine);
         }
         
-        const endLine = intoInfo ? (this.currentLine - 1) : this.currentLine;
+        // Check if next line is a "do" block (callback)
+        // extractParenthesizedContent may have advanced currentLine if it was multi-line
+        let callback: ScopeBlock | undefined = undefined;
+        let lookAheadLine = this.currentLine;
+        
+        while (lookAheadLine < this.lines.length) {
+            const lookAheadLineContent = this.getTrimmedLine(lookAheadLine);
+            if (!lookAheadLineContent || lookAheadLineContent.startsWith('#')) {
+                lookAheadLine++;
+                continue;
+            }
+            
+            const lookAheadTokens = Lexer.tokenize(lookAheadLineContent);
+            if (lookAheadTokens.length > 0 && lookAheadTokens[0] === 'do') {
+                // Found a do block - parse it as callback
+                this.currentLine = lookAheadLine;
+                callback = this.parseScope(lookAheadLine);
+                // parseScope advances currentLine past enddo
+                break;
+            } else {
+                // Not a do block - stop looking
+                break;
+            }
+        }
+        
+        // Determine the end line of the command
+        // extractParenthesizedContent already advanced currentLine past the closing paren
+        // So for single-line calls, parenEndLine is the line with the closing paren
+        // For multi-line calls, parenEndLine is the last line of the call
+        const endLine = callback ? (this.currentLine - 1) : (intoInfo ? parenEndLine : parenEndLine);
+        
+        // If no callback and no into, ensure currentLine is set correctly
+        // extractParenthesizedContent already advanced currentLine past the closing paren
+        // So for single-line calls, currentLine is already at startLine + 1
+        // For multi-line calls, currentLine is already at parenEndLine + 1
+        if (!callback && !intoInfo) {
+            // extractParenthesizedContent already advanced currentLine correctly
+            // For single-line: currentLine = startLine + 1 (correct)
+            // For multi-line: currentLine = parenEndLine + 1 (correct)
+            // No need to change it
+        } else if (!callback) {
+            // intoInfo was found, currentLine is already set correctly
+            // (checkForIntoAfterParen may have advanced it)
+        }
+        // If callback was found, currentLine is already advanced by parseScope
         const command: CommandCall = { 
             type: 'command', 
             name, 
             args,
             syntaxType,
             into: intoInfo || undefined,
+            callback,
             codePos: this.createCodePositionFromLines(callStartLine, endLine)
         };
         
@@ -2530,6 +2685,148 @@ export class Parser {
         return result;
     }
 
+    private parseOnBlock(startLine: number): OnBlock {
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
+        const tokens = Lexer.tokenize(line);
+        
+        if (tokens.length < 2) {
+            throw this.createError('on requires an event name', this.currentLine);
+        }
+
+        // Parse event name from string literal (e.g., "test1" or 'test1')
+        let eventName: string;
+        const eventNameToken = tokens[1];
+        if (LexerUtils.isString(eventNameToken)) {
+            // Remove quotes and unescape
+            eventName = LexerUtils.parseString(eventNameToken);
+        } else {
+            // Allow unquoted event names for convenience
+            eventName = eventNameToken;
+        }
+        
+        // Extract inline comment from on line
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
+        const comments: CommentWithPosition[] = [];
+        if (inlineComment) {
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
+        }
+        
+        this.currentLine++;
+
+        const body: Statement[] = [];
+        let closed = false;
+        let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
+        let hasBlankLineAfterLastComment = false;
+        let hasCreatedCommentNodes = false;
+
+        while (this.currentLine < this.lines.length) {
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
+            
+            // Blank line: mark that blank line appeared after last comment
+            if (!bodyLine) {
+                hasBlankLineAfterLastComment = true;
+                this.currentLine++;
+                continue;
+            }
+            
+            // Comment line: if we have pending comments with blank line after, create comment nodes
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments and there was a blank line after them, create comment nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment) {
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                    hasCreatedCommentNodes = true;
+                } else if (!hasBlankLineAfterLastComment) {
+                    // Consecutive comment (no blank line) - reset flag so they can be attached
+                    hasCreatedCommentNodes = false;
+                }
+                
+                // Start new sequence with this comment
+                pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
+                hasBlankLineAfterLastComment = false;
+                this.currentLine++;
+                continue;
+            }
+
+            const bodyTokens = Lexer.tokenize(bodyLine);
+            
+            if (bodyTokens[0] === 'endon') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            const stmt = this.parseStatement();
+            if (stmt) {
+                const allComments: string[] = [];
+                
+                // If there was a blank line after pending comments, create comment nodes
+                if (pendingComments.length > 0 && hasBlankLineAfterLastComment && hasCreatedCommentNodes) {
+                    // comment -> blank -> comment -> blank -> statement: all comments become nodes
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0 && hasBlankLineAfterLastComment && !hasCreatedCommentNodes) {
+                    // comment -> blank -> statement: comment becomes node (not attached)
+                    // Group consecutive orphaned comments into a single node
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                } else if (pendingComments.length > 0) {
+                    // No blank line after comments - attach them (consecutive comments)
+                    allComments.push(...pendingComments);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                }
+                
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment.text);
+                }
+                
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
+                body.push(stmt);
+                hasBlankLineAfterLastComment = false;
+                hasCreatedCommentNodes = false;
+            }
+        }
+
+        // Handle any remaining pending comments at end of block
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+        }
+
+        if (!closed) {
+            throw this.createError('missing endon', this.currentLine);
+        }
+
+        const endLine = this.currentLine - 1; // endon line
+        const result: OnBlock = { 
+            type: 'onBlock', 
+            eventName, 
+            body,
+            codePos: this.createCodePositionFromLines(startLine, endLine)
+        };
+        if (comments.length > 0) {
+            result.comments = comments;
+        }
+        return result;
+    }
+
     private parseInlineIf(startLine: number): InlineIf {
         const originalLine = this.lines[this.currentLine];
         const line = originalLine.trim();
@@ -3048,6 +3345,11 @@ export class Parser {
 
         // Determine end line - use the current line index (may have advanced due to multi-line literals)
         const endLine = currentLineIndex;
+        // Update this.currentLine to reflect where we ended up (important for parseCommand's look-ahead logic)
+        // If we processed multi-line arguments, currentLineIndex may be ahead of this.currentLine
+        if (currentLineIndex > this.currentLine) {
+            this.currentLine = currentLineIndex;
+        }
         return { type: 'command', name, args, codePos: this.createCodePositionFromLines(commandStartLine, endLine) };
     }
 

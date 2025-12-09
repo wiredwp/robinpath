@@ -26,6 +26,8 @@ import type {
     ScopeBlock,
     TogetherBlock,
     ForLoop,
+    OnBlock,
+    BuiltinCallback,
     ModuleMetadata,
     DecoratorCall
 } from '../index';
@@ -61,6 +63,37 @@ export class Executor {
 
     getCallStack(): Frame[] {
         return this.callStack;
+    }
+
+    /**
+     * Execute an event handler with the provided arguments
+     * Arguments are available as $1, $2, $3, etc. in the handler body
+     */
+    async executeEventHandler(handler: OnBlock, args: Value[]): Promise<void> {
+        // Create a new frame for the handler
+        const frame: Frame = {
+            locals: new Map(),
+            lastValue: null,
+            isFunctionFrame: true
+        };
+        
+        // Set positional parameters ($1, $2, $3, ...)
+        for (let i = 0; i < args.length; i++) {
+            frame.locals.set(String(i + 1), args[i]);
+        }
+        
+        // Push frame to call stack
+        this.callStack.push(frame);
+        
+        try {
+            // Execute handler body
+            for (const stmt of handler.body) {
+                await this.executeStatement(stmt);
+            }
+        } finally {
+            // Clean up frame
+            this.callStack.pop();
+        }
     }
 
     /**
@@ -166,6 +199,9 @@ export class Executor {
                 break;
             case 'break':
                 await this.executeBreak(stmt, frameOverride);
+                break;
+            case 'onBlock':
+                this.registerEventHandler(stmt);
                 break;
             case 'comment':
                 // Comments are no-ops during execution
@@ -1166,12 +1202,61 @@ Examples:
         
         if (handler) {
             const previousLastValue = frame.lastValue; // Preserve last value for log and assertion functions
-            const result = await Promise.resolve(handler(args));
+            
+            // Create callback function if callback block is present
+            let callback: BuiltinCallback | null = null;
+            if (cmd.callback) {
+                callback = async (callbackArgs: Value[]): Promise<Value | null> => {
+                    // Execute the callback scope block with the provided arguments
+                    // The callback block's parameters ($1, $2, etc.) will be set from callbackArgs
+                    const callbackFrame: Frame = {
+                        locals: new Map(),
+                        lastValue: null,
+                        isFunctionFrame: true
+                    };
+                    
+                    // Set positional parameters ($1, $2, $3, ...) from callbackArgs
+                    for (let i = 0; i < callbackArgs.length; i++) {
+                        callbackFrame.locals.set(String(i + 1), callbackArgs[i]);
+                    }
+                    
+                    // Also set parameter names if callback has paramNames
+                    if (cmd.callback && cmd.callback.paramNames) {
+                        for (let i = 0; i < cmd.callback.paramNames.length; i++) {
+                            const paramName = cmd.callback.paramNames[i];
+                            const paramValue = i < callbackArgs.length ? callbackArgs[i] : null;
+                            callbackFrame.locals.set(paramName, paramValue);
+                        }
+                    }
+                    
+                    // Push callback frame to call stack
+                    this.callStack.push(callbackFrame);
+                    
+                    try {
+                        // Execute callback body
+                        if (cmd.callback) {
+                            for (const stmt of cmd.callback.body) {
+                                await this.executeStatement(stmt, callbackFrame);
+                            }
+                        }
+                        
+                        return callbackFrame.lastValue;
+                    } finally {
+                        // Clean up callback frame
+                        this.callStack.pop();
+                    }
+                };
+            }
+            
+            const result = await Promise.resolve(handler(args, callback));
             // log and assertion functions (assert*) should not affect the last value
             // Helper functions like isEqual, isBigger should set lastValue normally
+            // time.sleep should not affect the last value
             const isLog = functionName === 'log' || cmd.name === 'log';
             const isAssertion = (functionName.startsWith('test.assert') || cmd.name.startsWith('test.assert')) ||
                                (functionName === 'assert' || cmd.name === 'assert');
+            const isSleep = functionName === 'time.sleep' || cmd.name === 'time.sleep' || 
+                           (functionName === 'sleep' && this.environment.currentModule === 'time');
             
             // Handle "into" assignment if present - use the actual result value
             // console.log('====> Executor: cmd.into:', cmd.into, 'result:', result, 'cmd.name:', cmd.name);
@@ -1187,7 +1272,7 @@ Examples:
                 frame.lastValue = previousLastValue;
             } else {
                 // Only set lastValue if there's no "into" assignment
-                if (isLog || isAssertion) {
+                if (isLog || isAssertion || isSleep) {
                     frame.lastValue = previousLastValue;
                 } else {
                     // Ensure lastValue is set (even if result is undefined, preserve it)
@@ -1494,6 +1579,15 @@ Examples:
             func.decorators = existingFunc.decorators;
         }
         this.environment.functions.set(func.name, func);
+    }
+
+    private registerEventHandler(onBlock: OnBlock): void {
+        // Get existing handlers for this event name, or create new array
+        const handlers = this.environment.eventHandlers.get(onBlock.eventName) || [];
+        // Add the new handler to the array
+        handlers.push(onBlock);
+        // Store back in the map
+        this.environment.eventHandlers.set(onBlock.eventName, handlers);
     }
 
     private async executeScope(scope: ScopeBlock, frameOverride?: Frame): Promise<void> {

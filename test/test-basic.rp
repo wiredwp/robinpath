@@ -1,0 +1,149 @@
+# Basic Assignment Tests
+# These tests verify that basic assignment operations work correctly
+
+log "=== Basic Assignment Tests ==="
+
+# Test 1: Object literal assignment
+log "Test 1: Object literal assignment"
+$obj = { obj: true }
+log "obj value:" $obj
+test.assertEqual $obj.obj true "Object assignment failed"
+
+# Test 2: Variable to variable assignment
+log "Test 2: Variable to variable assignment"
+$a = $obj
+log "a value:" $a
+test.assertNotNull $a "Variable assignment failed - $a is null"
+test.assertEqual $a.obj true "Variable assignment failed - $a.obj is not true"
+
+# Test 2b: Variable to variable assignment with new variable name
+log "Test 2b: Variable to variable assignment (newObj = obj)"
+$newObj = $obj
+log "newObj value:" $newObj
+test.assertNotNull $newObj "Variable assignment failed - $newObj is null"
+test.assertEqual $newObj.obj true "Variable assignment failed - $newObj.obj is not true"
+test.assertEqual $newObj $obj "Variable assignment failed - $newObj should equal $obj"
+
+# Test 3: Nested object assignment
+log "Test 3: Nested object assignment"
+$nested = { outer: { inner: "value" } }
+$copy = $nested
+log "copy value:" $copy
+test.assertNotNull $copy "Nested object assignment failed - $copy is null"
+test.assertEqual $copy.outer.inner "value" "Nested object assignment failed - $copy.outer.inner is not 'value'"
+
+# Test 4: Array assignment
+log "Test 4: Array assignment"
+$arr = [1, 2, 3]
+$arrCopy = $arr
+log "arrCopy value:" $arrCopy
+test.assertNotNull $arrCopy "Array assignment failed - $arrCopy is null"
+test.assertEqual $arrCopy[0] 1 "Array assignment failed - $arrCopy[0] is not 1"
+
+# Test 5: String assignment
+log "Test 5: String assignment"
+$str = "hello"
+$strCopy = $str
+log "strCopy value:" $strCopy
+test.assertEqual $strCopy "hello" "String assignment failed - $strCopy is not 'hello'"
+
+# Test 6: Number assignment
+log "Test 6: Number assignment"
+$num = 42
+$numCopy = $num
+log "numCopy value:" $numCopy
+test.assertEqual $numCopy 42 "Number assignment failed - $numCopy is not 42"
+
+# Test 7: Boolean assignment
+log "Test 7: Boolean assignment"
+$bool = true
+$boolCopy = $bool
+log "boolCopy value:" $boolCopy
+test.assertTrue $boolCopy "Boolean assignment failed - $boolCopy is not true"
+
+# Test 8: Null assignment
+log "Test 8: Null assignment"
+$nullVar = null
+$nullCopy = $nullVar
+log "nullCopy value:" $nullCopy
+test.assertNull $nullCopy "Null assignment failed - $nullCopy is not null"
+
+# Test 9: Assignment within do block
+log "Test 9: Assignment within do block"
+do
+  $doObj = { test: "value", num: 100 }
+  $doStr = "assigned in do"
+  $doNum = 999
+  $doArr = [10, 20, 30]
+  log "Inside do - doObj:" $doObj
+  log "Inside do - doStr:" $doStr
+  log "Inside do - doNum:" $doNum
+  log "Inside do - doArr:" $doArr
+  test.assertNotNull $doObj "Assignment in do block failed - $doObj is null"
+  test.assertEqual $doObj.test "value" "Assignment in do block failed - $doObj.test is not 'value'"
+  test.assertEqual $doObj.num 100 "Assignment in do block failed - $doObj.num is not 100"
+  test.assertEqual $doStr "assigned in do" "Assignment in do block failed - $doStr is not 'assigned in do'"
+  test.assertEqual $doNum 999 "Assignment in do block failed - $doNum is not 999"
+  test.assertEqual $doArr[0] 10 "Assignment in do block failed - $doArr[0] is not 10"
+enddo
+
+# Test 9b: Variable to variable assignment within do block
+log "Test 9b: Variable to variable assignment within do block"
+$sourceObj = { name: "source", value: 42 }
+do
+  $doCopy = $sourceObj
+  $doCopy2 = $doCopy
+  log "Inside do - doCopy:" $doCopy
+  log "Inside do - doCopy2:" $doCopy2
+  test.assertNotNull $doCopy "Variable assignment in do block failed - $doCopy is null"
+  test.assertEqual $doCopy.name "source" "Variable assignment in do block failed - $doCopy.name is not 'source'"
+  test.assertNotNull $doCopy2 "Variable assignment in do block failed - $doCopy2 is null"
+  test.assertEqual $doCopy2.value 42 "Variable assignment in do block failed - $doCopy2.value is not 42"
+enddo
+
+# Test 10: Assign lastValue from command to object property
+log "Test 10: Assign lastValue from command to object property"
+math.add 5 5
+log "Last value after add 5 5:" $
+$sumValue = $
+$resultObj = { sum: $sumValue }
+log "resultObj value:" $resultObj
+test.assertNotNull $resultObj "Assignment of lastValue to object failed - $resultObj is null"
+test.assertEqual $resultObj.sum 10 "Assignment of lastValue to object failed - $resultObj.sum is not 10"
+
+# Test 10b: Assign lastValue to existing object property
+log "Test 10b: Assign lastValue to existing object property"
+$existingObj = { name: "test", value: 0 }
+math.add 3 7
+$existingObj.sum = $
+log "existingObj value:" $existingObj
+test.assertEqual $existingObj.name "test" "Assignment to object property failed - $existingObj.name changed"
+test.assertEqual $existingObj.value 0 "Assignment to object property failed - $existingObj.value changed"
+test.assertEqual $existingObj.sum 10 "Assignment of lastValue to object property failed - $existingObj.sum is not 10"
+
+# Test 10c: Assign lastValue from command to object property within do block
+log "Test 10c: Assign lastValue from command to object property within do block"
+do
+  math.add 5 5
+  log "Inside do - Last value after add 5 5:" $
+  $sumValue = $
+  $resultObj = { sum: $sumValue }
+  log "Inside do - resultObj value:" $resultObj
+  test.assertNotNull $resultObj "Assignment of lastValue to object in do block failed - $resultObj is null"
+  test.assertEqual $resultObj.sum 10 "Assignment of lastValue to object in do block failed - $resultObj.sum is not 10"
+enddo
+
+# Test 10d: Assign lastValue to existing object property within do block
+log "Test 10d: Assign lastValue to existing object property within do block"
+$existingObj2 = { name: "test2", value: 0 }
+do
+  math.add 3 7
+  log "Inside do - Last value after add 3 7:" $
+  $existingObj2.sum = $
+  log "Inside do - existingObj2 value:" $existingObj2
+  test.assertEqual $existingObj2.name "test2" "Assignment to object property in do block failed - $existingObj2.name changed"
+  test.assertEqual $existingObj2.value 0 "Assignment to object property in do block failed - $existingObj2.value changed"
+  test.assertEqual $existingObj2.sum 10 "Assignment of lastValue to object property in do block failed - $existingObj2.sum is not 10"
+enddo
+
+log "=== Basic Assignment Tests Complete ==="

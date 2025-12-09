@@ -38,7 +38,8 @@ export class RobinPathThread {
             currentModule: null,                       // per-thread module context
             variableMetadata: new Map(),              // per-thread variable metadata
             functionMetadata: new Map(),              // per-thread function metadata
-            constants: new Set()                      // per-thread constants
+            constants: new Set(),                     // per-thread constants
+            eventHandlers: new Map()                  // per-thread event handlers
         };
 
         this.executor = new Executor(this.environment, this);

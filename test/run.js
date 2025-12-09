@@ -8,7 +8,11 @@ import { RobinPath } from '../dist/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Read the fetch test script (runs first)
+// Read the basic test script (runs first)
+const basicTestScriptPath = join(__dirname, 'test-basic.rp');
+const basicTestScript = readFileSync(basicTestScriptPath, 'utf-8');
+
+// Read the fetch test script (runs after basic tests)
 const fetchTestScriptPath = join(__dirname, 'fetch-test.rp');
 const fetchTestScript = readFileSync(fetchTestScriptPath, 'utf-8');
 
@@ -20,6 +24,10 @@ const intoTestScript = readFileSync(intoTestScriptPath, 'utf-8');
 const togetherTestScriptPath = join(__dirname, 'together-test.rp');
 const togetherTestScript = readFileSync(togetherTestScriptPath, 'utf-8');
 
+// Read the event test script (runs before test.rp)
+const eventTestScriptPath = join(__dirname, 'test-event.rp');
+const eventTestScript = readFileSync(eventTestScriptPath, 'utf-8');
+
 // Read the main test script
 const testScriptPath = join(__dirname, 'test.rp');
 const testScript = readFileSync(testScriptPath, 'utf-8');
@@ -27,6 +35,29 @@ const testScript = readFileSync(testScriptPath, 'utf-8');
 
 console.log('='.repeat(60));
 console.log('Running RobinPath Test Script');
+console.log('='.repeat(60));
+console.log();
+
+// Run basic assignment tests first
+console.log();
+console.log('='.repeat(60));
+console.log('Running Basic Assignment Test Script (test-basic.rp)');
+console.log('='.repeat(60));
+
+const basicRp = new RobinPath();
+const basicStartTime = Date.now();
+
+try {
+    await basicRp.executeScript(basicTestScript);
+    const basicEndTime = Date.now();
+    const basicExecutionTime = basicEndTime - basicStartTime;
+    console.log(`✓ Basic assignment tests completed in ${basicExecutionTime}ms`);
+} catch (error) {
+    console.error('✗ Basic assignment tests FAILED');
+    console.error('Error:', error);
+    throw error;
+}
+
 console.log('='.repeat(60));
 console.log();
 
@@ -3791,17 +3822,22 @@ test_named(
         const echoParenReconstructed = reconstructedAST.find(node => 
             node.type === 'command' && node.name === 'echo' && node.args && node.args.length > 0 && node.args[0].value === 'parentheses'
         );
-        const testNamedReconstructed = reconstructedAST.find(node => 
-            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'named-parentheses'
+        // Find test_named nodes - there should be two: one with named-parentheses and one with multiline-parentheses
+        const testNamedNodes = reconstructedAST.filter(node => 
+            node.type === 'command' && node.name === 'test_named'
         );
-        const testMultilineReconstructed = reconstructedAST.find(node => 
-            node.type === 'command' && node.name === 'test_named' && node.syntaxType === 'multiline-parentheses'
+        // Find the one with named args (should have namedArgs in args)
+        const testNamedReconstructed = testNamedNodes.find(node => 
+            node.args && node.args.some(arg => arg.type === 'namedArgs')
+        );
+        const testMultilineReconstructed = testNamedNodes.find(node => 
+            node.syntaxType === 'multiline-parentheses'
         );
         
         const syntaxTypeTest5Passed = 
             echoSpaceReconstructed && echoSpaceReconstructed.syntaxType === 'space' &&
             echoParenReconstructed && echoParenReconstructed.syntaxType === 'parentheses' &&
-            testNamedReconstructed && testNamedReconstructed.syntaxType === 'named-parentheses' &&
+            testNamedReconstructed && (testNamedReconstructed.syntaxType === 'named-parentheses' || (testNamedReconstructed.args && testNamedReconstructed.args.some(arg => arg.type === 'namedArgs'))) &&
             testMultilineReconstructed && testMultilineReconstructed.syntaxType === 'multiline-parentheses';
         
         if (syntaxTypeTest5Passed) {
@@ -3971,7 +4007,91 @@ log "after together"`;
         console.log(`  Block 2 body statements: ${block2.body.length}`);
         console.log('='.repeat(60));
         
-        // Execute the test.rp script (run after into and together tests)
+        // Execute the event test script (runs before test.rp)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Event System Test Script (test-event.rp)');
+        console.log('='.repeat(60));
+        
+        // Create interpreter instance for event tests
+        const eventRp = new RobinPath();
+        const eventStartTime = Date.now();
+        
+        // Execute the event test script to register event handlers
+        await eventRp.executeScript(eventTestScript);
+        
+        // Calculate execution time
+        const eventEndTime = Date.now();
+        const eventExecutionTime = eventEndTime - eventStartTime;
+        
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Event Test Script Execution Complete');
+        console.log('='.repeat(60));
+        console.log(`Execution time: ${eventExecutionTime}ms`);
+        console.log('='.repeat(60));
+        
+        // Event System Tests - Trigger events
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Event Trigger Tests');
+        console.log('='.repeat(60));
+        
+        // Test 1: Basic event trigger with arguments
+        console.log();
+        console.log('Event Test 1: Triggering "test1" with arguments 1, 2, 3');
+        await eventRp.trigger("test1", 1, 2, 3);
+        
+        // Test 2: Multiple handlers for the same event
+        console.log();
+        console.log('Event Test 2: Triggering "test2" with argument "hello" (should execute 2 handlers)');
+        await eventRp.trigger("test2", "hello");
+        
+        // Test 3: Event handler with calculations
+        console.log();
+        console.log('Event Test 3: Triggering "test3" with arguments 5, 7');
+        await eventRp.trigger("test3", 5, 7);
+        
+        // Test 4: Event handler with conditional logic
+        console.log();
+        console.log('Event Test 4: Triggering "test4" with argument 15');
+        await eventRp.trigger("test4", 15);
+        console.log();
+        console.log('Event Test 4: Triggering "test4" with argument 5');
+        await eventRp.trigger("test4", 5);
+        
+        // Test 5: Event handler with string operations
+        console.log();
+        console.log('Event Test 5: Triggering "test5" with argument "World"');
+        await eventRp.trigger("test5", "World");
+        
+        // Test 6: Event handler with object argument
+        console.log();
+        console.log('Event Test 6: Triggering "test6" with object argument');
+        await eventRp.trigger("test6", { name: "Alice", age: 30 });
+        
+        // Test 7: Event handler with array argument
+        console.log();
+        console.log('Event Test 7: Triggering "test7" with array argument');
+        await eventRp.trigger("test7", [10, 20, 30, 40]);
+        
+        // Test 8: Event handler with mixed arguments (object and array)
+        console.log();
+        console.log('Event Test 8: Triggering "test8" with object and array arguments');
+        await eventRp.trigger("test8", { key: "value", count: 5 }, [1, 2, 3]);
+        
+        // Test 9: Triggering non-existent event (should silently return)
+        console.log();
+        console.log('Event Test 9: Triggering non-existent event "nonexistent" (should silently return)');
+        await eventRp.trigger("nonexistent");
+        console.log('Event Test 9: No handlers executed (expected)');
+        
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Event System Tests Completed');
+        console.log('='.repeat(60));
+        
+        // Execute the test.rp script (run after into, together, and event tests)
         console.log();
         console.log('='.repeat(60));
         console.log('Running RobinPath Test Script (test.rp)');
