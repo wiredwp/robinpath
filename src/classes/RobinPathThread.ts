@@ -115,6 +115,15 @@ export class RobinPathThread {
             this.environment.functions.set(func.name, func);
         }
         
+        // Register extracted event handlers first (before executing other statements)
+        // This allows trigger commands to work anywhere in the script
+        const extractedEventHandlers = parser.getExtractedEventHandlers();
+        for (const handler of extractedEventHandlers) {
+            const handlers = this.environment.eventHandlers.get(handler.eventName) || [];
+            handlers.push(handler);
+            this.environment.eventHandlers.set(handler.eventName, handlers);
+        }
+        
         const result = await this.executor.execute(statements);
         return result;
     }
@@ -132,6 +141,15 @@ export class RobinPathThread {
         const extractedFunctions = parser.getExtractedFunctions();
         for (const func of extractedFunctions) {
             this.environment.functions.set(func.name, func);
+        }
+        
+        // Register extracted event handlers first (before executing other statements)
+        // This allows trigger commands to work anywhere in the script
+        const extractedEventHandlers = parser.getExtractedEventHandlers();
+        for (const handler of extractedEventHandlers) {
+            const handlers = this.environment.eventHandlers.get(handler.eventName) || [];
+            handlers.push(handler);
+            this.environment.eventHandlers.set(handler.eventName, handlers);
         }
         
         const result = await this.executor.execute(statements);
