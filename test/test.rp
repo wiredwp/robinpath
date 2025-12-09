@@ -4022,6 +4022,61 @@ log "Test 61e - @required combined with @param and @arg: passed"
 
 log "Test 61 - @required decorator: All passed"
 
+# Test 62: dom.click with callback block - verify $1 and $2 parameters
+clear
+dom.click "test" with
+  log "$1" $1
+  log "$2" $2
+
+  # $1 should be the event object: { type: 'click', target: 'test' }
+  test.assertType $1 "object" "dom.click callback $1 should be an object"
+  test.assertEqual $1.type "click" "dom.click callback $1.type should be 'click'"
+  test.assertEqual $1.target "test" "dom.click callback $1.target should be 'test'"
+  
+  # $2 should be the query name string: "test"
+  test.assertType $2 "string" "dom.click callback $2 should be a string"
+  test.assertEqual $2 "test" "dom.click callback $2 should be 'test'"
+endwith
+
+# Test 62a: dom.click with callback and return value
+clear
+dom.click "test" with
+  add 5 5
+  return 15
+endwith
+test.assertEqual $ 15 "dom.click callback return value failed"
+
+# Test 62b: dom.click with callback and into assignment
+clear
+dom.click "test" with into $result
+  add 10 20
+  log $
+endwith
+test.assertEqual $result 30 "dom.click callback with into assignment failed"
+
+# Test 62c: dom.click with callback and into assignment - verify callback return is used
+clear
+dom.click "test" with into $callbackResult
+  return 42
+endwith
+test.assertEqual $callbackResult 42 "dom.click callback return value should be assigned to into variable"
+
+# Test 62d: dom.click with callback and into assignment - no explicit return (should use last value)
+clear
+dom.click "test" with into $lastValueResult
+  add 7 8
+endwith
+test.assertEqual $lastValueResult 15 "dom.click callback last value should be assigned to into variable when no return"
+
+# Test 62e: dom.click with callback and into assignment - return null
+clear
+dom.click "test" with into $nullResult
+  return null
+endwith
+test.assertNull $nullResult "dom.click callback return null should be assigned to into variable"
+
+log "Test 62 - dom.click with callback block: passed"
+
 log "All tests completed!"
 
 

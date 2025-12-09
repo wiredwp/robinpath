@@ -18,7 +18,7 @@ export const DomFunctions: Record<string, BuiltinHandler> = {
         
         // Simulate clicking an element (in a real implementation, this would interact with the DOM)
         // For now, we'll just log and call the callback if provided
-        console.log(`[DOM] Clicking element: ${queryName}`);
+        // console.log(`[DOM] Clicking element: ${queryName}`);
         
         // If callback is provided, call it with event data
         if (callback) {
@@ -29,6 +29,7 @@ export const DomFunctions: Record<string, BuiltinHandler> = {
             ];
             
             const callbackResult = await Promise.resolve(callback(eventData));
+            // console.log('====> Dom: callbackResult:', callbackResult);
             return callbackResult !== undefined ? callbackResult : null;
         }
         
@@ -38,7 +39,7 @@ export const DomFunctions: Record<string, BuiltinHandler> = {
 
 export const DomFunctionMetadata: Record<string, FunctionMetadata> = {
     click: {
-        description: 'Simulates a click event on an element identified by query name. Optionally accepts a do callback block.',
+        description: 'Simulates a click event on an element identified by query name. Optionally accepts a with callback block.',
         parameters: [
             {
                 name: 'queryName',
@@ -49,8 +50,8 @@ export const DomFunctionMetadata: Record<string, FunctionMetadata> = {
             }
         ],
         returnType: 'null',
-        returnDescription: 'Returns null, or the result of the callback if a do block is provided',
-        example: 'dom.click "button" do\n  log "Clicked:" $1\nenddo'
+        returnDescription: 'Returns null, or the result of the callback if a with block is provided',
+        example: 'dom.click "button" with\n  log "Clicked:" $1\nendwith'
     }
 };
 

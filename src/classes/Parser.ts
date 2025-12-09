@@ -1167,8 +1167,26 @@ export class Parser {
         }
 
         // Regular command (space-separated)
-        // Check for "into $var" in the tokens first
-        const intoIndex = tokens.indexOf('into');
+        // Check for "with" or "do" callback blocks on the same line first
+        // These keywords should not be parsed as arguments
+        const withIndex = tokens.indexOf('with');
+        const doIndex = tokens.indexOf('do');
+        
+        // Find the earliest callback keyword (if any)
+        let callbackKeywordIndex = -1;
+        let callbackKeyword: 'with' | 'do' | null = null;
+        if (withIndex >= 0 && (doIndex < 0 || withIndex < doIndex)) {
+            callbackKeywordIndex = withIndex;
+            callbackKeyword = 'with';
+        } else if (doIndex >= 0) {
+            callbackKeywordIndex = doIndex;
+            callbackKeyword = 'do';
+        }
+        
+        // Check for "into $var" in the tokens (but only before callback keywords)
+        const intoIndex = callbackKeywordIndex >= 0 
+            ? (tokens.indexOf('into') >= 0 && tokens.indexOf('into') < callbackKeywordIndex ? tokens.indexOf('into') : -1)
+            : tokens.indexOf('into');
 
         let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
         
@@ -1178,8 +1196,9 @@ export class Parser {
                 // This is an "into" assignment - parse the target variable
                 const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(varToken);
                 intoTarget = { targetName, targetPath };
-                // Parse command without the "into $var" part
-                const commandTokens = tokens.slice(0, intoIndex);
+                // Parse command without the "into $var" part (and without callback keywords)
+                const endIndex = callbackKeywordIndex >= 0 ? Math.min(intoIndex, callbackKeywordIndex) : intoIndex;
+                const commandTokens = tokens.slice(0, endIndex);
                 // Find the position of "into" in the original line to limit argument parsing
                 const originalLine = this.lines[this.currentLine];
                 const intoPosInLine = originalLine.indexOf('into');
@@ -1211,15 +1230,135 @@ export class Parser {
             }
         }
         
-        const command = this.parseCommandFromTokens(tokens, startLine);
+        // If there's a callback keyword on the same line, exclude it from argument parsing
+        let commandTokens = tokens;
+        if (callbackKeywordIndex >= 0) {
+            commandTokens = tokens.slice(0, callbackKeywordIndex);
+            // Also modify the line to exclude the callback keyword for argument parsing
+            const originalLine = this.lines[this.currentLine];
+            const callbackPosInLine = originalLine.indexOf(callbackKeyword!);
+            if (callbackPosInLine >= 0) {
+                const lineBeforeCallback = originalLine.substring(0, callbackPosInLine).trim();
+                const originalLineBackup = this.lines[this.currentLine];
+                const currentLineBackup = this.currentLine;
+                this.lines[this.currentLine] = lineBeforeCallback;
+                try {
+                    const command = this.parseCommandFromTokens(commandTokens, startLine);
+                    const endLine = this.currentLine;
+                    // Restore original line before checking for callback
+                    this.lines[currentLineBackup] = originalLineBackup;
+                    // Reset currentLine to the original line to check for callback on same line
+                    this.currentLine = currentLineBackup;
+                    
+                    // Check for callback on the same line (after the command arguments)
+                    let callback: ScopeBlock | undefined = undefined;
+                    const remainingLineContent = originalLine.substring(callbackPosInLine).trim();
+                    const remainingTokens = Lexer.tokenize(remainingLineContent);
+                    if (remainingTokens.length > 0 && remainingTokens[0] === callbackKeyword) {
+                        // Check if "into" appears after the callback keyword on the same line
+                        // This means "into" is the command's assignment target, not the callback's
+                        const intoIndexInRemaining = remainingTokens.indexOf('into');
+                        let commandIntoFromCallback: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+                        
+                        if (intoIndexInRemaining > 0 && intoIndexInRemaining < remainingTokens.length - 1) {
+                            // "into" appears after callback keyword - this is the command's "into"
+                            const varToken = remainingTokens[intoIndexInRemaining + 1];
+                            if (LexerUtils.isVariable(varToken)) {
+                                const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(varToken);
+                                commandIntoFromCallback = { targetName, targetPath };
+                                // Update intoTarget to use this one (it takes precedence)
+                                intoTarget = commandIntoFromCallback;
+                                
+                                // Parse callback without the "into $var" part
+                                // We need to modify the line temporarily, but ensure parseWithScope can find endwith
+                                const callbackLineContent = remainingTokens.slice(0, intoIndexInRemaining).join(' ');
+                                const originalLineForCallback = this.lines[this.currentLine];
+                                const currentLineBeforeParse = this.currentLine;
+                                
+                                // Parse callback, telling parseWithScope to ignore "into" on the first line
+                                // (it's the command's "into", not the callback's)
+                                if (callbackKeyword === 'with') {
+                                    // Temporarily modify the line to exclude "into $var" so parseWithScope doesn't try to parse it
+                                    this.lines[this.currentLine] = callbackLineContent;
+                                    try {
+                                        callback = this.parseWithScope(this.currentLine, true);
+                                    } finally {
+                                        // Restore original line only if we're still on the same line
+                                        // (parseWithScope may have advanced currentLine)
+                                        if (this.currentLine === currentLineBeforeParse) {
+                                            this.lines[this.currentLine] = originalLineForCallback;
+                                        }
+                                    }
+                                } else if (callbackKeyword === 'do') {
+                                    // For "do", we still need to modify the line
+                                    this.lines[this.currentLine] = callbackLineContent;
+                                    try {
+                                        callback = this.parseScope(this.currentLine);
+                                    } finally {
+                                        if (this.currentLine === currentLineBeforeParse) {
+                                            this.lines[this.currentLine] = originalLineForCallback;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // No "into" after callback keyword - parse callback normally
+                            const originalLineForCallback = this.lines[this.currentLine];
+                            const currentLineBeforeParse = this.currentLine;
+                            this.lines[this.currentLine] = remainingLineContent;
+                            try {
+                                if (callbackKeyword === 'with') {
+                                    callback = this.parseWithScope(this.currentLine);
+                                } else if (callbackKeyword === 'do') {
+                                    // Check if this is a standalone "do into" block (not a callback)
+                                    const hasInto = remainingTokens.includes('into');
+                                    if (!hasInto) {
+                                        callback = this.parseScope(this.currentLine);
+                                    }
+                                }
+                            } finally {
+                                // Restore original line only if we're still on the same line
+                                if (this.currentLine === currentLineBeforeParse) {
+                                    this.lines[this.currentLine] = originalLineForCallback;
+                                }
+                            }
+                        }
+                        
+                        // If "into" was found after callback keyword, callback is required
+                        if (commandIntoFromCallback && !callback) {
+                            throw this.createError('callback block is required when using "into" after callback keyword', this.currentLine);
+                        }
+                    }
+                    
+                    const result = {
+                        ...command,
+                        syntaxType: 'space' as const,
+                        into: intoTarget || undefined,
+                        callback,
+                        codePos: this.createCodePositionFromLines(startLine, callback ? (this.currentLine - 1) : endLine)
+                    };
+                    return result;
+                } finally {
+                    // Restore original line
+                    this.lines[currentLineBackup] = originalLineBackup;
+                }
+            }
+        }
+        
+        const command = this.parseCommandFromTokens(commandTokens, startLine);
         // parseCommandFromTokens may have advanced currentLine if there were multi-line arguments
         // So we need to check from the current line position
         const commandEndLine = this.currentLine;
         
-        // Check if next line is a "do" block (callback)
-        // Look ahead to see if next non-empty, non-comment line is "do"
+        // Check if next line is a callback block ("with" or "do")
+        // Look ahead to see if next non-empty, non-comment line is "with" or "do"
         // CRITICAL: Always start from the line AFTER where the command ended
         // This ensures we don't accidentally skip the next statement when there's no blank line
+        // 
+        // IMPORTANT: Do NOT hardcode which commands support callbacks (e.g., don't check command.name.startsWith('dom.'))
+        // The parser should be syntax-aware, not semantics-aware. We parse callback blocks when they appear,
+        // and let the executor/runtime handle whether the command actually supports callbacks or not.
+        // This keeps the parser flexible and allows new commands to support callbacks without parser changes.
         let callback: ScopeBlock | undefined = undefined;
         // Start looking from the line after the command ended
         // For single-line commands, commandEndLine equals startLine, so we look at startLine + 1
@@ -1238,7 +1377,17 @@ export class Parser {
             }
             
             const lookAheadTokens = Lexer.tokenize(lookAheadLineContent);
-            if (lookAheadTokens.length > 0 && lookAheadTokens[0] === 'do') {
+            const firstToken = lookAheadTokens.length > 0 ? lookAheadTokens[0] : '';
+            
+            // Check for "with" block (used for callback syntax)
+            if (firstToken === 'with') {
+                // Found a "with" block - parse it as callback
+                // Note: We don't check if the command supports callbacks here - that's the executor's responsibility
+                this.currentLine = lookAheadLine;
+                callback = this.parseWithScope(lookAheadLine);
+                // parseWithScope advances currentLine past endwith
+                break;
+            } else if (firstToken === 'do') {
                 // Check if this is a standalone "do into" block (not a callback)
                 // "do into $var" is a standalone statement, not a callback
                 const hasInto = lookAheadTokens.includes('into');
@@ -1246,23 +1395,15 @@ export class Parser {
                     // This is a standalone "do into" block, not a callback - stop looking
                     break;
                 }
-                // Check if the command supports callbacks
-                // Currently, only dom.* commands support callbacks (e.g., dom.click)
-                // Other commands like "clear" don't support callbacks, so "do" blocks after them
-                // should be treated as standalone statements, not callbacks
-                const commandName = command.name;
-                const supportsCallbacks = commandName.startsWith('dom.');
-                if (!supportsCallbacks) {
-                    // Command doesn't support callbacks - treat "do" as standalone statement
-                    break;
-                }
-                // Found a simple "do" block after a command that supports callbacks - parse it as callback
+                // Found a simple "do" block - parse it as callback
+                // Note: We don't check if the command supports callbacks here - that's the executor's responsibility
+                // If the command doesn't support callbacks, the executor will handle it appropriately
                 this.currentLine = lookAheadLine;
                 callback = this.parseScope(lookAheadLine);
                 // parseScope advances currentLine past enddo
                 break;
             } else {
-                // Not a do block - stop looking
+                // Not a callback block - stop looking
                 break;
             }
         }
@@ -1283,7 +1424,7 @@ export class Parser {
                 this.currentLine = startLine + 1;
             }
         }
-        // If callback was found, currentLine is already advanced by parseScope
+        // If callback was found, currentLine is already advanced by parseWithScope or parseScope
         
         const result: CommandCall = { 
             ...command, 
@@ -1386,8 +1527,13 @@ export class Parser {
             intoInfo = this.checkForIntoAfterParen(parenEndLine);
         }
         
-        // Check if next line is a "do" block (callback)
+        // Check if next line is a callback block ("with" or "do")
         // extractParenthesizedContent may have advanced currentLine if it was multi-line
+        // 
+        // IMPORTANT: Do NOT hardcode which commands support callbacks (e.g., don't check name.startsWith('dom.'))
+        // The parser should be syntax-aware, not semantics-aware. We parse callback blocks when they appear,
+        // and let the executor/runtime handle whether the command actually supports callbacks or not.
+        // This keeps the parser flexible and allows new commands to support callbacks without parser changes.
         let callback: ScopeBlock | undefined = undefined;
         let lookAheadLine = this.currentLine;
         
@@ -1399,14 +1545,26 @@ export class Parser {
             }
             
             const lookAheadTokens = Lexer.tokenize(lookAheadLineContent);
-            if (lookAheadTokens.length > 0 && lookAheadTokens[0] === 'do') {
+            const firstToken = lookAheadTokens.length > 0 ? lookAheadTokens[0] : '';
+            
+            // Check for "with" block (used for callback syntax)
+            if (firstToken === 'with') {
+                // Found a "with" block - parse it as callback
+                // Note: We don't check if the command supports callbacks here - that's the executor's responsibility
+                this.currentLine = lookAheadLine;
+                callback = this.parseWithScope(lookAheadLine);
+                // parseWithScope advances currentLine past endwith
+                break;
+            } else if (firstToken === 'do') {
                 // Found a do block - parse it as callback
+                // Note: We don't check if the command supports callbacks here - that's the executor's responsibility
+                // If the command doesn't support callbacks, the executor will handle it appropriately
                 this.currentLine = lookAheadLine;
                 callback = this.parseScope(lookAheadLine);
                 // parseScope advances currentLine past enddo
                 break;
             } else {
-                // Not a do block - stop looking
+                // Not a callback block - stop looking
                 break;
             }
         }
@@ -1430,7 +1588,7 @@ export class Parser {
             // intoInfo was found, currentLine is already set correctly
             // (checkForIntoAfterParen may have advanced it)
         }
-        // If callback was found, currentLine is already advanced by parseScope
+        // If callback was found, currentLine is already advanced by parseWithScope or parseScope
         const command: CommandCall = { 
             type: 'command', 
             name, 
@@ -2171,6 +2329,166 @@ export class Parser {
         }
 
         // If parameters are declared, include them in the do block
+        const endLine = this.currentLine - 1;
+        const scopeBlock: ScopeBlock = paramNames.length > 0 
+            ? { 
+                type: 'do', 
+                paramNames, 
+                body, 
+                into: intoTarget || undefined,
+                codePos: this.createCodePositionFromLines(startLine, endLine) 
+            }
+            : { 
+                type: 'do', 
+                body, 
+                into: intoTarget || undefined,
+                codePos: this.createCodePositionFromLines(startLine, endLine) 
+            };
+        if (comments.length > 0) {
+            scopeBlock.comments = comments;
+        }
+        
+        return scopeBlock;
+    }
+
+    /**
+     * Parse a "with" block (callback block for dom commands)
+     * Similar to parseScope but uses "with" and "endwith" keywords
+     * @param ignoreIntoOnFirstLine - If true, ignore "into" on the first line (it's the command's "into", not the callback's)
+     */
+    private parseWithScope(startLine: number, ignoreIntoOnFirstLine: boolean = false): ScopeBlock {
+        const originalLine = this.lines[this.currentLine];
+        const line = originalLine.trim();
+        const tokens = Lexer.tokenize(line);
+        
+        // Check for "into $var" after "with" (can be after parameters)
+        // But ignore it if ignoreIntoOnFirstLine is true (it's the command's "into", not the callback's)
+        const intoIndex = ignoreIntoOnFirstLine ? -1 : tokens.indexOf('into');
+        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        let paramEndIndex = tokens.length;
+        
+        if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
+            const varToken = tokens[intoIndex + 1];
+            if (LexerUtils.isVariable(varToken)) {
+                const { name, path } = LexerUtils.parseVariablePath(varToken);
+                intoTarget = { targetName: name, targetPath: path };
+                // Parameters end before "into"
+                paramEndIndex = intoIndex;
+            }
+        }
+        
+        // Parse parameter names (optional): with $a $b or with $a $b into $var
+        const paramNames: string[] = [];
+        
+        // Start from token index 1 (after "with"), stop before "into" if present
+        for (let i = 1; i < paramEndIndex; i++) {
+            const token = tokens[i];
+            
+            // Parameter names must be variables (e.g., $a, $b, $c)
+            if (LexerUtils.isVariable(token) && !LexerUtils.isPositionalParam(token) && !LexerUtils.isLastValue(token)) {
+                const { name: paramName } = LexerUtils.parseVariablePath(token);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    paramNames.push(paramName);
+                } else {
+                    // Invalid parameter name - stop parsing parameters
+                    break;
+                }
+            } else {
+                // Not a valid parameter name - stop parsing parameters
+                break;
+            }
+        }
+        
+        // Extract inline comment from scope line
+        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
+        const comments: CommentWithPosition[] = [];
+        if (inlineComment) {
+            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
+        }
+        
+        this.currentLine++;
+
+        const body: Statement[] = [];
+        let closed = false;
+        let pendingComments: string[] = [];
+        const pendingCommentLines: number[] = [];
+
+        while (this.currentLine < this.lines.length) {
+            const originalBodyLine = this.lines[this.currentLine];
+            const bodyLine = originalBodyLine.trim();
+            
+            // Blank line: preserve pending comments (they may be attached to next statement)
+            if (!bodyLine) {
+                this.currentLine++;
+                continue;
+            }
+            
+            // Comment line: if we have pending comments, they were separated by blank line, so create comment nodes
+            // Then start a new sequence with this comment
+            if (bodyLine.startsWith('#')) {
+                const commentText = bodyLine.slice(1).trim();
+                
+                // If we have pending comments, they were separated by blank line from this comment
+                // Create comment nodes for them (they won't be attached to a statement)
+                // Group consecutive orphaned comments into a single node
+                if (pendingComments.length > 0) {
+                    body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                }
+                
+                // Start new sequence with this comment
+                pendingComments.push(commentText);
+                pendingCommentLines.push(this.currentLine);
+                this.currentLine++;
+                continue;
+            }
+
+            const bodyTokens = Lexer.tokenize(bodyLine);
+            
+            if (bodyTokens[0] === 'endwith') {
+                this.currentLine++;
+                closed = true;
+                break;
+            }
+
+            const stmt = this.parseStatement();
+            if (stmt) {
+                const allComments: string[] = [];
+                
+                // Consecutive comments above
+                if (pendingComments.length > 0) {
+                    allComments.push(...pendingComments);
+                    pendingComments.length = 0;
+                    pendingCommentLines.length = 0;
+                }
+                
+                // Inline comment on same line
+                const inlineComment = this.extractInlineComment(originalBodyLine, this.currentLine);
+                if (inlineComment) {
+                    allComments.push(inlineComment.text);
+                }
+                
+                if (allComments.length > 0) {
+                    (stmt as any).comments = allComments;
+                }
+                
+                body.push(stmt);
+            }
+        }
+
+        // Handle any remaining pending comments at end of block
+        // Group consecutive orphaned comments into a single node
+        if (pendingComments.length > 0) {
+            body.push(this.createGroupedCommentNode(pendingComments, pendingCommentLines));
+        }
+
+        if (!closed) {
+            throw this.createError('missing endwith', this.currentLine);
+        }
+
+        // If parameters are declared, include them in the scope block
+        // Note: We use type 'do' to maintain AST compatibility
         const endLine = this.currentLine - 1;
         const scopeBlock: ScopeBlock = paramNames.length > 0 
             ? { 

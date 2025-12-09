@@ -213,6 +213,7 @@ export class LexerUtils {
     static isVariable(token: string): boolean {
         // Match: 
         // - $var, $var.property, $var[0], $var[0], $var.property.subproperty, etc.
+        // - $1, $1.property, $2[0], etc. (positional parameters with optional attributes)
         // - $.property, $[0], $.property[0] (last value with attributes)
         if (!token.startsWith('$')) return false;
         
@@ -221,6 +222,14 @@ export class LexerUtils {
             // Validate the rest is valid attribute path
             const rest = token.slice(1); // Remove $
             return /^(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*$/.test(rest);
+        }
+        
+        // Handle positional parameters: $1, $2, etc. with optional attributes
+        if (/^\$\d+/.test(token)) {
+            // Check if it has property access or array access
+            const rest = token.slice(1); // Remove $
+            // Match: digits followed by optional .property or [index] paths
+            return /^\d+(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\])*$/.test(rest);
         }
         
         // Handle regular variables: $var with optional attributes
@@ -284,6 +293,58 @@ export class LexerUtils {
             }
             
             return { name: '', path }; // Empty name means last value
+        }
+        
+        // Handle positional parameters: $1, $2, etc. with optional attributes
+        // Check if name starts with a digit (positional parameter)
+        if (/^\d+/.test(name)) {
+            // Extract the positional parameter number
+            const baseMatch = name.match(/^(\d+)/);
+            if (!baseMatch) {
+                throw new Error(`Invalid positional parameter: ${name}`);
+            }
+            const baseName = baseMatch[1];
+            let remaining = name.slice(baseName.length);
+            
+            // Parse path segments (.property or [index])
+            // Optimize: Use character-by-character parsing instead of regex in loop
+            let pos = 0;
+            while (pos < remaining.length) {
+                if (remaining[pos] === '.') {
+                    // Property access: .propertyName
+                    pos++; // Skip '.'
+                    let propStart = pos;
+                    // Find end of property name (alphanumeric + underscore)
+                    while (pos < remaining.length && 
+                           ((remaining[pos] >= 'a' && remaining[pos] <= 'z') ||
+                            (remaining[pos] >= 'A' && remaining[pos] <= 'Z') ||
+                            (remaining[pos] >= '0' && remaining[pos] <= '9') ||
+                            remaining[pos] === '_')) {
+                        pos++;
+                    }
+                    if (pos === propStart) {
+                        throw new Error(`Invalid property access: ${remaining}`);
+                    }
+                    path.push({ type: 'property', name: remaining.substring(propStart, pos) });
+                } else if (remaining[pos] === '[') {
+                    // Array index: [number]
+                    pos++; // Skip '['
+                    let indexStart = pos;
+                    // Find end of number
+                    while (pos < remaining.length && remaining[pos] >= '0' && remaining[pos] <= '9') {
+                        pos++;
+                    }
+                    if (pos === indexStart || pos >= remaining.length || remaining[pos] !== ']') {
+                        throw new Error(`Invalid array index: ${remaining}`);
+                    }
+                    path.push({ type: 'index', index: parseInt(remaining.substring(indexStart, pos), 10) });
+                    pos++; // Skip ']'
+                } else {
+                    throw new Error(`Unexpected character in variable path: ${remaining.substring(pos)}`);
+                }
+            }
+            
+            return { name: baseName, path };
         }
         
         // Handle regular variables: $var with optional attributes

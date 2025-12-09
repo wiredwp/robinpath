@@ -1199,7 +1199,7 @@ Examples:
         if (!handler && functionName !== cmd.name) {
             handler = this.environment.builtins.get(cmd.name);
         }
-        
+
         if (handler) {
             const previousLastValue = frame.lastValue; // Preserve last value for log and assertion functions
             
@@ -1241,6 +1241,12 @@ Examples:
                         }
                         
                         return callbackFrame.lastValue;
+                    } catch (error) {
+                        if (error instanceof ReturnException) {
+                            // Return statement was executed in callback - return the value
+                            return error.value;
+                        }
+                        throw error;
                     } finally {
                         // Clean up callback frame
                         this.callStack.pop();
