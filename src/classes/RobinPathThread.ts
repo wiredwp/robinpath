@@ -10,7 +10,8 @@ import type {
     Environment, 
     Statement, 
     Arg,
-    TogetherBlock
+    TogetherBlock,
+    OnBlock
 } from '../index';
 import type { RobinPath } from '../index';
 
@@ -238,6 +239,32 @@ export class RobinPathThread {
                 paramNames: func.paramNames,
                 body: func.body.map((stmt) => this.serializeStatement(stmt, undefined, undefined))
             };
+        });
+    }
+
+    /**
+     * Get all event handlers as a flat array
+     * @returns Array of all OnBlock handlers
+     */
+    getAllEventHandlers(): OnBlock[] {
+        const allHandlers: OnBlock[] = [];
+        for (const handlers of this.environment.eventHandlers.values()) {
+            allHandlers.push(...handlers);
+        }
+        return allHandlers;
+    }
+
+    /**
+     * Get event handlers as serialized AST
+     * @returns Array of serialized event handler AST nodes
+     */
+    getEventAST(): any[] {
+        const allHandlers = this.getAllEventHandlers();
+        let currentModuleContext: string | null = null;
+
+        // Serialize each event handler
+        return allHandlers.map((handler) => {
+            return this.serializeStatement(handler, undefined, currentModuleContext);
         });
     }
 
@@ -507,6 +534,13 @@ export class RobinPathThread {
                 return {
                     ...base,
                     blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, undefined, currentModuleContext))
+                };
+            case 'onBlock':
+                const onBlockStmt = stmt as OnBlock;
+                return {
+                    ...base,
+                    eventName: onBlockStmt.eventName,
+                    body: onBlockStmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'return':
                 return {

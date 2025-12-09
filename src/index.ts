@@ -1952,6 +1952,40 @@ export class RobinPath {
     }
 
     /**
+     * Get all event handlers (onBlocks) registered in the environment
+     * @returns Map of event name to array of OnBlock handlers
+     */
+    getEventHandlers(): Map<string, OnBlock[]> {
+        return this.environment.eventHandlers;
+    }
+
+    /**
+     * Get all event handlers as a flat array
+     * @returns Array of all OnBlock handlers
+     */
+    getAllEventHandlers(): OnBlock[] {
+        const allHandlers: OnBlock[] = [];
+        for (const handlers of this.environment.eventHandlers.values()) {
+            allHandlers.push(...handlers);
+        }
+        return allHandlers;
+    }
+
+    /**
+     * Get event handlers as serialized AST
+     * @returns Array of serialized event handler AST nodes
+     */
+    getEventAST(): any[] {
+        const allHandlers = this.getAllEventHandlers();
+        let currentModuleContext: string | null = null;
+
+        // Serialize each event handler
+        return allHandlers.map((handler) => {
+            return this.serializeStatement(handler, currentModuleContext);
+        });
+    }
+
+    /**
      * Get a variable value
      */
     getVariable(name: string): Value {
