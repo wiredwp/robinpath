@@ -1135,15 +1135,7 @@ do
   test.assertEqual $ null "Return null failed"
 enddo
 
-def return_subexpression
-  return $(math.add 5 5)
-enddef
-
-clear
-do
-  return_subexpression
-  test.assertEqual $ 10 "Return subexpression failed"
-enddo
+# return_subexpression test moved to test-subexpr.rp
 log "Test 25 - Return with different types: All passed"
 
 # Test 26: Return in conditional blocks
@@ -1544,105 +1536,7 @@ log "Test 31f - Comparison functions in conditionals: All passed"
 
 log "Test 31 - Comparison functions: All passed"
 
-# Test 32: Subexpressions $( )
-# Test basic single-line subexpression
-$test1 = $(math.add 5 3)
-test.assertEqual $test1 8 "Basic subexpression failed"
-
-# Test subexpression with multiple operations
-$test2 = $(math.add 10 5)
-$test3 = $(math.multiply $test2 2)
-test.assertEqual $test3 30 "Subexpression with variable reference failed"
-
-# Test nested subexpressions
-$test4 = $(math.add $(math.multiply 2 3) $(math.add 1 1))
-test.assertEqual $test4 8 "Nested subexpression failed"
-
-# Test multi-line subexpression
-$test5 = $(
-  math.add 10 20
-)
-test.assertEqual $test5 30 "Multi-line subexpression failed"
-
-# Test multi-line subexpression with nested subexpression
-# Note: $test2 is 15 at this point. The nested subexpression $(set $test2 1) 
-# sets $test2 to 1 and returns 1, but $test2 is evaluated first (as 15) before 
-# the nested subexpression runs, so result is 15 * 1 = 15
-$test6 = $(
-  math.multiply $test2 $(set $test2 1)
-)
-
-test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed"
-test.assertEqual $test2 1 "Nested set in subexpression failed"
-
-# Test complex multi-line subexpression
-$test7 = $(
-  math.add 5 5
-  math.multiply $ 3
-)
-test.assertEqual $test7 30 "Complex multi-line subexpression failed"
-
-# Test subexpression in function call
-clear
-do
-  math.add $(math.multiply 2 5) $(math.add 3 2)
-  test.assertEqual $ 15 "Subexpression in function call failed"
-enddo
-
-# Test subexpression in conditional
-if $(math.add 5 5) == 10
-  $test8 = "passed"
-else
-  $test8 = "failed"
-endif
-
-test.assertEqual $test8 "passed" "Subexpression in conditional failed"
-
-# Test subexpression with string operations
-$test9 = $(string.concat "hello" " " "world")
-test.assertEqual $test9 "hello world" "Subexpression with string operations failed"
-
-# Test subexpression with array operations
-$test10 = $(array.create 1 2 3)
-clear
-do
-  array.length $test10
-  test.assertEqual $ 3 "Subexpression with array operations failed"
-enddo
-
-# Test deeply nested subexpressions
-$test11 = $(math.add $(math.multiply $(math.add 1 1) 2) $(math.add 1 1))
-test.assertEqual $test11 6 "Deeply nested subexpression failed"
-
-# Test subexpression with return value
-def test_subexpr_return
-  return $(math.add 10 20)
-enddef
-clear
-do
-  test_subexpr_return
-  test.assertEqual $ 30 "Subexpression in return statement failed"
-enddo
-
-# Test multi-line subexpression with multiple statements
-$test12 = $(
-  math.add 1 2
-  math.multiply $ 2
-  math.add $ 1
-)
-test.assertEqual $test12 7 "Multi-line subexpression with multiple statements failed"
-
-# Test subexpression with variable assignment inside (modifies parent do)
-$testVar = 10  # Set initial value in parent do
-$test13 = $(
-  set $testVar 42  # This should modify the parent $testVar
-  math.add $testVar 8
-)
-
-test.assertEqual $test13 50 "Subexpression with variable assignment failed"
-test.assertEqual $testVar 42 "Variable assignment in subexpression should modify parent do"
-
-log "Test 32 - Subexpressions $( ): All passed"
+# Test 32: Subexpressions $( ) - MOVED TO test-subexpr.rp
 
 # Test 33: Attribute access and array indexing
 # Test basic property access
@@ -4154,6 +4048,8 @@ repeat 5 with
   add $2 $1
 endwith
 test.assertEqual $ 10 "repeat should accumulate index values (0+1+2+3+4 = 10)"
+
+# Test 63h: repeat with subexpression - MOVED TO test-subexpr.rp
 
 log "Test 63 - repeat function: passed"
 

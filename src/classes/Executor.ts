@@ -2199,6 +2199,13 @@ Examples:
             isFunctionFrame: false // Subexpressions are not function frames
         };
         
+        // Copy all local variables from parent frame to subexpression frame
+        // This allows subexpressions to access local variables, including positional parameters
+        // from with/endwith blocks and def functions
+        for (const [key, value] of currentFrame.locals.entries()) {
+            subexprFrame.locals.set(key, value);
+        }
+        
         // Push the subexpression frame
         this.callStack.push(subexprFrame);
         

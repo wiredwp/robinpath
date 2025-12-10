@@ -32,6 +32,10 @@ const eventTestScript = readFileSync(eventTestScriptPath, 'utf-8');
 const orphanedOnTestScriptPath = join(__dirname, 'test-orphaned-on.rp');
 const orphanedOnTestScript = readFileSync(orphanedOnTestScriptPath, 'utf-8');
 
+// Read the subexpression test script (runs separately)
+const subexprTestScriptPath = join(__dirname, 'test-subexpr.rp');
+const subexprTestScript = readFileSync(subexprTestScriptPath, 'utf-8');
+
 // Read the main test script
 const testScriptPath = join(__dirname, 'test.rp');
 const testScript = readFileSync(testScriptPath, 'utf-8');
@@ -4118,6 +4122,29 @@ log "after together"`;
         console.log('Test execution completed successfully!');
         console.log(`Total execution time: ${executionTime}ms (${(executionTime / 1000).toFixed(3)}s)`);
         console.log('='.repeat(60));
+        
+        // Execute the subexpression test script (runs after test.rp)
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Subexpression Test Script (test-subexpr.rp)');
+        console.log('='.repeat(60));
+        
+        const subexprRp = new RobinPath();
+        const subexprStartTime = Date.now();
+        
+        try {
+            await subexprRp.executeScript(subexprTestScript);
+            const subexprEndTime = Date.now();
+            const subexprExecutionTime = subexprEndTime - subexprStartTime;
+            console.log(`✓ Subexpression tests completed in ${subexprExecutionTime}ms`);
+        } catch (error) {
+            console.error('✗ Subexpression tests FAILED');
+            console.error('Error:', error);
+            throw error;
+        }
+        
+        console.log('='.repeat(60));
+        console.log();
         
         // Execute the orphaned-on test script last (tests auto-closing "on" blocks)
         console.log();

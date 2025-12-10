@@ -1,0 +1,232 @@
+# Test Suite: Subexpressions $( )
+# Tests for subexpression functionality, including positional parameters in def functions and with/endwith blocks
+
+# ============================================================================
+# Basic Subexpression Tests
+# ============================================================================
+
+# Test basic single-line subexpression
+$test1 = $(math.add 5 3)
+test.assertEqual $test1 8 "Basic subexpression failed"
+
+# Test subexpression with multiple operations
+$test2 = $(math.add 10 5)
+$test3 = $(math.multiply $test2 2)
+test.assertEqual $test3 30 "Subexpression with variable reference failed"
+
+# Test nested subexpressions
+$test4 = $(math.add $(math.multiply 2 3) $(math.add 1 1))
+test.assertEqual $test4 8 "Nested subexpression failed"
+
+# Test multi-line subexpression
+$test5 = $(
+  math.add 10 20
+)
+test.assertEqual $test5 30 "Multi-line subexpression failed"
+
+# Test multi-line subexpression with nested subexpression
+# Note: $test2 is 15 at this point. The nested subexpression $(set $test2 1) 
+# sets $test2 to 1 and returns null, so math.multiply 15 null = 0
+$test6 = $(
+  math.multiply $test2 $(set $test2 1)
+)
+
+test.assertEqual $test6 0 "Multi-line subexpression with nested subexpression failed (math.multiply 15 null = 0)"
+test.assertEqual $test2 1 "Nested set in subexpression failed"
+
+# Test complex multi-line subexpression
+$test7 = $(
+  math.add 5 5
+  math.multiply $ 3
+)
+test.assertEqual $test7 30 "Complex multi-line subexpression failed"
+
+# Test subexpression in function call
+clear
+do
+  math.add $(math.multiply 2 5) $(math.add 3 2)
+  test.assertEqual $ 15 "Subexpression in function call failed"
+enddo
+
+# Test subexpression in conditional
+if $(math.add 5 5) == 10
+  $test8 = "passed"
+else
+  $test8 = "failed"
+endif
+
+test.assertEqual $test8 "passed" "Subexpression in conditional failed"
+
+# Test subexpression with string operations
+$test9 = $(string.concat "hello" " " "world")
+test.assertEqual $test9 "hello world" "Subexpression with string operations failed"
+
+# Test subexpression with array operations
+$test10 = $(array.create 1 2 3)
+clear
+do
+  array.length $test10
+  test.assertEqual $ 3 "Subexpression with array operations failed"
+enddo
+
+# Test deeply nested subexpressions
+$test11 = $(math.add $(math.multiply $(math.add 1 1) 2) $(math.add 1 1))
+test.assertEqual $test11 6 "Deeply nested subexpression failed"
+
+# Test subexpression with return value
+def test_subexpr_return
+  return $(math.add 10 20)
+enddef
+clear
+do
+  test_subexpr_return
+  test.assertEqual $ 30 "Subexpression in return statement failed"
+enddo
+
+# Test multi-line subexpression with multiple statements
+$test12 = $(
+  math.add 1 2
+  math.multiply $ 2
+  math.add $ 1
+)
+test.assertEqual $test12 7 "Multi-line subexpression with multiple statements failed"
+
+# Test subexpression with variable assignment inside (modifies parent do)
+$testVar = 10  # Set initial value in parent do
+$test13 = $(
+  set $testVar 42  # This should modify the parent $testVar
+  math.add $testVar 8
+)
+
+test.assertEqual $test13 50 "Subexpression with variable assignment failed"
+test.assertEqual $testVar 42 "Variable assignment in subexpression should modify parent do"
+
+# ============================================================================
+# Subexpressions with def Functions - Positional Parameters ($1, $2, etc.)
+# ============================================================================
+
+# Test def function with $1 in subexpression
+def add_with_subexpr
+  return $(add $1 2)
+enddef
+
+clear
+add_with_subexpr 5
+test.assertEqual $ 7 "def function with $1 in subexpression failed"
+
+# Test def function with $1 and $2 in subexpression
+def add_two_params
+  return $(add $1 $2)
+enddef
+
+clear
+add_two_params 10 20
+test.assertEqual $ 30 "def function with $1 and $2 in subexpression failed"
+
+# Test def function with positional params in nested subexpression
+def nested_subexpr_test
+  $result = $(math.multiply $(add $1 5) $(add $2 10))
+  return $result
+enddef
+
+clear
+nested_subexpr_test 2 3
+test.assertEqual $ 91 "def function with nested subexpressions using $1 and $2 failed (should be (2+5)*(3+10)=91)"
+
+# Test def function with $1 in multi-line subexpression
+def multi_line_subexpr
+  $result = $(
+    add $1 10
+    math.multiply $ 2
+  )
+  return $result
+enddef
+
+clear
+multi_line_subexpr 5
+test.assertEqual $ 30 "def function with $1 in multi-line subexpression failed (should be (5+10)*2=30)"
+
+# Test def function with multiple positional params in subexpression
+def sum_all_params
+  $sum = 0
+  $sum = $(add $sum $1)
+  $sum = $(add $sum $2)
+  $sum = $(add $sum $3)
+  return $sum
+enddef
+
+clear
+sum_all_params 1 2 3
+test.assertEqual $ 6 "def function summing $1, $2, $3 in subexpressions failed"
+
+# Test def function with $1 used directly and in subexpression
+def mixed_usage
+  log ">" $1
+  return $(add $1 2)
+enddef
+
+clear
+mixed_usage 5
+# Last value should be 7 (from add $1 2)
+test.assertEqual $ 7 "def function with mixed $1 usage failed"
+
+# ============================================================================
+# Subexpressions with repeat/with Blocks - Positional Parameters ($1, $2, etc.)
+# ============================================================================
+
+# Test repeat with subexpression using $1 - verify $1 is accessible inside $( )
+# This test verifies that positional parameters ($1, $2, etc.) are properly inherited
+# by subexpressions within with/endwith blocks
+clear
+$sum = 0
+repeat 5 with
+  # $1 should be accessible inside subexpression and have the correct value (0, 1, 2, 3, 4)
+  # Before the fix, $1 inside $( ) would always be 0
+  $sum = $(add $sum $1)
+endwith
+test.assertEqual $sum 10 "repeat with subexpression should access $1 correctly (0+1+2+3+4 = 10)"
+
+# Test repeat with $1 used directly and in subexpression
+clear
+repeat 5 with
+  log ">" $1
+  return $(add $1 2)
+endwith
+# Last value should be 6 (from last iteration: add 4 2)
+test.assertEqual $ 6 "repeat with $1 in subexpression should work correctly"
+
+# Test repeat with $1 and $2 in subexpression
+clear
+repeat 3 with
+  if $2 == null
+    return 0
+  endif
+  $result = $(add $1 $2)
+  return $result
+endwith
+test.assertEqual $ 3 "repeat with $1 and $2 in subexpression failed (iterations: 0+null=0, 1+0=1, 2+1=3)"
+
+# Test repeat with nested subexpressions using $1
+clear
+$product = 1
+repeat 4 with
+  if $2 == null
+    return 1
+  endif
+  $product = $(math.multiply $product $(add $1 1))
+  return $product
+endwith
+test.assertEqual $product 24 "repeat with nested subexpressions using $1 failed (should be 1*2*3*4=24)"
+
+# Test repeat with multi-line subexpression using $1
+clear
+repeat 3 with
+  $result = $(
+    add $1 5
+    math.multiply $ 2
+  )
+  return $result
+endwith
+test.assertEqual $ 14 "repeat with multi-line subexpression using $1 failed (last iteration: (2+5)*2=14)"
+
+log "All subexpression tests completed!"
