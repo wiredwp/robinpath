@@ -17,7 +17,6 @@ export interface ModuleAdapter {
 
 // Import utilities
 import { 
-    splitIntoLogicalLines, 
     extractNamedArgs,
     type Value,
     type AttributePathSegment
@@ -1351,8 +1350,7 @@ export class RobinPath {
      */
     needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
-            const lines = splitIntoLogicalLines(script);
-            const parser = new Parser(lines);
+            const parser = new Parser(script);
             parser.parse();
             return { needsMore: false };
         } catch (error) {
@@ -1409,8 +1407,7 @@ export class RobinPath {
      */
     getAST(script: string): any[] {
         // Parse the script to get AST
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        const parser = new Parser(script);
         const statements = parser.parse();
 
         // Track "use" command context to determine module names
@@ -1446,8 +1443,7 @@ export class RobinPath {
      */
     getExtractedFunctions(script: string): any[] {
         // Parse the script to extract functions
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        const parser = new Parser(script);
         parser.parse(); // Parse to extract functions
         
         const extractedFunctions = parser.getExtractedFunctions();
@@ -1716,9 +1712,8 @@ export class RobinPath {
      * Execute a RobinPath script
      */
     async executeScript(script: string): Promise<Value> {
-        // Split into logical lines (handles ; separator)
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        // Parser now handles source directly via TokenStream
+        const parser = new Parser(script);
         const statements = parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
@@ -1749,9 +1744,8 @@ export class RobinPath {
      * Functions and builtins persist across calls.
      */
     async executeLine(line: string): Promise<Value> {
-        // Split into logical lines (handles ; separator)
-        const lines = splitIntoLogicalLines(line);
-        const parser = new Parser(lines);
+        // Parser now handles source directly via TokenStream
+        const parser = new Parser(line);
         const statements = parser.parse();
         
         // Register extracted function definitions first (before executing other statements)

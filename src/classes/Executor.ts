@@ -2,7 +2,7 @@
  * Executor class for executing RobinPath statements
  */
 
-import { isTruthy, type Value, splitIntoLogicalLines, type AttributePathSegment } from '../utils';
+import { isTruthy, type Value, type AttributePathSegment } from '../utils';
 import { LexerUtils } from '../utils';
 import { ReturnException, BreakException, EndException } from './exceptions';
 import { ExpressionEvaluator } from './ExpressionEvaluator';
@@ -1929,8 +1929,7 @@ Examples:
         
         // Parse the expression as if it were a command/statement
         // This handles: range 1 10, db.query ..., etc.
-        const lines = [expr];
-        const parser = new Parser(lines);
+        const parser = new Parser(expr);
         const statements = parser.parse();
         
         if (statements.length === 0) {
@@ -2184,10 +2183,8 @@ Examples:
 
     async executeSubexpression(code: string): Promise<Value> {
         // Split into logical lines (handles ; inside $())
-        const lines = splitIntoLogicalLines(code);
-        
         // Parse the subexpression
-        const parser = new Parser(lines);
+        const parser = new Parser(code);
         const statements = parser.parse();
         
         // Create a new frame for the subexpression

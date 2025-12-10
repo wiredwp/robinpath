@@ -2,7 +2,7 @@
  * RobinPathThread class for managing execution threads
  */
 
-import { splitIntoLogicalLines, type Value } from '../utils';
+import { type Value } from '../utils';
 import { Parser } from './Parser';
 import { Executor } from './Executor';
 import { ExecutionStateTracker } from './ExecutionStateTracker';
@@ -53,8 +53,8 @@ export class RobinPathThread {
      */
     needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } {
         try {
-            const lines = splitIntoLogicalLines(script);
-            const parser = new Parser(lines);
+            // Parser now handles the full source directly (including logical line splitting via tokenization)
+            const parser = new Parser(script);
             parser.parse();
             return { needsMore: false };
         } catch (error) {
@@ -104,9 +104,8 @@ export class RobinPathThread {
      * Execute a RobinPath script in this thread
      */
     async executeScript(script: string): Promise<Value> {
-        // Split into logical lines (handles ; separator)
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        // Parser now handles source directly via TokenStream
+        const parser = new Parser(script);
         const statements = parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
@@ -132,9 +131,8 @@ export class RobinPathThread {
      * Execute a single line in this thread (for REPL)
      */
     async executeLine(line: string): Promise<Value> {
-        // Split into logical lines (handles ; separator)
-        const lines = splitIntoLogicalLines(line);
-        const parser = new Parser(lines);
+        // Parser now handles source directly via TokenStream
+        const parser = new Parser(line);
         const statements = parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
@@ -207,8 +205,7 @@ export class RobinPathThread {
      */
     getAST(script: string): any[] {
         // Parse the script to get AST
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        const parser = new Parser(script);
         const statements = parser.parse();
 
         // Track "use" command context to determine module names
@@ -244,8 +241,7 @@ export class RobinPathThread {
      */
     getExtractedFunctions(script: string): any[] {
         // Parse the script to extract functions
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        const parser = new Parser(script);
         parser.parse(); // Parse to extract functions
         
         const extractedFunctions = parser.getExtractedFunctions();
@@ -308,8 +304,7 @@ export class RobinPathThread {
         }>;
     }> {
         // Parse the script to get AST
-        const lines = splitIntoLogicalLines(script);
-        const parser = new Parser(lines);
+        const parser = new Parser(script);
         const statements = parser.parse();
 
         // Execute with state tracking - track $ at each statement level

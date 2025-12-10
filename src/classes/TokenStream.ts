@@ -1,0 +1,240 @@
+/**
+ * TokenStream - A stream of tokens for parsing
+ * 
+ * This class provides convenient methods for consuming and inspecting tokens
+ * during parsing. It supports lookahead, backtracking, and error reporting.
+ */
+
+import { TokenKind } from './Lexer';
+import type { Token } from './Lexer';
+
+export class TokenStream {
+    private tokens: Token[];
+    private position: number = 0;
+    
+    constructor(tokens: Token[]) {
+        this.tokens = tokens;
+        this.position = 0;
+    }
+    
+    /**
+     * Get the current token without consuming it
+     * @returns The current token, or null if at end
+     */
+    current(): Token | null {
+        return this.peek(0);
+    }
+    
+    /**
+     * Look ahead at a token without consuming it
+     * @param offset - Number of tokens to look ahead (default 0 = current token)
+     * @returns The token at the given offset, or null if beyond end
+     */
+    peek(offset: number = 0): Token | null {
+        const index = this.position + offset;
+        if (index < 0 || index >= this.tokens.length) {
+            return null;
+        }
+        return this.tokens[index];
+    }
+    
+    /**
+     * Consume and return the current token
+     * @returns The current token, or null if at end
+     */
+    next(): Token | null {
+        if (this.position >= this.tokens.length) {
+            return null;
+        }
+        const token = this.tokens[this.position];
+        this.position++;
+        return token;
+    }
+    
+    /**
+     * Check if we're at the end of the token stream
+     * @returns True if at EOF or beyond
+     */
+    isAtEnd(): boolean {
+        const token = this.current();
+        return token === null || token.kind === TokenKind.EOF;
+    }
+    
+    /**
+     * Check if the current token matches the given kind or text, without consuming it
+     * @param kindOrText - TokenKind enum or string text to match
+     * @returns True if the current token matches
+     */
+    check(kindOrText: TokenKind | string): boolean {
+        const token = this.current();
+        if (!token) return false;
+        
+        if (typeof kindOrText === 'string') {
+            return token.text === kindOrText;
+        } else {
+            return token.kind === kindOrText;
+        }
+    }
+    
+    /**
+     * If the current token matches, consume it and return true
+     * Otherwise, return false without consuming
+     * 
+     * @param kindOrText - TokenKind enum or string text to match
+     * @returns True if matched and consumed, false otherwise
+     */
+    match(kindOrText: TokenKind | string): boolean {
+        if (this.check(kindOrText)) {
+            this.next();
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Expect the current token to match, consume it, and return it
+     * If it doesn't match, throw an error
+     * 
+     * @param kindOrText - TokenKind enum or string text to expect
+     * @param message - Optional custom error message
+     * @returns The consumed token
+     * @throws Error if token doesn't match
+     */
+    expect(kindOrText: TokenKind | string, message?: string): Token {
+        const token = this.current();
+        if (!token) {
+            const errorMsg = message || `Expected ${kindOrText} but reached end of input`;
+            throw new Error(errorMsg);
+        }
+        
+        const matches = typeof kindOrText === 'string' 
+            ? token.text === kindOrText 
+            : token.kind === kindOrText;
+        
+        if (!matches) {
+            const expected = typeof kindOrText === 'string' ? `'${kindOrText}'` : kindOrText;
+            const errorMsg = message || `Expected ${expected} but got '${token.text}' at line ${token.line}, column ${token.column}`;
+            throw new Error(errorMsg);
+        }
+        
+        this.next();
+        return token;
+    }
+    
+    /**
+     * Save the current position for potential backtracking
+     * @returns The current position index
+     */
+    save(): number {
+        return this.position;
+    }
+    
+    /**
+     * Restore a previously saved position (backtrack)
+     * @param pos - The position to restore to
+     */
+    restore(pos: number): void {
+        this.position = pos;
+    }
+    
+    /**
+     * Skip tokens of a specific kind (useful for skipping newlines, comments, etc.)
+     * @param kind - The TokenKind to skip
+     * @returns Number of tokens skipped
+     */
+    skip(kind: TokenKind): number {
+        let count = 0;
+        while (this.check(kind)) {
+            this.next();
+            count++;
+        }
+        return count;
+    }
+    
+    /**
+     * Skip all newline tokens
+     * @returns Number of newlines skipped
+     */
+    skipNewlines(): number {
+        return this.skip(TokenKind.NEWLINE);
+    }
+    
+    /**
+     * Consume tokens until a specific kind or text is found (exclusive)
+     * @param kindOrText - The kind or text to stop at
+     * @returns Array of consumed tokens (not including the stop token)
+     */
+    consumeUntil(kindOrText: TokenKind | string): Token[] {
+        const consumed: Token[] = [];
+        while (!this.isAtEnd() && !this.check(kindOrText)) {
+            const token = this.next();
+            if (token) consumed.push(token);
+        }
+        return consumed;
+    }
+    
+    /**
+     * Collect all tokens on the current line (until NEWLINE or EOF)
+     * @returns Array of tokens on the current line
+     */
+    collectLine(): Token[] {
+        const lineTokens: Token[] = [];
+        while (!this.isAtEnd()) {
+            const token = this.current();
+            if (!token || token.kind === TokenKind.NEWLINE || token.kind === TokenKind.EOF) {
+                break;
+            }
+            lineTokens.push(this.next()!);
+        }
+        return lineTokens;
+    }
+    
+    /**
+     * Get the current position in the stream
+     * @returns Current position index
+     */
+    getPosition(): number {
+        return this.position;
+    }
+    
+    /**
+     * Get the total number of tokens in the stream
+     * @returns Total token count
+     */
+    getLength(): number {
+        return this.tokens.length;
+    }
+    
+    /**
+     * Get all remaining tokens without consuming them
+     * @returns Array of remaining tokens
+     */
+    remaining(): Token[] {
+        return this.tokens.slice(this.position);
+    }
+    
+    /**
+     * Create a sub-stream from a range of tokens
+     * Useful for parsing sub-expressions or blocks
+     * 
+     * @param start - Start position (inclusive)
+     * @param end - End position (exclusive), defaults to current position
+     * @returns New TokenStream instance
+     */
+    slice(start: number, end?: number): TokenStream {
+        const endPos = end !== undefined ? end : this.position;
+        return new TokenStream(this.tokens.slice(start, endPos));
+    }
+    
+    /**
+     * Format current position for error messages
+     * @returns String like "line 10, column 5"
+     */
+    formatPosition(): string {
+        const token = this.current();
+        if (!token) {
+            return 'end of input';
+        }
+        return `line ${token.line}, column ${token.column}`;
+    }
+}
