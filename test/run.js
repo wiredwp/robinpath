@@ -36,6 +36,10 @@ const orphanedOnTestScript = readFileSync(orphanedOnTestScriptPath, 'utf-8');
 const subexprTestScriptPath = join(__dirname, 'test-subexpr.rp');
 const subexprTestScript = readFileSync(subexprTestScriptPath, 'utf-8');
 
+// Read the decorator test script (runs separately)
+const decoratorTestScriptPath = join(__dirname, 'test-decorator.rp');
+const decoratorTestScript = readFileSync(decoratorTestScriptPath, 'utf-8');
+
 // Read the main test script
 const testScriptPath = join(__dirname, 'test.rp');
 const testScript = readFileSync(testScriptPath, 'utf-8');
@@ -4139,6 +4143,25 @@ log "after together"`;
             console.log(`✓ Subexpression tests completed in ${subexprExecutionTime}ms`);
         } catch (error) {
             console.error('✗ Subexpression tests FAILED');
+            console.error('Error:', error);
+            throw error;
+        }
+        
+        console.log();
+        console.log('='.repeat(60));
+        console.log('Running Decorator Test Script (test-decorator.rp)');
+        console.log('='.repeat(60));
+        
+        const decoratorRp = new RobinPath();
+        const decoratorStartTime = Date.now();
+        
+        try {
+            await decoratorRp.executeScript(decoratorTestScript);
+            const decoratorEndTime = Date.now();
+            const decoratorExecutionTime = decoratorEndTime - decoratorStartTime;
+            console.log(`✓ Decorator tests completed in ${decoratorExecutionTime}ms`);
+        } catch (error) {
+            console.error('✗ Decorator tests FAILED');
             console.error('Error:', error);
             throw error;
         }

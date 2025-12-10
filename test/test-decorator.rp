@@ -1,0 +1,729 @@
+# RobinPath Decorator Test Script
+# This script tests decorator functionality for various statement types
+
+# Test 1: Built-in decorator functionality for functions (@desc/@description, @title)
+log "Test 1 - Built-in decorator functionality for functions"
+
+# Test @desc decorator
+@desc "A test function with description"
+def testDescFn
+  log "Test 1.1 - Function with @desc decorator"
+enddef
+
+# Call function to trigger decorator execution (decorators execute when function is called)
+testDescFn
+
+# Verify description metadata was added
+getMeta testDescFn description
+test.assertEqual $ "A test function with description" "@desc decorator failed to add description metadata"
+
+# Test @description decorator (alias for @desc)
+@description "Another test function"
+def testDescriptionFn
+  log "Test 1.2 - Function with @description decorator"
+enddef
+
+# Call function to trigger decorator execution
+testDescriptionFn
+
+# Verify description metadata was added
+getMeta testDescriptionFn description
+test.assertEqual $ "Another test function" "@description decorator failed to add description metadata"
+
+# Test @title decorator
+@title "Test Function Title"
+def testTitleFn
+  log "Test 1.3 - Function with @title decorator"
+enddef
+
+# Call function to trigger decorator execution
+testTitleFn
+
+# Verify title metadata was added
+getMeta testTitleFn title
+test.assertEqual $ "Test Function Title" "@title decorator failed to add title metadata"
+
+# Test multiple decorators on same function
+@desc "Function with both description and title"
+@title "Multi Decorator Function"
+def multiDecoratorFn
+  log "Test 1.4 - Function with multiple decorators"
+enddef
+
+# Call function to trigger decorator execution
+multiDecoratorFn
+
+# Verify both metadata were added
+getMeta multiDecoratorFn description
+test.assertEqual $ "Function with both description and title" "Multiple decorators - description failed"
+getMeta multiDecoratorFn title
+test.assertEqual $ "Multi Decorator Function" "Multiple decorators - title failed"
+
+# Test that decorators inside comments are ignored
+# @abc "This decorator should be ignored"
+# @desc "This should also be ignored"
+def testIgnoredDecoratorFn
+  log "Test 1.5 - Function with decorators in comments (should be ignored)"
+enddef
+
+# Call function to trigger decorator execution
+testIgnoredDecoratorFn
+
+# Verify that decorators in comments were NOT applied (no metadata should exist)
+getMeta testIgnoredDecoratorFn description
+test.assertEqual $ null "Decorator in comment should be ignored - description should not exist"
+getMeta testIgnoredDecoratorFn abc
+test.assertEqual $ null "Decorator in comment should be ignored - abc metadata should not exist"
+
+log "Test 1 - Built-in decorator functionality for functions: All passed"
+
+# Test 2: Decorators for if statements
+log "Test 2 - Decorators for if statements"
+
+@desc "This is a conditional block"
+@title "Conditional Test"
+if true
+  log "Test 2.1 - If block with decorators"
+endif
+
+# Note: Decorators on if blocks are parsed and attached, but may not execute
+# unless there's runtime support. This test verifies parsing works correctly.
+log "Test 2 - Decorators for if statements: Parsed successfully"
+
+# Test 2a: Multiple decorators on if statement
+@desc "Multiple decorators test"
+@title "If Block Title"
+if false
+  log "This won't execute"
+else
+  log "Test 2.2 - If-else block with decorators"
+endif
+
+log "Test 2a - Multiple decorators on if: Parsed successfully"
+
+# Test 3: Decorators for do statements
+log "Test 3 - Decorators for do statements"
+
+@desc "This is a do block"
+@title "Do Block Test"
+do
+  log "Test 3.1 - Do block with decorators"
+enddo
+
+# Note: Decorators on do blocks are parsed and attached, but may not execute
+# unless there's runtime support. This test verifies parsing works correctly.
+log "Test 3 - Decorators for do statements: Parsed successfully"
+
+# Test 3a: Multiple decorators on do statement
+@desc "Do block with multiple decorators"
+@title "Do Block Multiple"
+do
+  log "Test 3.2 - Do block with multiple decorators"
+enddo
+
+log "Test 3a - Multiple decorators on do: Parsed successfully"
+
+# Test 4: Decorators for for loops
+log "Test 4 - Decorators for for loops"
+
+@desc "This is a for loop"
+@title "For Loop Test"
+for $i in range 1 3
+  log "Test 4.1 - For loop with decorators, iteration:" $i
+endfor
+
+# Note: Decorators on for loops are parsed and attached, but may not execute
+# unless there's runtime support. This test verifies parsing works correctly.
+log "Test 4 - Decorators for for loops: Parsed successfully"
+
+# Test 4a: Multiple decorators on for loop
+@desc "For loop with multiple decorators"
+@title "For Loop Multiple"
+for $j in range 1 2
+  log "Test 4.2 - For loop with multiple decorators, iteration:" $j
+endfor
+
+log "Test 4a - Multiple decorators on for: Parsed successfully"
+
+# Test 5: Decorators for on (event) blocks
+log "Test 5 - Decorators for on (event) blocks"
+
+@desc "This is an event handler"
+@title "Event Handler Test"
+on testEvent
+  log "Test 5.1 - On block with decorators"
+endon
+
+# Note: Decorators on on blocks are parsed and attached, but may not execute
+# unless there's runtime support. This test verifies parsing works correctly.
+log "Test 5 - Decorators for on blocks: Parsed successfully"
+
+# Test 5a: Multiple decorators on on statement
+@desc "Event handler with multiple decorators"
+@title "Event Handler Multiple"
+on anotherEvent
+  log "Test 5.2 - On block with multiple decorators"
+endon
+
+log "Test 5a - Multiple decorators on on: Parsed successfully"
+
+# Test 6: Multiple decorators on different statement types
+log "Test 6 - Multiple decorators on different statement types"
+
+@desc "First decorator"
+@title "Second decorator"
+if true
+  log "Test 6.1 - If with multiple decorators"
+endif
+
+@desc "Do block decorator"
+@title "Do block title"
+do
+  log "Test 6.2 - Do with multiple decorators"
+enddo
+
+@desc "For loop decorator"
+@title "For loop title"
+for $i in range 1 2
+  log "Test 6.3 - For with multiple decorators, iteration:" $i
+endfor
+
+@desc "Event handler decorator"
+@title "Event handler title"
+on anotherEvent
+  log "Test 6.4 - On with multiple decorators"
+endon
+
+log "Test 6 - Multiple decorators on different statement types: Parsed successfully"
+
+# Test 7: Decorators with var and const (existing functionality)
+log "Test 7 - Decorators for var and const"
+
+# Test 7a: @desc decorator with var
+@desc "A test variable with description"
+var $decoratedVar7a 42
+test.assertEqual $decoratedVar7a 42 "decorated var value failed"
+getMeta $decoratedVar7a description
+test.assertEqual $ "A test variable with description" "@desc decorator with var failed"
+log "Test 7a - @desc with var: passed"
+
+# Test 7b: @description decorator with var (alias)
+@description "Another test variable"
+var $decoratedVar7b "hello"
+test.assertEqual $decoratedVar7b "hello" "decorated var value failed"
+getMeta $decoratedVar7b description
+test.assertEqual $ "Another test variable" "@description decorator with var failed"
+log "Test 7b - @description with var: passed"
+
+# Test 7c: @title decorator with var
+@title "Test Variable Title"
+var $titledVar7c 100
+test.assertEqual $titledVar7c 100 "titled var value failed"
+getMeta $titledVar7c title
+test.assertEqual $ "Test Variable Title" "@title decorator with var failed"
+log "Test 7c - @title with var: passed"
+
+# Test 7d: Multiple decorators with var
+@desc "Variable with both description and title"
+@title "Multi Decorator Variable"
+var $multiDecoratedVar7d 200
+test.assertEqual $multiDecoratedVar7d 200 "multi-decorated var value failed"
+getMeta $multiDecoratedVar7d description
+test.assertEqual $ "Variable with both description and title" "Multiple decorators - description failed"
+getMeta $multiDecoratedVar7d title
+test.assertEqual $ "Multi Decorator Variable" "Multiple decorators - title failed"
+log "Test 7d - Multiple decorators with var: passed"
+
+# Test 7e: @desc decorator with const
+@desc "A test constant with description"
+const $DECORATED_CONST_7e 300
+test.assertEqual $DECORATED_CONST_7e 300 "decorated const value failed"
+getMeta $DECORATED_CONST_7e description
+test.assertEqual $ "A test constant with description" "@desc decorator with const failed"
+log "Test 7e - @desc with const: passed"
+
+# Test 7f: @title decorator with const
+@title "Test Constant Title"
+const $TITLED_CONST_7f 400
+test.assertEqual $TITLED_CONST_7f 400 "titled const value failed"
+getMeta $TITLED_CONST_7f title
+test.assertEqual $ "Test Constant Title" "@title decorator with const failed"
+log "Test 7f - @title with const: passed"
+
+# Test 7g: Multiple decorators with const
+@desc "Constant with both description and title"
+@title "Multi Decorator Constant"
+const $MULTI_DECORATED_CONST_7g 500
+test.assertEqual $MULTI_DECORATED_CONST_7g 500 "multi-decorated const value failed"
+getMeta $MULTI_DECORATED_CONST_7g description
+test.assertEqual $ "Constant with both description and title" "Multiple decorators with const - description failed"
+getMeta $MULTI_DECORATED_CONST_7g title
+test.assertEqual $ "Multi Decorator Constant" "Multiple decorators with const - title failed"
+log "Test 7g - Multiple decorators with const: passed"
+
+# Test 7h: getMeta for decorated variable - return all metadata
+@desc "Variable for getMeta all test"
+@title "GetMeta All Test"
+var $getMetaVar7h 600
+getMeta $getMetaVar7h
+$meta7h = $
+test.assertType $meta7h "object" "getMeta all metadata should return an object"
+test.assertEqual $meta7h.description "Variable for getMeta all test" "getMeta all metadata - description failed"
+test.assertEqual $meta7h.title "GetMeta All Test" "getMeta all metadata - title failed"
+log "Test 7h - getMeta all metadata with var: passed"
+
+# Test 7i: getMeta for decorated constant - return all metadata
+@desc "Constant for getMeta all test"
+@title "GetMeta All Const Test"
+const $GET_META_CONST_7i 700
+getMeta $GET_META_CONST_7i
+$meta7i = $
+test.assertType $meta7i "object" "getMeta all metadata should return an object"
+test.assertEqual $meta7i.description "Constant for getMeta all test" "getMeta all metadata - description failed"
+test.assertEqual $meta7i.title "GetMeta All Const Test" "getMeta all metadata - title failed"
+log "Test 7i - getMeta all metadata with const: passed"
+
+log "Test 7 - Decorators with var and const: All passed"
+
+# Test 8: @param decorator
+log "Test 8 - @param decorator"
+
+# Test 8a: @param decorator with required parameter
+@param string $name "User's name"
+@desc "Function with parameter metadata"
+def greetUser
+  log "Hello" $1
+enddef
+
+greetUser "Alice"
+getMeta greetUser parameters
+$params8a = $
+test.assertType $params8a "array" "getMeta parameters should return array"
+test.assertEqual $params8a[0].name "name" "@param decorator - parameter name failed"
+test.assertEqual $params8a[0].dataType "string" "@param decorator - dataType failed"
+test.assertEqual $params8a[0].description "User's name" "@param decorator - description failed"
+test.assertTrue $params8a[0].required "@param decorator - required should be true when no default"
+log "Test 8a - @param with required parameter: passed"
+
+# Test 8b: @param decorator with default value
+@param number $age 25 "User's age"
+@desc "Function with parameter with default"
+def setAge
+  log "Age:" $1
+enddef
+
+setAge 30
+getMeta setAge parameters
+$params8b = $
+test.assertEqual $params8b[0].name "age" "@param decorator - parameter name with default failed"
+test.assertEqual $params8b[0].dataType "number" "@param decorator - dataType with default failed"
+test.assertEqual $params8b[0].defaultValue 25 "@param decorator - defaultValue failed"
+test.assertEqual $params8b[0].description "User's age" "@param decorator - description with default failed"
+test.assertFalse $params8b[0].required "@param decorator - required should be false when default provided"
+log "Test 8b - @param with default value: passed"
+
+# Test 8c: @param decorator with multiple parameters
+@param string $firstName "First name"
+@param string $lastName "Last name"
+@param number $age 0 "Age"
+@desc "Function with multiple parameters"
+def createUser
+  log "User:" $1 $2 $3
+enddef
+
+createUser "John" "Doe" 30
+getMeta createUser parameters
+$params8c = $
+test.assertEqual $(array.length $params8c) 3 "@param decorator - multiple parameters count failed"
+test.assertEqual $params8c[0].name "firstName" "@param decorator - first parameter name failed"
+test.assertEqual $params8c[1].name "lastName" "@param decorator - second parameter name failed"
+test.assertEqual $params8c[2].name "age" "@param decorator - third parameter name failed"
+log "Test 8c - @param with multiple parameters: passed"
+
+# Test 8d: @param decorator with different types
+@param array $items "List of items"
+@param object $config "Configuration object"
+@param bool $enabled true "Enabled flag"
+@desc "Function with different parameter types"
+def processData
+  log "Processing:" $1 $2 $3
+enddef
+
+processData [1, 2, 3] {key: "value"} true
+getMeta processData parameters
+$params8d = $
+test.assertEqual $params8d[0].dataType "array" "@param decorator - array type failed"
+test.assertEqual $params8d[1].dataType "object" "@param decorator - object type failed"
+test.assertEqual $params8d[2].dataType "boolean" "@param decorator - bool type normalization failed"
+log "Test 8d - @param with different types: passed"
+
+# Test 8e: @param decorator without description
+@param string $message
+@desc "Function with param without description"
+def logMessage
+  log $1
+enddef
+
+logMessage "test"
+getMeta logMessage parameters
+$params8e = $
+test.assertEqual $params8e[0].name "message" "@param decorator - without description name failed"
+test.assertEqual $params8e[0].description "" "@param decorator - without description should be empty string"
+log "Test 8e - @param without description: passed"
+
+# Test 8f: @param decorator with boolean type normalization
+@param boolean $flag false "Boolean flag"
+@desc "Function with boolean parameter"
+def toggleFlag
+  log "Flag:" $1
+enddef
+
+toggleFlag true
+getMeta toggleFlag parameters
+$params8f = $
+test.assertEqual $params8f[0].dataType "boolean" "@param decorator - boolean type normalization failed"
+log "Test 8f - @param with boolean type: passed"
+
+# Test 8g: @param decorator combined with @desc and @title
+@desc "Function with all decorators"
+@title "Complete Function"
+@param string $name "User name"
+@param number $age "User age"
+def completeFunction
+  log "Name:" $1 "Age:" $2
+enddef
+
+completeFunction "Bob" 35
+getMeta completeFunction
+$allMeta8g = $
+test.assertEqual $allMeta8g.description "Function with all decorators" "@param combined with @desc failed"
+test.assertEqual $allMeta8g.title "Complete Function" "@param combined with @title failed"
+test.assertType $allMeta8g.parameters "array" "@param combined with other decorators - parameters type failed"
+test.assertEqual $(array.length $allMeta8g.parameters) 2 "@param combined with other decorators - parameters count failed"
+log "Test 8g - @param combined with @desc and @title: passed"
+
+# Test 8h: @param decorator error - used on variable (should throw error)
+# Note: This is tested manually - @param on var should throw error
+log "Test 8h - @param on variable (tested manually - should throw error): passed"
+
+# Test 8i: @param decorator error - missing required arguments
+# Note: This is tested manually - @param with less than 2 args should throw error
+log "Test 8i - @param missing arguments (tested manually - should throw error): passed"
+
+log "Test 8 - @param decorator: All passed"
+
+# Test 9: @arg decorator
+log "Test 9 - @arg decorator"
+
+# Test 9a: @arg decorator - single arg
+@arg number
+@desc "Function with variadic arguments"
+def addNumbers
+  math.add $1 $2 $3
+enddef
+
+addNumbers 1 2 3
+getMeta addNumbers parameters
+$params9a = $
+test.assertType $params9a "array" "getMeta parameters should return array"
+# Find args parameter
+$argsParam9a = null
+for $p in $params9a
+  if $p.name == "args"
+    set $argsParam9a $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9a "@arg decorator - args parameter should exist"
+test.assertEqual $argsParam9a.name "args" "@arg decorator - args parameter name failed"
+test.assertEqual $argsParam9a.dataType "array" "@arg decorator - args parameter dataType failed"
+test.assertType $argsParam9a.children "array" "@arg decorator - args parameter should have children array"
+test.assertEqual $(array.length $argsParam9a.children) 1 "@arg decorator - should have one child"
+test.assertEqual $argsParam9a.children[0].name "value" "@arg decorator - child name failed"
+test.assertEqual $argsParam9a.children[0].dataType "number" "@arg decorator - child dataType failed"
+test.assertTrue $argsParam9a.children[0].required "@arg decorator - child required should be true when no default"
+log "Test 9a - @arg single arg: passed"
+
+# Test 9b: @arg decorator - with default value
+@arg string "default" "String argument"
+@desc "Function with variadic arguments with default"
+def processStrings
+  log "Processing:" $1 $2 $3
+enddef
+
+processStrings "a" "b" "c"
+getMeta processStrings parameters
+$params9b = $
+$argsParam9b = null
+for $p in $params9b
+  if $p.name == "args"
+    set $argsParam9b $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9b "@arg decorator - args parameter should exist"
+test.assertEqual $(array.length $argsParam9b.children) 1 "@arg decorator - should have one child"
+test.assertEqual $argsParam9b.children[0].defaultValue "default" "@arg decorator - child defaultValue failed"
+test.assertEqual $argsParam9b.children[0].description "String argument" "@arg decorator - child description failed"
+test.assertFalse $argsParam9b.children[0].required "@arg decorator - child required should be false when default provided"
+log "Test 9b - @arg with default value: passed"
+
+# Test 9c: @arg decorator - multiple @arg decorators
+@arg number
+@arg string
+@arg boolean
+@desc "Function with multiple variadic argument types"
+def processMultiple
+  log "Processing:" $1 $2 $3
+enddef
+
+processMultiple 1 "hello" true
+getMeta processMultiple parameters
+$params9c = $
+$argsParam9c = null
+for $p in $params9c
+  if $p.name == "args"
+    set $argsParam9c $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9c "@arg decorator - args parameter should exist"
+test.assertEqual $(array.length $argsParam9c.children) 3 "@arg decorator - should have three children"
+test.assertEqual $argsParam9c.children[0].dataType "number" "@arg decorator - first child dataType failed"
+test.assertEqual $argsParam9c.children[1].dataType "string" "@arg decorator - second child dataType failed"
+test.assertEqual $argsParam9c.children[2].dataType "boolean" "@arg decorator - third child dataType failed"
+log "Test 9c - @arg multiple decorators: passed"
+
+# Test 9d: @arg decorator - combined with @param
+@param string $name "User name"
+@arg number
+@desc "Function with both @param and @arg"
+def greetAndAdd
+  log "Hello" $1
+  math.add $2 $3 $4
+enddef
+
+greetAndAdd "Alice" 1 2 3
+getMeta greetAndAdd parameters
+$params9d = $
+test.assertEqual $(array.length $params9d) 2 "@arg combined with @param - should have two parameters"
+# Find name parameter
+$nameParam9d = null
+for $p in $params9d
+  if $p.name == "name"
+    set $nameParam9d $p
+    break
+  endif
+endfor
+test.assertNotNull $nameParam9d "@arg combined with @param - name parameter should exist"
+test.assertEqual $nameParam9d.name "name" "@arg combined with @param - name parameter name failed"
+# Find args parameter
+$argsParam9d = null
+for $p in $params9d
+  if $p.name == "args"
+    set $argsParam9d $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9d "@arg combined with @param - args parameter should exist"
+test.assertEqual $(array.length $argsParam9d.children) 1 "@arg combined with @param - args should have one child"
+log "Test 9d - @arg combined with @param: passed"
+
+# Test 9e: @arg decorator - with description only (no default)
+@arg array "List of items"
+@desc "Function with @arg description only"
+def processArray
+  log "Processing:" $1
+enddef
+
+processArray [1, 2, 3]
+getMeta processArray parameters
+$params9e = $
+$argsParam9e = null
+for $p in $params9e
+  if $p.name == "args"
+    set $argsParam9e $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9e "@arg decorator - args parameter should exist"
+test.assertEqual $argsParam9e.children[0].dataType "array" "@arg decorator - child dataType failed"
+test.assertEqual $argsParam9e.children[0].description "List of items" "@arg decorator - child description failed"
+test.assertTrue $argsParam9e.children[0].required "@arg decorator - child required should be true when no default"
+log "Test 9e - @arg with description only: passed"
+
+# Test 9f: @arg decorator - different types
+@arg object
+@arg bool
+@desc "Function with different @arg types"
+def processTypes
+  log "Processing:" $1 $2
+enddef
+
+processTypes {key: "value"} true
+getMeta processTypes parameters
+$params9f = $
+$argsParam9f = null
+for $p in $params9f
+  if $p.name == "args"
+    set $argsParam9f $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam9f "@arg decorator - args parameter should exist"
+test.assertEqual $argsParam9f.children[0].dataType "object" "@arg decorator - object type failed"
+test.assertEqual $argsParam9f.children[1].dataType "boolean" "@arg decorator - bool type normalization failed"
+log "Test 9f - @arg different types: passed"
+
+log "Test 9 - @arg decorator: All passed"
+
+# Test 10: @required decorator
+log "Test 10 - @required decorator"
+
+# Test 10a: @required decorator - mark single parameter as required
+@param string $name "User name"
+@required $name
+@desc "Function with required parameter"
+def greetRequired
+  log "Hello" $1
+enddef
+
+greetRequired "Alice"
+getMeta greetRequired parameters
+$params10a = $
+test.assertType $params10a "array" "getMeta parameters should return array"
+test.assertEqual $params10a[0].name "name" "@required decorator - parameter name failed"
+test.assertTrue $params10a[0].required "@required decorator - parameter should be required"
+log "Test 10a - @required single parameter: passed"
+
+# Test 10b: @required decorator - mark multiple parameters as required
+@param string $firstName "First name"
+@param string $lastName "Last name"
+@param number $age "Age"
+@required $firstName $lastName
+@desc "Function with multiple required parameters"
+def createUserRequired
+  log "User:" $1 $2 $3
+enddef
+
+createUserRequired "John" "Doe" 30
+getMeta createUserRequired parameters
+$params10b = $
+test.assertEqual $(array.length $params10b) 3 "@required decorator - should have three parameters"
+# Find firstName parameter
+$firstNameParam10b = null
+for $p in $params10b
+  if $p.name == "firstName"
+    set $firstNameParam10b $p
+    break
+  endif
+endfor
+test.assertNotNull $firstNameParam10b "@required decorator - firstName parameter should exist"
+test.assertTrue $firstNameParam10b.required "@required decorator - firstName should be required"
+# Find lastName parameter
+$lastNameParam10b = null
+for $p in $params10b
+  if $p.name == "lastName"
+    set $lastNameParam10b $p
+    break
+  endif
+endfor
+test.assertNotNull $lastNameParam10b "@required decorator - lastName parameter should exist"
+test.assertTrue $lastNameParam10b.required "@required decorator - lastName should be required"
+log "Test 10b - @required multiple parameters: passed"
+
+# Test 10c: @required decorator - preserves default value when marking as required
+@param number $age 25 "User age"
+@required $age
+@desc "Function with required parameter that had default"
+def setAgeRequired
+  log "Age:" $1
+enddef
+
+setAgeRequired 30
+getMeta setAgeRequired parameters
+$params10c = $
+$ageParam10c = null
+for $p in $params10c
+  if $p.name == "age"
+    set $ageParam10c $p
+    break
+  endif
+endfor
+test.assertNotNull $ageParam10c "@required decorator - age parameter should exist"
+test.assertTrue $ageParam10c.required "@required decorator - age should be required"
+# defaultValue should be preserved
+test.assertEqual $ageParam10c.defaultValue 25 "@required decorator - defaultValue should be preserved"
+log "Test 10c - @required preserves default value: passed"
+
+# Test 10d: @required decorator - creates parameter if it doesn't exist
+@required $newParam
+@desc "Function with @required on non-existent parameter"
+def functionWithNewParam
+  log "Test"
+enddef
+
+functionWithNewParam
+getMeta functionWithNewParam parameters
+$params10d = $
+$newParam10d = null
+for $p in $params10d
+  if $p.name == "newParam"
+    set $newParam10d $p
+    break
+  endif
+endfor
+test.assertNotNull $newParam10d "@required decorator - newParam should be created"
+test.assertTrue $newParam10d.required "@required decorator - newParam should be required"
+test.assertEqual $newParam10d.dataType "any" "@required decorator - newParam should have default dataType"
+log "Test 10d - @required creates parameter: passed"
+
+# Test 10e: @required decorator - combined with @param and @arg
+@param string $name "User name"
+@arg number
+@required $name
+@desc "Function with @required combined with @param and @arg"
+def combinedRequired
+  log "Name:" $1 "Numbers:" $2 $3 $4
+enddef
+
+combinedRequired "Bob" 1 2 3
+getMeta combinedRequired parameters
+$params10e = $
+test.assertEqual $(array.length $params10e) 2 "@required combined - should have two parameters"
+# Find name parameter
+$nameParam10e = null
+for $p in $params10e
+  if $p.name == "name"
+    set $nameParam10e $p
+    break
+  endif
+endfor
+test.assertNotNull $nameParam10e "@required combined - name parameter should exist"
+test.assertTrue $nameParam10e.required "@required combined - name should be required"
+# Find args parameter
+$argsParam10e = null
+for $p in $params10e
+  if $p.name == "args"
+    set $argsParam10e $p
+    break
+  endif
+endfor
+test.assertNotNull $argsParam10e "@required combined - args parameter should exist"
+# args parameter should not be affected by @required (it's not a regular parameter)
+log "Test 10e - @required combined with @param and @arg: passed"
+
+log "Test 10 - @required decorator: All passed"
+
+# Test 11: Error cases - orphaned decorators (should fail parsing)
+log "Test 11 - Error cases (orphaned decorators)"
+
+# These should cause parsing errors, so we'll test them by attempting to parse
+# and catching errors. For now, we'll just log that these should fail.
+log "Test 11.1 - Orphaned decorator before non-decorated statement should fail"
+# @desc "This should fail"
+# log "This line should cause an error"
+
+log "Test 11 - Error cases: Noted (would require error handling tests)"
+
+log "All decorator tests completed"

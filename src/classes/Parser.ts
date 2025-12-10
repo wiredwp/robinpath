@@ -297,7 +297,7 @@ export class Parser {
                         decoratorScanLine++;
                         continue;
                     }
-                    // Not a decorator - check if it's a def, var, or const statement
+                    // Not a decorator - check if it's a def, var, const, if, do, for, or on statement
                     if (decoratorTokens.length > 0 && decoratorTokens[0] === 'def') {
                         scanLine = decoratorScanLine; // Update scanLine to the def line
                         foundDef = true;
@@ -307,10 +307,15 @@ export class Parser {
                         scanLine = decoratorScanLine + 1; // Skip the var/const line
                         foundVarOrConst = true;
                         break;
+                    } else if (decoratorTokens.length > 0 && (decoratorTokens[0] === 'if' || decoratorTokens[0] === 'do' || decoratorTokens[0] === 'for' || decoratorTokens[0] === 'on')) {
+                        // Found if, do, for, or on - skip it (decorators will be handled in main parse)
+                        scanLine = decoratorScanLine + 1; // Skip the statement line
+                        foundVarOrConst = true; // Reuse this flag to indicate we found a statement that needs decorator handling in main parse
+                        break;
                     } else {
-                        // Not a decorator and not a def/var/const - orphaned decorator
+                        // Not a decorator and not a supported statement - orphaned decorator
                         if (decorators.length > 0) {
-                            throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, or const declaration', decorators[0].codePos.startRow);
+                            throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, const, if, do, for, or on statement', decorators[0].codePos.startRow);
                         }
                         break;
                     }
@@ -595,7 +600,7 @@ export class Parser {
             if (line.startsWith('@')) {
                 // Check if there are pending decorators with blank line after (orphaned)
                 if (pendingDecorators.length > 0 && hasBlankLineAfterLastComment) {
-                    throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, or const declaration', pendingDecoratorLines[0]);
+                    throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, const, if, do, for, or on statement', pendingDecoratorLines[0]);
                 }
                 
                 // Parse decorator: @decoratorName arg1 arg2 ...
@@ -717,7 +722,7 @@ export class Parser {
             if (stmt) {
                 // If we have pending decorators, check if this statement supports decorators
                 if (pendingDecorators.length > 0) {
-                    // Decorators are allowed before: def, var, const commands
+                    // Decorators are allowed before: def, var, const, if, do, for, on statements
                     if (stmt.type === 'define') {
                         // Attach decorators to def statements (handled below)
                     } else if (stmt.type === 'command' && (stmt.name === 'var' || stmt.name === 'const')) {
@@ -725,9 +730,14 @@ export class Parser {
                         stmt.decorators = [...pendingDecorators];
                         pendingDecorators.length = 0;
                         pendingDecoratorLines.length = 0;
+                    } else if (stmt.type === 'ifBlock' || stmt.type === 'do' || stmt.type === 'forLoop' || stmt.type === 'onBlock') {
+                        // Attach decorators to if, do, for, and on statements
+                        (stmt as any).decorators = [...pendingDecorators];
+                        pendingDecorators.length = 0;
+                        pendingDecoratorLines.length = 0;
                     } else {
-                        // Orphaned decorator - not before def, var, or const
-                        throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, or const declaration', pendingDecoratorLines[0]);
+                        // Orphaned decorator - not before def, var, const, if, do, for, or on
+                        throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, const, if, do, for, or on statement', pendingDecoratorLines[0]);
                     }
                 }
                 const allComments: CommentWithPosition[] = [];
@@ -801,7 +811,7 @@ export class Parser {
         
         // Handle any remaining pending decorators at end of file (orphaned decorators)
         if (pendingDecorators.length > 0) {
-            throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, or const declaration', pendingDecoratorLines[0]);
+            throw this.createError('orphaned decorator: decorator must be immediately before function definition, var, const, if, do, for, or on statement', pendingDecoratorLines[0]);
         }
 
         return statements;
