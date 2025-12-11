@@ -11,8 +11,8 @@ import { Lexer, TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
-import { BlockParserBase, type BlockParserContext } from './BlockParserBase';
-import type { Statement, CommentWithPosition, OnBlock, CodePosition, CommentStatement } from '../index';
+import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
+import type { Statement, CommentWithPosition, OnBlock } from '../index';
 
 export interface OnBlockHeader {
     /**
@@ -24,36 +24,6 @@ export interface OnBlockHeader {
      * Comments attached to the on statement
      */
     comments: CommentWithPosition[];
-}
-
-/**
- * Context for TokenStream-based on block parsing
- */
-export interface OnBlockTokenStreamContext {
-    /**
-     * All lines in source (for line-based utilities)
-     */
-    lines: string[];
-    
-    /**
-     * Parse a statement from TokenStream (stub for now - delegates to line-based)
-     */
-    parseStatementFromTokens?: (stream: TokenStream) => Statement | null;
-    
-    /**
-     * Create code position from tokens
-     */
-    createCodePositionFromTokens: (startToken: Token, endToken: Token) => CodePosition;
-    
-    /**
-     * Create code position from line range
-     */
-    createCodePositionFromLines: (startLine: number, endLine: number) => CodePosition;
-    
-    /**
-     * Create grouped comment node
-     */
-    createGroupedCommentNode: (comments: string[], commentLines: number[]) => CommentStatement;
 }
 
 // Keywords for nested block tracking (reserved for future use)
@@ -287,7 +257,7 @@ export class OnBlockParser extends BlockParserBase {
     static parseFromStream(
         stream: TokenStream,
         headerToken: Token,
-        context: OnBlockTokenStreamContext
+        context: BlockTokenStreamContext
     ): OnBlock {
         // 1. Validate precondition: stream should be at 'on'
         if (headerToken.text !== 'on') {
@@ -397,11 +367,8 @@ export class OnBlockParser extends BlockParserBase {
                 continue;
             }
             
-            // Parse statement
-            // Use context-provided parseStatementFromTokens if available, otherwise use stub
-            const stmt = context.parseStatementFromTokens 
-                ? context.parseStatementFromTokens(stream)
-                : OnBlockParser.parseStatementFromTokens(stream, context);
+            // Parse statement using context-provided parseStatementFromTokens
+            const stmt = context.parseStatementFromTokens?.(stream);
             if (stmt) {
                 body.push(stmt);
             } else {
@@ -427,50 +394,4 @@ export class OnBlockParser extends BlockParserBase {
         return result;
     }
     
-    /**
-     * Parse a single statement from TokenStream
-     * 
-     * STUB: This needs to be implemented to fully support TokenStream-based parsing.
-     * For now, returns null to skip to next token.
-     * 
-     * TODO: Implement full statement parsing that dispatches on keywords:
-     * - if/endif
-     * - do/enddo
-     * - for/endfor
-     * - def/enddef
-     * - return
-     * - break
-     * - command calls
-     * - assignments
-     */
-    private static parseStatementFromTokens(
-        stream: TokenStream,
-        _context: OnBlockTokenStreamContext
-    ): Statement | null {
-        const t = stream.current();
-        if (!t) return null;
-        
-        // Skip to next line for now (stub behavior)
-        // In full implementation, this would dispatch based on t.text:
-        // - 'if' -> parseIfBlockFromTokens
-        // - 'do' -> parseScopeFromTokens
-        // - 'for' -> parseForLoopFromTokens
-        // - etc.
-        
-        // Consume tokens until newline (simple stub)
-        while (!stream.isAtEnd()) {
-            const current = stream.current();
-            if (!current || current.kind === TokenKind.NEWLINE || current.kind === TokenKind.EOF) {
-                if (current?.kind === TokenKind.NEWLINE) {
-                    stream.next();
-                }
-                break;
-            }
-            stream.next();
-        }
-        
-        // Return a placeholder command for now
-        // In real implementation, this would return proper Statement nodes
-        return null;
-    }
 }

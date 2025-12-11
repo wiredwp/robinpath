@@ -1,13 +1,58 @@
 /**
  * Parser for inline if statements
  * Syntax: if <condition> then <command>
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseStatement(startLine)
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
-import { Lexer } from '../classes/Lexer';
+import { Lexer, TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import { ReturnParser } from './ReturnParser';
 import type { InlineIf, Statement, CommandCall, CommentWithPosition, CodePosition } from '../index';
+
+/**
+ * Context for TokenStream-based inline if statement parsing
+ */
+export interface InlineIfTokenStreamContext {
+    /**
+     * All lines in source
+     */
+    lines: string[];
+    
+    /**
+     * Create code position from tokens
+     */
+    createCodePositionFromTokens: (startToken: Token, endToken: Token) => CodePosition;
+    
+    /**
+     * Create error with line info
+     */
+    createError(message: string, lineNumber: number): Error;
+    
+    /**
+     * Extract inline comment from line
+     */
+    extractInlineComment(line: string, lineNumber?: number): { text: string; position: number } | null;
+    
+    /**
+     * Create inline comment with position
+     */
+    createInlineCommentWithPosition(line: string, lineNumber: number, comment: { text: string; position: number }): CommentWithPosition;
+    
+    /**
+     * Parse command from tokens
+     */
+    parseCommandFromTokens(tokens: string[], startLine?: number): CommandCall;
+    
+    /**
+     * Extract subexpression from line
+     */
+    extractSubexpression(line: string, startPos: number): { code: string; endPos: number };
+}
 
 export interface InlineIfParserContext {
     /**
@@ -209,6 +254,216 @@ export class InlineIfParser {
         if (comments.length > 0) {
             result.comments = comments;
         }
+        return result;
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse inline if statement from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'if' keyword
+     * @param headerToken - The 'if' keyword token
+     * @param context - Context with helper methods
+     * @returns Parsed InlineIf
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: InlineIfTokenStreamContext
+    ): InlineIf {
+        // 1. Validate precondition: stream should be at 'if'
+        if (headerToken.text !== 'if') {
+            throw new Error(`parseFromStream expected 'if' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'if' keyword
+        stream.next();
+        
+        // 2. Parse condition expression (everything until 'then')
+        const conditionTokens: Token[] = [];
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t) break;
+            if (t.kind === TokenKind.KEYWORD && t.text === 'then') {
+                break; // Stop at 'then'
+            }
+            if (t.kind === TokenKind.NEWLINE) {
+                throw context.createError("inline if requires 'then'", t.line - 1);
+            }
+            conditionTokens.push(t);
+            stream.next();
+        }
+        
+        if (conditionTokens.length === 0) {
+            throw context.createError("inline if requires a condition", headerToken.line - 1);
+        }
+        
+        const conditionExpr = conditionTokens.map(t => t.text).join(' ');
+        
+        // 3. Expect and consume 'then' keyword
+        const thenToken = stream.expect('then', "inline if requires 'then' keyword");
+        stream.next(); // consume 'then'
+        
+        // 4. Parse command after 'then'
+        const commandTokens: Token[] = [];
+        const headerComments: CommentWithPosition[] = [];
+        
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t) break;
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next(); // consume NEWLINE
+                break;
+            }
+            if (t.kind === TokenKind.COMMENT) {
+                // Capture inline comment
+                const lineNumber = t.line - 1;
+                const line = context.lines[lineNumber] || '';
+                const comment = context.extractInlineComment(line, lineNumber);
+                if (comment) {
+                    headerComments.push(context.createInlineCommentWithPosition(line, lineNumber, comment));
+                }
+                stream.next();
+                continue;
+            }
+            commandTokens.push(t);
+            stream.next();
+        }
+        
+        // 5. Parse the command from tokens
+        // Convert tokens to string[] for compatibility with parseCommandFromTokens
+        const commandTokenStrings = commandTokens.map(t => t.text);
+        const startLine = headerToken.line - 1;
+        
+        // Check if this is an assignment FIRST
+        let finalCommand: Statement;
+        if (commandTokenStrings.length >= 3 && LexerUtils.isVariable(commandTokenStrings[0]) && commandTokenStrings[1] === '=') {
+            // This is an assignment - parse target with possible attribute path
+            const targetVar = commandTokenStrings[0];
+            const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(targetVar);
+            const restTokens = commandTokenStrings.slice(2);
+            
+            // Check if it's a literal value
+            if (restTokens.length === 1) {
+                const token = restTokens[0];
+                if (LexerUtils.isNumber(token)) {
+                    const numValue = parseFloat(token);
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        literalValue: numValue,
+                        literalValueType: 'number',
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else if (LexerUtils.isString(token)) {
+                    const strValue = LexerUtils.parseString(token);
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        literalValue: strValue,
+                        literalValueType: 'string',
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else if (token === 'true') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        literalValue: true,
+                        literalValueType: 'boolean',
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else if (token === 'false') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        literalValue: false,
+                        literalValueType: 'boolean',
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else if (token === 'null') {
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        literalValue: null,
+                        literalValueType: 'null',
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else if (LexerUtils.isVariable(token)) {
+                    // Handle variable reference: $a = $b
+                    const { name: varName, path: varPath } = LexerUtils.parseVariablePath(token);
+                    finalCommand = { 
+                        type: 'assignment', 
+                        targetName, 
+                        targetPath,
+                        command: {
+                            type: 'command',
+                            name: '_var',
+                            args: [{ type: 'var', name: varName, path: varPath }],
+                            codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                        },
+                        codePos: context.createCodePositionFromTokens(headerToken, headerToken)
+                    };
+                } else {
+                    const cmd = context.parseCommandFromTokens(restTokens, startLine);
+                    finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, codePos: context.createCodePositionFromTokens(headerToken, headerToken) };
+                }
+            } else {
+                const cmd = context.parseCommandFromTokens(restTokens, startLine);
+                finalCommand = { type: 'assignment', targetName, targetPath, command: cmd, codePos: context.createCodePositionFromTokens(headerToken, headerToken) };
+            }
+        } else {
+            // Check if it's a break or return statement
+            if (commandTokenStrings.length === 1 && commandTokenStrings[0] === 'break') {
+                finalCommand = { type: 'break', codePos: context.createCodePositionFromTokens(headerToken, headerToken) };
+            } else if (commandTokenStrings.length >= 1 && commandTokenStrings[0] === 'return') {
+                // Parse return statement
+                const returnValueTokens = commandTokenStrings.slice(1);
+                if (returnValueTokens.length === 0) {
+                    finalCommand = { type: 'return', codePos: context.createCodePositionFromTokens(headerToken, headerToken) };
+                } else {
+                    // Convert to TokenStream for parseReturnValue
+                    const lineNumber = headerToken.line - 1;
+                    const line = context.lines[lineNumber] || '';
+                    const returnValueLine = line.substring(line.indexOf('then') + 4).trim();
+                    const tokenizedReturnValue = Lexer.tokenizeFull(returnValueLine);
+                    const returnValueStream = new TokenStream(tokenizedReturnValue);
+                    const returnValue = ReturnParser.parseReturnValueStatic(
+                        returnValueStream, 
+                        returnValueLine, 
+                        (l: string, pos: number) => context.extractSubexpression(l, pos)
+                    );
+                    finalCommand = { type: 'return', value: returnValue, codePos: context.createCodePositionFromTokens(headerToken, headerToken) };
+                }
+            } else {
+                // Not an assignment, parse as regular command
+                finalCommand = context.parseCommandFromTokens(commandTokenStrings, startLine);
+            }
+        }
+        
+        // 6. Build codePos from headerToken to end of command
+        const endToken = commandTokens.length > 0 ? commandTokens[commandTokens.length - 1] : thenToken;
+        const codePos = context.createCodePositionFromTokens(headerToken, endToken);
+        
+        // 7. Build result
+        const result: InlineIf = {
+            type: 'inlineIf',
+            conditionExpr,
+            command: finalCommand,
+            codePos
+        };
+        
+        if (headerComments.length > 0) {
+            result.comments = headerComments;
+        }
+        
         return result;
     }
 }

@@ -1,6 +1,10 @@
 /**
  * Parser for return statements
  * Syntax: return [value]
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseStatement()
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
 import { Lexer, TokenKind } from '../classes/Lexer';
@@ -8,6 +12,31 @@ import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import type { ReturnStatement, Arg, CodePosition } from '../index';
+
+/**
+ * Context for TokenStream-based return statement parsing
+ */
+export interface ReturnTokenStreamContext {
+    /**
+     * All lines in source (for extracting subexpressions)
+     */
+    lines: string[];
+    
+    /**
+     * Create code position from tokens
+     */
+    createCodePositionFromTokens: (startToken: Token, endToken: Token) => CodePosition;
+    
+    /**
+     * Create error from token position
+     */
+    createErrorFromToken(message: string, token: Token | null): Error;
+    
+    /**
+     * Extract subexpression from line at given position
+     */
+    extractSubexpression(line: string, startPos: number): { code: string; endPos: number };
+}
 
 export interface ReturnParserContext {
     /**
@@ -193,5 +222,67 @@ export class ReturnParser {
             // Treat as literal string
             return { type: 'literal', value: token.text };
         }
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse return statement from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'return' keyword
+     * @param headerToken - The 'return' keyword token
+     * @param context - Context with helper methods
+     * @returns Parsed ReturnStatement
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: ReturnTokenStreamContext
+    ): ReturnStatement {
+        // 1. Validate precondition: stream should be at 'return'
+        if (headerToken.text !== 'return') {
+            throw new Error(`parseFromStream expected 'return' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'return' keyword
+        stream.next();
+        
+        // 2. Skip comments and whitespace
+        stream.skip(TokenKind.COMMENT);
+        stream.skipNewlines();
+        
+        // 3. Parse return value if present
+        let value: Arg | undefined;
+        let endToken = headerToken;
+        
+        if (!stream.isAtEnd()) {
+            const current = stream.current();
+            if (current && current.kind !== TokenKind.EOF && current.kind !== TokenKind.COMMENT && current.kind !== TokenKind.NEWLINE) {
+                // There's a value to return - parse it
+                // Get the line for subexpression extraction
+                const lineNumber = current.line - 1; // Convert to 0-based
+                const line = context.lines[lineNumber] || '';
+                
+                value = ReturnParser.parseReturnValueStatic(
+                    stream,
+                    line,
+                    (l: string, pos: number) => context.extractSubexpression(l, pos)
+                );
+                
+                // Update endToken to the last token of the return value
+                endToken = stream.current() ?? current;
+            }
+        }
+        
+        // 4. Build codePos from headerToken to endToken
+        const codePos = context.createCodePositionFromTokens(headerToken, endToken);
+        
+        return {
+            type: 'return',
+            value,
+            codePos
+        };
     }
 }

@@ -8,7 +8,8 @@ import { IfBlockParser } from '../parsers/IfBlockParser';
 import { DefineParser } from '../parsers/DefineParser';
 import { ScopeParser } from '../parsers/ScopeParser';
 import { WithScopeParser } from '../parsers/WithScopeParser';
-import { OnBlockParser, type OnBlockTokenStreamContext } from '../parsers/OnBlockParser';
+import { OnBlockParser } from '../parsers/OnBlockParser';
+import type { BlockTokenStreamContext } from '../parsers/BlockParserBase';
 import { ReturnParser } from '../parsers/ReturnParser';
 import { BreakParser } from '../parsers/BreakParser';
 import { InlineIfParser } from '../parsers/InlineIfParser';
@@ -438,6 +439,58 @@ export class Parser {
                 this.createInlineCommentWithPosition(line, lineNumber, comment),
             parseCommandFromTokens: (tokens: string[], startLine?: number) => this.parseCommandFromTokens(tokens, startLine),
             extractSubexpression: (line: string, startPos: number) => this.extractSubexpression(line, startPos)
+        };
+    }
+    
+    /**
+     * Create a BlockTokenStreamContext for use by block parsers
+     */
+    private createBlockTokenStreamContext(): BlockTokenStreamContext {
+        return {
+            lines: this.lines,
+            parseStatementFromTokens: (tokenStream: TokenStream) => {
+                // Hybrid approach: convert token position to line and use line-based parsing
+                const currentToken = tokenStream.current();
+                if (!currentToken) return null;
+                
+                // Get line from token (1-based, convert to 0-based)
+                const statementStartLine = currentToken.line - 1;
+                
+                // Sync currentLine to the statement's line
+                this.currentLine = statementStartLine;
+                
+                // Use line-based parseStatement (this will advance this.currentLine)
+                const stmt = this.parseStatement();
+                
+                // Advance stream past all tokens on lines consumed by parseStatement
+                // parseStatement advanced this.currentLine to the line after the statement
+                const endLine = this.currentLine - 1; // Last line of the statement
+                
+                while (!tokenStream.isAtEnd()) {
+                    const nextToken = tokenStream.current();
+                    if (!nextToken) break;
+                    
+                    const nextLine = nextToken.line - 1;
+                    
+                    // If we've moved past the statement's last line, stop
+                    if (nextLine > endLine) {
+                        break;
+                    }
+                    
+                    tokenStream.next();
+                }
+                
+                return stmt;
+            },
+            createCodePositionFromTokens: (startToken: Token, endToken: Token) => {
+                return this.createCodePositionFromTokens(startToken, endToken);
+            },
+            createCodePositionFromLines: (startLine: number, endLine: number) => {
+                return this.createCodePositionFromLines(startLine, endLine);
+            },
+            createGroupedCommentNode: (comments: string[], commentLines: number[]) => {
+                return this.createGroupedCommentNode(comments, commentLines);
+            }
         };
     }
     
@@ -1131,6 +1184,17 @@ export class Parser {
 
         // Keyword dispatch (using TokenStream-compatible logic for future migration)
         const firstToken = tokens[0];
+        
+        // Skip end keywords (these should be handled by block parsers, not as standalone statements)
+        // This prevents them from being parsed as commands when they appear on their own lines
+        const endKeywords = ['endif', 'enddef', 'endfor', 'enddo', 'endwith', 'endtogether', 'endon', 'elseif', 'else'];
+        if (endKeywords.includes(firstToken)) {
+            // These keywords are handled by their respective block parsers
+            // If we encounter them here, it's likely a parsing error or they're being called incorrectly
+            // Skip them to avoid parsing them as commands
+            this.currentLine++;
+            return null;
+        }
         
         // Check for define block
         if (firstToken === 'def') {
@@ -1864,9 +1928,38 @@ export class Parser {
     }
 
     private parseDefine(startLine: number): DefineFunction {
-        // Delegate to DefineParser for complete block parsing
-        const parser = new DefineParser(this.createBlockParserContext(this.currentLine));
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new DefineParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'def'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'def') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new DefineParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        const result = DefineParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext());
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     /**
@@ -1874,9 +1967,52 @@ export class Parser {
      * Syntax: do [$param1 $param2 ...] [into $var] ... enddo
      */
     private parseScope(startLine: number): ScopeBlock {
-        // Delegate to ScopeParser for complete block parsing
-        const parser = new ScopeParser(this.createBlockParserContext(this.currentLine));
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new ScopeParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'do'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'do') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new ScopeParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        return this.parseScopeTokenStream(stream, headerToken);
+    }
+    
+    /**
+     * TokenStream-based 'do' block parser
+     * 
+     * Delegates to ScopeParser.parseFromStream() for token-based parsing.
+     * Uses a hybrid approach: TokenStream for boundaries, line-based for body statements.
+     * 
+     * @param stream - TokenStream positioned at the 'do' token
+     * @param headerToken - The 'do' keyword token
+     */
+    private parseScopeTokenStream(stream: TokenStream, headerToken: Token): ScopeBlock {
+        // Use ScopeParser.parseFromStream with shared context
+        const result = ScopeParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext());
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     /**
@@ -1885,21 +2021,108 @@ export class Parser {
      * @param ignoreIntoOnFirstLine - If true, ignore "into" on the first line (it's the command's "into", not the callback's)
      */
     private parseWithScope(startLine: number, ignoreIntoOnFirstLine: boolean = false): ScopeBlock {
-        // Delegate to WithScopeParser for complete block parsing
-        const parser = new WithScopeParser(this.createBlockParserContext(this.currentLine), ignoreIntoOnFirstLine);
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new WithScopeParser(this.createBlockParserContext(this.currentLine), ignoreIntoOnFirstLine);
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'with'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'with') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new WithScopeParser(this.createBlockParserContext(this.currentLine), ignoreIntoOnFirstLine);
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        const result = WithScopeParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext(), ignoreIntoOnFirstLine);
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     private parseTogether(startLine: number): TogetherBlock {
-        // Delegate to TogetherBlockParser for complete block parsing
-        const parser = new TogetherBlockParser(this.createBlockParserContext(this.currentLine));
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new TogetherBlockParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'together'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'together') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new TogetherBlockParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        const result = TogetherBlockParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext());
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     private parseForLoop(startLine: number): ForLoop {
-        // Delegate to ForLoopParser for complete block parsing
-        const parser = new ForLoopParser(this.createBlockParserContext(this.currentLine));
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new ForLoopParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'for'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'for') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new ForLoopParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        const result = ForLoopParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext());
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     /**
@@ -1924,9 +2147,38 @@ export class Parser {
 
 
     private parseIfBlock(startLine: number): IfBlock {
-        // Delegate to IfBlockParser for complete block parsing
-        const parser = new IfBlockParser(this.createBlockParserContext(this.currentLine));
-        return parser.parseBlock(startLine);
+        // Get the token index for this line
+        const tokenIndex = this.lineStartTokenIndex[startLine];
+        
+        // If no tokens on this line, fall back to line-based parsing
+        if (tokenIndex === -1) {
+            const parser = new IfBlockParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Get the header token and verify it's 'if'
+        const headerToken = this.tokens[tokenIndex];
+        if (headerToken.text !== 'if') {
+            // Unexpected - fall back to line-based parsing
+            const parser = new IfBlockParser(this.createBlockParserContext(this.currentLine));
+            return parser.parseBlock(startLine);
+        }
+        
+        // Create a TokenStream starting at this token
+        const stream = new TokenStream(this.tokens, tokenIndex);
+        
+        // Use the TokenStream-based parser
+        const result = IfBlockParser.parseFromStream(stream, headerToken, this.createBlockTokenStreamContext());
+        
+        // Update currentLine based on where the stream ended
+        const finalToken = stream.current();
+        if (finalToken) {
+            this.currentLine = finalToken.line - 1;
+        } else {
+            this.currentLine = this.lines.length;
+        }
+        
+        return result;
     }
 
     /**
@@ -1973,7 +2225,7 @@ export class Parser {
      */
     private parseOnBlockTokenStream(stream: TokenStream, headerToken: Token): OnBlock {
         // Create context for OnBlockParser.parseFromStream
-        const context: OnBlockTokenStreamContext = {
+        const context: BlockTokenStreamContext = {
             lines: this.lines,
             parseStatementFromTokens: (tokenStream: TokenStream) => {
                 // Hybrid approach: convert token position to line and use line-based parsing

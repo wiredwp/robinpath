@@ -1,12 +1,31 @@
 /**
  * Parser for break statements
  * Syntax: break
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseStatement()
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
 import { Lexer, TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import type { BreakStatement, CodePosition } from '../index';
+
+/**
+ * Context for TokenStream-based break statement parsing
+ */
+export interface BreakTokenStreamContext {
+    /**
+     * Create code position from tokens
+     */
+    createCodePositionFromTokens: (startToken: Token, endToken: Token) => CodePosition;
+    
+    /**
+     * Create error from token position
+     */
+    createErrorFromToken(message: string, token: Token | null): Error;
+}
 
 export interface BreakParserContext {
     /**
@@ -82,6 +101,50 @@ export class BreakParser {
                 breakToken.line - 1,
                 breakToken.column + breakToken.text.length
             )
+        };
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse break statement from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'break' keyword
+     * @param headerToken - The 'break' keyword token
+     * @param context - Context with helper methods
+     * @returns Parsed BreakStatement
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: BreakTokenStreamContext
+    ): BreakStatement {
+        // 1. Validate precondition: stream should be at 'break'
+        if (headerToken.text !== 'break') {
+            throw new Error(`parseFromStream expected 'break' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'break' keyword
+        stream.next();
+        
+        // 2. Skip comments and whitespace
+        stream.skip(TokenKind.COMMENT);
+        stream.skipNewlines();
+        
+        // 3. Verify no extra tokens (break is a simple statement)
+        const nextToken = stream.current();
+        if (nextToken && nextToken.kind !== TokenKind.EOF && nextToken.kind !== TokenKind.COMMENT && nextToken.kind !== TokenKind.NEWLINE) {
+            throw context.createErrorFromToken('break statement should not have any arguments', nextToken);
+        }
+        
+        // 4. Build codePos from headerToken
+        const codePos = context.createCodePositionFromTokens(headerToken, headerToken);
+        
+        return {
+            type: 'break',
+            codePos
         };
     }
 }

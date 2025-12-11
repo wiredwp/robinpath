@@ -1,11 +1,18 @@
 /**
  * Parser for 'with' blocks (callback blocks)
  * Syntax: with [$param1 $param2 ...] [into $var] ... endwith
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseBlock(startLine)
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
-import { Lexer } from '../classes/Lexer';
-import { BlockParserBase, type BlockParserContext } from './BlockParserBase';
-import type { CommentWithPosition, AttributePathSegment, ScopeBlock } from '../index';
+import { Lexer, TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
+import { TokenStream } from '../classes/TokenStream';
+import { LexerUtils } from '../utils';
+import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
+import type { CommentWithPosition, AttributePathSegment, ScopeBlock, Statement } from '../index';
 
 export interface WithScopeHeader {
     /**
@@ -175,6 +182,171 @@ export class WithScopeParser extends BlockParserBase {
             };
         if (comments.length > 0) {
             scopeBlock.comments = comments;
+        }
+        
+        return scopeBlock;
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse 'with' block from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'with' keyword
+     * @param headerToken - The 'with' keyword token
+     * @param context - Context with helper methods
+     * @param ignoreIntoOnFirstLine - If true, ignore "into" on the first line (it's the command's "into", not the callback's)
+     * @returns Parsed ScopeBlock
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: BlockTokenStreamContext,
+        ignoreIntoOnFirstLine: boolean = false
+    ): ScopeBlock {
+        // 1. Validate precondition: stream should be at 'with'
+        if (headerToken.text !== 'with') {
+            throw new Error(`parseFromStream expected 'with' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'with' keyword
+        stream.next();
+        
+        // 2. Parse header: parameters and 'into' target
+        const paramNames: string[] = [];
+        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        const headerComments: CommentWithPosition[] = [];
+        
+        // Collect tokens until newline
+        const headerTokens: Token[] = [];
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t) break;
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next(); // consume NEWLINE, move to first body token
+                break;
+            }
+            if (t.kind === TokenKind.COMMENT) {
+                // Capture inline comment on header line
+                headerComments.push({
+                    text: t.value ?? t.text.replace(/^#\s*/, ''),
+                    inline: true,
+                    codePos: context.createCodePositionFromTokens(t, t)
+                });
+                stream.next();
+                continue;
+            }
+            headerTokens.push(t);
+            stream.next();
+        }
+        
+        // Parse parameters and 'into' from header tokens
+        const tokenStrings = headerTokens.map(t => t.text);
+        
+        // Check for "into $var" after "with" (can be after parameters)
+        // But ignore it if ignoreIntoOnFirstLine is true
+        const { target: intoTargetResult, intoIndex } = ignoreIntoOnFirstLine
+            ? { target: null, intoIndex: -1 }
+            : (() => {
+                const idx = tokenStrings.indexOf('into');
+                if (idx >= 0 && idx < tokenStrings.length - 1) {
+                    const varToken = headerTokens[idx + 1];
+                    if (varToken && (varToken.kind === TokenKind.VARIABLE || LexerUtils.isVariable(varToken.text))) {
+                        const { name, path } = LexerUtils.parseVariablePath(varToken.text);
+                        return { target: { targetName: name, targetPath: path }, intoIndex: idx };
+                    }
+                }
+                return { target: null, intoIndex: -1 };
+            })();
+        intoTarget = intoTargetResult;
+        const paramEndIndex = intoIndex >= 0 ? intoIndex : tokenStrings.length;
+        
+        // Parse parameter names (optional): with $a $b or with $a $b into $var
+        for (let i = 0; i < paramEndIndex; i++) {
+            const token = headerTokens[i];
+            if (!token) continue;
+            
+            // Parameters should be variables (starting with $)
+            if (token.kind === TokenKind.VARIABLE || LexerUtils.isVariable(token.text)) {
+                const { name: paramName } = LexerUtils.parseVariablePath(token.text);
+                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
+                    paramNames.push(paramName);
+                }
+            }
+        }
+        
+        // 3. Parse body tokens until matching 'endwith'
+        const body: Statement[] = [];
+        const bodyStartToken = stream.current() ?? headerToken;
+        let endToken = bodyStartToken;
+        
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t || t.kind === TokenKind.EOF) break;
+            
+            endToken = t;
+            
+            // Check for 'endwith' keyword - this closes our block
+            if (t.kind === TokenKind.KEYWORD && t.text === 'endwith') {
+                // Found closing endwith for our block
+                stream.next(); // consume 'endwith'
+                
+                // Consume everything until end of line after 'endwith'
+                while (!stream.isAtEnd() && stream.current()?.kind !== TokenKind.NEWLINE) {
+                    stream.next();
+                }
+                if (stream.current()?.kind === TokenKind.NEWLINE) {
+                    stream.next(); // move to next logical statement
+                }
+                break;
+            }
+            
+            // Skip newlines and comments at the statement boundary
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next();
+                continue;
+            }
+            
+            if (t.kind === TokenKind.COMMENT) {
+                // TODO: Handle standalone comments in body
+                // For now, skip them
+                stream.next();
+                continue;
+            }
+            
+            // Parse statement using context-provided parseStatementFromTokens
+            const stmt = context.parseStatementFromTokens?.(stream);
+            if (stmt) {
+                body.push(stmt);
+            } else {
+                // If parseStatementFromTokens returns null, ensure progress
+                stream.next();
+            }
+        }
+        
+        // 4. Build codePos from headerToken to endToken
+        const codePos = context.createCodePositionFromTokens(headerToken, endToken);
+        
+        // 5. Build result (use type 'do' to maintain AST compatibility)
+        const scopeBlock: ScopeBlock = paramNames.length > 0 
+            ? { 
+                type: 'do', 
+                paramNames, 
+                body, 
+                into: intoTarget || undefined,
+                codePos
+            }
+            : { 
+                type: 'do', 
+                body, 
+                into: intoTarget || undefined,
+                codePos
+            };
+        
+        if (headerComments.length > 0) {
+            scopeBlock.comments = headerComments;
         }
         
         return scopeBlock;

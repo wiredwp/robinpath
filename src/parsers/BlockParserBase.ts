@@ -4,6 +4,7 @@
  */
 
 import type { Token } from '../classes/Lexer';
+import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import type { CodePosition, CommentWithPosition, AttributePathSegment, Statement, CommentStatement } from '../index';
 
@@ -58,6 +59,37 @@ export interface BlockParserContext {
      * Returns null if the line is empty or not a valid statement
      */
     parseStatement(): Statement | null;
+}
+
+/**
+ * Shared context for TokenStream-based block parsing
+ * Used by OnBlockParser, ScopeParser, and other block parsers that support TokenStream parsing
+ */
+export interface BlockTokenStreamContext {
+    /**
+     * All lines in source (for line-based utilities)
+     */
+    lines: string[];
+    
+    /**
+     * Parse a statement from TokenStream (stub for now - delegates to line-based)
+     */
+    parseStatementFromTokens?: (stream: TokenStream) => Statement | null;
+    
+    /**
+     * Create code position from tokens
+     */
+    createCodePositionFromTokens: (startToken: Token, endToken: Token) => CodePosition;
+    
+    /**
+     * Create code position from line range
+     */
+    createCodePositionFromLines: (startLine: number, endLine: number) => CodePosition;
+    
+    /**
+     * Create grouped comment node
+     */
+    createGroupedCommentNode: (comments: string[], commentLines: number[]) => CommentStatement;
 }
 
 export abstract class BlockParserBase {

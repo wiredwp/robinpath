@@ -1,12 +1,18 @@
 /**
  * Parser for 'together' blocks
  * Syntax: together ... endtogether
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseBlock(startLine)
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
-import { Lexer } from '../classes/Lexer';
-import { BlockParserBase, type BlockParserContext } from './BlockParserBase';
+import { Lexer, TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
+import { TokenStream } from '../classes/TokenStream';
+import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
 import { ScopeParser } from './ScopeParser';
-import type { CommentWithPosition, TogetherBlock } from '../index';
+import type { CommentWithPosition, TogetherBlock, ScopeBlock } from '../index';
 
 export interface TogetherBlockHeader {
     /**
@@ -148,5 +154,126 @@ export class TogetherBlockParser extends BlockParserBase {
             togetherBlock.comments = comments;
         }
         return togetherBlock;
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse 'together' block from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'together' keyword
+     * @param headerToken - The 'together' keyword token
+     * @param context - Context with helper methods
+     * @returns Parsed TogetherBlock
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: BlockTokenStreamContext
+    ): TogetherBlock {
+        // 1. Validate precondition: stream should be at 'together'
+        if (headerToken.text !== 'together') {
+            throw new Error(`parseFromStream expected 'together' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'together' keyword
+        stream.next();
+        
+        // 2. Consume to end of header line (handle inline comments)
+        const headerComments: CommentWithPosition[] = [];
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t) break;
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next(); // consume NEWLINE, move to first body token
+                break;
+            }
+            if (t.kind === TokenKind.COMMENT) {
+                // Capture inline comment on header line
+                headerComments.push({
+                    text: t.value ?? t.text.replace(/^#\s*/, ''),
+                    inline: true,
+                    codePos: context.createCodePositionFromTokens(t, t)
+                });
+            }
+            stream.next();
+        }
+        
+        // 3. Parse body: only 'do' blocks until 'endtogether'
+        const blocks: ScopeBlock[] = [];
+        let endToken = headerToken;
+        
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t || t.kind === TokenKind.EOF) break;
+            
+            endToken = t;
+            
+            // Check for 'endtogether' keyword - this closes our block
+            if (t.kind === TokenKind.KEYWORD && t.text === 'endtogether') {
+                stream.next(); // consume 'endtogether'
+                
+                // Consume everything until end of line after 'endtogether'
+                while (!stream.isAtEnd() && stream.current()?.kind !== TokenKind.NEWLINE) {
+                    stream.next();
+                }
+                if (stream.current()?.kind === TokenKind.NEWLINE) {
+                    stream.next(); // move to next logical statement
+                }
+                break;
+            }
+            
+            // Skip newlines and comments
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next();
+                continue;
+            }
+            
+            if (t.kind === TokenKind.COMMENT) {
+                stream.next();
+                continue;
+            }
+            
+            // Only allow 'do' blocks inside together
+            if (t.kind !== TokenKind.KEYWORD || t.text !== 'do') {
+                throw new Error(`together block can only contain do blocks at line ${t.line}`);
+            }
+            
+            // Parse the do block using ScopeParser.parseFromStream
+            // Create a new context for the do block
+            const doBlockContext: BlockTokenStreamContext = {
+                lines: context.lines,
+                parseStatementFromTokens: context.parseStatementFromTokens,
+                createCodePositionFromTokens: context.createCodePositionFromTokens,
+                createCodePositionFromLines: context.createCodePositionFromLines,
+                createGroupedCommentNode: context.createGroupedCommentNode
+            };
+            
+            const doBlock = ScopeParser.parseFromStream(stream, t, doBlockContext);
+            
+            if (doBlock.type === 'do') {
+                blocks.push(doBlock);
+            } else {
+                throw new Error(`together block can only contain do blocks at line ${t.line}`);
+            }
+        }
+        
+        // 4. Build codePos from headerToken to endToken
+        const codePos = context.createCodePositionFromTokens(headerToken, endToken);
+        
+        // 5. Build result
+        const result: TogetherBlock = {
+            type: 'together',
+            blocks,
+            codePos
+        };
+        
+        if (headerComments.length > 0) {
+            result.comments = headerComments;
+        }
+        
+        return result;
     }
 }

@@ -1,12 +1,18 @@
 /**
  * Parser for 'for' loops
  * Syntax: for $var in <expr> ... endfor
+ * 
+ * Supports both:
+ * - Line-based parsing (legacy): parseBlock(startLine)
+ * - TokenStream-based parsing: parseFromStream(stream, headerToken, context)
  */
 
-import { Lexer } from '../classes/Lexer';
+import { Lexer, TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
+import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
-import { BlockParserBase, type BlockParserContext } from './BlockParserBase';
-import type { CommentWithPosition, ForLoop } from '../index';
+import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
+import type { CommentWithPosition, ForLoop, Statement } from '../index';
 
 export interface ForLoopHeader {
     /**
@@ -173,6 +179,145 @@ export class ForLoopParser extends BlockParserBase {
         if (comments.length > 0) {
             result.comments = comments;
         }
+        return result;
+    }
+    
+    // ========================================================================
+    // TokenStream-based parsing methods
+    // ========================================================================
+    
+    /**
+     * Parse 'for' loop from TokenStream - TOKEN-BASED VERSION
+     * 
+     * @param stream - TokenStream positioned at the 'for' keyword
+     * @param headerToken - The 'for' keyword token
+     * @param context - Context with helper methods
+     * @returns Parsed ForLoop
+     */
+    static parseFromStream(
+        stream: TokenStream,
+        headerToken: Token,
+        context: BlockTokenStreamContext
+    ): ForLoop {
+        // 1. Validate precondition: stream should be at 'for'
+        if (headerToken.text !== 'for') {
+            throw new Error(`parseFromStream expected 'for' keyword, got '${headerToken.text}'`);
+        }
+        
+        // Consume 'for' keyword
+        stream.next();
+        
+        // 2. Parse loop variable
+        stream.skip(TokenKind.COMMENT);
+        const varToken = stream.current();
+        if (!varToken || varToken.kind === TokenKind.EOF || varToken.kind === TokenKind.NEWLINE) {
+            throw new Error(`for loop requires a variable at line ${headerToken.line}`);
+        }
+        
+        if (varToken.kind !== TokenKind.VARIABLE && !LexerUtils.isVariable(varToken.text)) {
+            throw new Error(`for loop variable must be a variable (e.g., $i, $item) at line ${varToken.line}`);
+        }
+        
+        const varName = LexerUtils.parseVariablePath(varToken.text).name;
+        stream.next(); // consume variable token
+        
+        // 3. Expect 'in' keyword
+        stream.skip(TokenKind.COMMENT);
+        stream.expect('in', "for loop requires 'in' keyword");
+        
+        // 4. Parse iterable expression (everything after 'in' until newline)
+        const iterableTokens: Token[] = [];
+        const headerComments: CommentWithPosition[] = [];
+        
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t) break;
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next(); // consume NEWLINE, move to first body token
+                break;
+            }
+            if (t.kind === TokenKind.COMMENT) {
+                // Capture inline comment on header line
+                headerComments.push({
+                    text: t.value ?? t.text.replace(/^#\s*/, ''),
+                    inline: true,
+                    codePos: context.createCodePositionFromTokens(t, t)
+                });
+                stream.next();
+                continue;
+            }
+            iterableTokens.push(t);
+            stream.next();
+        }
+        
+        // Build iterable expression string from tokens
+        const iterableExpr = iterableTokens.map(t => t.text).join(' ');
+        
+        // 5. Parse body tokens until matching 'endfor'
+        const body: Statement[] = [];
+        const bodyStartToken = stream.current() ?? headerToken;
+        let endToken = bodyStartToken;
+        
+        while (!stream.isAtEnd()) {
+            const t = stream.current();
+            if (!t || t.kind === TokenKind.EOF) break;
+            
+            endToken = t;
+            
+            // Check for 'endfor' keyword - this closes our block
+            if (t.kind === TokenKind.KEYWORD && t.text === 'endfor') {
+                // Found closing endfor for our block
+                stream.next(); // consume 'endfor'
+                
+                // Consume everything until end of line after 'endfor'
+                while (!stream.isAtEnd() && stream.current()?.kind !== TokenKind.NEWLINE) {
+                    stream.next();
+                }
+                if (stream.current()?.kind === TokenKind.NEWLINE) {
+                    stream.next(); // move to next logical statement
+                }
+                break;
+            }
+            
+            // Skip newlines and comments at the statement boundary
+            if (t.kind === TokenKind.NEWLINE) {
+                stream.next();
+                continue;
+            }
+            
+            if (t.kind === TokenKind.COMMENT) {
+                // TODO: Handle standalone comments in body
+                // For now, skip them
+                stream.next();
+                continue;
+            }
+            
+            // Parse statement using context-provided parseStatementFromTokens
+            const stmt = context.parseStatementFromTokens?.(stream);
+            if (stmt) {
+                body.push(stmt);
+            } else {
+                // If parseStatementFromTokens returns null, ensure progress
+                stream.next();
+            }
+        }
+        
+        // 6. Build codePos from headerToken to endToken
+        const codePos = context.createCodePositionFromTokens(headerToken, endToken);
+        
+        // 7. Build result
+        const result: ForLoop = {
+            type: 'forLoop',
+            varName,
+            iterableExpr,
+            body,
+            codePos
+        };
+        
+        if (headerComments.length > 0) {
+            result.comments = headerComments;
+        }
+        
         return result;
     }
 }
