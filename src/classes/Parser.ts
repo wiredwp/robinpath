@@ -57,6 +57,13 @@ import { Lexer, TokenKind } from './Lexer';
 import type { Token } from './Lexer';
 import { TokenStream } from './TokenStream';
 import { LexerUtils, splitIntoLogicalLines } from '../utils';
+import { TogetherBlockParser } from '../parsers/TogetherBlockParser';
+import { ForLoopParser } from '../parsers/ForLoopParser';
+import { IfBlockParser } from '../parsers/IfBlockParser';
+import { DefineParser } from '../parsers/DefineParser';
+import { ScopeParser } from '../parsers/ScopeParser';
+import { WithScopeParser } from '../parsers/WithScopeParser';
+import { OnBlockParser } from '../parsers/OnBlockParser';
 import type {
     Statement,
     Arg,
@@ -370,155 +377,50 @@ export class Parser {
     }
 
     // ========================================================================
-    // TokenStream-based parsing helpers (DEMO/FUTURE)
+    // TokenStream Migration Progress Notes
     // ========================================================================
     
     /**
-     * DEMO: Example of how TokenStream will be used for parsing statements
+     * TOKENSTREAM MIGRATION STATUS:
      * 
-     * This is a simplified version showing the future direction.
-     * Once integrated, parseStatement() will use this approach.
+     * ✅ COMPLETED:
+     * - parseReturn: Fully migrated to TokenStream (line ~3137)
+     * - parseBreak: Fully migrated to TokenStream (line ~3183)
+     * - parseReturnValue: Fully migrated to TokenStream (line ~3217)
      * 
-     * Expected token sequence for a simple command:
-     *   IDENTIFIER [args...] NEWLINE
+     * ✅ BLOCK HEADER PARSERS (extracted to separate classes):
+     * - DefineParser: Parses 'def functionName [$params...]' headers
+     * - ScopeParser: Parses 'do [$params...] [into $var]' headers (uses TokenStream)
+     * - WithScopeParser: Parses 'with [$params...] [into $var]' headers
+     * - ForLoopParser: Parses 'for $var in <expr>' headers
+     * - IfBlockParser: Parses 'if <condition>' headers
+     * - OnBlockParser: Parses 'on "eventName"' headers (uses TokenStream)
+     * - TogetherBlockParser: Parses 'together' headers
      * 
-     * Expected token sequence for a block:
-     *   KEYWORD (if/do/def/for/on) [...] NEWLINE
-     *     [body statements]
-     *   KEYWORD (endif/enddo/enddef/endfor/endon) NEWLINE
+     * 📋 TODO (Future migrations):
+     * - parseCommandFromTokens: Large method, good candidate for extraction/migration
+     * - parseAssignment: Variable assignments ($var = value)
+     * - parseInlineIf: Inline if...then...else expressions
+     * - Expression parsing: Subexpressions, operators, function calls
      * 
-     * @internal - For future use, not yet integrated
+     * 📝 ARCHITECTURE NOTES:
+     * 
+     * 1. Line-based vs TokenStream:
+     *    - Block BODIES remain line-based (comment attachment, multi-line iteration)
+     *    - Block HEADERS use TokenStream or extracted parser classes
+     *    - Single-line statements use TokenStream where beneficial
+     * 
+     * 2. Parser Class Pattern:
+     *    - Create classes extending BlockParserBase for complex headers
+     *    - Use TokenStream directly in Parser.ts for simple statements
+     *    - Keep body parsing in Parser.ts (needs state/recursion)
+     * 
+     * 3. Migration Priority:
+     *    HIGH: Statement-level parsers (return, break, etc.) ✅ DONE
+     *    MEDIUM: Block headers (def, do, for, if, on) ✅ DONE
+     *    LOW: Command parsing, expression parsing (complex, needs design)
+     *    NOT RECOMMENDED: Block body parsing (works well as-is)
      */
-    // @ts-expect-error - Unused demo function for future TokenStream migration
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private parseStatement_TokenStreamDemo(stream: TokenStream): Statement | null {
-        // Skip any leading newlines
-        stream.skipNewlines();
-        
-        if (stream.isAtEnd()) {
-            return null;
-        }
-        
-        const token = stream.current();
-        if (!token) return null;
-        
-        // Handle comments
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            // In full implementation, this would create a CommentStatement
-            return null;
-        }
-        
-        // Handle keywords - dispatch to specialized parsers
-        if (token.kind === TokenKind.KEYWORD) {
-            switch (token.text) {
-                case 'def':
-                    // return this.parseDefine_TokenStream(stream);
-                    throw new Error('def parsing with TokenStream not yet implemented');
-                case 'if':
-                    // Check if it's inline or block
-                    // return this.parseIf_TokenStream(stream);
-                    throw new Error('if parsing with TokenStream not yet implemented');
-                case 'do':
-                    // return this.parseScope_TokenStream(stream);
-                    throw new Error('do parsing with TokenStream not yet implemented');
-                case 'for':
-                    // return this.parseForLoop_TokenStream(stream);
-                    throw new Error('for parsing with TokenStream not yet implemented');
-                case 'on':
-                    // return this.parseOnBlock_TokenStream(stream);
-                    throw new Error('on parsing with TokenStream not yet implemented');
-                case 'return':
-                    return this.parseReturn_TokenStream(stream);
-                case 'break':
-                    return this.parseBreak_TokenStream(stream);
-                default:
-                    // Unknown keyword, treat as identifier
-                    break;
-            }
-        }
-        
-        // Handle variable references and assignments
-        if (token.kind === TokenKind.VARIABLE) {
-            const nextToken = stream.peek(1);
-            if (nextToken && nextToken.kind === TokenKind.ASSIGN) {
-                // return this.parseAssignment_TokenStream(stream);
-                throw new Error('assignment parsing with TokenStream not yet implemented');
-            }
-            // Fallthrough to command parsing
-        }
-        
-        // Handle identifiers (function calls, commands)
-        if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.VARIABLE) {
-            // return this.parseCommand_TokenStream(stream);
-            throw new Error('command parsing with TokenStream not yet implemented');
-        }
-        
-        throw this.createErrorFromToken('unexpected token', token);
-    }
-    
-    /**
-     * DEMO: Parse a simple 'return' statement using TokenStream
-     * 
-     * Expected tokens: KEYWORD("return") [expr] NEWLINE
-     */
-    private parseReturn_TokenStream(stream: TokenStream): ReturnStatement {
-        const returnToken = stream.expect(TokenKind.KEYWORD, 'Expected "return" keyword');
-        if (returnToken.text !== 'return') {
-            throw this.createErrorFromToken('Expected "return" keyword', returnToken);
-        }
-        
-        // Check if there's a value to return
-        const lineTokens = stream.collectLine();
-        
-        let value: Arg | undefined;
-        if (lineTokens.length > 0) {
-            // Parse the return value
-            // For now, just store the raw tokens as a string (simplified)
-            // In full implementation, this would recursively parse the expression
-            const valueText = lineTokens.map(t => t.text).join(' ');
-            value = { type: 'literal', value: valueText };
-        }
-        
-        // Consume the newline
-        stream.match(TokenKind.NEWLINE);
-        
-        return {
-            type: 'return',
-            value,
-            codePos: {
-                startRow: returnToken.line - 1, // Convert to 0-based
-                startCol: returnToken.column,
-                endRow: returnToken.line - 1,
-                endCol: returnToken.column + returnToken.text.length
-            }
-        };
-    }
-    
-    /**
-     * DEMO: Parse a 'break' statement using TokenStream
-     * 
-     * Expected tokens: KEYWORD("break") NEWLINE
-     */
-    private parseBreak_TokenStream(stream: TokenStream): Statement {
-        const breakToken = stream.expect(TokenKind.KEYWORD, 'Expected "break" keyword');
-        if (breakToken.text !== 'break') {
-            throw this.createErrorFromToken('Expected "break" keyword', breakToken);
-        }
-        
-        // Consume the newline
-        stream.match(TokenKind.NEWLINE);
-        
-        return {
-            type: 'break',
-            codePos: {
-                startRow: breakToken.line - 1, // Convert to 0-based
-                startCol: breakToken.column,
-                endRow: breakToken.line - 1,
-                endCol: breakToken.column + breakToken.text.length
-            }
-        };
-    }
     
     /**
      * DEMO: Helper to convert string tokens to TokenStream
@@ -2417,41 +2319,14 @@ export class Parser {
     }
 
     private parseDefine(startLine: number): DefineFunction {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        const tokens = Lexer.tokenize(line);
-        
-        if (tokens.length < 2) {
-            throw this.createError('def requires a function name', this.currentLine);
-        }
-
-        const name = tokens[1];
-        
-        // Parse parameter names (optional): def fn $a $b $c
-        const paramNames: string[] = [];
-        for (let i = 2; i < tokens.length; i++) {
-            const token = tokens[i];
-            // Parameter names must be variables (e.g., $a, $b, $c)
-            if (LexerUtils.isVariable(token) && !LexerUtils.isPositionalParam(token) && !LexerUtils.isLastValue(token)) {
-                const { name: paramName } = LexerUtils.parseVariablePath(token);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    paramNames.push(paramName);
-                } else {
-                    // Invalid parameter name - stop parsing parameters
-                    break;
-                }
-            } else {
-                // Not a valid parameter name - stop parsing parameters
-                break;
-            }
-        }
-        
-        // Extract inline comment from def line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use DefineParser for header parsing
+        const headerParser = new DefineParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        const { name, paramNames, comments } = header;
         
         this.currentLine++;
 
@@ -2574,71 +2449,14 @@ export class Parser {
      * Syntax: do [$param1 $param2 ...] [into $var] ... enddo
      */
     private parseScope(startLine: number): ScopeBlock {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        
-        // Use TokenStream for parsing the header line
-        const lineTokens = Lexer.tokenizeFull(line);
-        const stream = new TokenStream(lineTokens);
-        
-        // Expect 'do' keyword
-        stream.expect('do', "'do' keyword expected");
-        
-        // Collect remaining tokens (skip comments and whitespace)
-        const remainingTokens: Token[] = [];
-        while (!stream.isAtEnd()) {
-            const token = stream.next();
-            if (token && token.kind !== TokenKind.EOF && token.kind !== TokenKind.COMMENT && token.kind !== TokenKind.NEWLINE) {
-                remainingTokens.push(token);
-            }
-        }
-        
-        // Convert to string[] for compatibility with existing logic
-        const tokens = remainingTokens.map(t => t.text);
-        
-        // Check for "into $var" after "do" (can be after parameters)
-        const intoIndex = tokens.indexOf('into');
-        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
-        let paramEndIndex = tokens.length;
-        
-        if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
-            const varToken = tokens[intoIndex + 1];
-            if (LexerUtils.isVariable(varToken)) {
-                const { name, path } = LexerUtils.parseVariablePath(varToken);
-                intoTarget = { targetName: name, targetPath: path };
-                // Parameters end before "into"
-                paramEndIndex = intoIndex;
-            }
-        }
-        
-        // Parse parameter names (optional): do $a $b or do $a $b into $var
-        const paramNames: string[] = [];
-        
-        // Start from token index 0 (after "do"), stop before "into" if present
-        for (let i = 0; i < paramEndIndex; i++) {
-            const token = tokens[i];
-            
-            // Parameter names must be variables (e.g., $a, $b, $c)
-            if (LexerUtils.isVariable(token) && !LexerUtils.isPositionalParam(token) && !LexerUtils.isLastValue(token)) {
-                const { name: paramName } = LexerUtils.parseVariablePath(token);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    paramNames.push(paramName);
-                } else {
-                    // Invalid parameter name - stop parsing parameters
-                    break;
-                }
-            } else {
-                // Not a valid parameter name - stop parsing parameters
-                break;
-            }
-        }
-        
-        // Extract inline comment from scope line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use ScopeParser for header parsing
+        const headerParser = new ScopeParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        const { paramNames, intoTarget, comments } = header;
         
         this.currentLine++;
 
@@ -2750,54 +2568,14 @@ export class Parser {
      * @param ignoreIntoOnFirstLine - If true, ignore "into" on the first line (it's the command's "into", not the callback's)
      */
     private parseWithScope(startLine: number, ignoreIntoOnFirstLine: boolean = false): ScopeBlock {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        const tokens = Lexer.tokenize(line);
-        
-        // Check for "into $var" after "with" (can be after parameters)
-        // But ignore it if ignoreIntoOnFirstLine is true (it's the command's "into", not the callback's)
-        const intoIndex = ignoreIntoOnFirstLine ? -1 : tokens.indexOf('into');
-        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
-        let paramEndIndex = tokens.length;
-        
-        if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
-            const varToken = tokens[intoIndex + 1];
-            if (LexerUtils.isVariable(varToken)) {
-                const { name, path } = LexerUtils.parseVariablePath(varToken);
-                intoTarget = { targetName: name, targetPath: path };
-                // Parameters end before "into"
-                paramEndIndex = intoIndex;
-            }
-        }
-        
-        // Parse parameter names (optional): with $a $b or with $a $b into $var
-        const paramNames: string[] = [];
-        
-        // Start from token index 1 (after "with"), stop before "into" if present
-        for (let i = 1; i < paramEndIndex; i++) {
-            const token = tokens[i];
-            
-            // Parameter names must be variables (e.g., $a, $b, $c)
-            if (LexerUtils.isVariable(token) && !LexerUtils.isPositionalParam(token) && !LexerUtils.isLastValue(token)) {
-                const { name: paramName } = LexerUtils.parseVariablePath(token);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    paramNames.push(paramName);
-                } else {
-                    // Invalid parameter name - stop parsing parameters
-                    break;
-                }
-            } else {
-                // Not a valid parameter name - stop parsing parameters
-                break;
-            }
-        }
-        
-        // Extract inline comment from scope line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use WithScopeParser for header parsing
+        const headerParser = new WithScopeParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        }, ignoreIntoOnFirstLine);
+        const header = headerParser.parseHeader();
+        const { paramNames, intoTarget, comments } = header;
         
         this.currentLine++;
 
@@ -2905,16 +2683,15 @@ export class Parser {
     }
 
     private parseTogether(startLine: number): TogetherBlock {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        const tokens = Lexer.tokenize(line);
-
-        // Must start with "together"
-        if (tokens[0] !== 'together') {
-            throw this.createError('expected together', this.currentLine);
-        }
-
-        // Collect comments above the together block
+        // Use TogetherBlockParser for header parsing
+        const headerParser = new TogetherBlockParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        
+        // Collect comments above the together block (not handled by header parser)
         const comments: CommentWithPosition[] = [];
         let commentStartLine = startLine;
         while (commentStartLine > 0) {
@@ -2932,6 +2709,11 @@ export class Parser {
             } else {
                 break;
             }
+        }
+        
+        // Add inline comment from header to comments
+        if (header.comments.length > 0) {
+            comments.push(...header.comments);
         }
 
         this.currentLine++; // Move past "together" line
@@ -2992,39 +2774,14 @@ export class Parser {
     }
 
     private parseForLoop(startLine: number): ForLoop {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        const tokens = Lexer.tokenize(line);
-        
-        // Parse: for $var in <expr>
-        if (tokens.length < 4) {
-            throw this.createError('for loop requires: for $var in <expr>', this.currentLine);
-        }
-        
-        if (tokens[0] !== 'for') {
-            throw this.createError('expected for keyword', this.currentLine);
-        }
-        
-        // Get loop variable
-        if (!LexerUtils.isVariable(tokens[1])) {
-            throw this.createError('for loop variable must be a variable (e.g., $i, $item)', this.currentLine);
-        }
-        const varName = tokens[1].slice(1); // Remove $
-        
-        if (tokens[2] !== 'in') {
-            throw this.createError("for loop requires 'in' keyword", this.currentLine);
-        }
-        
-        // Get iterable expression (everything after 'in')
-        const exprTokens = tokens.slice(3);
-        const iterableExpr = exprTokens.join(' ');
-        
-        // Extract inline comment from for line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use ForLoopParser for header parsing
+        const headerParser = new ForLoopParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        const { varName, iterableExpr, comments } = header;
         
         this.currentLine++;
 
@@ -3125,7 +2882,11 @@ export class Parser {
      * Parse return statement using TokenStream
      * Syntax: return [value]
      */
-    private parseReturn(startLine: number): ReturnStatement {
+    /**
+     * Parse return statement using TokenStream
+     * Syntax: return [value]
+     */
+    private parseReturn(_startLine: number): ReturnStatement {
         const line = this.lines[this.currentLine].trim();
         
         // Use TokenStream for parsing
@@ -3133,37 +2894,37 @@ export class Parser {
         const stream = new TokenStream(lineTokens);
         
         // Expect 'return' keyword
-        stream.expect('return', "'return' keyword expected");
-        const endLine = this.currentLine;
-        this.currentLine++;
+        const returnToken = stream.expect('return', "'return' keyword expected");
         
-        // Collect remaining tokens for value parsing (skip comments and whitespace)
-        // Note: parseReturnValue still uses string[] tokens for now (handles $() subexpressions)
-        const remainingTokens: Token[] = [];
-        while (!stream.isAtEnd()) {
-            const token = stream.next();
-            if (token && token.kind !== TokenKind.EOF && token.kind !== TokenKind.COMMENT && token.kind !== TokenKind.NEWLINE) {
-                remainingTokens.push(token);
+        // Skip comments and whitespace
+        stream.skip(TokenKind.COMMENT);
+        stream.skipNewlines();
+        
+        // Parse return value if present
+        let value: Arg | undefined;
+        
+        if (!stream.isAtEnd()) {
+            const current = stream.current();
+            if (current && current.kind !== TokenKind.EOF && current.kind !== TokenKind.COMMENT && current.kind !== TokenKind.NEWLINE) {
+                // There's a value to return - parse it using TokenStream
+                value = this.parseReturnValue(stream, line);
             }
         }
         
-        // Convert Token[] to string[] for parseReturnValue (temporary compatibility)
-        const valueTokenStrings = remainingTokens.map(t => t.text);
+        this.currentLine++;
         
-        // If there's a value after "return", parse it as an argument
-        if (valueTokenStrings.length > 0) {
-            const arg = this.parseReturnValue(valueTokenStrings);
-            return { 
-                type: 'return', 
-                value: arg,
-                codePos: this.createCodePositionFromLines(startLine, endLine)
-            };
-        }
-        
-        // No value specified - returns $ (last value)
+        // Use token position for start, line-based for end (simpler and still accurate)
+        const endLine = this.currentLine;
+        const endCols = this.getColumnPositions(endLine);
         return { 
-            type: 'return',
-            codePos: this.createCodePositionFromLines(startLine, endLine)
+            type: 'return', 
+            value,
+            codePos: this.createCodePosition(
+                returnToken.line - 1, // Convert to 0-based
+                returnToken.column,
+                endLine,
+                endCols.endCol
+            )
         };
     }
 
@@ -3171,7 +2932,7 @@ export class Parser {
      * Parse break statement using TokenStream
      * Syntax: break
      */
-    private parseBreak(startLine: number): Statement {
+    private parseBreak(_startLine: number): Statement {
         const line = this.lines[this.currentLine].trim();
         
         // Use TokenStream for parsing
@@ -3179,100 +2940,120 @@ export class Parser {
         const stream = new TokenStream(lineTokens);
         
         // Expect 'break' keyword
-        stream.expect('break', "'break' keyword expected");
-        const endLine = this.currentLine;
-        this.currentLine++;
+        const breakToken = stream.expect('break', "'break' keyword expected");
+        
+        // Skip comments and whitespace
+        stream.skip(TokenKind.COMMENT);
+        stream.skipNewlines();
         
         // Verify no extra tokens (break is a simple statement)
-        const nextToken = stream.next();
+        const nextToken = stream.current();
         if (nextToken && nextToken.kind !== TokenKind.EOF && nextToken.kind !== TokenKind.COMMENT && nextToken.kind !== TokenKind.NEWLINE) {
             throw this.createErrorFromToken('break statement should not have any arguments', nextToken);
         }
         
+        // Use token position for code position (convert from 1-based to 0-based line)
+        this.currentLine++;
+        
         return { 
             type: 'break', 
-            codePos: this.createCodePositionFromLines(startLine, endLine) 
+            codePos: this.createCodePosition(
+                breakToken.line - 1, // Convert to 0-based
+                breakToken.column,
+                breakToken.line - 1,
+                breakToken.column + breakToken.text.length
+            )
         };
     }
 
-    private parseReturnValue(tokens: string[]): Arg {
-        if (tokens.length === 0) {
+    /**
+     * Parse return value using TokenStream
+     * Handles various value types including subexpressions $(...)
+     */
+    private parseReturnValue(stream: TokenStream, line: string): Arg {
+        if (stream.isAtEnd()) {
             return { type: 'lastValue' };
         }
         
-        const line = this.lines[this.currentLine - 1]; // Get the original line
-        const returnIndex = line.indexOf('return');
-        
-        // Find the position after "return" in the original line
-        const afterReturnStart = returnIndex + 6; // "return" is 6 chars
-        let pos = afterReturnStart;
-        
-        // Skip whitespace after "return"
-        while (pos < line.length && /\s/.test(line[pos])) {
-            pos++;
+        const currentToken = stream.current();
+        if (!currentToken) {
+            return { type: 'lastValue' };
         }
         
         // Check if we're at a $( subexpression
-        if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
-            const subexprCode = this.extractSubexpression(line, pos);
+        // Subexpressions are not tokenized as a single token, so we check if:
+        // 1. Current token is '$' (VARIABLE kind)
+        // 2. Next token is '(' (LPAREN kind) OR the next character in line is '('
+        const isDollar = currentToken.text === '$' && currentToken.kind === TokenKind.VARIABLE;
+        const nextToken = stream.peek(1);
+        const isSubexprStart = isDollar && (
+            (nextToken && nextToken.kind === TokenKind.LPAREN) ||
+            (currentToken.column + 1 < line.length && line[currentToken.column + 1] === '(')
+        );
+        
+        if (isSubexprStart) {
+            // Extract subexpression using line-based method (handles nested $() properly)
+            const tokenStartPos = currentToken.column;
+            const subexprCode = this.extractSubexpression(line, tokenStartPos);
+            
+            // Advance stream past the subexpression tokens
+            // Consume tokens until we find one that starts at or after endPos
+            const endPos = subexprCode.endPos;
+            while (!stream.isAtEnd()) {
+                const token = stream.current();
+                if (!token) break;
+                // If token starts at or after endPos, we're done
+                if (token.column >= endPos) {
+                    break;
+                }
+                stream.next();
+            }
+            
             return { type: 'subexpr', code: subexprCode.code };
         }
         
-        // Otherwise, parse the first token
-        const token = tokens[0].trim(); // Ensure token is trimmed
+        // Parse single token value
+        const token = stream.next()!;
         
-        // Check if it's exactly $ (last value without attributes)
-        if (token === '$') {
-            return { type: 'lastValue' };
-        } else if (LexerUtils.isVariable(token)) {
-            // This includes $.property, $[index], $var, $var.property, etc.
-            const { name, path } = LexerUtils.parseVariablePath(token);
+        // Check token kind first for better type safety
+        if (token.kind === TokenKind.VARIABLE) {
+            // Handle $ (last value) or $var, $.property, etc.
+            if (token.text === '$') {
+                return { type: 'lastValue' };
+            }
+            const { name, path } = LexerUtils.parseVariablePath(token.text);
             // If name is empty, it means last value with attributes (e.g., $.name)
             if (name === '') {
                 return { type: 'var', name: '', path };
             }
             return { type: 'var', name, path };
-        } else if (token === 'true') {
-            return { type: 'literal', value: true };
-        } else if (token === 'false') {
-            return { type: 'literal', value: false };
-        } else if (token === 'null') {
+        } else if (token.kind === TokenKind.BOOLEAN) {
+            return { type: 'literal', value: token.value ?? (token.text === 'true') };
+        } else if (token.kind === TokenKind.NULL) {
             return { type: 'literal', value: null };
-        } else if (LexerUtils.isPositionalParam(token)) {
-            return { type: 'var', name: token.slice(1) };
-        } else if (LexerUtils.isString(token)) {
-            return { type: 'string', value: LexerUtils.parseString(token) };
-        } else if (LexerUtils.isNumber(token)) {
-            return { type: 'number', value: parseFloat(token) };
+        } else if (token.kind === TokenKind.STRING) {
+            return { type: 'string', value: token.value ?? LexerUtils.parseString(token.text) };
+        } else if (token.kind === TokenKind.NUMBER) {
+            return { type: 'number', value: token.value ?? parseFloat(token.text) };
         } else {
-            // Treat as literal
-            return { type: 'literal', value: token };
+            // Check for positional param ($1, $2, etc.) - these might be tokenized as VARIABLE
+            if (LexerUtils.isPositionalParam(token.text)) {
+                return { type: 'var', name: token.text.slice(1) };
+            }
+            // Treat as literal string
+            return { type: 'literal', value: token.text };
         }
     }
 
     private parseIfBlock(startLine: number): IfBlock {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        
-        // Extract condition (everything after 'if')
-        // Use the original line string to preserve subexpressions $(...)
-        const ifIndex = line.indexOf('if');
-        if (ifIndex === -1) {
-            throw this.createError('if statement must start with "if"', this.currentLine);
-        }
-        // Find the position after "if" and any whitespace
-        let conditionStart = ifIndex + 2; // "if" is 2 characters
-        while (conditionStart < line.length && /\s/.test(line[conditionStart])) {
-            conditionStart++;
-        }
-        const conditionExpr = line.slice(conditionStart).trim();
-
-        // Extract inline comment from if line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use IfBlockParser for header parsing
+        const headerParser = new IfBlockParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        const { conditionExpr, comments } = header;
 
         this.currentLine++;
 
@@ -3449,40 +3230,14 @@ export class Parser {
      * Syntax: on "eventName" ... endon
      */
     private parseOnBlock(startLine: number): OnBlock {
-        const originalLine = this.lines[this.currentLine];
-        const line = originalLine.trim();
-        
-        // Use TokenStream for parsing the header line
-        const lineTokens = Lexer.tokenizeFull(line);
-        const stream = new TokenStream(lineTokens);
-        
-        // Expect 'on' keyword (match by text)
-        stream.expect('on', "'on' keyword expected");
-        
-        // Get event name token
-        const eventNameToken = stream.next();
-        if (!eventNameToken) {
-            throw this.createError('on requires an event name', this.currentLine);
-        }
-
-        // Parse event name from string literal (e.g., "test1" or 'test1')
-        let eventName: string;
-        if (eventNameToken.kind === TokenKind.STRING) {
-            // String token - remove quotes and unescape
-            eventName = LexerUtils.parseString(eventNameToken.text);
-        } else if (eventNameToken.kind === TokenKind.IDENTIFIER) {
-            // Allow unquoted identifiers for convenience
-            eventName = eventNameToken.text;
-        } else {
-            throw this.createErrorFromToken('event name must be a string or identifier', eventNameToken);
-        }
-        
-        // Extract inline comment from on line
-        const inlineComment = this.extractInlineComment(originalLine, this.currentLine);
-        const comments: CommentWithPosition[] = [];
-        if (inlineComment) {
-            comments.push(this.createInlineCommentWithPosition(originalLine, this.currentLine, inlineComment));
-        }
+        // Use OnBlockParser for header parsing
+        const headerParser = new OnBlockParser({
+            originalLine: this.lines[this.currentLine],
+            lineNumber: this.currentLine,
+            lines: this.lines
+        });
+        const header = headerParser.parseHeader();
+        const { eventName, comments } = header;
         
         this.currentLine++;
 
@@ -3738,7 +3493,12 @@ export class Parser {
                 if (returnValueTokens.length === 0) {
                     finalCommand = { type: 'return', codePos: this.createCodePositionFromLines(startLine, startLine) };
                 } else {
-                    const returnValue = this.parseReturnValue(returnValueTokens);
+                    // Convert string[] tokens to TokenStream for parseReturnValue
+                    const originalLine = this.lines[startLine];
+                    const returnValueLine = originalLine.substring(originalLine.indexOf('then') + 4).trim();
+                    const tokenizedReturnValue = Lexer.tokenizeFull(returnValueLine);
+                    const returnValueStream = new TokenStream(tokenizedReturnValue);
+                    const returnValue = this.parseReturnValue(returnValueStream, returnValueLine);
                     finalCommand = { type: 'return', value: returnValue, codePos: this.createCodePositionFromLines(startLine, startLine) };
             }
         } else {
