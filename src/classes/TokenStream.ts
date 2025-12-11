@@ -12,9 +12,32 @@ export class TokenStream {
     private tokens: Token[];
     private position: number = 0;
     
-    constructor(tokens: Token[]) {
+    /**
+     * Create a new TokenStream
+     * @param tokens - Array of tokens to stream
+     * @param startIndex - Optional starting index (default 0)
+     */
+    constructor(tokens: Token[], startIndex: number = 0) {
         this.tokens = tokens;
-        this.position = 0;
+        this.position = startIndex;
+    }
+    
+    /**
+     * Create a new TokenStream starting from the given index
+     * Useful for sub-parsing operations that need to start from a specific position
+     * @param index - Starting index in the token array
+     * @returns New TokenStream instance starting at the given index
+     */
+    cloneFrom(index: number): TokenStream {
+        return new TokenStream(this.tokens, index);
+    }
+    
+    /**
+     * Set the current position directly
+     * @param position - New position
+     */
+    setPosition(position: number): void {
+        this.position = position;
     }
     
     /**

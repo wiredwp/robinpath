@@ -1,11 +1,11 @@
 /**
- * Base class for block header parsers
- * Provides common dependencies and utilities for parsing block statement headers
+ * Base class for block parsers
+ * Provides common dependencies and utilities for parsing block statements (header + body)
  */
 
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
-import type { CodePosition, CommentWithPosition, AttributePathSegment } from '../index';
+import type { CodePosition, CommentWithPosition, AttributePathSegment, Statement, CommentStatement } from '../index';
 
 export interface BlockParserContext {
     /**
@@ -22,6 +22,42 @@ export interface BlockParserContext {
      * All lines in the source (for error reporting)
      */
     readonly lines: string[];
+    
+    /**
+     * Get the current line number (mutable - advances as parsing progresses)
+     */
+    getCurrentLine(): number;
+    
+    /**
+     * Advance to the next line
+     */
+    advanceLine(): void;
+    
+    /**
+     * Get trimmed line at given line number
+     */
+    getTrimmedLine(lineNumber: number): string;
+    
+    /**
+     * Extract inline comment from line at given line number
+     */
+    extractInlineCommentFromLine(lineNumber: number): { text: string; position: number } | null;
+    
+    /**
+     * Create code position from start/end line numbers
+     */
+    createCodePositionFromLines(startRow: number, endRow: number): CodePosition;
+    
+    /**
+     * Create a grouped comment node from comment texts and line numbers
+     */
+    createGroupedCommentNode(comments: string[], commentLines: number[]): CommentStatement;
+    
+    /**
+     * Parse a single statement from the current line
+     * Returns null if the line is empty or not a valid statement
+     */
+    parseStatement(): Statement | null;
 }
 
 export abstract class BlockParserBase {
@@ -51,7 +87,8 @@ export abstract class BlockParserBase {
     }
     
     /**
-     * Extract inline comment from a line
+     * Extract inline comment from a line (without caching)
+     * For cached version, use context.extractInlineCommentFromLine()
      */
     protected extractInlineComment(line: string): { text: string; position: number } | null {
         // Early exit optimization: if there's no # in the line at all, return null
@@ -91,6 +128,13 @@ export abstract class BlockParserBase {
         }
         
         return null;
+    }
+    
+    /**
+     * Extract inline comment at current line (with caching via context)
+     */
+    protected extractInlineCommentAtLine(lineNumber: number): { text: string; position: number } | null {
+        return this.context.extractInlineCommentFromLine(lineNumber);
     }
     
     /**

@@ -3,7 +3,7 @@
  */
 
 import { type Value } from '../utils';
-import { Parser } from './Parser';
+import { Parser } from './ParserByLine';
 import { Executor } from './Executor';
 import { ExecutionStateTracker } from './ExecutionStateTracker';
 import type { 

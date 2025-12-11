@@ -6,7 +6,7 @@ import { isTruthy, type Value, type AttributePathSegment } from '../utils';
 import { LexerUtils } from '../utils';
 import { ReturnException, BreakException, EndException } from './exceptions';
 import { ExpressionEvaluator } from './ExpressionEvaluator';
-import { Parser } from './Parser';
+import { Parser } from './ParserByLine';
 import JSON5 from 'json5';
 import type { 
     Environment, 
