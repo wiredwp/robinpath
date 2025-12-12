@@ -159,13 +159,13 @@ do into $result19
 enddo
 test.assertEqual $result19 100 "return in do block - should return specified value"
 
-# Test 20: Return statement in do block without value (returns $)
+# Test 20: Return statement in do block without value (returns null)
 log "Test 20: Return in do block without value"
 do into $result20
   math.add 5 5
-  return  # Should return $ (which is 10)
+  return  # Should return null when no value specified
 enddo
-test.assertEqual $result20 10 "return in do block - should return last value when no value specified"
+test.assertEqual $result20 null "return in do block - should return null when no value specified"
 
 # Test 21: Return stops execution of remaining code
 log "Test 21: Return stops execution"

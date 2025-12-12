@@ -33,14 +33,14 @@ export function parseIf(
 
     // Consume 'if' keyword
     stream.next();
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
 
     // Parse condition expression
     // The condition can contain parentheses for grouping, e.g., ($age >= 18) && ($citizen == "yes")
     const condition = parseConditionExpression(stream, context);
 
     // Check if this is an inline if (has 'then' keyword)
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const nextToken = stream.current();
     
     if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'then') {
@@ -84,7 +84,7 @@ function parseInlineIf(
         throw new Error(`Expected 'then' after if condition at line ${ifToken.line}`);
     }
     stream.next();
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
 
     // Parse the command statement
     const command = context.parseStatement(stream);
@@ -118,7 +118,7 @@ function parseIfBlock(
     let endToken = ifToken;
 
     // Parse then branch (body after condition until elseif/else/endif)
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     
     // If there's a newline, we're in block mode
     // Otherwise, it might be a single-line if block
@@ -135,13 +135,13 @@ function parseIfBlock(
         // Check for elseif
         if (token.kind === TokenKind.KEYWORD && token.text === 'elseif') {
             stream.next(); // consume 'elseif'
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             
             // Parse elseif condition
             const elseifCondition = parseConditionExpression(stream, context);
             
             // Parse elseif body
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             if (stream.current()?.kind === TokenKind.NEWLINE) {
                 stream.next(); // consume newline
             }
@@ -183,7 +183,7 @@ function parseIfBlock(
         // Check for else
         if (token.kind === TokenKind.KEYWORD && token.text === 'else') {
             stream.next(); // consume 'else'
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             if (stream.current()?.kind === TokenKind.NEWLINE) {
                 stream.next(); // consume newline
             }
@@ -277,19 +277,3 @@ function parseIfBlock(
     return result;
 }
 
-/**
- * Skip whitespace (newlines) and comments
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        break;
-    }
-}

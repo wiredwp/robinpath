@@ -59,6 +59,7 @@ export const TokenKind = {
     COMMENT: 'COMMENT',         // # comment
     NEWLINE: 'NEWLINE',         // \n
     EOF: 'EOF',                 // End of file
+    SUBEXPRESSION_OPEN: 'SUBEXPRESSION_OPEN', // $( - opening of subexpression
     
     // Future: INDENT/DEDENT if we need Python-style indentation
     // INDENT: 'INDENT',
@@ -268,23 +269,17 @@ export class Lexer {
                 continue;
             }
             
-            // Handle variables ($identifier, $arr[0], $obj.prop)
-            // Note: For now, we'll tokenize $ as VARIABLE and let parser handle attribute access
-            // TODO: In future, we might want to handle $() subexpressions here
+            // Handle variables ($identifier, $arr[0], $obj.prop) and subexpressions ($(...))
             if (char === '$') {
                 const varStartCol = column;
                 i++; // skip $
                 column++;
                 
-                // Check if this is a $( subexpression - for now, we'll handle it simply
-                // In the future, this should be parsed recursively
+                // Check if this is a $( subexpression opening
                 if (i < source.length && source[i] === '(') {
-                    // For now, just tokenize $ and ( separately
-                    // The parser will handle $() specially
-                    i--; // back up
-                    column--;
-                    tokens.push(makeToken(TokenKind.VARIABLE, '$', line, varStartCol, ''));
-                    i++;
+                    // Tokenize $( as SUBEXPRESSION_OPEN
+                    tokens.push(makeToken(TokenKind.SUBEXPRESSION_OPEN, '$(', line, varStartCol));
+                    i++; // skip (
                     column++;
                     continue;
                 }

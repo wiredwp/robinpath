@@ -36,7 +36,7 @@ export function parseForLoop(
     stream.next();
 
     // Parse loop variable: $var
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const varToken = stream.current();
     if (!varToken || varToken.kind !== TokenKind.VARIABLE) {
         throw new Error(`for loop requires a variable at line ${headerToken.line}, column ${headerToken.column}`);
@@ -50,7 +50,7 @@ export function parseForLoop(
     stream.next(); // consume variable token
 
     // Expect 'in' keyword
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const inToken = stream.current();
     if (!inToken || inToken.kind !== TokenKind.KEYWORD || inToken.text !== 'in') {
         throw new Error(`for loop requires 'in' keyword at line ${varToken.line}, column ${varToken.column}`);
@@ -58,7 +58,7 @@ export function parseForLoop(
     stream.next(); // consume 'in' keyword
 
     // Parse iterable expression (everything after 'in' until newline)
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const iterableStartToken = stream.current();
     if (!iterableStartToken) {
         throw new Error(`for loop requires an iterable expression after 'in' at line ${inToken.line}`);
@@ -185,19 +185,3 @@ export function parseForLoop(
     return result;
 }
 
-/**
- * Skip whitespace (newlines) and comments
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        break;
-    }
-}

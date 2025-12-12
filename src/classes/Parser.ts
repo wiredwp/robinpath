@@ -22,6 +22,33 @@ export class Parser {
     private onBlockTokenIndices: Set<number> = new Set();
 
     /**
+     * Maximum number of iterations allowed before detecting an infinite loop
+     */
+    static readonly MAX_STUCK_ITERATIONS = 100;
+    
+    /**
+     * Debug mode flag - set to true to enable logging
+     * Can be controlled via VITE_DEBUG environment variable or set programmatically
+     */
+    static debug: boolean = (() => {
+        try {
+            // Check process.env (Node.js)
+            const proc = (globalThis as any).process;
+            if (proc && proc.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+            // Check import.meta.env (Vite/browser)
+            const importMeta = (globalThis as any).import?.meta;
+            if (importMeta && importMeta.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+        } catch {
+            // Ignore errors
+        }
+        return false;
+    })();
+
+    /**
      * Create a new Parser
      * @param source - Full source code as a single string
      */
@@ -42,23 +69,61 @@ export class Parser {
         this.stream = new TokenStream(this.tokens); // Reset stream
         const statements: Statement[] = [];
 
+        let parseIteration = 0;
+        let lastPosition = -1;
+        let stuckCount = 0;
+
         while (!this.stream.isAtEnd()) {
+            parseIteration++;
             const currentIndex = this.stream.getPosition();
+            const token = this.stream.current();
+            
+            if (Parser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[Parser.parse] [${timestamp}] Iteration ${parseIteration}, position: ${currentIndex}, token: ${token?.text || 'null'} (${token?.kind || 'EOF'}), line: ${token?.line || 'N/A'}`);
+            }
+            
+            // Detect if we're stuck (position not advancing)
+            if (currentIndex === lastPosition) {
+                stuckCount++;
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] WARNING: Position stuck at ${currentIndex} (count: ${stuckCount})`);
+                }
+                if (stuckCount > Parser.MAX_STUCK_ITERATIONS) {
+                    throw new Error(`[Parser.parse] Infinite loop detected! Stuck at position ${currentIndex} for ${stuckCount} iterations. Token: ${token?.text || 'null'} (${token?.kind || 'EOF'})`);
+                }
+            } else {
+                stuckCount = 0;
+                lastPosition = currentIndex;
+            }
             
             // Skip tokens that are part of extracted def/on blocks
             if (this.defBlockTokenIndices.has(currentIndex) || this.onBlockTokenIndices.has(currentIndex)) {
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] Skipping token at ${currentIndex} (part of def/on block)`);
+                }
                 this.stream.next();
                 continue;
             }
 
             // Skip newlines
             if (this.stream.check(TokenKind.NEWLINE)) {
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] Skipping newline at ${currentIndex}`);
+                }
                 this.stream.next();
                 continue;
             }
 
             // Skip comments (they'll be handled separately)
             if (this.stream.check(TokenKind.COMMENT)) {
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] Parsing comment at ${currentIndex}`);
+                }
                 const comment = this.parseComment();
                 if (comment) {
                     statements.push(comment);
@@ -67,16 +132,33 @@ export class Parser {
             }
 
             // Try to parse a statement
+            if (Parser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[Parser.parse] [${timestamp}] Attempting to parse statement at ${currentIndex}`);
+            }
             const statement = this.parseStatement();
             if (statement) {
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] Parsed statement type: ${statement.type} at ${currentIndex}`);
+                }
                 // Attach inline comments if present
                 this.attachInlineComments(statement);
                 statements.push(statement);
             } else {
                 // If we can't parse anything, skip the current token to avoid infinite loop
-                const token = this.stream.next();
-                if (!token) break;
+                if (Parser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Parser.parse] [${timestamp}] WARNING: Could not parse statement at ${currentIndex}, skipping token: ${token?.text || 'null'}`);
+                }
+                const skippedToken = this.stream.next();
+                if (!skippedToken) break;
             }
+        }
+
+        if (Parser.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
         }
 
         return statements;
@@ -340,7 +422,18 @@ export class Parser {
      */
     private parseStatement(): Statement | null {
         const token = this.stream.current();
-        if (!token) return null;
+        if (!token) {
+            if (Parser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[Parser.parseStatement] [${timestamp}] No token at position ${this.stream.getPosition()}`);
+            }
+            return null;
+        }
+        
+        if (Parser.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[Parser.parseStatement] [${timestamp}] Parsing statement at position ${this.stream.getPosition()}, token: ${token.text} (${token.kind}), line: ${token.line}`);
+        }
 
         // Check for variable assignment: $var = ...
         if (token.kind === TokenKind.VARIABLE) {
@@ -359,7 +452,15 @@ export class Parser {
                 
                 // Found the next non-whitespace token
                 if (nextToken.kind === TokenKind.ASSIGN) {
-                    return AssignmentParser.parse(this.stream);
+                    return AssignmentParser.parse(this.stream, {
+                        parseStatement: (s) => this.parseStatementFromStream(s),
+                        createCodePosition: (start, end) => ({
+                            startRow: start.line - 1,
+                            startCol: start.column,
+                            endRow: end.line - 1,
+                            endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                        })
+                    });
                 }
                 break; // Not an assignment
             }
@@ -431,6 +532,10 @@ export class Parser {
 
         // Check for 'do' scope block
         if (token.kind === TokenKind.KEYWORD && token.text === 'do') {
+            if (Parser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[Parser.parseStatement] [${timestamp}] Found 'do' keyword, calling ScopeParser.parse at position ${this.stream.getPosition()}`);
+            }
             return ScopeParser.parse(
                 this.stream,
                 (s) => this.parseStatementFromStream(s),
@@ -461,6 +566,10 @@ export class Parser {
         // - Function definitions
         // etc.
 
+        if (Parser.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[Parser.parseStatement] [${timestamp}] No matching statement type for token: ${token.text} (${token.kind}) at position ${this.stream.getPosition()}`);
+        }
         return null;
     }
 

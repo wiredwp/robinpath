@@ -3,10 +3,11 @@
  * Converts tokens into Expression AST nodes
  */
 
-import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
+import { SubexpressionParser } from './SubexpressionParser';
 import type { Expression, CodePosition, Statement, BinaryOperator } from '../types/Ast.type';
 
 /**
@@ -66,7 +67,7 @@ function parseBinaryExpression(
 
         // Consume operator
         stream.next();
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
 
         // Parse right operand
         const right = parseBinaryExpression(stream, opInfo.precedence + 1, parseStatement, parseComment);
@@ -105,7 +106,7 @@ function parseUnaryExpression(
     if (token.kind === TokenKind.MINUS || token.kind === TokenKind.PLUS) {
         const operator = token.kind === TokenKind.MINUS ? '-' : '+';
         stream.next();
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         const argument = parseUnaryExpression(stream, parseStatement, parseComment);
         return {
             type: 'unary',
@@ -118,13 +119,17 @@ function parseUnaryExpression(
     if (token.kind === TokenKind.KEYWORD && (token.text === 'not' || token.text === '!')) {
         const operator = 'not';
         stream.next();
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         const argument = parseUnaryExpression(stream, parseStatement, parseComment);
+        // Get end token from argument's codePos if available, otherwise use the operator token
+        const endToken = argument.codePos 
+            ? { line: (argument.codePos.endRow + 1), column: argument.codePos.endCol, text: '', kind: TokenKind.EOF } as Token
+            : token;
         return {
             type: 'unary',
             operator,
             argument,
-            codePos: createCodePosition(token, argument.codePos ? { line: (argument.codePos.endRow + 1), column: argument.codePos.endCol, text: '' } : token)
+            codePos: createCodePosition(token, endToken)
         };
     }
 
@@ -148,13 +153,13 @@ function parsePrimaryExpression(
     // Handle parenthesized expressions: (expr)
     if (startToken.kind === TokenKind.LPAREN) {
         stream.next(); // consume (
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         
         // Parse expression inside parentheses
         const expr = parseBinaryExpression(stream, 0, parseStatement, parseComment);
         
         // Expect closing )
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         const rparen = stream.current();
         if (!rparen || rparen.kind !== TokenKind.RPAREN) {
             throw new Error(`Expected ')' after expression at line ${startToken.line}, column ${startToken.column}`);
@@ -171,13 +176,15 @@ function parsePrimaryExpression(
         // Check for standalone $ (last value)
         if (varText === '$') {
             // Check if it's followed by ( for subexpression
-            const nextToken = stream.peek(1);
-            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
+            if (SubexpressionParser.isSubexpression(stream)) {
                 // It's a subexpression $(...)
                 if (!parseStatement || !parseComment) {
                     throw new Error('parseStatement and parseComment callbacks required for subexpressions');
                 }
-                return parseSubexpression(stream, parseStatement, parseComment);
+                return SubexpressionParser.parse(stream, {
+                    parseStatement,
+                    createCodePosition: (start, end) => createCodePosition(start, end)
+                });
             }
             
             // It's just $ (last value)
@@ -384,11 +391,11 @@ function parseCallExpression(
     stream.next();
 
     // Check for module.function syntax
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const dotToken = stream.current();
     if (dotToken && dotToken.kind === TokenKind.DOT) {
         stream.next(); // Consume '.'
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         
         const funcToken = stream.current();
         if (!funcToken || (funcToken.kind !== TokenKind.IDENTIFIER && funcToken.kind !== TokenKind.KEYWORD)) {
@@ -400,7 +407,7 @@ function parseCallExpression(
     }
 
     // Parse arguments
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
     const args: Expression[] = [];
     let endToken = startToken;
 
@@ -411,7 +418,7 @@ function parseCallExpression(
         stream.next(); // consume (
         let depth = 1;
         
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         while (!stream.isAtEnd() && depth > 0) {
             const token = stream.current();
             if (!token) break;
@@ -429,7 +436,7 @@ function parseCallExpression(
                 stream.next();
             } else if (token.kind === TokenKind.COMMA) {
                 stream.next(); // consume comma
-                skipWhitespaceAndComments(stream);
+                stream.skipWhitespaceAndComments();
             } else if (token.kind === TokenKind.NEWLINE) {
                 stream.next();
             } else if (token.kind === TokenKind.COMMENT) {
@@ -438,7 +445,7 @@ function parseCallExpression(
                 // Parse argument expression
                 const arg = parseBinaryExpression(stream, 0, parseStatement, parseComment);
                 args.push(arg);
-                skipWhitespaceAndComments(stream);
+                stream.skipWhitespaceAndComments();
             }
         }
     } else {
@@ -474,7 +481,7 @@ function parseCallExpression(
             args.push(arg);
             endToken = stream.current() || endToken;
             
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             
             // Check if next token is a binary operator or assignment (end of call)
             const next = stream.current();
@@ -492,98 +499,7 @@ function parseCallExpression(
     };
 }
 
-/**
- * Skip whitespace (newlines) and comments
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        break;
-    }
-}
 
-/**
- * Parse a subexpression $(...)
- */
-function parseSubexpression(
-    stream: TokenStream,
-    parseStatement: (stream: TokenStream) => Statement | null,
-    parseComment: (stream: TokenStream) => Statement | null
-): Expression {
-    const startToken = stream.current();
-    if (!startToken || startToken.kind !== TokenKind.VARIABLE || startToken.text !== '$') {
-        throw new Error(`Expected '$' for subexpression at line ${startToken?.line || 0}, column ${startToken?.column || 0}`);
-    }
-
-    // Consume $ token
-    stream.next();
-
-    // Expect ( token
-    const lparenToken = stream.current();
-    if (!lparenToken || lparenToken.kind !== TokenKind.LPAREN) {
-        throw new Error(`Expected '(' after '$' in subexpression at line ${startToken.line}, column ${startToken.column}`);
-    }
-    stream.next(); // consume (
-
-    // Parse statements until matching )
-    const body: Statement[] = [];
-    let depth = 1; // Track nesting depth
-    let endToken = lparenToken;
-
-    stream.pushContext(ParsingContext.SUBEXPRESSION);
-    try {
-        while (!stream.isAtEnd() && depth > 0) {
-            const token = stream.current();
-            if (!token) break;
-
-            if (token.kind === TokenKind.LPAREN) {
-                depth++;
-                stream.next();
-            } else if (token.kind === TokenKind.RPAREN) {
-                depth--;
-                if (depth === 0) {
-                    endToken = token;
-                    stream.next(); // consume closing )
-                    break;
-                }
-                stream.next();
-            } else if (token.kind === TokenKind.NEWLINE) {
-                stream.next();
-            } else if (token.kind === TokenKind.COMMENT) {
-                const comment = parseComment(stream);
-                if (comment) {
-                    body.push(comment);
-                }
-            } else {
-                const stmt = parseStatement(stream);
-                if (stmt) {
-                    body.push(stmt);
-                } else {
-                    stream.next(); // Skip token if we can't parse it
-                }
-            }
-        }
-
-        if (depth > 0) {
-            throw new Error(`Unclosed subexpression starting at line ${startToken.line}, column ${startToken.column}`);
-        }
-    } finally {
-        stream.popContext();
-    }
-
-    return {
-        type: 'subexpression',
-        body,
-        codePos: createCodePosition(startToken, endToken)
-    };
-}
 
 /**
  * Create a CodePosition from start and end tokens

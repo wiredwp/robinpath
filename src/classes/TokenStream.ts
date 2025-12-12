@@ -29,6 +29,36 @@ export class TokenStream {
     private tokens: Token[];
     private position: number = 0;
     private contextStack: ParsingContext[] = [];
+    private lastNextPosition: number = -1; // Track last position where next() was called
+    private consecutiveNextCalls: number = 0; // Track consecutive next() calls at same position
+    
+    /**
+     * Maximum number of consecutive next() calls allowed at the same position before throwing
+     */
+    static readonly MAX_CONSECUTIVE_NEXT_AT_SAME_POSITION = 3;
+    
+    /**
+     * Debug mode flag - set to true to enable logging
+     * Can be controlled via VITE_DEBUG environment variable or set programmatically
+     * Usage: TokenStream.debug = true;
+     */
+    static debug: boolean = (() => {
+        try {
+            // Check process.env (Node.js)
+            const proc = (globalThis as any).process;
+            if (proc && proc.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+            // Check import.meta.env (Vite/browser)
+            const importMeta = (globalThis as any).import?.meta;
+            if (importMeta && importMeta.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+        } catch {
+            // Ignore errors
+        }
+        return false;
+    })();
     
     /**
      * Create a new TokenStream
@@ -38,6 +68,8 @@ export class TokenStream {
     constructor(tokens: Token[], startIndex: number = 0) {
         this.tokens = tokens;
         this.position = startIndex;
+        this.lastNextPosition = -1;
+        this.consecutiveNextCalls = 0;
     }
     
     /**
@@ -56,6 +88,9 @@ export class TokenStream {
      */
     setPosition(position: number): void {
         this.position = position;
+        // Reset tracking when position is set manually
+        this.lastNextPosition = -1;
+        this.consecutiveNextCalls = 0;
     }
     
     /**
@@ -82,13 +117,48 @@ export class TokenStream {
     /**
      * Consume and return the current token
      * @returns The current token, or null if at end
+     * @throws Error if called multiple times at the same position (indicates infinite loop)
      */
     next(): Token | null {
         if (this.position >= this.tokens.length) {
+            if (TokenStream.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[TokenStream] [${timestamp}] next() - At end of stream (position: ${this.position}, total tokens: ${this.tokens.length})`);
+            }
             return null;
         }
+        
+        // Detect if we're calling next() multiple times at the same position (infinite loop detection)
+        if (this.position === this.lastNextPosition) {
+            this.consecutiveNextCalls++;
+            if (this.consecutiveNextCalls >= TokenStream.MAX_CONSECUTIVE_NEXT_AT_SAME_POSITION) {
+                const token = this.tokens[this.position];
+                throw new Error(`[TokenStream] Infinite loop detected! next() called ${this.consecutiveNextCalls} times at position ${this.position} without advancing. Token: ${token?.text || 'null'} (${token?.kind || 'EOF'}), line: ${token?.line || 'N/A'}`);
+            }
+            if (TokenStream.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[TokenStream] [${timestamp}] WARNING: next() called ${this.consecutiveNextCalls} times at position ${this.position} without advancing`);
+            }
+        } else {
+            // Position changed, reset counter
+            this.consecutiveNextCalls = 0;
+            this.lastNextPosition = this.position;
+        }
+        
         const token = this.tokens[this.position];
+        const oldPosition = this.position;
         this.position++;
+        
+        if (TokenStream.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[TokenStream] [${timestamp}] next() - Advanced from position ${oldPosition} to ${this.position}:`, {
+                kind: token.kind,
+                text: token.text,
+                line: token.line,
+                column: token.column,
+                context: this.getCurrentContext()
+            });
+        }
         return token;
     }
     
@@ -339,5 +409,23 @@ export class TokenStream {
         const newStream = new TokenStream(this.tokens, startIndex ?? this.position);
         newStream.contextStack = [...this.contextStack];
         return newStream;
+    }
+    
+    /**
+     * Skip whitespace (newlines) and comments
+     * Advances the stream past any consecutive newline or comment tokens
+     */
+    skipWhitespaceAndComments(): void {
+        while (!this.isAtEnd()) {
+            const token = this.current();
+            if (!token) break;
+            
+            if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
+                this.next();
+                continue;
+            }
+            
+            break;
+        }
     }
 }

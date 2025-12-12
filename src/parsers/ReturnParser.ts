@@ -10,6 +10,7 @@ import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
+import { SubexpressionParser } from './SubexpressionParser';
 import type { ReturnStatement, CodePosition, Arg } from '../types/Ast.type';
 
 export interface ReturnParserContext {
@@ -85,11 +86,18 @@ function parseReturnValue(stream: TokenStream): Arg {
     if (token.kind === TokenKind.VARIABLE) {
         if (token.text === '$') {
             // Check if it's followed by ( for subexpression
-            const nextToken = stream.peek(1);
-            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
+            if (SubexpressionParser.isSubexpression(stream)) {
                 // It's a subexpression $(...)
-                const subexprResult = parseSubexpression(stream);
-                return { type: 'subexpr', code: subexprResult.code };
+                const subexpr = SubexpressionParser.parse(stream, {
+                    parseStatement: () => null, // ReturnParser doesn't have parseStatement context
+                    createCodePosition: (start, end) => ({
+                        startRow: start.line - 1,
+                        startCol: start.column,
+                        endRow: end.line - 1,
+                        endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                    })
+                });
+                return subexpr; // Return SubexpressionExpression directly
             }
             // It's just $ (last value)
             stream.next();
@@ -152,71 +160,6 @@ function parseReturnValue(stream: TokenStream): Arg {
     throw new Error(`Unexpected token in return value: ${token.kind} '${token.text}' at line ${token.line}, column ${token.column}`);
 }
 
-/**
- * Parse subexpression $(...)
- * Reused from CommandParser
- */
-function parseSubexpression(stream: TokenStream): { code: string; endToken: Token } {
-    const dollarToken = stream.current();
-    if (!dollarToken || dollarToken.kind !== TokenKind.VARIABLE || dollarToken.text !== '$') {
-        throw new Error('Expected $ at start of subexpression');
-    }
-    
-    stream.pushContext(ParsingContext.SUBEXPRESSION);
-    
-    try {
-        stream.next(); // Consume $
-
-        const lparenToken = stream.current();
-        if (!lparenToken || lparenToken.kind !== TokenKind.LPAREN) {
-            throw new Error('Expected ( after $ in subexpression');
-        }
-        stream.next(); // consume (
-        const lparen = lparenToken;
-        
-        let depth = 1;
-        const tokens: Token[] = [];
-        
-        while (!stream.isAtEnd() && depth > 0) {
-            const token = stream.current();
-            if (!token) break;
-            
-            // Skip string tokens - they're already tokenized
-            if (token.kind === TokenKind.STRING) {
-                tokens.push(token);
-                stream.next();
-                continue;
-            }
-            
-            if (token.kind === TokenKind.LPAREN) {
-                depth++;
-            } else if (token.kind === TokenKind.RPAREN) {
-                depth--;
-                if (depth === 0) {
-                    stream.next(); // Consume closing paren
-                    break;
-                }
-            }
-            
-            if (depth > 0) {
-                tokens.push(token);
-            }
-            
-            stream.next();
-        }
-        
-        if (depth > 0) {
-            throw new Error('Unclosed subexpression');
-        }
-        
-        const endToken = stream.current() || lparen;
-        const code = tokens.map(t => t.text).join('');
-        
-        return { code, endToken };
-    } finally {
-        stream.popContext();
-    }
-}
 
 /**
  * Skip only comments (not newlines - newlines indicate end of statement)

@@ -10,6 +10,7 @@ import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
+import { SubexpressionParser } from './SubexpressionParser';
 import type { CommandCall, Arg, ScopeBlock, CodePosition } from '../types/Ast.type';
 import type { AttributePathSegment } from '../utils/types';
 
@@ -52,7 +53,7 @@ export class CommandParser {
 
         // Check if next token is '(' for parenthesized syntax
         // Skip whitespace and comments, but don't consume the next token yet
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         const nextToken = stream.current();
         
         if (nextToken && nextToken.kind === TokenKind.LPAREN) {
@@ -84,11 +85,11 @@ export class CommandParser {
         stream.next();
 
         // Check for module.function syntax
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
         const dotToken = stream.current();
         if (dotToken && dotToken.kind === TokenKind.DOT) {
             stream.next(); // Consume '.'
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             
             const funcToken = stream.current();
             if (!funcToken || (funcToken.kind !== TokenKind.IDENTIFIER && funcToken.kind !== TokenKind.KEYWORD)) {
@@ -210,8 +211,7 @@ export class CommandParser {
                 syntaxType = 'parentheses';
             }
 
-            // Check for "into $var" after closing paren
-            skipWhitespaceAndComments(stream);
+            // Check for "into $var" after closing paren (parseInto handles skipping whitespace/newlines)
             const intoInfo = this.parseInto(stream);
 
             // Check for callback block (do/with)
@@ -252,14 +252,14 @@ export class CommandParser {
         
         try {
             const args: Arg[] = [];
-            const namedArgs: Record<string, Arg> = [];
+            const namedArgs: Record<string, Arg> = {};
             const startLineNum = startToken.line;
 
         // Special handling for "set" command with optional "as" keyword
         // Syntax: set $var [as] value [fallback]
         if (name === 'set') {
             // Parse first argument (variable)
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             const varArgResult = this.parseArgument(stream, context);
             if (!varArgResult || varArgResult.isNamed) {
                 throw new Error('set command requires a variable as first argument');
@@ -268,12 +268,12 @@ export class CommandParser {
             
             // Check for optional "as" keyword
             // Note: "as" is not in the KEYWORDS set, so it's tokenized as IDENTIFIER
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
             const nextToken = stream.current();
             if (nextToken && (nextToken.kind === TokenKind.KEYWORD || nextToken.kind === TokenKind.IDENTIFIER) && nextToken.text === 'as') {
                 // Consume "as" keyword
                 stream.next();
-                skipWhitespaceAndComments(stream);
+                stream.skipWhitespaceAndComments();
             }
             
             // Parse remaining arguments (value and optional fallback)
@@ -297,6 +297,11 @@ export class CommandParser {
                     continue;
                 }
 
+                // Check for "into" keyword - stop parsing arguments if found
+                if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
+                    break;
+                }
+
                 // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
@@ -312,7 +317,7 @@ export class CommandParser {
             }
         } else {
             // Regular command parsing
-            // Collect arguments until end of line
+            // Collect arguments until end of line or "into" keyword
             let lastIndex = -1;
             let loopCount = 0;
             while (!stream.isAtEnd()) {
@@ -346,6 +351,19 @@ export class CommandParser {
                     continue;
                 }
 
+                // If we're inside a subexpression context, stop at closing paren
+                // This allows subexpressions like $(math.add 5 5) to work correctly
+                if (stream.getCurrentContext() === ParsingContext.SUBEXPRESSION && 
+                    token.kind === TokenKind.RPAREN) {
+                    break;
+                }
+
+                // Check for "into" keyword - stop parsing arguments if found
+                // This prevents "into" from being consumed as an argument
+                if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
+                    break;
+                }
+
                 // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
@@ -367,8 +385,7 @@ export class CommandParser {
             allArgs.push({ type: 'namedArgs', args: namedArgs });
         }
 
-        // Check for "into $var"
-        skipWhitespaceAndComments(stream);
+        // Check for "into $var" (parseInto handles skipping whitespace/newlines)
         const intoInfo = this.parseInto(stream);
 
         // Check for callback block
@@ -411,7 +428,7 @@ export class CommandParser {
                 const key = token.text;
                 stream.next(); // Consume key
                 stream.next(); // Consume '='
-                skipWhitespaceAndComments(stream);
+                stream.skipWhitespaceAndComments();
                 
                 const valueArg = this.parseArgumentValue(stream, context);
                 if (valueArg) {
@@ -429,7 +446,7 @@ export class CommandParser {
                 if (name && /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
                     stream.next(); // Consume variable
                     stream.next(); // Consume '='
-                    skipWhitespaceAndComments(stream);
+                    stream.skipWhitespaceAndComments();
                     
                     const valueArg = this.parseArgumentValue(stream, context);
                     if (valueArg) {
@@ -499,12 +516,13 @@ export class CommandParser {
         }
 
         // Subexpression: $(...)
-        if (token.kind === TokenKind.VARIABLE && token.text === '$') {
-            const nextToken = stream.peek(1);
-            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
-                const subexprResult = parseSubexpression(stream);
-                return { type: 'subexpr', code: subexprResult.code };
-            }
+        if (SubexpressionParser.isSubexpression(stream)) {
+            const subexpr = SubexpressionParser.parse(stream, {
+                parseStatement: context?.parseStatement || (() => null),
+                createCodePosition: context?.createCodePosition || createCodePosition
+            });
+            // Return SubexpressionExpression directly as an Arg (Expression)
+            return subexpr;
         }
 
         // Object literal: {...}
@@ -531,10 +549,31 @@ export class CommandParser {
 
     /**
      * Parse "into $var" syntax
+     * Handles "into" on the same line or next line (for multiline calls)
      */
     private static parseInto(stream: TokenStream): { targetName: string; targetPath?: AttributePathSegment[] } | null {
         const savedPos = stream.save();
-        skipWhitespaceAndComments(stream);
+        
+        // Skip whitespace, comments, and newlines to find "into"
+        // This allows "into" to appear on the next line for multiline parenthesized calls
+        while (!stream.isAtEnd()) {
+            const token = stream.current();
+            if (!token) break;
+            
+            // Skip comments and newlines
+            if (token.kind === TokenKind.COMMENT || token.kind === TokenKind.NEWLINE) {
+                stream.next();
+                continue;
+            }
+            
+            // Stop at EOF
+            if (token.kind === TokenKind.EOF) {
+                break;
+            }
+            
+            // Found a non-whitespace token - check if it's "into"
+            break;
+        }
 
         const intoToken = stream.current();
         if (!intoToken || intoToken.text !== 'into') {
@@ -543,7 +582,23 @@ export class CommandParser {
         }
 
         stream.next(); // Consume 'into'
-        skipWhitespaceAndComments(stream);
+        
+        // Skip whitespace, comments, and newlines before variable
+        while (!stream.isAtEnd()) {
+            const token = stream.current();
+            if (!token) break;
+            
+            if (token.kind === TokenKind.COMMENT || token.kind === TokenKind.NEWLINE) {
+                stream.next();
+                continue;
+            }
+            
+            if (token.kind === TokenKind.EOF) {
+                break;
+            }
+            
+            break;
+        }
 
         const varToken = stream.current();
         if (!varToken || varToken.kind !== TokenKind.VARIABLE) {
@@ -569,7 +624,7 @@ export class CommandParser {
         }
 
         const savedPos = stream.save();
-        skipWhitespaceAndComments(stream);
+        stream.skipWhitespaceAndComments();
 
         const token = stream.current();
         if (!token) {
@@ -588,83 +643,7 @@ export class CommandParser {
     }
 }
 
-/**
- * Helper: Skip whitespace and comment tokens (but not newlines)
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        // Don't skip newlines - they're statement boundaries
-        break;
-    }
-}
 
-/**
- * Helper: Parse subexpression $(...)
- */
-function parseSubexpression(stream: TokenStream): { code: string; endToken: Token } {
-    const dollarToken = stream.current();
-    if (!dollarToken || dollarToken.kind !== TokenKind.VARIABLE || dollarToken.text !== '$') {
-        throw new Error('Expected $ at start of subexpression');
-    }
-    
-    // Push subexpression context
-    stream.pushContext(ParsingContext.SUBEXPRESSION);
-    
-    try {
-        stream.next(); // Consume $
-
-        const lparen = stream.expect(TokenKind.LPAREN, 'Expected ( after $ in subexpression');
-        
-        let depth = 1;
-        const tokens: Token[] = [];
-        
-        while (!stream.isAtEnd() && depth > 0) {
-            const token = stream.current();
-            if (!token) break;
-            
-            // Skip string tokens - they're already tokenized
-            if (token.kind === TokenKind.STRING) {
-                tokens.push(token);
-                stream.next();
-                continue;
-            }
-            
-            if (token.kind === TokenKind.LPAREN) {
-                depth++;
-            } else if (token.kind === TokenKind.RPAREN) {
-                depth--;
-                if (depth === 0) {
-                    stream.next(); // Consume closing paren
-                    break;
-                }
-            }
-            
-            if (depth > 0) {
-                tokens.push(token);
-            }
-            
-            stream.next();
-        }
-        
-        if (depth > 0) {
-            throw new Error('Unclosed subexpression');
-        }
-        
-        const endToken = stream.current() || lparen;
-        const code = tokens.map(t => t.text).join('');
-        
-        return { code, endToken };
-    } finally {
-        // Always pop the context
-        stream.popContext();
-    }
-}
 
 
 /**

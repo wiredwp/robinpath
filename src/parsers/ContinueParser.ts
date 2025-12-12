@@ -33,7 +33,7 @@ export function parseContinue(
     stream.next();
 
     // Skip whitespace and comments after 'continue' (including inline comments)
-    skipWhitespaceAndComments(stream);
+    stream.skipWhitespaceAndComments();
 
     // Find the end token (last token before newline/EOF)
     let endToken = continueToken;
@@ -48,26 +48,3 @@ export function parseContinue(
     };
 }
 
-/**
- * Skip whitespace (newlines) and comments
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        // Consume comments (including inline comments after continue)
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        // Stop at newline or EOF (end of statement)
-        if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.EOF) {
-            break;
-        }
-        
-        // If we encounter anything else, stop (might be next statement)
-        break;
-    }
-}

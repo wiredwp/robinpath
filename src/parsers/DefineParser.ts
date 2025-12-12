@@ -40,7 +40,7 @@ export class DefineParser {
             stream.next(); // Consume 'def' or 'define'
 
             // Skip whitespace and comments
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
 
         // Parse function name
         const nameToken = stream.current();
@@ -86,7 +86,7 @@ export class DefineParser {
                 stream.next();
                 // After "as", only allow comments and newline
                 // skipWhitespaceAndComments will consume newlines, so after it we should be at the body
-                skipWhitespaceAndComments(stream);
+                stream.skipWhitespaceAndComments();
                 // Break out of parameter parsing loop - we're done with the header
                 break;
             }
@@ -210,21 +210,6 @@ export class DefineParser {
     }
 }
 
-/**
- * Helper: Skip whitespace and comment tokens
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        if (token.kind === TokenKind.COMMENT || 
-            (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
-            stream.next();
-            continue;
-        }
-        break;
-    }
-}
 
 /**
  * Helper: Create CodePosition from start and end tokens

@@ -3,15 +3,27 @@
  * Handles: $var = value, $var = $, $var = command, etc.
  */
 
-import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { CommandParser } from './CommandParser';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
-import type { Assignment, CommandCall, CodePosition, Arg } from '../types/Ast.type';
-import type { AttributePathSegment } from '../utils/types';
+import { SubexpressionParser } from './SubexpressionParser';
+import type { Assignment, CodePosition } from '../types/Ast.type';
+
+export interface AssignmentParserContext {
+    /**
+     * Parse a statement from the stream (for subexpressions)
+     */
+    parseStatement?: (stream: TokenStream) => any;
+    
+    /**
+     * Create code position from tokens
+     */
+    createCodePosition?: (startToken: Token, endToken: Token) => CodePosition;
+}
 
 export class AssignmentParser {
     /**
@@ -19,9 +31,10 @@ export class AssignmentParser {
      * Expects stream to be positioned at the variable token
      * 
      * @param stream - TokenStream positioned at the variable token
+     * @param context - Optional context with helper methods
      * @returns Assignment AST node
      */
-    static parse(stream: TokenStream): Assignment {
+    static parse(stream: TokenStream, context?: AssignmentParserContext): Assignment {
         const startToken = stream.current();
         if (!startToken) {
             throw new Error('Unexpected end of input while parsing assignment');
@@ -72,7 +85,7 @@ export class AssignmentParser {
         }
 
         // Parse the assignment value
-        const valueResult = this.parseAssignmentValue(stream);
+        const valueResult = this.parseAssignmentValue(stream, context);
         
         // Create code position
         const codePos = createCodePosition(startToken, valueResult.endToken);
@@ -90,7 +103,7 @@ export class AssignmentParser {
      * Parse the value part of an assignment
      * Returns the assignment data and the end token
      */
-    private static parseAssignmentValue(stream: TokenStream): {
+    private static parseAssignmentValue(stream: TokenStream, context?: AssignmentParserContext): {
         assignmentData: Partial<Assignment>;
         endToken: Token;
     } {
@@ -229,22 +242,25 @@ export class AssignmentParser {
 
         // Check for subexpression: $(...)
         // The Lexer tokenizes $ and ( separately, so we need to check for VARIABLE($) followed by LPAREN
-        if (startToken.kind === TokenKind.VARIABLE && startToken.text === '$') {
-            const nextToken = stream.peek(1);
-            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
-                const subexprResult = parseSubexpression(stream);
-                return {
-                    assignmentData: {
-                        command: {
-                            type: 'command',
-                            name: '_subexpr',
-                            args: [{ type: 'subexpr', code: subexprResult.code }],
-                            codePos: createCodePosition(startToken, subexprResult.endToken)
-                        }
-                    },
-                    endToken: subexprResult.endToken
-                };
-            }
+        if (SubexpressionParser.isSubexpression(stream)) {
+            // Parse the subexpression using SubexpressionParser
+            const subexpr = SubexpressionParser.parse(stream, {
+                parseStatement: context?.parseStatement || (() => null),
+                createCodePosition: context?.createCodePosition || createCodePosition
+            });
+            // Wrap in _subexpr command for backward compatibility with Executor
+            const endToken = stream.current() || startToken;
+            return {
+                assignmentData: {
+                    command: {
+                        type: 'command',
+                        name: '_subexpr',
+                        args: [subexpr], // Pass SubexpressionExpression as arg
+                        codePos: subexpr.codePos
+                    }
+                },
+                endToken: endToken
+            };
         }
 
         // Check for object literal: {...}
@@ -291,85 +307,8 @@ export class AssignmentParser {
     }
 }
 
-/**
- * Helper: Skip whitespace and comment tokens
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        if (token.kind === TokenKind.COMMENT || 
-            (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
-            stream.next();
-            continue;
-        }
-        break;
-    }
-}
 
-/**
- * Helper: Parse subexpression $(...)
- */
-function parseSubexpression(stream: TokenStream): { code: string; endToken: Token } {
-    const dollarToken = stream.current();
-    if (!dollarToken || dollarToken.kind !== TokenKind.VARIABLE || dollarToken.text !== '$') {
-        throw new Error('Expected $ at start of subexpression');
-    }
-    
-    // Push subexpression context
-    stream.pushContext(ParsingContext.SUBEXPRESSION);
-    
-    try {
-        stream.next(); // Consume $
 
-        const lparen = stream.expect(TokenKind.LPAREN, 'Expected ( after $ in subexpression');
-        
-        // Collect tokens until matching )
-        let depth = 1;
-        const tokens: Token[] = [];
-        
-        while (!stream.isAtEnd() && depth > 0) {
-            const token = stream.current();
-            if (!token) break;
-            
-            // Skip string tokens - they're already tokenized
-            if (token.kind === TokenKind.STRING) {
-                tokens.push(token);
-                stream.next();
-                continue;
-            }
-            
-            if (token.kind === TokenKind.LPAREN) {
-                depth++;
-            } else if (token.kind === TokenKind.RPAREN) {
-                depth--;
-                if (depth === 0) {
-                    stream.next(); // Consume closing paren
-                    break;
-                }
-            }
-            
-            if (depth > 0) {
-                tokens.push(token);
-            }
-            
-            stream.next();
-        }
-        
-        if (depth > 0) {
-            throw new Error('Unclosed subexpression');
-        }
-        
-        const endToken = stream.current() || lparen;
-        // Reconstruct the code from tokens, preserving spacing
-        const code = tokens.map(t => t.text).join('');
-        
-        return { code, endToken };
-    } finally {
-        // Always pop the context
-        stream.popContext();
-    }
-}
 
 
 

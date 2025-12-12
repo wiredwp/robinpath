@@ -62,6 +62,28 @@ export class Executor {
     private callStack: Frame[] = [];
     private parentThread: RobinPathThread | null = null;
     private sourceCode: string | null = null; // Store source code for error messages
+    
+    /**
+     * Debug mode flag - set to true to enable logging
+     * Can be controlled via VITE_DEBUG environment variable or set programmatically
+     */
+    static debug: boolean = (() => {
+        try {
+            // Check process.env (Node.js)
+            const proc = (globalThis as any).process;
+            if (proc && proc.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+            // Check import.meta.env (Vite/browser)
+            const importMeta = (globalThis as any).import?.meta;
+            if (importMeta && importMeta.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+        } catch {
+            // Ignore errors
+        }
+        return false;
+    })();
 
     constructor(environment: Environment, parentThread?: RobinPathThread | null, sourceCode?: string | null) {
         this.environment = environment;
@@ -1644,7 +1666,10 @@ Examples:
         const parentFrame = this.getCurrentFrame(frameOverride);
         const originalLastValue = parentFrame.lastValue; // Preserve parent's $
         
-        // console.log('====> Executor: executeScope called, scope.into:', scope.into);
+        if (Executor.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[Executor.executeScope] [${timestamp}] Starting do block execution. Body statements: ${scope.body.length}, isolated: ${scope.paramNames && scope.paramNames.length > 0}, callStack depth: ${this.callStack.length}`);
+        }
         
         // If parameters are declared, create an isolated scope (no parent variable access)
         // Otherwise, create a scope that inherits from parent (current behavior)
@@ -1670,8 +1695,19 @@ Examples:
         let scopeValue: Value = null;
         try {
             // Execute scope body - pass frame directly to avoid race conditions in parallel execution
+            let stmtIndex = 0;
             for (const stmt of scope.body) {
+                stmtIndex++;
+                if (Executor.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[Executor.executeScope] [${timestamp}] Executing statement ${stmtIndex}/${scope.body.length}, type: ${stmt.type}`);
+                }
                 await this.executeStatement(stmt, frame);
+            }
+            
+            if (Executor.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[Executor.executeScope] [${timestamp}] Completed do block execution. Statements executed: ${stmtIndex}`);
             }
 
             // Capture the scope's lastValue before restoring parent's $
@@ -1979,6 +2015,7 @@ Examples:
 
         // Legacy Arg types for backward compatibility
         // These are the old types that haven't been migrated yet
+        // Note: SubexpressionExpression (type: 'subexpression') is handled above as an Expression
         if (arg.type === 'subexpr' || arg.type === 'object' || arg.type === 'array') {
             switch (arg.type) {
                 case 'subexpr':

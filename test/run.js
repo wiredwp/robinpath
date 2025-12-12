@@ -16,9 +16,18 @@
  *    - Example: npm run test -- c0  (runs c0-getAST.js)
  * 
  * Usage:
- *   - npm run test                    (runs all RP script tests, then all JavaScript case tests)
- *   - npm run test -- <test-number>   (runs a specific RP script test)
- *   - npm run test -- c<case-number>  (runs a specific JavaScript case test)
+ *   - npm run test                           (runs all RP script tests, then all JavaScript case tests)
+ *   - npm run test -- <test-number>          (runs a specific RP script test)
+ *   - npm run test -- <test-number> --repeat <count>  (runs a test multiple times and shows average runtime)
+ *   - npm run test -- <test-number-1> <test-number-2> ...  (runs multiple specific tests)
+ *   - npm run test -- <start>-<end>          (runs a range of tests, e.g., 0-7 runs tests 0 through 7)
+ *   - npm run test -- c<case-number>         (runs a specific JavaScript case test)
+ * 
+ * Examples:
+ *   - npm run test -- 0                      (runs test 0)
+ *   - npm run test -- 0 1 2 3 4 5            (runs tests 0, 1, 2, 3, 4, 5)
+ *   - npm run test -- 0-7                    (runs tests 0 through 7)
+ *   - npm run test -- 5 --repeat 100         (runs test 5 one hundred times and shows average runtime)
  */
 
 import { existsSync } from 'fs';
@@ -72,70 +81,184 @@ const testCases = [
 ];
 
 // Parse command-line arguments
-const testArg = process.argv[2];
-let testNumber = null;
+const args = process.argv.slice(2);
+let testNumbers = []; // Array of test numbers to run
 let testCase = null;
 let runAll = false;
+let repeatCount = 1; // Default to 1 run
 
-
-if (testArg === undefined) {
-    // No argument provided - run all tests
-    runAll = true;
-} else if (testArg.startsWith('c')) {
-    // It's a case test (starts with 'c')
-    const caseNumber = parseInt(testArg.substring(1), 10);
-    if (isNaN(caseNumber) || caseNumber < 0 || caseNumber >= testCases.length) {
-        console.error('='.repeat(60));
-        console.error('Invalid test case:', testArg);
-        console.error('='.repeat(60));
-        console.error();
-        console.error('Available JavaScript Case Tests:');
-        testCases.forEach((file, index) => {
-            console.error(`  c${index}: ${file}`);
-        });
-        console.error();
-        console.error('Usage: npm run test -- c<case-number>');
-        console.error('Example: npm run test -- c0  (runs c0-getAST.js)');
-        process.exit(1);
+// Parse arguments
+for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    // Check for --repeat flag
+    if (arg === '--repeat' && i + 1 < args.length) {
+        repeatCount = parseInt(args[i + 1], 10);
+        if (isNaN(repeatCount) || repeatCount < 1) {
+            console.error('Invalid repeat count. Must be a positive number.');
+            process.exit(1);
+        }
+        i++; // Skip the next argument (the count)
+        continue;
     }
-    testCase = caseNumber;
-} else {
-    // It's a numeric test (RP script test)
-    testNumber = parseInt(testArg, 10);
-    if (isNaN(testNumber) || testNumber < 0 || testNumber >= testFiles.length) {
-        console.error('='.repeat(60));
-        console.error('Invalid test number:', testArg);
-        console.error('='.repeat(60));
-        console.error();
-        console.error('Available RP Script Tests:');
-        testFiles.forEach((file, index) => {
-            console.error(`  ${index}: ${file}`);
-        });
-        console.error();
-        console.error('Usage: npm run test -- <test-number>');
-        console.error('Example: npm run test -- 0  (runs 01-variable-assignment.rp)');
-        process.exit(1);
+    
+    // Check for case test (starts with 'c')
+    if (arg.startsWith('c')) {
+        const caseNumber = parseInt(arg.substring(1), 10);
+        if (isNaN(caseNumber) || caseNumber < 0 || caseNumber >= testCases.length) {
+            console.error('='.repeat(60));
+            console.error('Invalid test case:', arg);
+            console.error('='.repeat(60));
+            console.error();
+            console.error('Available JavaScript Case Tests:');
+            testCases.forEach((file, index) => {
+                console.error(`  c${index}: ${file}`);
+            });
+            console.error();
+            console.error('Usage: npm run test -- c<case-number>');
+            console.error('Example: npm run test -- c0  (runs c0-getAST.js)');
+            process.exit(1);
+        }
+        testCase = caseNumber;
+        break; // Case tests are single, so break
+    }
+    
+    // Check for range syntax (e.g., "0-7")
+    if (arg.includes('-')) {
+        const parts = arg.split('-');
+        if (parts.length === 2) {
+            const start = parseInt(parts[0], 10);
+            const end = parseInt(parts[1], 10);
+            if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start && end < testFiles.length) {
+                for (let j = start; j <= end; j++) {
+                    testNumbers.push(j);
+                }
+                continue;
+            }
+        }
+    }
+    
+    // Check for numeric test number
+    const testNum = parseInt(arg, 10);
+    if (!isNaN(testNum)) {
+        if (testNum < 0 || testNum >= testFiles.length) {
+            console.error('='.repeat(60));
+            console.error('Invalid test number:', testNum);
+            console.error('='.repeat(60));
+            console.error();
+            console.error('Available RP Script Tests:');
+            testFiles.forEach((file, index) => {
+                console.error(`  ${index}: ${file}`);
+            });
+            console.error();
+            console.error('Usage: npm run test -- <test-number>');
+            console.error('Example: npm run test -- 0  (runs 01-variable-assignment.rp)');
+            process.exit(1);
+        }
+        testNumbers.push(testNum);
     }
 }
 
-// Helper function to execute the actual test logic
-const executeTestLogic = async (testFilePath, isCaseTest) => {
-    if (isCaseTest) {
-        // For case tests, import and run the test function
-        const importPath = testFilePath.startsWith('file://') ? testFilePath : `file://${testFilePath}`;
-        const caseModule = await import(importPath);
-        
-        if (typeof caseModule.runTest !== 'function') {
-            throw new Error(`Test case must export a runTest function`);
+// Remove duplicates and sort
+testNumbers = [...new Set(testNumbers)].sort((a, b) => a - b);
+
+// If no arguments provided, run all tests
+if (args.length === 0) {
+    runAll = true;
+}
+
+// If we have a case test, don't process test numbers
+if (testCase !== null) {
+    testNumbers = [];
+}
+
+// Helper function to suppress console output
+const suppressConsole = async (callback) => {
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const originalInfo = console.info;
+    const originalDebug = console.debug;
+    const originalStdoutWrite = process.stdout.write;
+    const originalStderrWrite = process.stderr.write;
+    
+    // Create no-op functions
+    const noop = () => {};
+    const noopWrite = function(chunk, encoding, callback) {
+        if (typeof callback === 'function') {
+            callback();
         }
-        await caseModule.runTest();
+        return true;
+    };
+    
+    // Override console methods
+    console.log = noop;
+    console.error = noop;
+    console.warn = noop;
+    console.info = noop;
+    console.debug = noop;
+    
+    // Override stdout/stderr write to suppress output
+    process.stdout.write = noopWrite;
+    process.stderr.write = noopWrite;
+    
+    try {
+        return await callback();
+    } finally {
+        // Restore original methods
+        console.log = originalLog;
+        console.error = originalError;
+        console.warn = originalWarn;
+        console.info = originalInfo;
+        console.debug = originalDebug;
+        process.stdout.write = originalStdoutWrite;
+        process.stderr.write = originalStderrWrite;
+    }
+};
+
+// Helper function to execute the actual test logic
+const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false) => {
+    if (suppressOutput) {
+        // Suppress console before importing modules (they might capture console at import time)
+        return suppressConsole(async () => {
+            if (isCaseTest) {
+                // For case tests, import and run the test function
+                const importPath = testFilePath.startsWith('file://') ? testFilePath : `file://${testFilePath}`;
+                const caseModule = await import(importPath);
+                
+                if (typeof caseModule.runTest !== 'function') {
+                    throw new Error(`Test case must export a runTest function`);
+                }
+                await caseModule.runTest();
+            } else {
+                // For RP script tests, read and execute with RobinPath
+                const { readFileSync } = await import('fs');
+                const { RobinPath } = await import('../dist/index.js');
+                
+                const testScript = readFileSync(testFilePath, 'utf-8');
+                const rp = new RobinPath();
+                await rp.executeScript(testScript);
+            }
+        });
     } else {
-        // For RP script tests, read and execute with RobinPath
-        const { readFileSync } = await import('fs');
-        const { RobinPath } = await import('../dist/index.js');
-        const testScript = readFileSync(testFilePath, 'utf-8');
-        const rp = new RobinPath();
-        await rp.executeScript(testScript);
+        if (isCaseTest) {
+            // For case tests, import and run the test function
+            const importPath = testFilePath.startsWith('file://') ? testFilePath : `file://${testFilePath}`;
+            const caseModule = await import(importPath);
+            
+            if (typeof caseModule.runTest !== 'function') {
+                throw new Error(`Test case must export a runTest function`);
+            }
+            await caseModule.runTest();
+        } else {
+            // For RP script tests, read and execute with RobinPath
+            const { readFileSync } = await import('fs');
+            const { RobinPath } = await import('../dist/index.js');
+            
+            const testScript = readFileSync(testFilePath, 'utf-8');
+            const rp = new RobinPath();
+            await rp.executeScript(testScript);
+        }
     }
 };
 
@@ -323,46 +446,138 @@ const executeTestLogic = async (testFilePath, isCaseTest) => {
             }
         }
         
-        // If a specific test number was provided, run only that test
-        if (testNumber !== null) {
-            const testFileName = testFiles[testNumber];
-            const testFilePath = join(scriptsDir, testFileName);
+        // If specific test numbers were provided, run them
+        if (testNumbers.length > 0) {
+            const results = [];
+            let totalPassed = 0;
+            let totalFailed = 0;
+            const overallStartTime = Date.now();
             
-            if (!existsSync(testFilePath)) {
-                console.error(`? Test file not found: ${testFilePath}`);
-                process.exit(1);
-            }
-            
-            console.log('='.repeat(60));
-            console.log(`Running RP Script Test ${testNumber}: ${testFileName}`);
-            console.log('='.repeat(60));
-            console.log();
-            console.log('Note: This is a RobinPath language test written in .rp script format.');
-            console.log();
-            
-            const startTime = Date.now();
-            
-            try {
-                await executeTestLogic(testFilePath, false);
-                const endTime = Date.now();
-                const executionTime = endTime - startTime;
-                console.log();
-                console.log('='.repeat(60));
-                console.log(`? RP Script Test ${testNumber} (${testFileName}) completed in ${executionTime}ms`);
-                console.log('='.repeat(60));
-                process.exit(0);
-            } catch (error) {
-                console.error();
-                console.error('='.repeat(60));
-                console.error(`? RP Script Test ${testNumber} (${testFileName}) FAILED`);
-                console.error('='.repeat(60));
-                if (error.stack) {
-                    console.error(error.stack);
-                } else {
-                    console.error('Error:', error.message);
+            for (const testNum of testNumbers) {
+                const testFileName = testFiles[testNum];
+                const testFilePath = join(scriptsDir, testFileName);
+                
+                if (!existsSync(testFilePath)) {
+                    console.error(`? Test file not found: ${testFilePath}`);
+                    results.push({ testNum, passed: false, error: 'File not found' });
+                    totalFailed++;
+                    continue;
                 }
-                process.exit(1);
+                
+                console.log('='.repeat(60));
+                if (repeatCount > 1) {
+                    console.log(`Running RP Script Test ${testNum}: ${testFileName} (${repeatCount} times)`);
+                } else {
+                    console.log(`Running RP Script Test ${testNum}: ${testFileName}`);
+                }
+                console.log('='.repeat(60));
+                console.log();
+                
+                const executionTimes = [];
+                let testPassed = true;
+                let testError = null;
+                
+                // Run the test repeatCount times
+                for (let run = 1; run <= repeatCount; run++) {
+                    // Enable debug mode for test 6 via environment variable (only on first run if repeating)
+                    if (testNum === 6 && repeatCount === 1) {
+                        process.env.VITE_DEBUG = 'true';
+                        console.log('DEBUG MODE ENABLED FOR TEST 6 (via VITE_DEBUG=true)');
+                    } else if (testNum === 6 && repeatCount > 1) {
+                        // Disable debug mode when repeating to avoid log spam
+                        process.env.VITE_DEBUG = 'false';
+                    }
+                    
+                    const startTime = Date.now();
+                    
+                    try {
+                        // Suppress console output when repeating
+                        await executeTestLogic(testFilePath, false, repeatCount > 1);
+                        const endTime = Date.now();
+                        const executionTime = endTime - startTime;
+                        executionTimes.push(executionTime);
+                        
+                        if (repeatCount === 1) {
+                            console.log(`  ? Passed (${executionTime}ms)`);
+                        }
+                        // Don't show individual run messages when repeating
+                    } catch (error) {
+                        testPassed = false;
+                        testError = error.message;
+                        if (error.stack && repeatCount === 1) {
+                            console.error(error.stack);
+                        } else {
+                            console.error(`  Run ${run} failed: ${error.message}`);
+                        }
+                        break; // Stop repeating if test fails
+                    }
+                }
+                
+                console.log();
+                
+                if (testPassed) {
+                    const totalTestTime = executionTimes.reduce((a, b) => a + b, 0);
+                    const avgTime = executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
+                    if (repeatCount > 1) {
+                        const minTime = Math.min(...executionTimes);
+                        const maxTime = Math.max(...executionTimes);
+                        console.log('='.repeat(60));
+                        console.log(`? RP Script Test ${testNum} (${testFileName}) - All ${repeatCount} runs passed`);
+                        console.log(`  Total: ${totalTestTime}ms`);
+                        console.log(`  Average: ${avgTime.toFixed(2)}ms`);
+                        console.log(`  Min: ${minTime}ms | Max: ${maxTime}ms`);
+                        console.log('='.repeat(60));
+                    } else {
+                        console.log('='.repeat(60));
+                        console.log(`? RP Script Test ${testNum} (${testFileName}) completed in ${executionTimes[0]}ms`);
+                        console.log('='.repeat(60));
+                    }
+                    totalPassed++;
+                    results.push({ testNum, passed: true, times: executionTimes, totalTime: totalTestTime, avgTime: avgTime });
+                } else {
+                    console.error('='.repeat(60));
+                    console.error(`? RP Script Test ${testNum} (${testFileName}) FAILED`);
+                    console.error('='.repeat(60));
+                    if (testError) {
+                        console.error('Error:', testError);
+                    }
+                    totalFailed++;
+                    results.push({ testNum, passed: false, error: testError, totalTime: 0, avgTime: 0 });
+                }
+                console.log();
             }
+            
+            // Summary if multiple tests
+            const overallEndTime = Date.now();
+            const totalWallClockTime = overallEndTime - overallStartTime;
+            
+            // Calculate total runtime by summing all average times from each test
+            // This represents the total time to run all tests once
+            const passedResults = results.filter(r => r.passed);
+            const totalRuntime = passedResults.reduce((sum, r) => {
+                // Use avgTime if available (from repeated runs), otherwise use the single run time
+                const avgTime = r.avgTime !== undefined ? r.avgTime : (r.times && r.times[0] ? r.times[0] : 0);
+                return sum + avgTime;
+            }, 0);
+            
+            if (testNumbers.length > 1) {
+                console.log('='.repeat(60));
+                console.log('Test Summary');
+                console.log('='.repeat(60));
+                console.log(`Total: ${testNumbers.length} | Passed: ${totalPassed} | Failed: ${totalFailed}`);
+                console.log(`Total Runtime: ${totalRuntime.toFixed(2)}ms`);
+                console.log('='.repeat(60));
+                
+                if (totalFailed > 0) {
+                    console.log();
+                    console.log('Failed tests:');
+                    results.filter(r => !r.passed).forEach(r => {
+                        console.log(`  ${r.testNum}: ${testFiles[r.testNum]} - ${r.error || 'Unknown error'}`);
+                    });
+                }
+            }
+            
+            process.exit(totalFailed > 0 ? 1 : 0);
         }
         
     } catch (error) {

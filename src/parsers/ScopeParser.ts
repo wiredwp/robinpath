@@ -13,6 +13,33 @@ import type { AttributePathSegment } from '../utils/types';
 
 export class ScopeParser {
     /**
+     * Maximum number of iterations allowed before detecting an infinite loop
+     */
+    static readonly MAX_STUCK_ITERATIONS = 100;
+    
+    /**
+     * Debug mode flag - set to true to enable logging
+     * Can be controlled via VITE_DEBUG environment variable or set programmatically
+     */
+    static debug: boolean = (() => {
+        try {
+            // Check process.env (Node.js)
+            const proc = (globalThis as any).process;
+            if (proc && proc.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+            // Check import.meta.env (Vite/browser)
+            const importMeta = (globalThis as any).import?.meta;
+            if (importMeta && importMeta.env?.VITE_DEBUG === 'true') {
+                return true;
+            }
+        } catch {
+            // Ignore errors
+        }
+        return false;
+    })();
+    
+    /**
      * Parse a 'do' scope block
      * Expects stream to be positioned at the 'do' keyword
      * 
@@ -32,6 +59,12 @@ export class ScopeParser {
         }
 
         const startToken = doToken;
+        const startPosition = stream.getPosition();
+        
+        if (ScopeParser.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[ScopeParser.parse] [${timestamp}] Starting do block parse at position ${startPosition}, line ${doToken.line}`);
+        }
         
         // Push block context
         stream.pushContext(ParsingContext.BLOCK);
@@ -40,7 +73,7 @@ export class ScopeParser {
             stream.next(); // Consume 'do'
 
             // Skip whitespace and comments
-            skipWhitespaceAndComments(stream);
+            stream.skipWhitespaceAndComments();
 
             // Parse header: parameters and 'into' target
             const paramNames: string[] = [];
@@ -110,15 +143,51 @@ export class ScopeParser {
             // Parse body until matching 'enddo'
             const body: Statement[] = [];
             let endToken = startToken;
+            let bodyIteration = 0;
+            let lastBodyPosition = -1;
+            let bodyStuckCount = 0;
 
             while (!stream.isAtEnd()) {
+                bodyIteration++;
+                const currentPos = stream.getPosition();
                 const t = stream.current();
-                if (!t || t.kind === TokenKind.EOF) break;
+                if (!t || t.kind === TokenKind.EOF) {
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] Reached EOF in do block body at iteration ${bodyIteration}`);
+                    }
+                    break;
+                }
 
                 endToken = t;
+                
+                if (ScopeParser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[ScopeParser.parse] [${timestamp}] Body iteration ${bodyIteration}, position: ${currentPos}, token: ${t.text} (${t.kind}), line: ${t.line}`);
+                }
+                
+                // Detect if we're stuck
+                if (currentPos === lastBodyPosition) {
+                    bodyStuckCount++;
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] WARNING: Body position stuck at ${currentPos} (count: ${bodyStuckCount})`);
+                    }
+                    if (bodyStuckCount > ScopeParser.MAX_STUCK_ITERATIONS) {
+                        const timestamp = new Date().toISOString();
+                        throw new Error(`[ScopeParser.parse] [${timestamp}] Infinite loop detected in do block body! Stuck at position ${currentPos} for ${bodyStuckCount} iterations. Token: ${t.text} (${t.kind}), line: ${t.line}`);
+                    }
+                } else {
+                    bodyStuckCount = 0;
+                    lastBodyPosition = currentPos;
+                }
 
                 // Check for 'enddo' keyword - this closes our block
                 if (t.kind === TokenKind.KEYWORD && t.text === 'enddo') {
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] Found 'enddo' at position ${currentPos}, closing do block`);
+                    }
                     stream.next(); // consume 'enddo'
 
                     // Consume everything until end of line after 'enddo'
@@ -133,13 +202,33 @@ export class ScopeParser {
 
                 // Skip newlines and comments at the statement boundary
                 if (t.kind === TokenKind.NEWLINE) {
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] Skipping newline in do block body`);
+                    }
                     stream.next();
                     continue;
                 }
 
                 if (t.kind === TokenKind.COMMENT) {
                     // Parse comment statement
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] Parsing comment in do block body at position ${currentPos}`);
+                    }
+                    const commentBeforeParse = stream.getPosition();
                     const comment = parseComment(stream);
+                    const commentAfterParse = stream.getPosition();
+                    
+                    // Ensure stream position advanced (parseComment should consume the comment token)
+                    if (commentAfterParse === commentBeforeParse) {
+                        if (ScopeParser.debug) {
+                            const timestamp = new Date().toISOString();
+                            console.log(`[ScopeParser.parse] [${timestamp}] WARNING: parseComment did not advance stream, manually advancing`);
+                        }
+                        stream.next(); // Manually advance if parseComment didn't
+                    }
+                    
                     if (comment) {
                         body.push(comment);
                     }
@@ -147,13 +236,30 @@ export class ScopeParser {
                 }
 
                 // Parse statement using the callback
+                if (ScopeParser.debug) {
+                    const timestamp = new Date().toISOString();
+                    console.log(`[ScopeParser.parse] [${timestamp}] Parsing statement in do block body at position ${currentPos}`);
+                }
                 const stmt = parseStatement(stream);
                 if (stmt) {
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] Parsed statement type: ${stmt.type} in do block body`);
+                    }
                     body.push(stmt);
                 } else {
                     // If we can't parse, skip the token to avoid infinite loop
+                    if (ScopeParser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[ScopeParser.parse] [${timestamp}] WARNING: Could not parse statement in do block body at position ${currentPos}, skipping token: ${t.text}`);
+                    }
                     stream.next();
                 }
+            }
+            
+            if (ScopeParser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[ScopeParser.parse] [${timestamp}] Do block body parsing complete. Iterations: ${bodyIteration}, statements: ${body.length}, final position: ${stream.getPosition()}`);
             }
 
             // Build codePos from startToken to endToken
@@ -178,6 +284,11 @@ export class ScopeParser {
                 scopeBlock.comments = headerComments;
             }
 
+            if (ScopeParser.debug) {
+                const timestamp = new Date().toISOString();
+                console.log(`[ScopeParser.parse] [${timestamp}] Do block parse complete. Start position: ${startPosition}, end position: ${stream.getPosition()}, body statements: ${body.length}`);
+            }
+
             return scopeBlock;
         } finally {
             // Always pop the context, even if we error out
@@ -186,21 +297,6 @@ export class ScopeParser {
     }
 }
 
-/**
- * Helper: Skip whitespace and comment tokens (but not newlines)
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        // Don't skip newlines - they're statement boundaries
-        break;
-    }
-}
 
 /**
  * Helper: Create CodePosition from start and end tokens
