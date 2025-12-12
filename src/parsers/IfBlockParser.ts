@@ -3,11 +3,11 @@
  * Handles: if condition then command, if condition ... endif, elseif, else
  */
 
-import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { parseExpression } from './ExpressionParser';
-import type { IfBlock, InlineIf, Statement, CommentWithPosition, CodePosition, Expression } from '../types/Ast.type';
+import type { IfBlock, InlineIf, Statement, CodePosition, Expression } from '../types/Ast.type';
 
 export interface IfBlockParserContext {
     parseStatement: (stream: TokenStream) => Statement | null;

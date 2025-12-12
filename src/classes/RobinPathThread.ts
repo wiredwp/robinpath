@@ -499,13 +499,13 @@ export class RobinPathThread {
             case 'inlineIf':
                 return {
                     ...base,
-                    conditionExpr: stmt.conditionExpr,
+                    conditionExpr: stmt.condition,
                     command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
                 };
             case 'ifBlock':
                 return {
                     ...base,
-                    conditionExpr: stmt.conditionExpr,
+                    conditionExpr: stmt.condition,
                     thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s, undefined, currentModuleContext)),
                     elseifBranches: stmt.elseifBranches?.map(branch => ({
                         condition: branch.condition,
@@ -539,7 +539,7 @@ export class RobinPathThread {
                 return {
                     ...base,
                     varName: stmt.varName,
-                    iterableExpr: stmt.iterableExpr,
+                    iterableExpr: stmt.iterable,
                     body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
                 };
             case 'together':

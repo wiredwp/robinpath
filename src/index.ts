@@ -37,24 +37,11 @@ export type { Value, AttributePathSegment };
 import type {
     Statement,
     Arg,
-    CommandCall,
-    Assignment,
-    ShorthandAssignment,
-    InlineIf,
-    IfBlock,
-    IfTrue,
-    IfFalse,
+    Expression,
     DefineFunction,
     ScopeBlock,
     TogetherBlock,
-    ForLoop,
-    ReturnStatement,
-    BreakStatement,
-    OnBlock,
-    CommentStatement,
-    CommentWithPosition,
-    CodePosition,
-    DecoratorCall
+    OnBlock
 } from './types/Ast.type';
 
 // Re-export AST types for external use (backward compatibility)
@@ -1445,15 +1432,15 @@ export class RobinPath {
             case 'inlineIf':
                 return {
                     ...base,
-                    conditionExpr: stmt.conditionExpr,
+                    conditionExpr: stmt.condition,
                     command: this.serializeStatement(stmt.command, currentModuleContext)
                 };
             case 'ifBlock':
                 return {
                     ...base,
-                    conditionExpr: stmt.conditionExpr,
+                    conditionExpr: stmt.condition,
                     thenBranch: stmt.thenBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
-                    elseifBranches: stmt.elseifBranches?.map((branch: { condition: string; body: Statement[] }) => ({
+                    elseifBranches: stmt.elseifBranches?.map((branch: { condition: Expression; body: Statement[] }) => ({
                         condition: branch.condition,
                         body: branch.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                     })),
@@ -1486,7 +1473,7 @@ export class RobinPath {
                 return {
                     ...base,
                     varName: stmt.varName,
-                    iterableExpr: stmt.iterableExpr,
+                    iterableExpr: stmt.iterable,
                     body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
             case 'return':

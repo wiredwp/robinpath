@@ -23,7 +23,6 @@
 import { isTruthy, type Value, type AttributePathSegment } from '../utils';
 import { LexerUtils } from '../utils';
 import { ReturnException, BreakException, ContinueException, EndException } from './exceptions';
-import { ExpressionEvaluator } from './ExpressionEvaluator';
 import { Parser } from './Parser';
 import { createErrorWithContext } from '../utils/errorFormatter';
 import JSON5 from 'json5';
@@ -311,7 +310,9 @@ export class Executor {
     }
 
     private async executeCommand(cmd: CommandCall, frameOverride?: Frame): Promise<void> {
-        const frame = this.getCurrentFrame(frameOverride);
+        // Use frameOverride directly if provided, otherwise get from call stack
+        // This ensures we're updating the correct frame's lastValue
+        const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
         
         // Separate positional args and named args
         const positionalArgs: Value[] = [];
@@ -691,9 +692,6 @@ Examples:
                 throw new Error('set requires at least 2 arguments: variable name and value (optional fallback as 3rd arg)');
             }
             
-            // Preserve the last value - assign should not affect $
-            const previousLastValue = frame.lastValue;
-            
             // Get variable name from first arg (must be a variable reference)
             const varArg = cmd.args[0];
             if (varArg.type !== 'var') {
@@ -723,8 +721,8 @@ Examples:
             this.setVariable(varName, value);
             }
             
-            // Restore the last value - set command should not affect $
-            frame.lastValue = previousLastValue;
+            // Set lastValue to the assigned value
+            frame.lastValue = value;
             return;
         }
 
@@ -1502,7 +1500,9 @@ Examples:
             throw new Error(`Cannot reassign constant $${assign.targetName}. Constants are immutable.`);
         }
         
-        const frame = this.getCurrentFrame(frameOverride);
+        // Use frameOverride directly if provided, otherwise get from call stack
+        // This ensures we're reading from the correct frame's lastValue
+        const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
         
         let value: Value;
         if (assign.isLastValue) {
@@ -1618,8 +1618,6 @@ Examples:
     }
 
     private async executeReturn(returnStmt: ReturnStatement, frameOverride?: Frame): Promise<void> {
-        const frame = this.getCurrentFrame(frameOverride);
-        
         // If a value is specified, evaluate it
         if (returnStmt.value !== undefined) {
             const value = await this.evaluateArg(returnStmt.value, frameOverride);
@@ -1718,20 +1716,19 @@ Examples:
                 scopeValue = frame.lastValue;
             }
             // console.log('====> Executor: executeScope scopeValue after body:', scopeValue);
-            // Scope's lastValue should not affect parent's $ - restore original value
-            parentFrame.lastValue = originalLastValue;
+            // Don't restore parent's $ here - we'll handle it in finally block
+            // If there's no "into", we want to set parent's $ to scopeValue
+            // If there's an "into", we'll restore originalLastValue
         } catch (error) {
             // Handle return statements inside do blocks
             if (error instanceof ReturnException) {
                 // Set the frame's lastValue to the return value
                 frame.lastValue = error.value;
                 scopeValue = error.value;
-                // Scope's lastValue should not affect parent's $ - restore original value
-                parentFrame.lastValue = originalLastValue;
+                // Don't restore parent's $ here - we'll handle it in finally block
                 // Exit normally (don't re-throw) - the return value is stored in frame.lastValue
             } else {
-                // Scope's lastValue should not affect parent's $ - restore original value even on error
-                parentFrame.lastValue = originalLastValue;
+                // Don't restore parent's $ here - we'll handle it in finally block
                 // Re-throw other errors to ensure they propagate properly
                 throw error;
             }
@@ -1749,6 +1746,11 @@ Examples:
                 } else {
                     this.setVariable(scope.into.targetName, scopeValue);
                 }
+                // When using "into", restore parent's $ to original value (into assigns to specific variable, not $)
+                parentFrame.lastValue = originalLastValue;
+            } else {
+                // When there's no "into", set parent's $ to the scope's result value
+                parentFrame.lastValue = scopeValue;
             }
         }
     }
@@ -2397,9 +2399,12 @@ Examples:
     async evaluateExpression(expr: Expression, frameOverride?: Frame): Promise<Value> {
         switch (expr.type) {
             case 'var':
-                return this.resolveVariable(expr.name, expr.path);
+                return this.resolveVariable(expr.name, expr.path, frameOverride);
             case 'lastValue':
-                return this.getCurrentFrame(frameOverride).lastValue;
+                // Use frameOverride directly if provided, otherwise get from call stack
+                // This ensures we're reading from the correct frame's lastValue
+                const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
+                return frame.lastValue;
             case 'literal':
                 return expr.value;
             case 'number':
@@ -2551,28 +2556,11 @@ Examples:
         const previousLastValue = frame.lastValue;
         
         // Create a CommandCall-like structure for execution
+        // Note: We can pass Expression directly as Arg since evaluateArg handles both
         const cmd: CommandCall = {
             type: 'command',
             name: expr.callee,
-            args: expr.args.map(arg => {
-                // Convert Expression to Arg (for now, we'll use the Expression directly)
-                // This is a temporary bridge until all Arg usage is migrated
-                if (arg.type === 'var') {
-                    return { type: 'var', name: arg.name, path: arg.path };
-                } else if (arg.type === 'lastValue') {
-                    return { type: 'lastValue' };
-                } else if (arg.type === 'literal') {
-                    return { type: 'literal', value: arg.value };
-                } else if (arg.type === 'number') {
-                    return { type: 'number', value: arg.value };
-                } else if (arg.type === 'string') {
-                    return { type: 'string', value: arg.value };
-                } else {
-                    // For complex expressions, we need to evaluate them first
-                    // This is a limitation - ideally CommandCall.args should also be Expression[]
-                    throw new Error(`Cannot convert complex expression to Arg: ${arg.type}`);
-                }
-            }),
+            args: expr.args, // Pass Expression[] directly - evaluateArg will handle them
             codePos: expr.codePos || { startRow: 0, startCol: 0, endRow: 0, endCol: 0 }
         };
         
@@ -2583,8 +2571,10 @@ Examples:
         return result;
     }
 
-    private resolveVariable(name: string, path?: AttributePathSegment[]): Value {
-        const frame = this.getCurrentFrame();
+    private resolveVariable(name: string, path?: AttributePathSegment[], frameOverride?: Frame): Value {
+        // Use frameOverride directly if provided, otherwise get from call stack
+        // This ensures we're reading from the correct frame
+        const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
         
         // Check if variable is forgotten in current scope
         if (frame.forgotten && frame.forgotten.has(name)) {
@@ -2645,24 +2635,47 @@ Examples:
         
         // Variable resolution follows JavaScript scoping rules:
         // 1. Check current frame's locals first (function parameters and local variables)
-        // 2. If not found in locals, check globals (outer scope)
+        // 2. If not found, check parent frames' locals (lexical scoping)
+        // 3. If not found in any parent frame, check globals (outer scope)
         // This allows functions to read global variables but ensures local variables
         // shadow globals with the same name.
         
-        let baseValue: Value;
+        let baseValue: Value = null; // Initialize to satisfy TypeScript
         
         // If name is empty, it means last value ($) with attributes
         if (name === '') {
             baseValue = frame.lastValue;
         } else {
-        // Check locals first (function scope)
-        if (frame.locals.has(name)) {
+            // Check locals first (current frame)
+            if (frame.locals.has(name)) {
                 baseValue = frame.locals.get(name)!;
-            } else if (this.environment.variables.has(name)) {
-        // Check globals (outer scope)
-                baseValue = this.environment.variables.get(name)!;
             } else {
-                return null;
+                // Check parent frames (lexical scoping)
+                // Traverse call stack backwards to find variable in parent scopes
+                let found = false;
+                // Start from the frame before the current one (parent frame)
+                // Note: callStack[length - 1] is the current frame, so we start from length - 2
+                for (let i = this.callStack.length - 2; i >= 0; i--) {
+                    const parentFrame = this.callStack[i];
+                    // Skip isolated scopes - they don't inherit from parents
+                    if (parentFrame.isIsolatedScope) {
+                        continue;
+                    }
+                    if (parentFrame.locals.has(name)) {
+                        baseValue = parentFrame.locals.get(name)!;
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // If not found in any parent frame, check globals
+                if (!found) {
+                    if (this.environment.variables.has(name)) {
+                        baseValue = this.environment.variables.get(name)!;
+                    } else {
+                        return null;
+                    }
+                }
             }
         }
         

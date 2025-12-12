@@ -45,6 +45,15 @@ do into $result6
   math.add 20 30
   math.multiply $ 2
 enddo
+
+do
+  math.add 20 30
+  log $
+  math.multiply $ 2
+  log $
+enddo
+
+
 test.assertEqual $result6 100 "into syntax - do block failed"
 
 # Test 7: Do block with into should not affect last value

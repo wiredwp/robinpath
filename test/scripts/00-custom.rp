@@ -3,6 +3,8 @@
 
 log "=== Subexpression Tests ==="
 
+
+
 # Test 1: Basic single-line subexpression
 log "Test 1: Basic subexpression"
 $test1 = $(math.add 5 3)
@@ -26,14 +28,24 @@ $test5 = $(
 )
 test.assertEqual $test5 30 "Multi-line subexpression failed"
 
+
+do
+  log "hi"
+  log "-----------> it should log"
+  $a = 5
+  log $a
+enddo
+
+
+
 # Test 5: Multi-line subexpression with nested subexpression
 log "Test 5: Multi-line subexpression with nested subexpression"
 # Note: $test2 is 15 at this point. The nested subexpression $(set $test2 1) 
-# sets $test2 to 1 and returns null, so math.multiply 15 null = 0
+# sets $test2 to 1 and returns 1, so math.multiply 15 1 = 15
 $test6 = $(
   math.multiply $test2 $(set $test2 1)
 )
-test.assertEqual $test6 0 "Multi-line subexpression with nested subexpression failed (math.multiply 15 null = 0)"
+test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed (math.multiply 15 1 = 15)"
 test.assertEqual $test2 1 "Nested set in subexpression failed"
 
 # Test 6: Complex multi-line subexpression

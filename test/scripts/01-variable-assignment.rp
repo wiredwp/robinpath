@@ -90,6 +90,7 @@ enddo
 # Test 7: Variable to variable assignment within do block
 log "Test 7: Variable to variable assignment within do block"
 $sourceObj = { name: "source", value: 42 }
+log "---->" $sourceObj
 do
   $doCopy = $sourceObj
   $doCopy2 = $doCopy

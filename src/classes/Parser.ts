@@ -338,6 +338,7 @@ export class Parser {
         // Check for command call
         if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
             return CommandParser.parse(stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
                     startCol: start.column,
@@ -547,6 +548,7 @@ export class Parser {
         if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
             // Make sure it's not part of an assignment (we already checked for that above)
             return CommandParser.parse(this.stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
                     startCol: start.column,

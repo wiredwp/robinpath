@@ -4,7 +4,7 @@
  * Can be used in both def functions and do blocks
  */
 
-import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';

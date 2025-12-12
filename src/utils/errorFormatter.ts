@@ -95,7 +95,6 @@ export function formatErrorWithContext(context: ErrorContext): string {
             
             // Add caret pointing to the error position
             if (column >= 0) {
-                const indent = '  '; // Match the indentation above
                 const caretPos = Math.max(0, column - 1); // Convert back to 0-based
                 const caret = ' '.repeat(Math.min(caretPos, errorLine.length)) + '^';
                 errorMsg += `\n  ${caret}`;

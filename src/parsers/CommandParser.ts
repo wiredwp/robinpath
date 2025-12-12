@@ -11,7 +11,7 @@ import { LexerUtils } from '../utils';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
 import { SubexpressionParser } from './SubexpressionParser';
-import type { CommandCall, Arg, ScopeBlock, CodePosition } from '../types/Ast.type';
+import type { CommandCall, Arg, ScopeBlock, CodePosition, Expression } from '../types/Ast.type';
 import type { AttributePathSegment } from '../utils/types';
 
 export interface CommandParserContext {
@@ -124,7 +124,7 @@ export class CommandParser {
         stream: TokenStream,
         name: string,
         startToken: Token,
-        startLine: number,
+        _startLine: number,
         context?: CommandParserContext
     ): CommandCall {
         // Push function call context
@@ -198,7 +198,8 @@ export class CommandParser {
             // Combine positional and named args
             const allArgs: Arg[] = [...args];
             if (Object.keys(namedArgs).length > 0) {
-                allArgs.push({ type: 'namedArgs', args: namedArgs });
+                // Cast namedArgs to Record<string, Expression> since NamedArgsExpression expects Expression types
+                allArgs.push({ type: 'namedArgs', args: namedArgs as Record<string, Expression> });
             }
 
             // Determine syntax type
@@ -244,7 +245,7 @@ export class CommandParser {
         stream: TokenStream,
         name: string,
         startToken: Token,
-        startLine: number,
+        _startLine: number,
         context?: CommandParserContext
     ): CommandCall {
         // Push function call context
@@ -295,6 +296,13 @@ export class CommandParser {
                 if (token.kind === TokenKind.COMMENT) {
                     stream.next();
                     continue;
+                }
+
+                // If we're inside a subexpression context, stop at closing paren
+                // This allows subexpressions like $(set $var 1) to work correctly
+                if (stream.isInContext(ParsingContext.SUBEXPRESSION) && 
+                    token.kind === TokenKind.RPAREN) {
+                    break;
                 }
 
                 // Check for "into" keyword - stop parsing arguments if found
@@ -353,7 +361,7 @@ export class CommandParser {
 
                 // If we're inside a subexpression context, stop at closing paren
                 // This allows subexpressions like $(math.add 5 5) to work correctly
-                if (stream.getCurrentContext() === ParsingContext.SUBEXPRESSION && 
+                if (stream.isInContext(ParsingContext.SUBEXPRESSION) && 
                     token.kind === TokenKind.RPAREN) {
                     break;
                 }
@@ -382,7 +390,8 @@ export class CommandParser {
         // Combine positional and named args
         const allArgs: Arg[] = [...args];
         if (Object.keys(namedArgs).length > 0) {
-            allArgs.push({ type: 'namedArgs', args: namedArgs });
+            // Cast namedArgs to Record<string, Expression> since NamedArgsExpression expects Expression types
+            allArgs.push({ type: 'namedArgs', args: namedArgs as Record<string, Expression> });
         }
 
         // Check for "into $var" (parseInto handles skipping whitespace/newlines)

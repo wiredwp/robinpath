@@ -14,7 +14,7 @@ import JSON5 from 'json5';
  */
 
 export const CoreFunctions: Record<string, BuiltinHandler> = {
-    log: (args) => {
+    log: async (args) => {
         // Format arguments for logging
         const formattedArgs = args.map(arg => {
             if (arg === null) return 'null';
@@ -29,12 +29,13 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
             return arg;
         });
         
-        // Write directly to stdout to avoid buffering issues in worker threads
-        // Use process.stdout.write instead of console.log for immediate, unbuffered output
-        const message = formattedArgs.join(' ') + '\n';
-        process.stdout.write(message);
-        
-        return null; // log should not affect the last value
+        // Always use Promise to ensure log completes before next command
+        // The await in executeCommand will wait for this Promise to resolve
+        return new Promise<null>((resolve) => {
+            // Use console.log for consistent logging across environments
+            console.log(...formattedArgs);
+            resolve(null);
+        });
     },
 
     obj: (args) => {

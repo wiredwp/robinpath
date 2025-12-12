@@ -481,7 +481,7 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 for (let run = 1; run <= repeatCount; run++) {
                     // Enable debug mode for test 6 via environment variable (only on first run if repeating)
                     if (testNum === 6 && repeatCount === 1) {
-                        process.env.VITE_DEBUG = 'true';
+                        // process.env.VITE_DEBUG = 'true';
                         console.log('DEBUG MODE ENABLED FOR TEST 6 (via VITE_DEBUG=true)');
                     } else if (testNum === 6 && repeatCount > 1) {
                         // Disable debug mode when repeating to avoid log spam

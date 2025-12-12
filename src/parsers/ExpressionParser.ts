@@ -207,6 +207,18 @@ function parsePrimaryExpression(
         };
     }
 
+    // Handle subexpressions: $(...)
+    if (startToken.kind === TokenKind.SUBEXPRESSION_OPEN) {
+        if (!parseStatement || !parseComment) {
+            throw new Error('parseStatement and parseComment callbacks required for subexpressions');
+        }
+        return SubexpressionParser.parse(stream, {
+            parseStatement,
+            createCodePosition: (start, end) => createCodePosition(start, end)
+        });
+    }
+
+
     // Handle string literals
     if (startToken.kind === TokenKind.STRING) {
         const value = LexerUtils.parseString(startToken.text);
