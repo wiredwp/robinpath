@@ -1673,18 +1673,34 @@ Examples:
         // Otherwise, create a scope that inherits from parent (current behavior)
         const isIsolated = scope.paramNames && scope.paramNames.length > 0;
         
+        // Track initial lastValue to detect if body produces a new value
+        const initialLastValue = isIsolated ? null : parentFrame.lastValue;
+        
         const frame: Frame = {
             locals: new Map(),
-            lastValue: isIsolated ? null : parentFrame.lastValue, // Inherit parent's $ unless isolated scope
+            lastValue: initialLastValue, // Inherit parent's $ unless isolated scope
             isFunctionFrame: true, // Scope uses function-like scoping rules
             isIsolatedScope: isIsolated // Mark as isolated if parameters are declared
         };
 
-        // If scope has parameters, initialize them (they'll be null by default)
-        // In the future, these could be set by calling the scope with arguments
+        // If scope has parameters, initialize them with values from parent scope
+        // if variables with the same names exist, otherwise null
         if (scope.paramNames) {
             for (const paramName of scope.paramNames) {
-                frame.locals.set(paramName, null);
+                // Try to get value from parent frame or globals
+                let paramValue: Value = null;
+                
+                // Check parent frame locals
+                if (parentFrame.locals.has(paramName)) {
+                    paramValue = parentFrame.locals.get(paramName)!;
+                } else {
+                    // Check globals
+                    if (this.environment.variables.has(paramName)) {
+                        paramValue = this.environment.variables.get(paramName)!;
+                    }
+                }
+                
+                frame.locals.set(paramName, paramValue);
             }
         }
 
@@ -1710,7 +1726,11 @@ Examples:
 
             // Capture the scope's lastValue before restoring parent's $
             // If body is empty, scopeValue should be null (not parent's last value)
+            // If body didn't produce a new value (lastValue unchanged), scopeValue should be null
             if (scope.body.length === 0) {
+                scopeValue = null;
+            } else if (frame.lastValue === initialLastValue) {
+                // Body didn't produce a new value, return null
                 scopeValue = null;
             } else {
                 scopeValue = frame.lastValue;

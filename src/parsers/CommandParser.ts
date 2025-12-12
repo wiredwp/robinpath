@@ -622,7 +622,8 @@ export class CommandParser {
     }
 
     /**
-     * Parse callback block (do/with)
+     * Parse callback block (with only - do blocks are standalone statements, not callbacks)
+     * Only accepts callbacks on the same line as the command (does not skip newlines)
      */
     private static parseCallback(
         stream: TokenStream,
@@ -633,7 +634,32 @@ export class CommandParser {
         }
 
         const savedPos = stream.save();
-        stream.skipWhitespaceAndComments();
+        
+        // Skip only comments and spaces (NOT newlines)
+        // Callbacks must be on the same line as the command
+        while (!stream.isAtEnd()) {
+            const token = stream.current();
+            if (!token) break;
+            
+            // Skip comments
+            if (token.kind === TokenKind.COMMENT) {
+                stream.next();
+                continue;
+            }
+            
+            // Stop at newline - callbacks must be on the same line
+            if (token.kind === TokenKind.NEWLINE) {
+                break;
+            }
+            
+            // Stop at EOF
+            if (token.kind === TokenKind.EOF) {
+                break;
+            }
+            
+            // Found a non-comment, non-newline token
+            break;
+        }
 
         const token = stream.current();
         if (!token) {
@@ -641,8 +667,8 @@ export class CommandParser {
             return undefined;
         }
 
-        // Check for 'do' or 'with' keyword
-        if (token.kind === TokenKind.KEYWORD && (token.text === 'do' || token.text === 'with')) {
+        // Check for 'with' keyword only (do blocks are standalone statements, not callbacks)
+        if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
             // Don't restore - we found a callback
             return context.parseScope(stream);
         }

@@ -34,6 +34,7 @@ log "Test 5: Array function with into"
 array.create 1 2 3 into $result5
 clear
 do
+  log "-> Test 5: this do is run"
   array.length $result5
   test.assertEqual $ 3 "into syntax - array function length failed"
 enddo
@@ -42,17 +43,10 @@ test.assertEqual $result5[0] 1 "into syntax - array function element access fail
 # Test 6: Do block with into
 log "Test 6: Do block with into"
 do into $result6
+  log "-> Test 6: this do is run"
   math.add 20 30
   math.multiply $ 2
 enddo
-
-do
-  math.add 20 30
-  log $
-  math.multiply $ 2
-  log $
-enddo
-
 
 test.assertEqual $result6 100 "into syntax - do block failed"
 
@@ -61,6 +55,7 @@ log "Test 7: Do block with into preserves last value"
 math.add 1 1
 $beforeDoInto = $
 do into $result7
+  log "-> Test 7: this do is run"
   math.add 5 5
 enddo
 test.assertEqual $beforeDoInto 2 "into syntax - do block should preserve last value"
@@ -71,6 +66,7 @@ log "Test 8: Do block with parameters and into"
 $outerVar8 = 300
 clear
 do $a $b into $result8
+  log "-> Test 8: this do is run"
   # Should not be able to access $outerVar8 (isolated scope)
   test.assertEqual $outerVar8 null "do with params and into - should not access parent variables"
   test.assertEqual $a null "do with params and into - first param should be accessible"
@@ -149,12 +145,14 @@ test.assertEqual $c16 6 "into syntax - multiple statements third failed"
 # Test 17: Into with empty do block
 log "Test 17: Into with empty do block"
 do into $result17
+  log "-> Test 17: this do is run"
 enddo
 test.assertEqual $result17 null "into syntax - empty do block should return null"
 
 # Test 18: Into with do block that has parameters
 log "Test 18: Into with do block parameters"
 do $x $y into $result18
+  log "-> Test 18: this do is run"
   math.add $x $y
 enddo
 test.assertEqual $result18 0 "into syntax - do block with parameters (no args) should return 0"
@@ -162,6 +160,7 @@ test.assertEqual $result18 0 "into syntax - do block with parameters (no args) s
 # Test 19: Return statement in do block with into
 log "Test 19: Return in do block with into"
 do into $result19
+  log "-> Test 19: this do is run"
   math.add 10 20
   return 100
   math.add 1 1  # This should not execute
@@ -171,6 +170,7 @@ test.assertEqual $result19 100 "return in do block - should return specified val
 # Test 20: Return statement in do block without value (returns null)
 log "Test 20: Return in do block without value"
 do into $result20
+  log "-> Test 20: this do is run"
   math.add 5 5
   return  # Should return null when no value specified
 enddo
@@ -180,6 +180,7 @@ test.assertEqual $result20 null "return in do block - should return null when no
 log "Test 21: Return stops execution"
 $testVar21 = 0
 do into $result21
+  log "-> Test 21: this do is run"
   set $testVar21 1
   return 42
   set $testVar21 2  # This should not execute
@@ -206,6 +207,7 @@ log "Test 24: Into with array literal"
 array(1 2 3 4 5) into $arr24
 clear
 do
+  log "-> Test 24: this do is run"
   array.length $arr24
   test.assertEqual $ 5 "into syntax - array literal length failed"
 enddo

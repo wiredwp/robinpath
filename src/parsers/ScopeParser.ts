@@ -72,15 +72,14 @@ export class ScopeParser {
         try {
             stream.next(); // Consume 'do'
 
-            // Skip whitespace and comments
-            stream.skipWhitespaceAndComments();
-
             // Parse header: parameters and 'into' target
             const paramNames: string[] = [];
             let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
             const headerComments: CommentWithPosition[] = [];
 
-            // Collect tokens until newline
+            // Collect tokens until newline (skip only comments, not newlines)
+            // Note: We don't skip whitespace/newlines before this loop because we need
+            // to find the newline to know where the header ends and body begins
             const headerTokens: Token[] = [];
             while (!stream.isAtEnd()) {
                 const t = stream.current();

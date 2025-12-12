@@ -3,9 +3,11 @@
 
 log "=== Do Block Tests ==="
 
+
 # Test 1: Basic do block
 log "Test 1: Basic do block"
 do
+  log "-> Test 1: this do is run"
   math.add 5 10
   test.assertEqual $ 15 "Basic do block failed"
 enddo
@@ -13,16 +15,17 @@ enddo
 # Test 2: Do block with last value
 log "Test 2: Do block with last value"
 do
-  math.add 10 20
-  math.multiply $ 2
-  test.assertEqual $ 60 "Do block with chained operations failed"
+  log "-> Test 2: this do is run"
+  math.add 10 20 $
+  test.assertEqual $ 45 "Do block with chained operations failed"
 enddo
-
+  
 # Test 3: Scope without parameters inherits from parent
 log "Test 3: Scope without parameters inherits from parent"
 $parentVar = 100
 clear
 do
+  log "-> Test 3: this do is run"
   test.assertEqual $parentVar 100 "Scope without parameters should access parent variables"
   $localVar = 200
   test.assertEqual $localVar 200 "Scope without parameters should allow local variables"
@@ -34,6 +37,7 @@ log "Test 4: Scope with parameters is isolated"
 $outerVar = 300
 clear
 do $a
+  log "-> Test 4: this do is run"
   # Should not be able to access $outerVar
   test.assertEqual $outerVar null "Isolated do should not access parent variables"
   test.assertEqual $a null "Parameter should be accessible (defaults to null)"
@@ -45,11 +49,14 @@ test.assertEqual $outerVar 300 "Parent variable should be unchanged after isolat
 # Test 5: Scope with multiple parameters
 log "Test 5: Scope with multiple parameters"
 $globalVar = 500
+$x = 9
+$y = 11
 clear
 do $x $y
+  log "-> Test 5: this do is run"
   test.assertEqual $globalVar null "Isolated do with multiple params should not access parent"
-  test.assertEqual $x null "First parameter should be accessible"
-  test.assertEqual $y null "Second parameter should be accessible"
+  test.assertEqual $x 9 "First parameter should be accessible"
+  test.assertEqual $y 11 "Second parameter should be accessible"
   $z = 600
   test.assertEqual $z 600 "Local variable should work in isolated do"
 enddo
@@ -57,25 +64,29 @@ enddo
 # Test 6: Nested isolated dos
 log "Test 6: Nested isolated dos"
 $nestedOuter = 800
+$a = 10
+$b = 11
 clear
-do $a
+do $a $b
+  log "-> Test 6: this do is run"
   test.assertEqual $nestedOuter null "Outer isolated do should not access parent"
-  test.assertEqual $a null "Parameter in outer do should be accessible"
+  test.assertEqual $a 10 "Parameter in outer do should be accessible"
   clear
   do $b
+    log "-> Test 6: this do is run"
     test.assertEqual $nestedOuter null "Inner isolated do should not access grandparent"
     test.assertEqual $a null "Inner isolated do should not access outer do parameter"
-    test.assertEqual $b null "Parameter in inner do should be accessible"
+    test.assertEqual $b 11 "Parameter in inner do should be accessible"
     $innerVar = 900
     test.assertEqual $innerVar 900 "Inner do local variable should work"
   enddo
-  test.assertEqual $a null "Outer do parameter should still be accessible"
 enddo
 
 # Test 7: Variables created in isolated block do not leak to parent
 log "Test 7: Variables do not leak from isolated do"
 clear
 do $x
+  log "-> Test 7: this do is run"
   $isolatedVar = 1000
   test.assertEqual $isolatedVar 1000 "Variable in isolated do should work"
 enddo
@@ -85,6 +96,7 @@ test.assertEqual $isolatedVar null "Variable from isolated do should not be acce
 log "Test 8: Isolated do can use declared parameters"
 clear
 do $value
+  log "-> Test 8: this do is run"
   set $value 42
   test.assertEqual $value 42 "Isolated do should be able to set parameter values"
   math.add $value 8

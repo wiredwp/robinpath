@@ -1,77 +1,13 @@
-# Subexpression Tests
-# Tests for subexpression functionality $( )
-
-log "=== Subexpression Tests ==="
-
-
-
-# Test 1: Basic single-line subexpression
-log "Test 1: Basic subexpression"
-$test1 = $(math.add 5 3)
-test.assertEqual $test1 8 "Basic subexpression failed"
-
-# Test 2: Subexpression with variable reference
-log "Test 2: Subexpression with variable reference"
-$test2 = $(math.add 10 5)
-$test3 = $(math.multiply $test2 2)
-test.assertEqual $test3 30 "Subexpression with variable reference failed"
-
-# Test 3: Nested subexpressions
-log "Test 3: Nested subexpressions"
-$test4 = $(math.add $(math.multiply 2 3) $(math.add 1 1))
-test.assertEqual $test4 8 "Nested subexpression failed"
-
-# Test 4: Multi-line subexpression
-log "Test 4: Multi-line subexpression"
-$test5 = $(
-  math.add 10 20
-)
-test.assertEqual $test5 30 "Multi-line subexpression failed"
-
-
-do
-  log "hi"
-  log "-----------> it should log"
-  $a = 5
-  log $a
-enddo
-
-
-
-# Test 5: Multi-line subexpression with nested subexpression
-log "Test 5: Multi-line subexpression with nested subexpression"
-# Note: $test2 is 15 at this point. The nested subexpression $(set $test2 1) 
-# sets $test2 to 1 and returns 1, so math.multiply 15 1 = 15
-$test6 = $(
-  math.multiply $test2 $(set $test2 1)
-)
-test.assertEqual $test6 15 "Multi-line subexpression with nested subexpression failed (math.multiply 15 1 = 15)"
-test.assertEqual $test2 1 "Nested set in subexpression failed"
-
-# Test 6: Complex multi-line subexpression
-log "Test 6: Complex multi-line subexpression"
-$test7 = $(
-  math.add 5 5
-  math.multiply $ 3
-)
-test.assertEqual $test7 30 "Complex multi-line subexpression failed"
-
-# Test 7: Subexpression in function call
-log "Test 7: Subexpression in function call"
+$globalVar = 500
+$x = 9
+$y = 11
 clear
-do
-  math.add $(math.multiply 2 5) $(math.add 3 2)
-  test.assertEqual $ 15 "Subexpression in function call failed"
+do $x $y
+  log "-> Test 5: this do is run"
+  test.assertEqual $globalVar null "Isolated do with multiple params should not access parent"
+  test.assertEqual $x 9 "First parameter should be accessible"
+  test.assertEqual $y 11 "Second parameter should be accessible"
+  $z = 600
+  test.assertEqual $z 600 "Local variable should work in isolated do"
 enddo
-
-# Test 8: Subexpression in conditional
-log "Test 8: Subexpression in conditional"
-if $(math.add 5 5) == 10
-  $test8 = "passed"
-else
-  $test8 = "failed"
-endif
-test.assertEqual $test8 "passed" "Subexpression in conditional failed"
-
-
-
+__ast__

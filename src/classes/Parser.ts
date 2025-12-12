@@ -131,6 +131,14 @@ export class Parser {
                 continue;
             }
 
+            // Check for special __ast__ command
+            if (token && (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) && token.text === '__ast__') {
+                console.log('Current AST:', JSON.stringify(statements, null, 2));
+                // Consume the __ast__ token and continue
+                this.stream.next();
+                continue;
+            }
+
             // Try to parse a statement
             if (Parser.debug) {
                 const timestamp = new Date().toISOString();
