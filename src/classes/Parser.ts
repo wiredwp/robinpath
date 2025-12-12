@@ -133,9 +133,30 @@ export class Parser {
 
             // Check for special __ast__ command
             if (token && (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) && token.text === '__ast__') {
-                console.log('Current AST:', JSON.stringify(statements, null, 2));
-                // Consume the __ast__ token and continue
+                // Consume the __ast__ token
                 this.stream.next();
+                
+                // Skip whitespace and comments
+                this.stream.skipWhitespaceAndComments();
+                
+                // Check if there's a function name following
+                const nextToken = this.stream.current();
+                if (nextToken && (nextToken.kind === TokenKind.IDENTIFIER || nextToken.kind === TokenKind.KEYWORD)) {
+                    // There's a function name - show that function's AST
+                    const functionName = nextToken.text;
+                    this.stream.next(); // Consume the function name
+                    
+                    // Look up the function
+                    const func = this.extractedFunctions.find(f => f.name === functionName);
+                    if (func) {
+                        console.log(`AST for function "${functionName}":`, JSON.stringify(func.body, null, 2));
+                    } else {
+                        console.log(`Function "${functionName}" not found. Available functions:`, this.extractedFunctions.map(f => f.name).join(', ') || 'none');
+                    }
+                } else {
+                    // No function name - show current AST
+                    console.log('Current AST:', JSON.stringify(statements, null, 2));
+                }
                 continue;
             }
 
@@ -264,7 +285,15 @@ export class Parser {
                     continue;
                 }
                 if (nextToken.kind === TokenKind.ASSIGN) {
-                    return AssignmentParser.parse(stream);
+                    return AssignmentParser.parse(stream, {
+                        parseStatement: (s) => this.parseStatementFromStream(s),
+                        createCodePosition: (start, end) => ({
+                            startRow: start.line - 1,
+                            startCol: start.column,
+                            endRow: end.line - 1,
+                            endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                        })
+                    });
                 }
                 break;
             }
@@ -273,6 +302,7 @@ export class Parser {
         // Check for 'return' statement
         if (token.kind === TokenKind.KEYWORD && token.text === 'return') {
             return parseReturn(stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
                     startCol: start.column,
@@ -478,6 +508,7 @@ export class Parser {
         // Check for 'return' statement
         if (token.kind === TokenKind.KEYWORD && token.text === 'return') {
             return parseReturn(this.stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
                     startCol: start.column,

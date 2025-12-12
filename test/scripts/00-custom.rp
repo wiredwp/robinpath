@@ -1,13 +1,6 @@
-$globalVar = 500
-$x = 9
-$y = 11
-clear
-do $x $y
-  log "-> Test 5: this do is run"
-  test.assertEqual $globalVar null "Isolated do with multiple params should not access parent"
-  test.assertEqual $x 9 "First parameter should be accessible"
-  test.assertEqual $y 11 "Second parameter should be accessible"
-  $z = 600
-  test.assertEqual $z 600 "Local variable should work in isolated do"
-enddo
-__ast__
+def nested_subexpr_test
+  $result = $(log $(log 2) $(log 3) $(log 10))
+enddef
+nested_subexpr_test 2 3
+
+__ast__ nested_subexpr_test 

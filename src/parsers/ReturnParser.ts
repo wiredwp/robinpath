@@ -11,10 +11,11 @@ import { LexerUtils } from '../utils';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
 import { SubexpressionParser } from './SubexpressionParser';
-import type { ReturnStatement, CodePosition, Arg } from '../types/Ast.type';
+import type { ReturnStatement, CodePosition, Arg, Statement } from '../types/Ast.type';
 
 export interface ReturnParserContext {
     createCodePosition: (start: Token, end: Token) => CodePosition;
+    parseStatement?: (stream: TokenStream) => Statement | null;
 }
 
 /**
@@ -62,7 +63,7 @@ export function parseReturn(
     }
 
     // Parse the return value as an argument
-    const value = parseReturnValue(stream);
+    const value = parseReturnValue(stream, context);
     const endToken = stream.current() || returnToken;
 
     return {
@@ -76,7 +77,7 @@ export function parseReturn(
  * Parse the return value (everything after 'return' until newline/EOF)
  * Reuses the same logic as CommandParser.parseArgumentValue
  */
-function parseReturnValue(stream: TokenStream): Arg {
+function parseReturnValue(stream: TokenStream, context: ReturnParserContext): Arg {
     const token = stream.current();
     if (!token) {
         throw new Error('Expected return value');
@@ -88,14 +89,12 @@ function parseReturnValue(stream: TokenStream): Arg {
             // Check if it's followed by ( for subexpression
             if (SubexpressionParser.isSubexpression(stream)) {
                 // It's a subexpression $(...)
+                if (!context.parseStatement) {
+                    throw new Error('parseStatement callback required for subexpressions in return statements');
+                }
                 const subexpr = SubexpressionParser.parse(stream, {
-                    parseStatement: () => null, // ReturnParser doesn't have parseStatement context
-                    createCodePosition: (start, end) => ({
-                        startRow: start.line - 1,
-                        startCol: start.column,
-                        endRow: end.line - 1,
-                        endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
-                    })
+                    parseStatement: context.parseStatement,
+                    createCodePosition: context.createCodePosition
                 });
                 return subexpr; // Return SubexpressionExpression directly
             }
@@ -137,6 +136,18 @@ function parseReturnValue(stream: TokenStream): Arg {
         return { type: 'literal', value: null };
     }
 
+    // Subexpression: $(...)
+    // Check for SUBEXPRESSION_OPEN token (lexer tokenizes $( as single token)
+    if (token.kind === TokenKind.SUBEXPRESSION_OPEN) {
+        if (!context.parseStatement) {
+            throw new Error('parseStatement callback required for subexpressions in return statements');
+        }
+        const subexpr = SubexpressionParser.parse(stream, {
+            parseStatement: context.parseStatement,
+            createCodePosition: context.createCodePosition
+        });
+        return subexpr; // Return SubexpressionExpression directly
+    }
 
     // Object literal: {...}
     if (token.kind === TokenKind.LBRACE) {
