@@ -15,7 +15,25 @@ import JSON5 from 'json5';
 
 export const CoreFunctions: Record<string, BuiltinHandler> = {
     log: (args) => {
-        console.log(...args);
+        // Format arguments for logging
+        const formattedArgs = args.map(arg => {
+            if (arg === null) return 'null';
+            if (arg === undefined) return 'undefined';
+            if (typeof arg === 'object') {
+                try {
+                    return JSON.stringify(arg);
+                } catch {
+                    return String(arg);
+                }
+            }
+            return arg;
+        });
+        
+        // Write directly to stdout to avoid buffering issues in worker threads
+        // Use process.stdout.write instead of console.log for immediate, unbuffered output
+        const message = formattedArgs.join(' ') + '\n';
+        process.stdout.write(message);
+        
         return null; // log should not affect the last value
     },
 
@@ -123,12 +141,16 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
     },
 
     set: () => {
-        // set command: set <variable> <value> [fallback]
+        // set command: set <variable> [as] <value> [fallback]
         // Assigns a value to a variable, with optional fallback if value is empty/null
+        // The "as" keyword is optional and can be used for clarity
         // Examples:
         //   set $myVar "hello"           # $myVar = "hello"
+        //   set $myVar as "hello"        # $myVar = "hello" (with optional "as")
         //   set $user.name "John"       # $user.name = "John" (attribute path)
+        //   set $user.name as "John"    # $user.name = "John" (with optional "as")
         //   set $x "" "default"         # $x = "default" (fallback used)
+        //   set $x as "" "default"      # $x = "default" (with optional "as")
         // Note: The actual implementation is in executeCommand for special handling
         // This registration ensures it's recognized as a valid command
         return null;
@@ -168,7 +190,9 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         const end = Number(args[1]) || 0;
         const step = args.length >= 3 ? Number(args[2]) : undefined;
         const result: number[] = [];
-        
+
+        console.log('range', args);
+       
         // If step is provided, use it
         if (step !== undefined) {
             if (step === 0) {

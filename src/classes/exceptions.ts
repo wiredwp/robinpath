@@ -27,6 +27,16 @@ export class BreakException extends Error {
 }
 
 /**
+ * Special exception used to signal continue to next iteration of loops
+ */
+export class ContinueException extends Error {
+    constructor() {
+        super('Continue');
+        this.name = 'ContinueException';
+    }
+}
+
+/**
  * Special exception used to signal end of script execution
  */
 export class EndException extends Error {

@@ -6,7 +6,8 @@
 import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
-import type { CodePosition, CommentWithPosition, AttributePathSegment, Statement, CommentStatement } from '../index';
+import type { CodePosition, CommentWithPosition, Statement, CommentStatement } from '../types/Ast.type';
+import type { AttributePathSegment } from '../utils/types';
 
 export interface BlockParserContext {
     /**

@@ -1,0 +1,21 @@
+# End Command Tests
+# Tests for the "end" command that stops script execution
+
+log "=== End Command Tests ==="
+
+# Test 1: Basic end command
+log "Test 1: Basic end command"
+log "Before end"
+$beforeEnd = 100
+math.add 5 10
+end
+log "This should not execute"
+$afterEnd = 200
+
+# Note: The code after "end" should not execute
+# This test verifies that execution stops at the "end" command
+# The last value should be preserved (15 from math.add 5 10)
+# $beforeEnd should be set to 100
+# $afterEnd should remain null (not set)
+
+log "=== End Command Tests Complete ==="

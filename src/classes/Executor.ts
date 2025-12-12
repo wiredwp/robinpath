@@ -1,18 +1,41 @@
 /**
  * Executor class for executing RobinPath statements
+ * 
+ * AST REFACTORING NOTES:
+ * ======================
+ * This file is being prepared for the Expression-based AST refactoring.
+ * See EXECUTOR_REFACTOR_PLAN.md for detailed migration plan.
+ * 
+ * Key changes needed:
+ * 1. Replace string-based expression evaluation with Expression node evaluation
+ * 2. Remove runtime parsing (Parser, JSON5.parse)
+ * 3. Add evaluateExpression() and related helper methods
+ * 4. Update evaluateArg() to work with Expression | NamedArgsExpression
+ * 
+ * Current pain points:
+ * - conditionExpr: string (InlineIf, IfBlock) → should be Expression
+ * - iterableExpr: string (ForLoop) → should be Expression
+ * - subexpr.code: string → should be SubexpressionExpression with Statement[]
+ * - object.code: string → should be ObjectLiteralExpression with properties
+ * - array.code: string → should be ArrayLiteralExpression with elements
  */
 
 import { isTruthy, type Value, type AttributePathSegment } from '../utils';
 import { LexerUtils } from '../utils';
-import { ReturnException, BreakException, EndException } from './exceptions';
+import { ReturnException, BreakException, ContinueException, EndException } from './exceptions';
 import { ExpressionEvaluator } from './ExpressionEvaluator';
-import { Parser } from './ParserByLine';
+import { Parser } from './Parser';
+import { createErrorWithContext } from '../utils/errorFormatter';
 import JSON5 from 'json5';
 import type { 
     Environment, 
-    Frame, 
-    Statement, 
-    Arg, 
+    Frame,
+    BuiltinCallback,
+    ModuleMetadata
+} from '../index';
+import type {
+    Statement,
+    Arg,
     CommandCall,
     DefineFunction,
     Assignment,
@@ -23,24 +46,27 @@ import type {
     IfFalse,
     ReturnStatement,
     BreakStatement,
+    ContinueStatement,
     ScopeBlock,
     TogetherBlock,
     ForLoop,
     OnBlock,
-    BuiltinCallback,
-    ModuleMetadata,
-    DecoratorCall
-} from '../index';
+    DecoratorCall,
+    Expression,
+    CodePosition
+} from '../types/Ast.type';
 import type { RobinPathThread } from './RobinPathThread';
 
 export class Executor {
     private environment: Environment;
     private callStack: Frame[] = [];
     private parentThread: RobinPathThread | null = null;
+    private sourceCode: string | null = null; // Store source code for error messages
 
-    constructor(environment: Environment, parentThread?: RobinPathThread | null) {
+    constructor(environment: Environment, parentThread?: RobinPathThread | null, sourceCode?: string | null) {
         this.environment = environment;
         this.parentThread = parentThread || null;
+        this.sourceCode = sourceCode || null;
         // Initialize global frame
         this.callStack.push({
             locals: new Map(),
@@ -115,7 +141,7 @@ export class Executor {
             throw new Error(`Unknown function: ${funcName}`);
         }
         
-        const evaluatedArgs = await Promise.all(args.map(arg => this.evaluateArg(arg)));
+        const evaluatedArgs = await Promise.all(args.map(arg => this.evaluateArg(arg, undefined, undefined)));
         
         // Optimize: Use get() instead of has() + get() to reduce lookups
         // Check if it's a builtin function
@@ -197,9 +223,12 @@ export class Executor {
             case 'return':
                 await this.executeReturn(stmt, frameOverride);
                 break;
-            case 'break':
-                await this.executeBreak(stmt, frameOverride);
-                break;
+                case 'break':
+                    await this.executeBreak(stmt, frameOverride);
+                    break;
+                case 'continue':
+                    await this.executeContinue(stmt, frameOverride);
+                    break;
             case 'onBlock':
                 this.registerEventHandler(stmt);
                 break;
@@ -269,10 +298,10 @@ export class Executor {
         for (const arg of cmd.args) {
             if (arg.type === 'namedArgs') {
                 // Evaluate named arguments into an object
-                namedArgsObj = await this.evaluateArg(arg, frameOverride) as Record<string, Value>;
+                namedArgsObj = await this.evaluateArg(arg, frameOverride, cmd.codePos) as Record<string, Value>;
             } else {
-                // Positional argument
-                const value = await this.evaluateArg(arg, frameOverride);
+                // Positional argument - pass codePos for better error messages
+                const value = await this.evaluateArg(arg, frameOverride, cmd.codePos);
                 positionalArgs.push(value);
             }
         }
@@ -1463,11 +1492,17 @@ Examples:
         } else if (assign.command) {
             // Command-based assignment
             const previousLastValue = frame.lastValue; // Preserve last value
+            // Temporarily store assignment codePos so evaluateArg can use it
+            // We'll pass it through the command's codePos which is already set
             await this.executeCommand(assign.command, frameOverride);
             value = frame.lastValue;
             frame.lastValue = previousLastValue; // Restore last value (assignments don't affect $)
         } else {
-            throw new Error('Assignment must have either literalValue or command');
+            throw createErrorWithContext({
+                message: 'Assignment must have either literalValue or command',
+                codePos: assign.codePos,
+                code: this.sourceCode || undefined
+            });
         }
         
         // Assignments should not affect the last value ($)
@@ -1503,9 +1538,9 @@ Examples:
     }
 
     private async executeInlineIf(ifStmt: InlineIf, frameOverride?: Frame): Promise<void> {
-        const frame = this.getCurrentFrame(frameOverride);
-        const evaluator = new ExpressionEvaluator(frame, this.environment, this);
-        const condition = await evaluator.evaluate(ifStmt.conditionExpr);
+        // Evaluate Expression node
+        const conditionValue = await this.evaluateExpression(ifStmt.condition, frameOverride);
+        const condition = isTruthy(conditionValue);
         
         if (condition) {
             await this.executeStatement(ifStmt.command, frameOverride);
@@ -1513,11 +1548,11 @@ Examples:
     }
 
     private async executeIfBlock(ifStmt: IfBlock, frameOverride?: Frame): Promise<void> {
-        const frame = this.getCurrentFrame(frameOverride);
-        const evaluator = new ExpressionEvaluator(frame, this.environment, this);
+        // Evaluate Expression node for main condition
+        const conditionValue = await this.evaluateExpression(ifStmt.condition, frameOverride);
+        const condition = isTruthy(conditionValue);
         
-        // Check main condition
-        if (await evaluator.evaluate(ifStmt.conditionExpr)) {
+        if (condition) {
             for (const stmt of ifStmt.thenBranch) {
                 await this.executeStatement(stmt, frameOverride);
             }
@@ -1527,7 +1562,9 @@ Examples:
         // Check elseif branches
         if (ifStmt.elseifBranches) {
             for (const branch of ifStmt.elseifBranches) {
-                if (await evaluator.evaluate(branch.condition)) {
+                // branch.condition is Expression
+                const branchConditionValue = await this.evaluateExpression(branch.condition, frameOverride);
+                if (isTruthy(branchConditionValue)) {
                     for (const stmt of branch.body) {
                         await this.executeStatement(stmt, frameOverride);
                     }
@@ -1561,13 +1598,14 @@ Examples:
     private async executeReturn(returnStmt: ReturnStatement, frameOverride?: Frame): Promise<void> {
         const frame = this.getCurrentFrame(frameOverride);
         
-        // If a value is specified, evaluate it; otherwise use lastValue ($)
+        // If a value is specified, evaluate it
         if (returnStmt.value !== undefined) {
             const value = await this.evaluateArg(returnStmt.value, frameOverride);
             throw new ReturnException(value);
         } else {
-            // No value specified - return $ (last value)
-            throw new ReturnException(frame.lastValue);
+            // No value specified - return null (not lastValue)
+            // This should not happen if parser is correct, but handle it gracefully
+            throw new ReturnException(null);
         }
     }
 
@@ -1575,6 +1613,12 @@ Examples:
         // Throw BreakException to exit the current loop
         // This will be caught by executeForLoop
         throw new BreakException();
+    }
+
+    private async executeContinue(_continueStmt: ContinueStatement, _frameOverride?: Frame): Promise<void> {
+        // Throw ContinueException to skip to next iteration of the current loop
+        // This will be caught by executeForLoop
+        throw new ContinueException();
     }
 
     private registerFunction(func: DefineFunction): void {
@@ -1876,8 +1920,7 @@ Examples:
         const frame = this.getCurrentFrame(frameOverride);
         
         // Evaluate the iterable expression
-        // We need to evaluate it as a command/expression to get the iterable value
-        const iterable = await this.evaluateIterableExpr(forLoop.iterableExpr);
+        const iterable = await this.evaluateExpression(forLoop.iterable, frameOverride);
         
         if (!Array.isArray(iterable)) {
             throw new Error(`for loop iterable must be an array, got ${typeof iterable}`);
@@ -1904,6 +1947,10 @@ Examples:
                     // Break statement encountered - exit the loop
                     break;
                 }
+                if (error instanceof ContinueException) {
+                    // Continue statement encountered - skip to next iteration
+                    continue;
+                }
                 // Re-throw other errors
                 throw error;
             }
@@ -1917,94 +1964,98 @@ Examples:
         // Otherwise, frame.lastValue is already set from the last iteration
     }
     
-    private async evaluateIterableExpr(expr: string): Promise<Value> {
-        const exprTrimmed = expr.trim();
-        
-        // Special case: if the expression is just a variable reference, resolve it directly
-        // This avoids treating it as a shorthand assignment
-        if (LexerUtils.isVariable(exprTrimmed)) {
-            const { name, path } = LexerUtils.parseVariablePath(exprTrimmed);
-            return this.resolveVariable(name, path);
-        }
-        
-        // Parse the expression as if it were a command/statement
-        // This handles: range 1 10, db.query ..., etc.
-        const parser = new Parser(expr);
-        const statements = parser.parse();
-        
-        if (statements.length === 0) {
-            throw new Error(`Invalid iterable expression: ${expr}`);
-        }
-        
-        // Execute the statement(s) to get the value
-        // Usually it's a single command or variable reference
-        for (const stmt of statements) {
-            await this.executeStatement(stmt);
-        }
-        
-        return this.getCurrentFrame().lastValue;
-    }
 
-    private async evaluateArg(arg: Arg, frameOverride?: Frame): Promise<Value> {
-        const frame = this.getCurrentFrame(frameOverride);
-
-        switch (arg.type) {
-            case 'subexpr':
-                // Execute subexpression in a new frame with same environment
-                return await this.executeSubexpression(arg.code);
-            case 'lastValue':
-                return frame.lastValue;
-            case 'var':
-                return this.resolveVariable(arg.name, arg.path);
-            case 'number':
-                return arg.value;
-            case 'string':
-                return arg.value;
-            case 'literal':
-                return arg.value;
-            case 'object':
-                // Parse object literal as JSON5
-                // Handle empty object literal {}
-                if (!arg.code || arg.code.trim() === '') {
-                    return {};
-                }
-                try {
-                    // Interpolate variables and subexpressions in the object literal code
-                    const interpolatedCode = await this.interpolateObjectLiteral(arg.code);
-                    // Wrap the extracted content in braces since extractObjectLiteral only returns the inner content
-                    return JSON5.parse(`{${interpolatedCode}}`);
-                } catch (error) {
-                    throw new Error(`Invalid object literal: ${error instanceof Error ? error.message : String(error)}`);
-                }
-            case 'array':
-                // Parse array literal as JSON5 (to support objects with unquoted keys inside arrays)
-                // Handle empty array literal []
-                if (!arg.code || arg.code.trim() === '') {
-                    return [];
-                }
-                try {
-                    // Interpolate variables and subexpressions in the array literal code
-                    const interpolatedCode = await this.interpolateObjectLiteral(arg.code); // Reuse same method
-                    // Wrap the extracted content in brackets since extractArrayLiteral only returns the inner content
-                    return JSON5.parse(`[${interpolatedCode}]`);
-                } catch (error) {
-                    throw new Error(`Invalid array literal: ${error instanceof Error ? error.message : String(error)}`);
-                }
-            case 'namedArgs':
-                // Evaluate all named arguments and return as object
-                const obj: Record<string, Value> = {};
-                for (const [key, valueArg] of Object.entries(arg.args)) {
-                    obj[key] = await this.evaluateArg(valueArg, frameOverride);
-                }
-                return obj;
+    private async evaluateArg(arg: Arg, frameOverride?: Frame, parentCodePos?: CodePosition): Promise<Value> {
+        // Check if this is an Expression node (new format)
+        // Expression types: 'var', 'lastValue', 'literal', 'number', 'string',
+        // 'objectLiteral', 'arrayLiteral', 'subexpression', 'binary', 'unary', 'call'
+        if (arg.type === 'var' || arg.type === 'lastValue' || arg.type === 'literal' || 
+            arg.type === 'number' || arg.type === 'string' || arg.type === 'objectLiteral' ||
+            arg.type === 'arrayLiteral' || arg.type === 'subexpression' || arg.type === 'binary' ||
+            arg.type === 'unary' || arg.type === 'call') {
+            // It's an Expression - evaluate it
+            return await this.evaluateExpression(arg as Expression, frameOverride);
         }
+
+        // Legacy Arg types for backward compatibility
+        // These are the old types that haven't been migrated yet
+        if (arg.type === 'subexpr' || arg.type === 'object' || arg.type === 'array') {
+            switch (arg.type) {
+                case 'subexpr':
+                    // Execute subexpression in a new frame with same environment
+                    // TODO: Replace with: return await this.evaluateExpression(arg); // where arg is SubexpressionExpression
+                    return await this.executeSubexpression(arg.code);
+                case 'object':
+                    // Parse object literal as JSON5
+                    // Handle empty object literal {}
+                    // TODO: Replace with: return await this.evaluateObjectLiteral(arg.properties, frameOverride);
+                    if (!arg.code || arg.code.trim() === '') {
+                        return {};
+                    }
+                    try {
+                        // Interpolate variables and subexpressions in the object literal code
+                        const interpolatedCode = await this.interpolateObjectLiteral(arg.code, frameOverride);
+                        // Wrap the extracted content in braces since extractObjectLiteral only returns the inner content
+                        return JSON5.parse(`{${interpolatedCode}}`);
+                    } catch (error) {
+                        // Use parent codePos if available for better error messages
+                        // The error might contain position info from JSON5 (e.g., "at 1:6")
+                        const errorMsg = error instanceof Error ? error.message : String(error);
+                        throw createErrorWithContext({
+                            message: `Invalid object literal: ${errorMsg}`,
+                            codePos: parentCodePos,
+                            code: this.sourceCode || undefined
+                        });
+                    }
+                case 'array':
+                    // Parse array literal as JSON5 (to support objects with unquoted keys inside arrays)
+                    // Handle empty array literal []
+                    // TODO: Replace with: return await this.evaluateArrayLiteral(arg.elements, frameOverride);
+                    if (!arg.code || arg.code.trim() === '') {
+                        return [];
+                    }
+                    try {
+                        // Interpolate variables and subexpressions in the array literal code
+                        const interpolatedCode = await this.interpolateObjectLiteral(arg.code, frameOverride); // Reuse same method
+                        // Wrap the extracted content in brackets since extractArrayLiteral only returns the inner content
+                        return JSON5.parse(`[${interpolatedCode}]`);
+                    } catch (error) {
+                        // Use parent codePos if available for better error messages
+                        // The error might contain position info from JSON5 (e.g., "at 1:6")
+                        const errorMsg = error instanceof Error ? error.message : String(error);
+                        throw createErrorWithContext({
+                            message: `Invalid array literal: ${errorMsg}`,
+                            codePos: parentCodePos,
+                            code: this.sourceCode || undefined
+                        });
+                    }
+            }
+        }
+        
+        // Handle namedArgs (which is also an Expression type but needs special handling)
+        if (arg.type === 'namedArgs') {
+            // Evaluate all named arguments and return as object
+            // namedArgs.args is now Record<string, Expression>
+            const obj: Record<string, Value> = {};
+            for (const [key, valueExpr] of Object.entries(arg.args)) {
+                // valueExpr is now an Expression, not an Arg
+                obj[key] = await this.evaluateExpression(valueExpr, frameOverride);
+            }
+            return obj;
+        }
+        
+        // This should never happen - all cases should be handled above
+        throw new Error(`Unknown arg type: ${(arg as any).type}`);
     }
 
     /**
      * Interpolate variables and subexpressions in object literal code
-     * Replaces $var, $(expr), and [$key] with their actual values
+     * Replaces $var, $(expr), $ (last value), and [$key] with their actual values
+     * 
+     * TODO: AST Refactor - This method will be removed once ObjectLiteralExpression
+     * is used. Object literals will be evaluated by walking the properties AST nodes.
      */
-    private async interpolateObjectLiteral(code: string): Promise<string> {
+    private async interpolateObjectLiteral(code: string, frameOverride?: Frame): Promise<string> {
         let result = code;
         
         // First, replace subexpressions $(...)
@@ -2121,16 +2172,56 @@ Examples:
                 continue;
             }
             
-            // Check for variable reference $var
-            if (char === '$' && i + 1 < result.length) {
-                const nextChar = result[i + 1];
+            // Check for variable reference $var, $1 (positional), or standalone $ (last value)
+            if (char === '$') {
+                const nextChar = i + 1 < result.length ? result[i + 1] : null;
                 
-                // Check if it's a variable: $var, $var.property, etc.
-                if (/[A-Za-z_]/.test(nextChar)) {
-                    // Extract the variable path
+                // Check if it's a standalone $ (last value) - not followed by letter/underscore/digit
+                // Standalone $ can be followed by: space, comma, }, ], ), or end of string
+                if (nextChar === null || /[\s,}\]\)]/.test(nextChar)) {
+                    // This is a standalone $ (last value reference)
+                    const frame = this.getCurrentFrame(frameOverride);
+                    const value = frame.lastValue;
+                    
+                    // Serialize the value appropriately
+                    let replacement: string;
+                    if (value === null) {
+                        replacement = 'null';
+                    } else if (typeof value === 'string') {
+                        replacement = JSON.stringify(value);
+                    } else if (typeof value === 'number' || typeof value === 'boolean') {
+                        replacement = String(value);
+                    } else if (Array.isArray(value)) {
+                        replacement = JSON.stringify(value);
+                    } else if (typeof value === 'object') {
+                        replacement = JSON.stringify(value);
+                    } else {
+                        replacement = String(value);
+                    }
+                    
+                    // Add text before $ and replacement
+                    if (i > lastIndex) {
+                        outputParts.push(result.substring(lastIndex, i));
+                    }
+                    outputParts.push(replacement);
+                    lastIndex = i + 1;
+                    i = i + 1;
+                    continue;
+                }
+                // Check if it's a variable: $var, $1, $2, $var.property, etc.
+                else if (/[A-Za-z_0-9]/.test(nextChar)) {
+                    // Extract the variable path (handles $var, $1, $var.property, etc.)
                     let j = i + 1;
-                    while (j < result.length && /[A-Za-z0-9_.\[\]]/.test(result[j])) {
-                        j++;
+                    // For positional params ($1, $2), just consume the digits
+                    if (/[0-9]/.test(nextChar)) {
+                        while (j < result.length && /[0-9]/.test(result[j])) {
+                            j++;
+                        }
+                    } else {
+                        // For named variables, consume letters, digits, dots, brackets
+                        while (j < result.length && /[A-Za-z0-9_.\[\]]/.test(result[j])) {
+                            j++;
+                        }
                     }
                     const varPath = result.substring(i, j);
                     
@@ -2181,9 +2272,16 @@ Examples:
         return outputParts.join('');
     }
 
+    /**
+     * Execute a subexpression from code string
+     * 
+     * TODO: AST Refactor - This will be replaced with executeSubexpressionStatements()
+     * which takes Statement[] directly, eliminating runtime parsing.
+     */
     async executeSubexpression(code: string): Promise<Value> {
         // Split into logical lines (handles ; inside $())
         // Parse the subexpression
+        // TODO: AST Refactor - Remove Parser instantiation, use pre-parsed Statement[]
         const parser = new Parser(code);
         const statements = parser.parse();
         
@@ -2218,6 +2316,234 @@ Examples:
             // Pop the subexpression frame
             this.callStack.pop();
         }
+    }
+
+    /**
+     * Execute subexpression statements directly (for Expression-based AST)
+     * 
+     * @param statements - Pre-parsed statements from SubexpressionExpression.body
+     * @param frameOverride - Optional frame override for parallel execution
+     * @returns The lastValue after executing the statements
+     */
+    async executeSubexpressionStatements(statements: Statement[], frameOverride?: Frame): Promise<Value> {
+        const currentFrame = this.getCurrentFrame(frameOverride);
+        const subexprFrame: Frame = {
+            locals: new Map(),
+            lastValue: currentFrame.lastValue,
+            isFunctionFrame: false
+        };
+        
+        // Copy all local variables from parent frame
+        for (const [key, value] of currentFrame.locals.entries()) {
+            subexprFrame.locals.set(key, value);
+        }
+        
+        this.callStack.push(subexprFrame);
+        
+        try {
+            for (const stmt of statements) {
+                await this.executeStatement(stmt, subexprFrame);
+            }
+            return subexprFrame.lastValue;
+        } finally {
+            this.callStack.pop();
+        }
+    }
+
+    /**
+     * Evaluate an Expression node
+     * 
+     * @param expr - The Expression node to evaluate
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated value
+     */
+    async evaluateExpression(expr: Expression, frameOverride?: Frame): Promise<Value> {
+        switch (expr.type) {
+            case 'var':
+                return this.resolveVariable(expr.name, expr.path);
+            case 'lastValue':
+                return this.getCurrentFrame(frameOverride).lastValue;
+            case 'literal':
+                return expr.value;
+            case 'number':
+                return expr.value;
+            case 'string':
+                return expr.value;
+            case 'objectLiteral':
+                return await this.evaluateObjectLiteral(expr, frameOverride);
+            case 'arrayLiteral':
+                return await this.evaluateArrayLiteral(expr, frameOverride);
+            case 'subexpression':
+                return await this.executeSubexpressionStatements(expr.body, frameOverride);
+            case 'binary':
+                return await this.evaluateBinaryExpression(expr, frameOverride);
+            case 'unary':
+                return await this.evaluateUnaryExpression(expr, frameOverride);
+            case 'call':
+                return await this.evaluateCallExpression(expr, frameOverride);
+            default:
+                throw new Error(`Unknown expression type: ${(expr as any).type}`);
+        }
+    }
+
+    /**
+     * Evaluate an ObjectLiteralExpression
+     * 
+     * @param expr - The ObjectLiteralExpression node
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated object
+     */
+    async evaluateObjectLiteral(expr: import('../types/Ast.type').ObjectLiteralExpression, frameOverride?: Frame): Promise<Record<string, Value>> {
+        const result: Record<string, Value> = {};
+        
+        for (const prop of expr.properties) {
+            // Evaluate key (can be string or Expression for computed properties)
+            const key = typeof prop.key === 'string' 
+                ? prop.key 
+                : String(await this.evaluateExpression(prop.key, frameOverride));
+            
+            // Evaluate value
+            const value = await this.evaluateExpression(prop.value, frameOverride);
+            
+            result[key] = value;
+        }
+        
+        return result;
+    }
+
+    /**
+     * Evaluate an ArrayLiteralExpression
+     * 
+     * @param expr - The ArrayLiteralExpression node
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated array
+     */
+    async evaluateArrayLiteral(expr: import('../types/Ast.type').ArrayLiteralExpression, frameOverride?: Frame): Promise<Value[]> {
+        const result: Value[] = [];
+        
+        for (const element of expr.elements) {
+            const value = await this.evaluateExpression(element, frameOverride);
+            result.push(value);
+        }
+        
+        return result;
+    }
+
+    /**
+     * Evaluate a BinaryExpression
+     * 
+     * @param expr - The BinaryExpression node
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated value
+     */
+    async evaluateBinaryExpression(expr: import('../types/Ast.type').BinaryExpression, frameOverride?: Frame): Promise<Value> {
+        const left = await this.evaluateExpression(expr.left, frameOverride);
+        const right = await this.evaluateExpression(expr.right, frameOverride);
+        
+        switch (expr.operator) {
+            case '==':
+                return left === right;
+            case '!=':
+                return left !== right;
+            case '<':
+                return (left as number) < (right as number);
+            case '<=':
+                return (left as number) <= (right as number);
+            case '>':
+                return (left as number) > (right as number);
+            case '>=':
+                return (left as number) >= (right as number);
+            case 'and':
+                return isTruthy(left) && isTruthy(right);
+            case 'or':
+                return isTruthy(left) || isTruthy(right);
+            case '+':
+                return (left as number) + (right as number);
+            case '-':
+                return (left as number) - (right as number);
+            case '*':
+                return (left as number) * (right as number);
+            case '/':
+                return (left as number) / (right as number);
+            case '%':
+                return (left as number) % (right as number);
+            default:
+                throw new Error(`Unknown binary operator: ${(expr.operator as any)}`);
+        }
+    }
+
+    /**
+     * Evaluate a UnaryExpression
+     * 
+     * @param expr - The UnaryExpression node
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated value
+     */
+    async evaluateUnaryExpression(expr: import('../types/Ast.type').UnaryExpression, frameOverride?: Frame): Promise<Value> {
+        const arg = await this.evaluateExpression(expr.argument, frameOverride);
+        
+        switch (expr.operator) {
+            case 'not':
+                return !isTruthy(arg);
+            case '-':
+                return -(arg as number);
+            case '+':
+                return +(arg as number);
+            default:
+                throw new Error(`Unknown unary operator: ${(expr.operator as any)}`);
+        }
+    }
+
+    /**
+     * Evaluate a CallExpression
+     * 
+     * @param expr - The CallExpression node
+     * @param frameOverride - Optional frame override
+     * @returns The evaluated value
+     */
+    async evaluateCallExpression(expr: import('../types/Ast.type').CallExpression, frameOverride?: Frame): Promise<Value> {
+        // Evaluate arguments
+        const args: Value[] = [];
+        for (const argExpr of expr.args) {
+            args.push(await this.evaluateExpression(argExpr, frameOverride));
+        }
+        
+        // Execute the function/command call
+        // This is a simplified version - you may need to enhance it based on your command execution logic
+        const frame = this.getCurrentFrame(frameOverride);
+        const previousLastValue = frame.lastValue;
+        
+        // Create a CommandCall-like structure for execution
+        const cmd: CommandCall = {
+            type: 'command',
+            name: expr.callee,
+            args: expr.args.map(arg => {
+                // Convert Expression to Arg (for now, we'll use the Expression directly)
+                // This is a temporary bridge until all Arg usage is migrated
+                if (arg.type === 'var') {
+                    return { type: 'var', name: arg.name, path: arg.path };
+                } else if (arg.type === 'lastValue') {
+                    return { type: 'lastValue' };
+                } else if (arg.type === 'literal') {
+                    return { type: 'literal', value: arg.value };
+                } else if (arg.type === 'number') {
+                    return { type: 'number', value: arg.value };
+                } else if (arg.type === 'string') {
+                    return { type: 'string', value: arg.value };
+                } else {
+                    // For complex expressions, we need to evaluate them first
+                    // This is a limitation - ideally CommandCall.args should also be Expression[]
+                    throw new Error(`Cannot convert complex expression to Arg: ${arg.type}`);
+                }
+            }),
+            codePos: expr.codePos || { startRow: 0, startCol: 0, endRow: 0, endCol: 0 }
+        };
+        
+        await this.executeCommand(cmd, frameOverride);
+        const result = frame.lastValue;
+        frame.lastValue = previousLastValue; // Restore
+        
+        return result;
     }
 
     private resolveVariable(name: string, path?: AttributePathSegment[]): Value {

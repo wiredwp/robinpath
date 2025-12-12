@@ -2,15 +2,33 @@
  * TokenStream - A stream of tokens for parsing
  * 
  * This class provides convenient methods for consuming and inspecting tokens
- * during parsing. It supports lookahead, backtracking, and error reporting.
+ * during parsing. It supports lookahead, backtracking, error reporting, and
+ * parsing context tracking.
  */
 
 import { TokenKind } from './Lexer';
 import type { Token } from './Lexer';
 
+/**
+ * Parsing context types that the TokenStream can track
+ */
+export const ParsingContext = {
+    NONE: 'none',
+    ARRAY_LITERAL: 'array_literal',
+    OBJECT_LITERAL: 'object_literal',
+    FUNCTION_CALL: 'function_call',
+    SUBEXPRESSION: 'subexpression',
+    BLOCK: 'block', // Generic block (do, together, etc.)
+    FUNCTION_DEFINITION: 'function_definition', // Inside def/enddef
+    STRING_LITERAL: 'string_literal', // Inside a string (though strings are tokenized, this helps track state)
+} as const;
+
+export type ParsingContext = typeof ParsingContext[keyof typeof ParsingContext];
+
 export class TokenStream {
     private tokens: Token[];
     private position: number = 0;
+    private contextStack: ParsingContext[] = [];
     
     /**
      * Create a new TokenStream
@@ -259,5 +277,67 @@ export class TokenStream {
             return 'end of input';
         }
         return `line ${token.line}, column ${token.column}`;
+    }
+    
+    /**
+     * Push a parsing context onto the context stack
+     * @param context - The parsing context to enter
+     */
+    pushContext(context: ParsingContext): void {
+        this.contextStack.push(context);
+    }
+    
+    /**
+     * Pop the most recent parsing context from the stack
+     * @returns The context that was removed, or NONE if stack was empty
+     */
+    popContext(): ParsingContext {
+        return this.contextStack.pop() || ParsingContext.NONE;
+    }
+    
+    /**
+     * Get the current parsing context (top of the stack)
+     * @returns The current parsing context, or NONE if no context is active
+     */
+    getCurrentContext(): ParsingContext {
+        return this.contextStack.length > 0 
+            ? this.contextStack[this.contextStack.length - 1] 
+            : ParsingContext.NONE;
+    }
+    
+    /**
+     * Check if we're currently in a specific parsing context
+     * @param context - The context to check for
+     * @returns True if we're in the given context (at any level)
+     */
+    isInContext(context: ParsingContext): boolean {
+        return this.contextStack.includes(context);
+    }
+    
+    /**
+     * Get all active contexts (the entire stack)
+     * @returns Array of contexts from bottom to top
+     */
+    getContextStack(): ParsingContext[] {
+        return [...this.contextStack];
+    }
+    
+    /**
+     * Clear all parsing contexts
+     */
+    clearContexts(): void {
+        this.contextStack = [];
+    }
+    
+    /**
+     * Create a new TokenStream with the same tokens and contexts
+     * Useful for sub-parsing that should inherit context
+     * @param startIndex - Optional starting index (defaults to current position)
+     * @returns New TokenStream instance with copied context
+     */
+    cloneWithContext(startIndex?: number): TokenStream {
+        const newStream = new TokenStream(this.tokens, startIndex ?? this.position);
+        newStream.contextStack = [...this.contextStack];
+        return newStream;
     }
 }

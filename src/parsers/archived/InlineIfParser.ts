@@ -1,3 +1,8 @@
+/*
+This is old code that is no longer used. It is kept here for reference.
+This is a line-based parser.
+*/
+
 /**
  * Parser for inline if statements
  * Syntax: if <condition> then <command>
@@ -12,7 +17,7 @@ import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import { ReturnParser } from './ReturnParser';
-import type { InlineIf, Statement, CommandCall, CommentWithPosition, CodePosition } from '../index';
+import type { InlineIf, Statement, CommandCall, CommentWithPosition, CodePosition } from '../types/Ast.type';
 
 /**
  * Context for TokenStream-based inline if statement parsing
@@ -304,13 +309,14 @@ export class InlineIfParser {
         const conditionExpr = conditionTokens.map(t => t.text).join(' ');
         
         // 3. Expect and consume 'then' keyword
+        // Note: expect() already calls next() internally, so we don't need to call next() again
         const thenToken = stream.expect('then', "inline if requires 'then' keyword");
-        stream.next(); // consume 'then'
         
         // 4. Parse command after 'then'
         const commandTokens: Token[] = [];
         const headerComments: CommentWithPosition[] = [];
         
+        // Collect command tokens (everything after 'then' until NEWLINE)
         while (!stream.isAtEnd()) {
             const t = stream.current();
             if (!t) break;
@@ -329,6 +335,7 @@ export class InlineIfParser {
                 stream.next();
                 continue;
             }
+            // Collect all non-comment, non-newline tokens as command tokens
             commandTokens.push(t);
             stream.next();
         }
@@ -337,6 +344,11 @@ export class InlineIfParser {
         // Convert tokens to string[] for compatibility with parseCommandFromTokens
         const commandTokenStrings = commandTokens.map(t => t.text);
         const startLine = headerToken.line - 1;
+        
+        // Validate we have command tokens
+        if (commandTokenStrings.length === 0) {
+            throw context.createError("inline if requires a command after 'then'", headerToken.line - 1);
+        }
         
         // Check if this is an assignment FIRST
         let finalCommand: Statement;

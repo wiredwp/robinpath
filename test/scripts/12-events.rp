@@ -1,0 +1,92 @@
+# Event System Tests
+# Tests for event handlers (on/endon) and trigger command
+
+log "=== Event System Tests ==="
+
+# Test 1: Basic event handler with arguments
+log "Test 1: Basic event handler"
+on "test1"
+  log "Event Test 1 - Received args:" $1 $2 $3
+endon
+
+# Test 2: Multiple handlers for the same event
+log "Test 2: Multiple handlers for same event"
+on "test2"
+  log "Event Test 2a - Handler 1:" $1
+endon
+
+on "test2"
+  log "Event Test 2b - Handler 2:" $1
+endon
+
+# Test 3: Event handler with calculations
+log "Test 3: Event handler with calculations"
+on "test3"
+  math.add $1 $2
+  log "Event Test 3 - Sum:" $
+endon
+
+# Test 4: Event handler with conditional logic
+log "Test 4: Event handler with conditionals"
+on "test4"
+  if $1 > 10
+    log "Event Test 4 - Value is greater than 10:" $1
+  else
+    log "Event Test 4 - Value is 10 or less:" $1
+  endif
+endon
+
+# Test 5: Event handler with string operations
+log "Test 5: Event handler with string operations"
+on "test5"
+  string.concat "Hello, " $1
+  log "Event Test 5 - Greeting:" $
+endon
+
+# Test 6: Event handler with object argument
+log "Test 6: Event handler with object argument"
+on "test6"
+  log "Event Test 6 - Received object:" $1
+  log "Event Test 6 - Object property name:" $1.name
+  log "Event Test 6 - Object property age:" $1.age
+endon
+
+# Test 7: Event handler with array argument
+log "Test 7: Event handler with array argument"
+on "test7"
+  log "Event Test 7 - Received array:" $1
+  log "Event Test 7 - Array length:" $1.length
+  log "Event Test 7 - First element:" $1[0]
+  log "Event Test 7 - Second element:" $1[1]
+endon
+
+# Test 8: Trigger command tests
+log "Test 8: Trigger command"
+# Handler defined AFTER trigger command (should work because handlers are collected first)
+on "test9"
+  log "Event Test 9 - Handler executed:" $1 $2
+endon
+
+# Handler defined BEFORE trigger command
+on "test10"
+  log "Event Test 10 - Handler executed:" $1
+endon
+
+# Test 9: Orphaned on blocks (auto-closing)
+log "Test 9: Orphaned on blocks"
+on "orphan1"
+  log "Event orphan1 - Handler executed successfully"
+  log "Event orphan1 - Received:" $1
+
+on "orphan2"
+  log "Event orphan2 - Handler executed successfully"
+  log "Event orphan2 - Received:" $1
+
+on "orphan3"
+  log "Event orphan3 - Handler executed successfully"
+  log "Event orphan3 - Received:" $1
+
+# Note: These handlers are tested by triggering them from run.js
+# The orphaned syntax (without explicit endon) should work correctly
+
+log "=== Event System Tests Complete ==="

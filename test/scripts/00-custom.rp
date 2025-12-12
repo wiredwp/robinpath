@@ -1,0 +1,16 @@
+
+# Test 16: Continue skips remaining statements
+log "Test 16: Continue skips remaining statements"
+$skipTest = 0
+$shouldSkip = true
+for $i in range 1 5
+  if $i == 3
+    set $shouldSkip false
+    continue  # This skips the "if not $shouldSkip" check below for iteration 3
+  endif
+  if not $shouldSkip
+    set $skipTest $i
+  endif
+endfor
+# After loop: $skipTest should be 5 (from iterations 4 and 5, since iteration 3's continue skipped the check)
+test.assertEqual $skipTest 5 "Continue should skip remaining statements failed"

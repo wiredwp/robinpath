@@ -1,0 +1,196 @@
+# Builtin Commands Tests
+# Tests for set, get, empty, fallback, clear, forget, var, const, etc.
+
+log "=== Builtin Commands Tests ==="
+
+# Test 1: set command
+log "Test 1: set command"
+$testVar = "original"
+test.assertEqual $testVar "original" "Initial assignment failed"
+set $testVar "assigned"
+test.assertEqual $testVar "assigned" "set command failed"
+set $testVar 42
+test.assertEqual $testVar 42 "set command with number failed"
+set $testVar true
+test.assertEqual $testVar true "set command with boolean failed"
+$sourceVar = "source value"
+set $testVar $sourceVar
+test.assertEqual $testVar "source value" "set command with variable failed"
+math.add 10 20
+set $testVar $
+test.assertEqual $testVar 30 "set command with last value failed"
+
+# Test set with fallback (3rd parameter)
+$emptyVar = null
+set $testVar $emptyVar "fallback value"
+test.assertEqual $testVar "fallback value" "set with fallback for null failed"
+
+$emptyVar = ""
+set $testVar $emptyVar "fallback string"
+test.assertEqual $testVar "fallback string" "set with fallback for empty string failed"
+
+# Test 2: get command
+log "Test 2: get command"
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC", "zip": 10001}}'
+$user = $
+clear
+do
+  get $user "name"
+  test.assertEqual $ "John" "get command - basic property failed"
+enddo
+
+clear
+do
+  get $user "age"
+  test.assertEqual $ 30 "get command - number property failed"
+enddo
+
+clear
+do
+  get $user "address.city"
+  test.assertEqual $ "NYC" "get command - nested path failed"
+enddo
+
+clear
+do
+  get $user "nonexistent"
+  test.assertEqual $ null "get command - non-existent path should return null"
+enddo
+
+# Test 3: empty command
+log "Test 3: empty command"
+$toEmpty = "not empty"
+test.assertEqual $toEmpty "not empty" "Variable before empty failed"
+empty $toEmpty
+test.assertEqual $toEmpty null "empty command failed"
+$toEmpty = 42
+test.assertEqual $toEmpty 42 "Variable reassignment after empty failed"
+empty $toEmpty
+test.assertEqual $toEmpty null "empty command second time failed"
+
+# Test 4: fallback command
+log "Test 4: fallback command"
+$maybeEmpty = null
+clear
+do
+  fallback $maybeEmpty "default value"
+  test.assertEqual $ "default value" "fallback with null failed"
+enddo
+
+$maybeEmpty = ""
+clear
+do
+  fallback $maybeEmpty "default string"
+  test.assertEqual $ "default string" "fallback with empty string failed"
+enddo
+
+$maybeEmpty = "not empty"
+clear
+do
+  fallback $maybeEmpty "fallback"
+  test.assertEqual $ "not empty" "fallback should not use fallback when value is not empty"
+enddo
+
+# Test 5: clear command
+log "Test 5: clear command"
+clear
+do
+  math.add 10 20
+  test.assertEqual $ 30 "Last value before clear failed"
+enddo
+clear
+do
+  test.assertEqual $ null "clear command failed to clear last value"
+enddo
+
+# Test 6: forget command
+log "Test 6: forget command"
+$testVar = 100
+clear
+do
+  forget $testVar
+  test.assertEqual $ null "forget command should return null"
+  test.assertEqual $testVar null "forgotten variable should return null"
+enddo
+# Variable should be accessible again after do ends
+test.assertEqual $testVar 100 "forgotten variable should be accessible after do ends"
+
+# Test 7: var and const commands
+log "Test 7: var and const commands"
+var $testVar7a
+test.assertEqual $testVar7a null "var command without default value failed"
+
+var $testVar7b 42
+test.assertEqual $testVar7b 42 "var command with default value failed"
+
+const $TEST_CONST_7c 100
+test.assertEqual $TEST_CONST_7c 100 "const command failed"
+
+# Test 8: has command
+log "Test 8: has command"
+$testVar8 = 42
+has $testVar8
+test.assertTrue $ "has command - variable exists failed"
+
+has $nonexistentVar
+test.assertFalse $ "has command - nonexistent variable should return false"
+
+def testHasFunc
+  log "test"
+enddef
+
+has testHasFunc
+test.assertTrue $ "has command - user-defined function exists failed"
+
+has log
+test.assertTrue $ "has command - builtin function exists failed"
+
+has math.add
+test.assertTrue $ "has command - module function exists failed"
+
+# Test 9: getType command
+log "Test 9: getType command"
+$strVar = "hello"
+clear
+do
+  getType $strVar
+  test.assertEqual $ "string" "getType for string failed"
+enddo
+
+$numVar = 42
+clear
+do
+  getType $numVar
+  test.assertEqual $ "number" "getType for number failed"
+enddo
+
+$boolVar = true
+clear
+do
+  getType $boolVar
+  test.assertEqual $ "boolean" "getType for boolean failed"
+enddo
+
+$nullVar = null
+clear
+do
+  getType $nullVar
+  test.assertEqual $ "null" "getType for null failed"
+enddo
+
+$arrVar = range 1 5
+clear
+do
+  getType $arrVar
+  test.assertEqual $ "array" "getType for array failed"
+enddo
+
+obj '{name: "John"}'
+$objVar = $
+clear
+do
+  getType $objVar
+  test.assertEqual $ "object" "getType for object failed"
+enddo
+
+log "=== Builtin Commands Tests Complete ==="

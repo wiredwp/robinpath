@@ -1,612 +1,680 @@
 /**
  * Parser for command calls (both space-separated and parenthesized syntax)
  * Handles: command arg1 arg2, fn(arg1, arg2), module.fn(args)
+ * Token-stream based implementation
  */
 
-import { Lexer } from '../classes/Lexer';
+import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
-import { ArgumentParser } from './ArgumentParser';
-import type { CommandCall, Arg, ScopeBlock, CodePosition, AttributePathSegment } from '../index';
+import { ObjectLiteralParser } from './ObjectLiteralParser';
+import { ArrayLiteralParser } from './ArrayLiteralParser';
+import type { CommandCall, Arg, ScopeBlock, CodePosition } from '../types/Ast.type';
+import type { AttributePathSegment } from '../utils/types';
 
 export interface CommandParserContext {
     /**
-     * Get current line number
+     * Parse a statement from the stream (for callback blocks)
      */
-    getCurrentLine(): number;
+    parseStatement?: (stream: TokenStream) => any;
     
     /**
-     * Set current line number
+     * Parse a scope block (do/enddo)
      */
-    setCurrentLine(line: number): void;
+    parseScope?: (stream: TokenStream) => ScopeBlock;
     
     /**
-     * All lines in the source
+     * Create code position from tokens
      */
-    readonly lines: string[];
-    
-    /**
-     * Create error with line info
-     */
-    createError(message: string, lineNumber: number): Error;
-    
-    /**
-     * Create code position from start/end lines
-     */
-    createCodePositionFromLines(startRow: number, endRow: number): CodePosition;
-    
-    /**
-     * Get trimmed line content
-     */
-    getTrimmedLine(lineNumber: number): string;
-    
-    /**
-     * Extract subexpression from line
-     */
-    extractSubexpression(line: string, startPos: number): { code: string; endPos: number };
-    
-    /**
-     * Extract object literal from line
-     */
-    extractObjectLiteral(line: string, startPos: number): { code: string; endPos: number };
-    
-    /**
-     * Extract array literal from line
-     */
-    extractArrayLiteral(line: string, startPos: number): { code: string; endPos: number };
-    
-    /**
-     * Extract parenthesized content (handles multi-line)
-     */
-    extractParenthesizedContent(): string;
-    
-    /**
-     * Parse a 'do' scope block
-     */
-    parseScope(startLine: number): ScopeBlock;
-    
-    /**
-     * Parse a 'with' scope block
-     */
-    parseWithScope(startLine: number): ScopeBlock;
+    createCodePosition?: (startToken: Token, endToken: Token) => CodePosition;
 }
 
 export class CommandParser {
-    private readonly context: CommandParserContext;
-    
-    constructor(context: CommandParserContext) {
-        this.context = context;
-    }
-    
     /**
-     * Parse parenthesized function call: fn(...) or module.fn(...)
+     * Parse a command call from TokenStream
+     * Expects stream to be positioned at the command name (identifier or keyword)
+     * 
+     * @param stream - TokenStream positioned at the command name
+     * @param context - Optional context for parsing callbacks and creating code positions
+     * @returns Parsed CommandCall
      */
-    parseParenthesizedCall(tokens: string[], startLine?: number): CommandCall {
-        const callStartLine = startLine !== undefined ? startLine : this.context.getCurrentLine();
-        // Get function name (handle module.function syntax)
-        let name: string;
-        if (tokens.length >= 4 && tokens[1] === '.' && tokens[3] === '(') {
-            // Module function: math.add(...)
-            name = `${tokens[0]}.${tokens[2]}`;
-        } else if (tokens.length >= 2 && tokens[1] === '(') {
-            // Regular function: fn(...)
-            name = tokens[0];
-        } else {
-            throw this.context.createError('expected ( after function name', this.context.getCurrentLine());
+    static parse(stream: TokenStream, context?: CommandParserContext): CommandCall {
+        const startToken = stream.current();
+        if (!startToken) {
+            throw new Error('Unexpected end of input while parsing command');
         }
 
-        // Validate function name
+        // Parse command name (may be module.function)
+        const nameResult = this.parseCommandName(stream);
+        const commandName = nameResult.name;
+        const startLine = startToken.line;
+
+        // Check if next token is '(' for parenthesized syntax
+        // Skip whitespace and comments, but don't consume the next token yet
+        skipWhitespaceAndComments(stream);
+        const nextToken = stream.current();
+        
+        if (nextToken && nextToken.kind === TokenKind.LPAREN) {
+            // Parenthesized syntax: command(...)
+            // Don't call skipWhitespaceAndComments again - the '(' is at stream.current()
+            // parseParenthesizedCall will consume it with stream.expect()
+            return this.parseParenthesizedCall(stream, commandName, startToken, startLine, context);
+        } else {
+            // Space-separated syntax: command arg1 arg2
+            return this.parseSpaceSeparatedCall(stream, commandName, startToken, startLine, context);
+        }
+    }
+
+    /**
+     * Parse command name (handles module.function syntax)
+     */
+    private static parseCommandName(stream: TokenStream): { name: string; endToken: Token } {
+        const startToken = stream.current();
+        if (!startToken) {
+            throw new Error('Expected command name');
+        }
+
+        // Command name must be an identifier or keyword
+        if (startToken.kind !== TokenKind.IDENTIFIER && startToken.kind !== TokenKind.KEYWORD) {
+            throw new Error(`Expected identifier or keyword for command name at ${stream.formatPosition()}`);
+        }
+
+        let name = startToken.text;
+        stream.next();
+
+        // Check for module.function syntax
+        skipWhitespaceAndComments(stream);
+        const dotToken = stream.current();
+        if (dotToken && dotToken.kind === TokenKind.DOT) {
+            stream.next(); // Consume '.'
+            skipWhitespaceAndComments(stream);
+            
+            const funcToken = stream.current();
+            if (!funcToken || (funcToken.kind !== TokenKind.IDENTIFIER && funcToken.kind !== TokenKind.KEYWORD)) {
+                throw new Error(`Expected function name after '.' at ${stream.formatPosition()}`);
+            }
+            
+            name = `${name}.${funcToken.text}`;
+            stream.next();
+        }
+
+        // Validate command name
         if (LexerUtils.isNumber(name)) {
-            throw this.context.createError(`expected command name, got number: ${name}`, this.context.getCurrentLine());
+            throw new Error(`Expected command name, got number: ${name}`);
         }
         if (LexerUtils.isString(name)) {
-            throw this.context.createError(`expected command name, got string literal: ${name}`, this.context.getCurrentLine());
+            throw new Error(`Expected command name, got string literal: ${name}`);
         }
         if (LexerUtils.isVariable(name) || LexerUtils.isPositionalParam(name)) {
-            throw this.context.createError(`expected command name, got variable: ${name}`, this.context.getCurrentLine());
+            throw new Error(`Expected command name, got variable: ${name}`);
         }
         if (LexerUtils.isLastValue(name)) {
-            throw this.context.createError(`expected command name, got last value reference: ${name}`, this.context.getCurrentLine());
+            throw new Error(`Expected command name, got last value reference: ${name}`);
         }
 
-        // Extract content inside parentheses (handles multi-line)
-        const parenStartLine = this.context.getCurrentLine();
-        // Save the original line before extractParenthesizedContent modifies currentLine
-        const originalLineAtStart = this.context.lines[parenStartLine];
-        const parenContent = this.context.extractParenthesizedContent();
-        const parenEndLine = this.context.getCurrentLine() - 1; // extractParenthesizedContent advances currentLine past the closing paren
-        
-        // Detect if multiline (content spans multiple lines)
-        const isMultiline = parenEndLine > parenStartLine;
-        
-        // Parse arguments from the content
-        const { positionalArgs, namedArgs } = ArgumentParser.parseParenthesizedArguments(parenContent);
-
-        // Determine syntax type
-        let syntaxType: 'parentheses' | 'named-parentheses' | 'multiline-parentheses';
-        const hasNamedArgs = Object.keys(namedArgs).length > 0;
-        
-        if (isMultiline) {
-            syntaxType = 'multiline-parentheses';
-        } else if (hasNamedArgs) {
-            syntaxType = 'named-parentheses';
-        } else {
-            syntaxType = 'parentheses';
-        }
-
-        // Combine positional args and named args (named args as a special object)
-        const args: Arg[] = [...positionalArgs];
-        if (hasNamedArgs) {
-            args.push({ type: 'namedArgs', args: namedArgs });
-        }
-
-        // Check for "into $var" after parenthesized call (on same line as closing paren or next line)
-        // For single-line calls, check the original line directly
-        let intoInfo: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
-        if (!isMultiline && parenEndLine === parenStartLine) {
-            // Single-line call - check the original line directly
-            const closingParenIndex = originalLineAtStart.lastIndexOf(')');
-            if (closingParenIndex >= 0) {
-                const afterParen = originalLineAtStart.slice(closingParenIndex + 1).trim();
-                if (afterParen) {
-                    const afterTokens = Lexer.tokenize(afterParen);
-                    const intoIndex = afterTokens.indexOf('into');
-                    if (intoIndex >= 0 && intoIndex < afterTokens.length - 1) {
-                        const varToken = afterTokens[intoIndex + 1];
-                        if (LexerUtils.isVariable(varToken)) {
-                            const { name: varName, path } = LexerUtils.parseVariablePath(varToken);
-                            // currentLine is already past this line, so no need to advance
-                            intoInfo = { targetName: varName, targetPath: path };
-                        }
-                    }
-                }
-            }
-        }
-        
-        // If not found on same line (or multiline), check using helper method
-        if (!intoInfo) {
-            intoInfo = this.checkForIntoAfterParen(parenEndLine);
-        }
-        
-        // Check if next line is a callback block ("with" or "do")
-        let callback: ScopeBlock | undefined = undefined;
-        let lookAheadLine = this.context.getCurrentLine();
-        
-        while (lookAheadLine < this.context.lines.length) {
-            const lookAheadLineContent = this.context.getTrimmedLine(lookAheadLine);
-            if (!lookAheadLineContent || lookAheadLineContent.startsWith('#')) {
-                lookAheadLine++;
-                continue;
-            }
-            
-            const lookAheadTokens = Lexer.tokenize(lookAheadLineContent);
-            const firstToken = lookAheadTokens.length > 0 ? lookAheadTokens[0] : '';
-            
-            // Check for "with" block (used for callback syntax)
-            if (firstToken === 'with') {
-                // Found a "with" block - parse it as callback
-                this.context.setCurrentLine(lookAheadLine);
-                callback = this.context.parseWithScope(lookAheadLine);
-                break;
-            } else if (firstToken === 'do') {
-                // Found a do block - parse it as callback
-                this.context.setCurrentLine(lookAheadLine);
-                callback = this.context.parseScope(lookAheadLine);
-                break;
-            } else {
-                // Not a callback block - stop looking
-                break;
-            }
-        }
-        
-        // Determine the end line of the command
-        const endLine = callback ? (this.context.getCurrentLine() - 1) : (intoInfo ? parenEndLine : parenEndLine);
-        
-        const command: CommandCall = { 
-            type: 'command', 
-            name, 
-            args,
-            syntaxType,
-            into: intoInfo || undefined,
-            callback,
-            codePos: this.context.createCodePositionFromLines(callStartLine, endLine)
-        };
-        
-        return command;
+        return { name, endToken: stream.current() || startToken };
     }
-    
+
     /**
-     * Check for "into $var" after a parenthesized call
+     * Parse parenthesized function call: command(...)
      */
-    private checkForIntoAfterParen(parenEndLine: number): { targetName: string; targetPath?: AttributePathSegment[] } | null {
-        // Check the line containing the closing paren
-        if (parenEndLine >= 0 && parenEndLine < this.context.lines.length) {
-            const line = this.context.lines[parenEndLine];
-            // Find the closing paren position
-            const closingParenIndex = line.lastIndexOf(')');
-            if (closingParenIndex >= 0) {
-                // Check for "into" after the closing paren on the same line
-                const afterParen = line.slice(closingParenIndex + 1);
-                if (afterParen.trim()) {
-                    const tokens = Lexer.tokenize(afterParen.trim());
-                    const intoIndex = tokens.indexOf('into');
-                    if (intoIndex >= 0 && intoIndex < tokens.length - 1) {
-                        const varToken = tokens[intoIndex + 1];
-                        if (LexerUtils.isVariable(varToken)) {
-                            const { name, path } = LexerUtils.parseVariablePath(varToken);
-                            if (parenEndLine + 1 > this.context.getCurrentLine()) {
-                                this.context.setCurrentLine(parenEndLine + 1);
-                            }
-                            return { targetName: name, targetPath: path };
+    private static parseParenthesizedCall(
+        stream: TokenStream,
+        name: string,
+        startToken: Token,
+        startLine: number,
+        context?: CommandParserContext
+    ): CommandCall {
+        // Push function call context
+        stream.pushContext(ParsingContext.FUNCTION_CALL);
+        
+        try {
+            // We've already checked that the current token is '(' in the parse() method
+            // and skipWhitespaceAndComments was already called there, so we can directly expect '('
+            const currentToken = stream.current();
+            if (!currentToken || currentToken.kind !== TokenKind.LPAREN) {
+                const actualToken = currentToken 
+                    ? `'${currentToken.text}' (${currentToken.kind})` 
+                    : 'end of input';
+                const position = currentToken 
+                    ? `line ${currentToken.line}, column ${currentToken.column}` 
+                    : 'end of input';
+                throw new Error(
+                    `Expected '(' after function name '${name}' but got ${actualToken} at ${position}`
+                );
+            }
+            const lparen = stream.next()!;
+            
+            // Parse arguments inside parentheses
+            const args: Arg[] = [];
+            const namedArgs: Record<string, Arg> = {};
+            let depth = 1;
+            let isMultiline = false;
+            const startLineNum = lparen.line;
+
+            while (!stream.isAtEnd() && depth > 0) {
+                const token = stream.current();
+                if (!token) break;
+
+                if (token.kind === TokenKind.LPAREN) {
+                    depth++;
+                } else if (token.kind === TokenKind.RPAREN) {
+                    depth--;
+                    if (depth === 0) {
+                        stream.next(); // Consume closing ')'
+                        break;
+                    }
+                }
+
+                // Track if multiline
+                if (token.line !== startLineNum) {
+                    isMultiline = true;
+                }
+
+                // Skip newlines and comments
+                if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
+                    stream.next();
+                    continue;
+                }
+
+                // Parse argument
+                if (depth === 1) {
+                    const argResult = this.parseArgument(stream, context);
+                    if (argResult) {
+                        if (argResult.isNamed) {
+                            namedArgs[argResult.key!] = argResult.arg;
+                        } else {
+                            args.push(argResult.arg);
                         }
                     }
+                } else {
+                    // Inside nested parentheses - skip for now (could be subexpression)
+                    stream.next();
                 }
             }
+
+            // Combine positional and named args
+            const allArgs: Arg[] = [...args];
+            if (Object.keys(namedArgs).length > 0) {
+                allArgs.push({ type: 'namedArgs', args: namedArgs });
+            }
+
+            // Determine syntax type
+            let syntaxType: 'parentheses' | 'named-parentheses' | 'multiline-parentheses';
+            if (isMultiline) {
+                syntaxType = 'multiline-parentheses';
+            } else if (Object.keys(namedArgs).length > 0) {
+                syntaxType = 'named-parentheses';
+            } else {
+                syntaxType = 'parentheses';
+            }
+
+            // Check for "into $var" after closing paren
+            skipWhitespaceAndComments(stream);
+            const intoInfo = this.parseInto(stream);
+
+            // Check for callback block (do/with)
+            const callback = this.parseCallback(stream, context);
+
+            const endToken = stream.current() || startToken;
+            const codePos = context?.createCodePosition 
+                ? context.createCodePosition(startToken, endToken)
+                : createCodePosition(startToken, endToken);
+
+            return {
+                type: 'command',
+                name,
+                args: allArgs,
+                syntaxType,
+                into: intoInfo || undefined,
+                callback,
+                codePos
+            };
+        } finally {
+            // Always pop the context, even if we error out
+            stream.popContext();
         }
+    }
+
+    /**
+     * Parse space-separated function call: command arg1 arg2
+     */
+    private static parseSpaceSeparatedCall(
+        stream: TokenStream,
+        name: string,
+        startToken: Token,
+        startLine: number,
+        context?: CommandParserContext
+    ): CommandCall {
+        // Push function call context
+        stream.pushContext(ParsingContext.FUNCTION_CALL);
         
-        // Check next line if not found on same line
-        const nextLineNumber = parenEndLine + 1;
-        if (nextLineNumber < this.context.lines.length) {
-            const nextLine = this.context.getTrimmedLine(nextLineNumber);
-            if (nextLine && !nextLine.startsWith('#')) {
-                const tokens = Lexer.tokenize(nextLine);
-                // Check if line starts with "into"
-                if (tokens.length >= 2 && tokens[0] === 'into' && LexerUtils.isVariable(tokens[1])) {
-                    const { name, path } = LexerUtils.parseVariablePath(tokens[1]);
-                    // Advance past the "into" line
-                    if (nextLineNumber + 1 > this.context.getCurrentLine()) {
-                        this.context.setCurrentLine(nextLineNumber + 1);
+        try {
+            const args: Arg[] = [];
+            const namedArgs: Record<string, Arg> = [];
+            const startLineNum = startToken.line;
+
+        // Special handling for "set" command with optional "as" keyword
+        // Syntax: set $var [as] value [fallback]
+        if (name === 'set') {
+            // Parse first argument (variable)
+            skipWhitespaceAndComments(stream);
+            const varArgResult = this.parseArgument(stream, context);
+            if (!varArgResult || varArgResult.isNamed) {
+                throw new Error('set command requires a variable as first argument');
+            }
+            args.push(varArgResult.arg);
+            
+            // Check for optional "as" keyword
+            // Note: "as" is not in the KEYWORDS set, so it's tokenized as IDENTIFIER
+            skipWhitespaceAndComments(stream);
+            const nextToken = stream.current();
+            if (nextToken && (nextToken.kind === TokenKind.KEYWORD || nextToken.kind === TokenKind.IDENTIFIER) && nextToken.text === 'as') {
+                // Consume "as" keyword
+                stream.next();
+                skipWhitespaceAndComments(stream);
+            }
+            
+            // Parse remaining arguments (value and optional fallback)
+            while (!stream.isAtEnd()) {
+                const token = stream.current();
+                if (!token) break;
+
+                // Stop at EOF or newline
+                if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) {
+                    break;
+                }
+
+                // Stop if we've moved to a different line
+                if (token.line !== startLineNum) {
+                    break;
+                }
+
+                // Skip comments
+                if (token.kind === TokenKind.COMMENT) {
+                    stream.next();
+                    continue;
+                }
+
+                // Parse argument
+                const argResult = this.parseArgument(stream, context);
+                if (argResult) {
+                    if (argResult.isNamed) {
+                        namedArgs[argResult.key!] = argResult.arg;
+                    } else {
+                        args.push(argResult.arg);
                     }
-                    return { targetName: name, targetPath: path };
+                } else {
+                    // If we can't parse, skip the token
+                    stream.next();
+                }
+            }
+        } else {
+            // Regular command parsing
+            // Collect arguments until end of line
+            let lastIndex = -1;
+            let loopCount = 0;
+            while (!stream.isAtEnd()) {
+                const currentIndex = stream.getPosition();
+                if (currentIndex === lastIndex) {
+                    loopCount++;
+                    if (loopCount > 100) {
+                         throw new Error(`Infinite loop in CommandParser (space separated) at index ${currentIndex}`);
+                    }
+                } else {
+                    lastIndex = currentIndex;
+                    loopCount = 0;
+                }
+
+                const token = stream.current();
+                if (!token) break;
+
+                // Stop at EOF or newline
+                if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) {
+                    break;
+                }
+
+                // Stop if we've moved to a different line
+                if (token.line !== startLineNum) {
+                    break;
+                }
+
+                // Skip comments
+                if (token.kind === TokenKind.COMMENT) {
+                    stream.next();
+                    continue;
+                }
+
+                // Parse argument
+                const argResult = this.parseArgument(stream, context);
+                if (argResult) {
+                    if (argResult.isNamed) {
+                        namedArgs[argResult.key!] = argResult.arg;
+                    } else {
+                        args.push(argResult.arg);
+                    }
+                } else {
+                    // If we can't parse, skip the token
+                    stream.next();
                 }
             }
         }
-        
+
+        // Combine positional and named args
+        const allArgs: Arg[] = [...args];
+        if (Object.keys(namedArgs).length > 0) {
+            allArgs.push({ type: 'namedArgs', args: namedArgs });
+        }
+
+        // Check for "into $var"
+        skipWhitespaceAndComments(stream);
+        const intoInfo = this.parseInto(stream);
+
+        // Check for callback block
+        const callback = this.parseCallback(stream, context);
+
+            const endToken = stream.current() || startToken;
+            const codePos = context?.createCodePosition 
+                ? context.createCodePosition(startToken, endToken)
+                : createCodePosition(startToken, endToken);
+
+            return {
+                type: 'command',
+                name,
+                args: allArgs,
+                into: intoInfo || undefined,
+                callback,
+                codePos
+            };
+        } finally {
+            // Always pop the context, even if we error out
+            stream.popContext();
+        }
+    }
+
+    /**
+     * Parse a single argument (positional or named)
+     */
+    private static parseArgument(
+        stream: TokenStream,
+        context?: CommandParserContext
+    ): { arg: Arg; isNamed: boolean; key?: string } | null {
+        const token = stream.current();
+        if (!token) return null;
+
+        // Check for named argument: key=value or $param=value
+        if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
+            const nextToken = stream.peek(1);
+            if (nextToken && nextToken.kind === TokenKind.ASSIGN) {
+                // Named argument: key = value
+                const key = token.text;
+                stream.next(); // Consume key
+                stream.next(); // Consume '='
+                skipWhitespaceAndComments(stream);
+                
+                const valueArg = this.parseArgumentValue(stream, context);
+                if (valueArg) {
+                    return { arg: valueArg, isNamed: true, key };
+                }
+            }
+        }
+
+        // Check for variable named argument: $param=value
+        if (token.kind === TokenKind.VARIABLE && token.text !== '$') {
+            const varText = token.text;
+            const nextToken = stream.peek(1);
+            if (nextToken && nextToken.kind === TokenKind.ASSIGN) {
+                const { name } = LexerUtils.parseVariablePath(varText);
+                if (name && /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+                    stream.next(); // Consume variable
+                    stream.next(); // Consume '='
+                    skipWhitespaceAndComments(stream);
+                    
+                    const valueArg = this.parseArgumentValue(stream, context);
+                    if (valueArg) {
+                        return { arg: valueArg, isNamed: true, key: name };
+                    }
+                }
+            }
+        }
+
+        // Positional argument
+        const valueArg = this.parseArgumentValue(stream, context);
+        if (valueArg) {
+            return { arg: valueArg, isNamed: false };
+        }
+
         return null;
     }
-    
+
     /**
-     * Parse command from tokens (space-separated syntax)
+     * Parse an argument value (handles literals, variables, subexpressions, objects, arrays)
      */
-    parseCommandFromTokens(tokens: string[], startLine?: number): CommandCall {
-        const commandStartLine = startLine !== undefined ? startLine : this.context.getCurrentLine();
-        if (tokens.length === 0) {
-            throw this.context.createError('empty command', this.context.getCurrentLine());
+    private static parseArgumentValue(
+        stream: TokenStream,
+        context?: CommandParserContext
+    ): Arg | null {
+        const token = stream.current();
+        if (!token) return null;
+
+        // Last value: $
+        if (token.kind === TokenKind.VARIABLE && token.text === '$') {
+            stream.next();
+            return { type: 'lastValue' };
         }
 
-        // Handle module function calls: math.add -> tokens: ["math", ".", "add"]
-        // Combine module name and function name if second token is "."
-        let name: string;
-        let argStartIndex = 1;
-        if (tokens.length >= 3 && tokens[1] === '.') {
-            // Validate module name doesn't start with a number
-            if (/^\d/.test(tokens[0])) {
-                throw this.context.createError(`module name cannot start with a number: ${tokens[0]}`, this.context.getCurrentLine());
-            }
-            // Validate function name doesn't start with a number
-            if (/^\d/.test(tokens[2])) {
-                throw this.context.createError(`function name cannot start with a number: ${tokens[2]}`, this.context.getCurrentLine());
-            }
-            name = `${tokens[0]}.${tokens[2]}`;
-            argStartIndex = 3;
-        } else {
-            name = tokens[0];
-            // Validate function name doesn't start with a number
-            if (/^\d/.test(name)) {
-                throw this.context.createError(`function name cannot start with a number: ${name}`, this.context.getCurrentLine());
-            }
-        }
-        
-        // Validate that the first token is not a literal number, string, variable, or last value reference
-        if (LexerUtils.isNumber(name)) {
-            throw this.context.createError(`expected command name, got number: ${name}`, this.context.getCurrentLine());
-        }
-        if (LexerUtils.isString(name)) {
-            throw this.context.createError(`expected command name, got string literal: ${name}`, this.context.getCurrentLine());
-        }
-        if (LexerUtils.isVariable(name) || LexerUtils.isPositionalParam(name)) {
-            throw this.context.createError(`expected command name, got variable: ${name}`, this.context.getCurrentLine());
-        }
-        if (LexerUtils.isLastValue(name)) {
-            throw this.context.createError(`expected command name, got last value reference: ${name}`, this.context.getCurrentLine());
-        }
-        
-        const positionalArgs: Arg[] = [];
-        const namedArgs: Record<string, Arg> = {};
-        let currentLineIndex = this.context.getCurrentLine();
-        let line = this.context.lines[currentLineIndex];
-
-        // We need to scan the original line to find $(...) subexpressions
-        let i = argStartIndex;
-        
-        // Find the position after the command name in the original line
-        let nameEndPos: number;
-        if (argStartIndex === 3) {
-            // Module function: tokens[0] + "." + tokens[2]
-            const moduleToken = tokens[0];
-            const modulePos = line.indexOf(moduleToken);
-            nameEndPos = modulePos + moduleToken.length + 1 + tokens[2].length;
-        } else {
-            nameEndPos = line.indexOf(name) + name.length;
-        }
-        let pos = nameEndPos;
-        
-        // Skip whitespace after command name
-        while (pos < line.length && /\s/.test(line[pos])) {
-            pos++;
+        // Variable
+        if (token.kind === TokenKind.VARIABLE) {
+            const { name, path } = LexerUtils.parseVariablePath(token.text);
+            stream.next();
+            return { type: 'var', name, path };
         }
 
-        while (i < tokens.length || pos < line.length || currentLineIndex < this.context.lines.length) {
-            // Update line if we've moved to a new line
-            if (currentLineIndex !== this.context.getCurrentLine()) {
-                currentLineIndex = this.context.getCurrentLine();
-                line = this.context.lines[currentLineIndex];
-                pos = 0;
-                // Skip whitespace at start of new line
-                while (pos < line.length && /\s/.test(line[pos])) {
-                    pos++;
-                }
+        // String
+        if (token.kind === TokenKind.STRING) {
+            const value = token.value !== undefined ? token.value : LexerUtils.parseString(token.text);
+            stream.next();
+            return { type: 'string', value };
+        }
+
+        // Number
+        if (token.kind === TokenKind.NUMBER) {
+            const value = token.value !== undefined ? token.value : parseFloat(token.text);
+            stream.next();
+            return { type: 'number', value };
+        }
+
+        // Boolean
+        if (token.kind === TokenKind.BOOLEAN) {
+            const value = token.value !== undefined ? token.value : (token.text === 'true');
+            stream.next();
+            return { type: 'literal', value };
+        }
+
+        // Null
+        if (token.kind === TokenKind.NULL) {
+            stream.next();
+            return { type: 'literal', value: null };
+        }
+
+        // Subexpression: $(...)
+        if (token.kind === TokenKind.VARIABLE && token.text === '$') {
+            const nextToken = stream.peek(1);
+            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
+                const subexprResult = parseSubexpression(stream);
+                return { type: 'subexpr', code: subexprResult.code };
+            }
+        }
+
+        // Object literal: {...}
+        if (token.kind === TokenKind.LBRACE) {
+            const objResult = ObjectLiteralParser.parse(stream);
+            return { type: 'object', code: objResult.code };
+        }
+
+        // Array literal: [...]
+        if (token.kind === TokenKind.LBRACKET) {
+            const arrResult = ArrayLiteralParser.parse(stream);
+            return { type: 'array', code: arrResult.code };
+        }
+
+        // Identifier/keyword as literal
+        if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
+            const value = token.text;
+            stream.next();
+            return { type: 'literal', value };
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse "into $var" syntax
+     */
+    private static parseInto(stream: TokenStream): { targetName: string; targetPath?: AttributePathSegment[] } | null {
+        const savedPos = stream.save();
+        skipWhitespaceAndComments(stream);
+
+        const intoToken = stream.current();
+        if (!intoToken || intoToken.text !== 'into') {
+            stream.restore(savedPos);
+            return null;
+        }
+
+        stream.next(); // Consume 'into'
+        skipWhitespaceAndComments(stream);
+
+        const varToken = stream.current();
+        if (!varToken || varToken.kind !== TokenKind.VARIABLE) {
+            stream.restore(savedPos);
+            return null;
+        }
+
+        const { name, path } = LexerUtils.parseVariablePath(varToken.text);
+        stream.next();
+
+        return { targetName: name, targetPath: path };
+    }
+
+    /**
+     * Parse callback block (do/with)
+     */
+    private static parseCallback(
+        stream: TokenStream,
+        context?: CommandParserContext
+    ): ScopeBlock | undefined {
+        if (!context?.parseScope) {
+            return undefined;
+        }
+
+        const savedPos = stream.save();
+        skipWhitespaceAndComments(stream);
+
+        const token = stream.current();
+        if (!token) {
+            stream.restore(savedPos);
+            return undefined;
+        }
+
+        // Check for 'do' or 'with' keyword
+        if (token.kind === TokenKind.KEYWORD && (token.text === 'do' || token.text === 'with')) {
+            // Don't restore - we found a callback
+            return context.parseScope(stream);
+        }
+
+        stream.restore(savedPos);
+        return undefined;
+    }
+}
+
+/**
+ * Helper: Skip whitespace and comment tokens (but not newlines)
+ */
+function skipWhitespaceAndComments(stream: TokenStream): void {
+    while (!stream.isAtEnd()) {
+        const token = stream.current();
+        if (!token) break;
+        if (token.kind === TokenKind.COMMENT) {
+            stream.next();
+            continue;
+        }
+        // Don't skip newlines - they're statement boundaries
+        break;
+    }
+}
+
+/**
+ * Helper: Parse subexpression $(...)
+ */
+function parseSubexpression(stream: TokenStream): { code: string; endToken: Token } {
+    const dollarToken = stream.current();
+    if (!dollarToken || dollarToken.kind !== TokenKind.VARIABLE || dollarToken.text !== '$') {
+        throw new Error('Expected $ at start of subexpression');
+    }
+    
+    // Push subexpression context
+    stream.pushContext(ParsingContext.SUBEXPRESSION);
+    
+    try {
+        stream.next(); // Consume $
+
+        const lparen = stream.expect(TokenKind.LPAREN, 'Expected ( after $ in subexpression');
+        
+        let depth = 1;
+        const tokens: Token[] = [];
+        
+        while (!stream.isAtEnd() && depth > 0) {
+            const token = stream.current();
+            if (!token) break;
+            
+            // Skip string tokens - they're already tokenized
+            if (token.kind === TokenKind.STRING) {
+                tokens.push(token);
+                stream.next();
+                continue;
             }
             
-            // Check if we're at a $( subexpression in the current line
-            if (pos < line.length - 1 && line[pos] === '$' && line[pos + 1] === '(') {
-                // Extract the subexpression code
-                const subexprCode = this.context.extractSubexpression(line, pos);
-                positionalArgs.push({ type: 'subexpr', code: subexprCode.code });
-                
-                // Skip past the $() in the current line
-                pos = subexprCode.endPos;
-                
-                // Skip any tokens that were part of this subexpression
-                while (i < tokens.length) {
-                    const tokenStart = line.indexOf(tokens[i], pos - 100);
-                    if (tokenStart === -1 || tokenStart >= pos) {
-                        break;
-                    }
-                    i++;
-                }
-                
-                // Skip whitespace
-                while (pos < line.length && /\s/.test(line[pos])) {
-                    pos++;
-                }
-                continue;
-            }
-
-            // Check if we're at an object literal { ... }
-            if (pos < line.length && line[pos] === '{') {
-                const startLineIndex = this.context.getCurrentLine();
-                const objCode = this.context.extractObjectLiteral(line, pos);
-                positionalArgs.push({ type: 'object', code: objCode.code });
-                
-                if (this.context.getCurrentLine() > startLineIndex) {
-                    currentLineIndex = this.context.getCurrentLine();
-                    line = this.context.lines[currentLineIndex];
-                    pos = objCode.endPos;
-                    if (pos < line.length && line[pos] === '}') {
-                        pos++;
-                    }
-                    const remainingLine = line.substring(pos).trim();
-                    if (remainingLine) {
-                        const remainingTokens = Lexer.tokenize(remainingLine);
-                        tokens.splice(i, 0, ...remainingTokens);
-                    }
-                } else {
-                    pos = objCode.endPos;
-                }
-                
-                // Skip any tokens that were part of this object
-                while (i < tokens.length) {
-                    const tokenStart = line.indexOf(tokens[i], Math.max(0, pos - 100));
-                    if (tokenStart === -1 || tokenStart >= pos) {
-                        break;
-                    }
-                    i++;
-                }
-                
-                // Skip whitespace
-                while (pos < line.length && /\s/.test(line[pos])) {
-                    pos++;
-                }
-                continue;
-            }
-
-            // Check if we're at an array literal [ ... ]
-            if (pos < line.length && line[pos] === '[') {
-                const startLineIndex = this.context.getCurrentLine();
-                const arrCode = this.context.extractArrayLiteral(line, pos);
-                positionalArgs.push({ type: 'array', code: arrCode.code });
-                
-                if (this.context.getCurrentLine() > startLineIndex) {
-                    currentLineIndex = this.context.getCurrentLine();
-                    line = this.context.lines[currentLineIndex];
-                    pos = arrCode.endPos;
-                    if (pos < line.length && line[pos] === ']') {
-                        pos++;
-                    }
-                    const remainingLine = line.substring(pos).trim();
-                    if (remainingLine) {
-                        const remainingTokens = Lexer.tokenize(remainingLine);
-                        tokens.splice(i, 0, ...remainingTokens);
-                    }
-                } else {
-                    pos = arrCode.endPos;
-                }
-                
-                // Skip any tokens that were part of this array
-                while (i < tokens.length) {
-                    const tokenStart = line.indexOf(tokens[i], Math.max(0, pos - 100));
-                    if (tokenStart === -1 || tokenStart >= pos) {
-                        break;
-                    }
-                    i++;
-                }
-                
-                // Skip whitespace
-                while (pos < line.length && /\s/.test(line[pos])) {
-                    pos++;
-                }
-                continue;
-            }
-            
-            // If we've processed all tokens and we're at the end of the current line
-            if (i >= tokens.length && pos >= line.length) {
-                if (currentLineIndex < this.context.getCurrentLine()) {
-                    currentLineIndex = this.context.getCurrentLine();
-                    line = this.context.lines[currentLineIndex];
-                    pos = 0;
-                    const remainingTokens = Lexer.tokenize(line);
-                    tokens.push(...remainingTokens);
-                    while (pos < line.length && /\s/.test(line[pos])) {
-                        pos++;
-                    }
-                    continue;
-                } else {
+            if (token.kind === TokenKind.LPAREN) {
+                depth++;
+            } else if (token.kind === TokenKind.RPAREN) {
+                depth--;
+                if (depth === 0) {
+                    stream.next(); // Consume closing paren
                     break;
                 }
             }
             
-            // If we've processed all tokens from the original line but there's more content on current line
-            if (i >= tokens.length && pos < line.length) {
-                const remainingLine = line.substring(pos).trim();
-                if (remainingLine) {
-                    const remainingTokens = Lexer.tokenize(remainingLine);
-                    tokens.push(...remainingTokens);
-                    pos = line.length;
-                }
+            if (depth > 0) {
+                tokens.push(token);
             }
             
-            // If we still have no tokens, break
-            if (i >= tokens.length) {
-                break;
-            }
-            
-            const token = tokens[i];
-            
-            // Check if this is a module function reference
-            let actualToken = token;
-            let tokensToSkip = 0;
-            if (i + 2 < tokens.length && tokens[i + 1] === '.' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(tokens[i + 2])) {
-                if (!/^\d/.test(token) && /^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
-                    actualToken = `${token}.${tokens[i + 2]}`;
-                    tokensToSkip = 2;
-                }
-            }
-            
-            // Check if this is a named argument
-            let key: string | null = null;
-            let valueStr: string | null = null;
-            
-            const equalsIndex = token.indexOf('=');
-            if (equalsIndex > 0 && equalsIndex < token.length - 1 && 
-                !token.startsWith('"') && !token.startsWith("'") && !token.startsWith('`')) {
-                const beforeEquals = token.substring(0, equalsIndex).trim();
-                valueStr = token.substring(equalsIndex + 1).trim();
-                
-                if (beforeEquals.startsWith('$') && beforeEquals.length > 1) {
-                    const paramName = beforeEquals.substring(1);
-                    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                        key = paramName;
-                    }
-                }
-                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEquals)) {
-                    key = beforeEquals;
-                }
-            }
-            
-            let tokensSkipped = 0;
-            if (!key && tokensToSkip === 0 && i + 1 < tokens.length && tokens[i + 1] === '=') {
-                if (LexerUtils.isVariable(token)) {
-                    const { name: paramName } = LexerUtils.parseVariablePath(token);
-                    if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                        key = paramName;
-                        if (i + 2 < tokens.length) {
-                            valueStr = tokens[i + 2];
-                            tokensSkipped = 2;
-                        } else {
-                            valueStr = '';
-                            tokensSkipped = 1;
-                        }
-                    }
-                }
-                else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
-                    key = token;
-                    if (i + 2 < tokens.length) {
-                        valueStr = tokens[i + 2];
-                        tokensSkipped = 2;
-                    } else {
-                        valueStr = '';
-                        tokensSkipped = 1;
-                    }
-                }
-            }
-            
-            if (key && valueStr !== null) {
-                const valueArg = ArgumentParser.parseArgumentValue(valueStr);
-                namedArgs[key] = valueArg;
-                
-                const tokenPos = line.indexOf(token, pos);
-                if (tokenPos !== -1) {
-                    pos = tokenPos + token.length;
-                    while (pos < line.length && /\s/.test(line[pos])) {
-                        pos++;
-                    }
-                }
-                if (tokensSkipped > 0) {
-                    i += tokensSkipped;
-                    continue;
-                }
-            }
-            
-            // Parse as positional argument
-            let arg: Arg;
-            if (actualToken === '$') {
-                arg = { type: 'lastValue' };
-            } else if (LexerUtils.isVariable(actualToken)) {
-                const { name: varName, path } = LexerUtils.parseVariablePath(actualToken);
-                arg = { type: 'var', name: varName, path };
-            } else if (actualToken === 'true') {
-                arg = { type: 'literal', value: true };
-            } else if (actualToken === 'false') {
-                arg = { type: 'literal', value: false };
-            } else if (actualToken === 'null') {
-                arg = { type: 'literal', value: null };
-            } else if (LexerUtils.isPositionalParam(actualToken)) {
-                arg = { type: 'var', name: actualToken.slice(1) };
-            } else if (LexerUtils.isString(actualToken)) {
-                arg = { type: 'string', value: LexerUtils.parseString(actualToken) };
-            } else if (LexerUtils.isNumber(actualToken)) {
-                arg = { type: 'number', value: parseFloat(actualToken) };
-            } else {
-                arg = { type: 'literal', value: actualToken };
-            }
-            
-            positionalArgs.push(arg);
-            
-            // Advance position in line
-            const tokenPos = line.indexOf(token, pos);
-            if (tokenPos !== -1) {
-                const advanceLength = tokensToSkip > 0 ? 
-                    (token.length + 1 + tokens[i + 2].length) : token.length;
-                pos = tokenPos + advanceLength;
-                while (pos < line.length && /\s/.test(line[pos])) {
-                    pos++;
-                }
-            }
-            
-            i += 1 + tokensToSkip;
+            stream.next();
         }
-
-        // Combine positional args and named args
-        const args: Arg[] = [...positionalArgs];
-        if (Object.keys(namedArgs).length > 0) {
-            args.push({ type: 'namedArgs', args: namedArgs });
+        
+        if (depth > 0) {
+            throw new Error('Unclosed subexpression');
         }
-
-        // Determine end line
-        const endLine = currentLineIndex;
-        if (currentLineIndex > this.context.getCurrentLine()) {
-            this.context.setCurrentLine(currentLineIndex);
-        }
-        return { type: 'command', name, args, codePos: this.context.createCodePositionFromLines(commandStartLine, endLine) };
+        
+        const endToken = stream.current() || lparen;
+        const code = tokens.map(t => t.text).join('');
+        
+        return { code, endToken };
+    } finally {
+        // Always pop the context
+        stream.popContext();
     }
+}
+
+
+/**
+ * Helper: Create CodePosition from start and end tokens
+ */
+function createCodePosition(startToken: Token, endToken: Token): CodePosition {
+    return {
+        startRow: startToken.line - 1, // Convert to 0-based
+        startCol: startToken.column,
+        endRow: endToken.line - 1, // Convert to 0-based
+        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
+    };
 }

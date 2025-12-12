@@ -1,0 +1,58 @@
+# Expression Tests
+# Tests for basic math operations and expressions
+
+log "=== Expression Tests ==="
+
+# Test 1: Basic math operations
+log "Test 1: Basic math operations"
+math.add 10 20
+$result = $
+test.assertEqual $result 30 "Math.add failed"
+
+math.multiply $result 5
+test.assertEqual $ 150 "Math.multiply failed"
+
+# Test 2: Using last value ($) in chained operations
+log "Test 2: Chained operations with last value"
+math.add 7 8
+math.multiply $ 2
+test.assertEqual $ 30 "Chained operations result failed"
+
+# Test 3: Complex expressions
+log "Test 3: Complex expressions"
+$age = 18
+$citizen = "yes"
+if ($age >= 18) && ($citizen == "yes") then log "Test 3 - Complex expression works"
+
+# Test 4: Math operations with multiple arguments
+log "Test 4: Math operations with multiple arguments"
+math.add 1 2 3 4
+test.assertEqual $ 10 "Math.add multiple args failed"
+
+math.multiply 2 3 4
+test.assertEqual $ 24 "Math.multiply multiple args failed"
+
+# Test 5: Math operations in expressions
+log "Test 5: Math operations in expressions"
+$value = 42
+if $value > 0
+  if $value < 50
+    log "Test 5 - Value is between 0 and 50"
+  else
+    log "Test 5 - Value is 50 or greater"
+  endif
+else
+  log "Test 5 - Value is negative or zero"
+endif
+
+# Test 6: Math operations with variables
+log "Test 6: Math operations with variables"
+$num1 = 10
+$num2 = 20
+math.add $num1 $num2
+test.assertEqual $ 30 "Math operations with variables failed"
+
+math.multiply $num1 3
+test.assertEqual $ 30 "Math operations with variable and literal failed"
+
+log "=== Expression Tests Complete ==="

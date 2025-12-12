@@ -255,3 +255,4 @@ $testVar56z5 = 1
 test.assertEqual $testVar56z5 1 "return in do block with into - code after block should execute"
 
 log "Test 56 - into syntax sugar: All passed"
+

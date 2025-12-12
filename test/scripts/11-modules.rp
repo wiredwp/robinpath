@@ -1,0 +1,369 @@
+# Module Tests
+# Tests for math, string, array, json, time, random modules
+
+log "=== Module Tests ==="
+
+# Test 1: Math module
+log "Test 1: Math module"
+clear
+do
+  math.add 5 10
+  test.assertEqual $ 15 "Math.add failed"
+enddo
+
+clear
+do
+  math.add 1 2 3 4
+  test.assertEqual $ 10 "Math.add multiple args failed"
+enddo
+
+clear
+do
+  math.multiply 5 3
+  test.assertEqual $ 15 "Math.multiply failed"
+enddo
+
+clear
+do
+  math.multiply 2 3 4
+  test.assertEqual $ 24 "Math.multiply multiple args failed"
+enddo
+
+clear
+do
+  math.subtract 10 3
+  test.assertEqual $ 7 "Math.subtract failed"
+enddo
+
+clear
+do
+  math.divide 15 3
+  test.assertEqual $ 5 "Math.divide failed"
+enddo
+
+clear
+do
+  math.modulo 17 5
+  test.assertEqual $ 2 "Math.modulo failed"
+enddo
+
+clear
+do
+  math.power 2 8
+  test.assertEqual $ 256 "Math.power failed"
+enddo
+
+clear
+do
+  math.sqrt 16
+  test.assertEqual $ 4 "Math.sqrt failed"
+enddo
+
+clear
+do
+  math.abs -5
+  test.assertEqual $ 5 "Math.abs failed"
+enddo
+
+clear
+do
+  math.round 3.7
+  test.assertEqual $ 4 "Math.round failed"
+enddo
+
+clear
+do
+  math.floor 3.7
+  test.assertEqual $ 3 "Math.floor failed"
+enddo
+
+clear
+do
+  math.ceil 3.2
+  test.assertEqual $ 4 "Math.ceil failed"
+enddo
+
+clear
+do
+  math.min 5 2 8 1
+  test.assertEqual $ 1 "Math.min failed"
+enddo
+
+clear
+do
+  math.max 5 2 8 1
+  test.assertEqual $ 8 "Math.max failed"
+enddo
+
+# Test 2: String module
+log "Test 2: String module"
+clear
+do
+  string.length "hello"
+  test.assertEqual $ 5 "String.length failed"
+enddo
+
+clear
+do
+  string.substring "hello" 1 4
+  test.assertEqual $ "ell" "String.substring failed"
+enddo
+
+clear
+do
+  string.toUpperCase "hello"
+  test.assertEqual $ "HELLO" "String.toUpperCase failed"
+enddo
+
+clear
+do
+  string.toLowerCase "HELLO"
+  test.assertEqual $ "hello" "String.toLowerCase failed"
+enddo
+
+clear
+do
+  string.trim "  hello  "
+  test.assertEqual $ "hello" "String.trim failed"
+enddo
+
+clear
+do
+  string.replace "hello world" "world" "universe"
+  test.assertEqual $ "hello universe" "String.replace failed"
+enddo
+
+clear
+do
+  string.replaceAll "a b a" "a" "x"
+  test.assertEqual $ "x b x" "String.replaceAll failed"
+enddo
+
+string.split "a,b,c" ","
+$splitArr = $
+clear
+do
+  array.get $splitArr 0
+  test.assertEqual $ "a" "String.split first element failed"
+enddo
+
+string.startsWith "hello" "he"
+test.assertTrue $ "String.startsWith failed"
+string.endsWith "hello" "lo"
+test.assertTrue $ "String.endsWith failed"
+string.contains "hello" "ell"
+test.assertTrue $ "String.contains failed"
+
+clear
+do
+  string.indexOf "hello" "l"
+  test.assertEqual $ 2 "String.indexOf failed"
+enddo
+
+clear
+do
+  string.lastIndexOf "hello" "l"
+  test.assertEqual $ 3 "String.lastIndexOf failed"
+enddo
+
+clear
+do
+  string.charAt "hello" 1
+  test.assertEqual $ "e" "String.charAt failed"
+enddo
+
+clear
+do
+  string.padStart "5" 3 "0"
+  test.assertEqual $ "005" "String.padStart failed"
+enddo
+
+clear
+do
+  string.padEnd "5" 3 "0"
+  test.assertEqual $ "500" "String.padEnd failed"
+enddo
+
+clear
+do
+  string.repeat "ha" 3
+  test.assertEqual $ "hahaha" "String.repeat failed"
+enddo
+
+# Test 3: Array module
+log "Test 3: Array module"
+$arr = range 1 5
+clear
+do
+  array.length $arr
+  test.assertEqual $ 5 "Array.length failed"
+enddo
+
+clear
+do
+  array.get $arr 2
+  test.assertEqual $ 3 "Array.get failed"
+enddo
+
+array.slice $arr 1 4
+$sliced = $
+clear
+do
+  array.length $sliced
+  test.assertEqual $ 3 "Array.slice length failed"
+enddo
+
+clear
+do
+  array.get $sliced 0
+  test.assertEqual $ 2 "Array.slice content failed"
+enddo
+
+array.push $arr 6
+$pushed = $
+clear
+do
+  array.length $pushed
+  test.assertEqual $ 6 "Array.push length failed"
+enddo
+
+clear
+do
+  array.get $pushed 5
+  test.assertEqual $ 6 "Array.push content failed"
+enddo
+
+$arr1 = range 1 2
+$arr2 = range 3 4
+array.concat $arr1 $arr2
+$concatted = $
+clear
+do
+  array.length $concatted
+  test.assertEqual $ 4 "Array.concat length failed"
+enddo
+
+clear
+do
+  array.get $concatted 0
+  test.assertEqual $ 1 "Array.concat content failed"
+enddo
+
+clear
+do
+  array.join $arr ","
+  test.assertEqual $ "1,2,3,4,5" "Array.join failed"
+enddo
+
+array.create 1 2 3
+$created = $
+clear
+do
+  array.length $created
+  test.assertEqual $ 3 "Array.create length failed"
+enddo
+
+clear
+do
+  array.get $created 0
+  test.assertEqual $ 1 "Array.create first element failed"
+enddo
+
+# Test 4: Json module
+log "Test 4: Json module"
+$jsonStr = '{"name": "John", "age": 30}'
+json.parse $jsonStr
+$parsed = $
+test.assertNotNull $parsed "Json.parse failed"
+json.stringify $parsed
+$stringified = $
+string.contains $stringified "John"
+test.assertTrue $ "Json.stringify failed"
+json.isValid $jsonStr
+test.assertTrue $ "Json.isValid failed"
+
+# Test 5: Object module (keys, values, entries, merge, clone)
+log "Test 5: Object module"
+$testObj = $parsed
+keys $testObj
+$keys = $
+test.assertContains $keys "name" "Object.keys failed"
+values $testObj
+$values = $
+test.assertContains $values "John" "Object.values failed"
+
+json.parse '{"a": 1}'
+$obj1 = $
+json.parse '{"b": 2}'
+$obj2 = $
+merge $obj1 $obj2
+$merged = $
+clear
+do
+  get $merged "a"
+  test.assertEqual $ 1 "Object.merge failed"
+enddo
+clear
+do
+  get $merged "b"
+  test.assertEqual $ 2 "Object.merge failed"
+enddo
+
+clone $parsed
+$cloned = $
+clear
+do
+  get $cloned "name"
+  test.assertEqual $ "John" "Object.clone failed"
+enddo
+
+entries $cloned
+$entries = $
+test.assertNotNull $entries "Object.entries failed"
+
+# Test 6: Time module
+log "Test 6: Time module"
+time.now
+$now = $
+test.assertNotNull $now "Time.now failed"
+test.assertType $now "string" "Time.now type failed"
+time.timestamp
+$ts = $
+test.assertType $ts "number" "Time.timestamp type failed"
+test.assertGreater $ts 0 "Time.timestamp value failed"
+time.format "2024-01-15"
+$formatted = $
+test.assertType $formatted "string" "Time.format type failed"
+time.addDays "2024-01-15T00:00:00.000Z" 7
+$added = $
+test.assertNotNull $added "Time.addDays failed"
+clear
+do
+  time.diffDays "2024-01-01" "2024-01-08"
+  test.assertEqual $ 7 "Time.diffDays failed"
+enddo
+
+# Test 7: Random module
+log "Test 7: Random module"
+random.int 1 10
+$randInt = $
+test.assertGreaterOrEqual $randInt 1 "Random.int min failed"
+test.assertLessOrEqual $randInt 10 "Random.int max failed"
+random.float
+$randFloat = $
+test.assertGreaterOrEqual $randFloat 0 "Random.float min failed"
+test.assertLess $randFloat 1 "Random.float max failed"
+random.uuid
+$uuid = $
+test.assertType $uuid "string" "Random.uuid type failed"
+clear
+do
+  string.length $uuid
+  test.assertGreater $ 30 "Random.uuid length failed"
+enddo
+$arr = range 1 5
+random.choice $arr
+$choice = $
+test.assertContains $arr $choice "Random.choice failed"
+
+log "=== Module Tests Complete ==="

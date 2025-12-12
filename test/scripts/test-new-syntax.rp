@@ -1,0 +1,54 @@
+# Test new function call syntaxes
+
+log "=== Testing New Function Call Syntaxes ==="
+
+# Test 1: Multi-line function call without commas
+log "Test 1: Multi-line function call"
+def add $a $b
+  math.add $a $b
+enddef
+
+clear
+do
+  add(
+    5
+    5
+  )
+  test.assertEqual $ 10 "Multi-line function call failed"
+enddo
+
+# Test 2: Module function call without commas (single line)
+log "Test 2: Module function call without commas"
+clear
+do
+  math.add(5 5)
+  test.assertEqual $ 10 "Module function call without commas failed"
+enddo
+
+# Test 3: Named arguments without commas
+log "Test 3: Named arguments without commas"
+def fn $a $b
+  string.concat $a $b
+enddef
+
+clear
+do
+  fn(
+    a="abc"
+    b="def"
+  )
+  test.assertEqual $ "abcdef" "Named arguments without commas failed"
+enddo
+
+# Test 4: Mixed syntax - function call with module prefix
+log "Test 4: Module prefix with multi-line"
+clear
+do
+  math.add(
+    10
+    20
+  )
+  test.assertEqual $ 30 "Module prefix multi-line failed"
+enddo
+
+log "=== New Syntax Tests Complete ==="

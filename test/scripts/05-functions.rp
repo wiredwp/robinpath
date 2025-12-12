@@ -1,0 +1,435 @@
+# Function Tests
+# Tests for def functions, return statements, and parameters
+
+log "=== Function Tests ==="
+
+# Test 1: Basic user-defined function
+log "Test 1: Basic user-defined function"
+def greet
+  log "Test 1 - Hello" $1
+  log "Test 1 - Your age is" $2
+  math.add $2 1
+enddef
+
+greet "Alice" 25
+test.assertEqual $ 26 "Basic function failed"
+
+# Test 2: Function with return value
+log "Test 2: Function with return value"
+def sum_and_double
+  math.add $1 $2
+  math.multiply $ 2
+enddef
+
+sum_and_double 10 20
+test.assertEqual $ 60 "Function with return value failed"
+
+# Test 3: Return statement in functions
+log "Test 3: Return statement in functions"
+def return_value
+  return 100
+  log "This should not execute"
+enddef
+
+clear
+do
+  return_value
+  test.assertEqual $ 100 "Function return value failed"
+enddo
+
+def return_variable
+  $result = 200
+  return $result
+  log "This should not execute"
+enddef
+
+clear
+do
+  return_variable
+  test.assertEqual $ 200 "Function return variable failed"
+enddo
+
+def return_expression
+  math.add 10 20
+  return $
+  log "This should not execute"
+enddef
+
+clear
+do
+  return_expression
+  test.assertEqual $ 30 "Function return expression failed"
+enddo
+
+def return_early
+  if true
+    return "early"
+  endif
+  log "This should not execute"
+enddef
+
+clear
+do
+  return_early
+  test.assertEqual $ "early" "Function early return failed"
+enddo
+
+def return_no_value
+  $temp = 50
+  return
+  log "This should not execute"
+enddef
+
+clear
+do
+  return_no_value
+  test.assertEqual $ null "Function return last value failed"
+enddo
+
+# Test 4: Return with different value types
+log "Test 4: Return with different types"
+def return_string
+  return "hello"
+enddef
+
+clear
+do
+  return_string
+  test.assertEqual $ "hello" "Return string failed"
+enddo
+
+def return_number
+  return 42
+enddef
+
+clear
+do
+  return_number
+  test.assertEqual $ 42 "Return number failed"
+enddo
+
+def return_boolean
+  return true
+enddef
+
+clear
+do
+  return_boolean
+  test.assertEqual $ true "Return boolean failed"
+enddo
+
+def return_null
+  return null
+enddef
+
+clear
+do
+  return_null
+  test.assertEqual $ null "Return null failed"
+enddo
+
+# Test 5: Return in loops
+log "Test 5: Return in loops"
+def return_in_for
+  for $i in range 1 10
+    if $i == 3
+      return $i
+    endif
+  endfor
+  return 0
+enddef
+
+clear
+do
+  return_in_for
+  test.assertEqual $ 3 "Return in for loop failed"
+enddo
+
+# Test 7: Function parameters and arguments
+log "Test 7: Function parameters and arguments"
+def greetLog $name $age
+  log "Test 7 - Hello" $name
+  log "Test 7 - Age:" $age
+  log "Test 7 - Positional 1:" $1
+  log "Test 7 - Positional 2:" $2
+enddef
+
+clear
+do
+  greetLog("Alice" 25)
+  test.assertNull $ "Function with param names - basic call failed"
+enddo
+
+# Test 8: Parameter name aliases
+log "Test 8: Parameter name aliases"
+def add $a $b
+  math.add $a $b
+enddef
+
+clear
+do
+  add(10 20)
+  test.assertEqual $ 30 "Function param aliases failed"
+enddo
+
+# Test 9: Function with more args than declared params
+log "Test 9: Function with extra args"
+def first $a
+  log "Test 9 - a:" $a
+  log "Test 9 - extra:" $2
+enddef
+
+clear
+do
+  first(10 20)
+  test.assertEqual $ null "Function with extra args failed"
+enddo
+
+# Test 10: Function with fewer args than declared params
+log "Test 10: Function with fewer args"
+def three $a $b $c
+  log "Test 10 - a:" $a
+  log "Test 10 - b:" $b
+  log "Test 10 - c:" $c
+enddef
+
+clear
+do
+  three(10 20)
+  test.assertEqual $ null "Function with fewer args failed"
+enddo
+
+# Test 11: Named arguments
+log "Test 11: Named arguments"
+def config $env
+  log "Test 11 - env:" $env
+  log "Test 11 - key:" $args.key
+  log "Test 11 - value:" $args.value
+enddef
+
+clear
+do
+  config("production" key="api-key" value="secret123")
+  test.assertEqual $ null "Function with named args failed"
+enddo
+
+# Test 12: Named arguments with $paramName=value syntax
+log "Test 12: Named arguments with $paramName=value syntax"
+def test_fn $a $b
+  string.concat $a $b
+enddef
+
+test_fn $a="hello" $b="world"
+test.assertEqual $ "helloworld" "CLI-style $paramName=value failed"
+
+test_fn($a="foo" $b="bar")
+test.assertEqual $ "foobar" "Parenthesized $paramName=value failed"
+
+# Test 13: Def blocks extracted first (functions can reference each other)
+log "Test 13: Def blocks extracted first"
+def fn
+  fn2
+  $result1 = $
+  fn3
+  $result2 = $
+  math.add $result1 $result2
+enddef
+
+def fn2
+  return 10
+enddef
+
+def fn3
+  return 20
+enddef
+
+clear
+do
+  fn
+  test.assertEqual $ 30 "Def blocks extracted first - fn should be able to call fn2 and fn3"
+enddo
+
+clear
+do
+  fn2
+  test.assertEqual $ 10 "Def blocks extracted first - fn2 should be callable"
+enddo
+
+clear
+do
+  fn3
+  test.assertEqual $ 20 "Def blocks extracted first - fn3 should be callable"
+enddo
+
+# Test 14: Multi-line function calls with arguments on separate lines (no commas)
+log "Test 14: Multi-line function calls"
+def test_multiline $a $b
+  math.add $a $b
+enddef
+
+clear
+do
+  test_multiline(
+    5
+    5
+  )
+  test.assertEqual $ 10 "Multi-line function call failed"
+enddo
+
+clear
+do
+  math.add(
+    10
+    20
+  )
+  test.assertEqual $ 30 "Multi-line math.add call failed"
+enddo
+
+# Test 15: Single-line function calls with space-separated arguments (no commas)
+log "Test 15: Space-separated arguments"
+def test_spaces $a $b
+  math.add $a $b
+enddef
+
+clear
+do
+  test_spaces(5 5)
+  test.assertEqual $ 10 "Space-separated function call failed"
+enddo
+
+clear
+do
+  math.add(5 5)
+  test.assertEqual $ 10 "Space-separated math.add call failed"
+enddo
+
+# Test 16: Named arguments with = syntax (multi-line)
+log "Test 16: Named arguments with = syntax"
+def test_named $a $b
+  string.concat $a $b
+enddef
+
+clear
+do
+  test_named(
+    a="abc"
+    b="def"
+  )
+  test.assertEqual $ "abcdef" "Multi-line named arguments failed"
+enddo
+
+clear
+do
+  test_named(
+    $a="hello"
+    $b="world"
+  )
+  test.assertEqual $ "helloworld" "Multi-line named arguments with $ prefix failed"
+enddo
+
+# Test 17: Named arguments with = syntax (single-line)
+log "Test 17: Single-line named arguments"
+clear
+do
+  test_named(a="foo" b="bar")
+  test.assertEqual $ "foobar" "Single-line named arguments failed"
+enddo
+
+clear
+do
+  test_named($a="x" $b="y")
+  test.assertEqual $ "xy" "Single-line named arguments with $ prefix failed"
+enddo
+
+# Test 18: Mixed positional and named arguments
+log "Test 18: Mixed positional and named arguments"
+def test_mixed $a $b $c
+  log "---->" $a $b $c
+  string.concat $a $b
+  string.concat $ $c
+enddef
+
+clear
+do
+  test_mixed(
+    "hello"
+    $c="world"
+  )
+  test.assertEqual $ "helloworld" "Mixed positional and named arguments failed"
+enddo
+
+# Test 19: define as alias for def
+log "Test 19: define as alias for def"
+define test_define_alias
+  return "define works"
+enddef
+
+clear
+do
+  test_define_alias
+  test.assertEqual $ "define works" "define alias for def failed"
+enddo
+
+define test_define_with_params $a $b
+  math.add $a $b
+enddef
+
+clear
+do
+  test_define_with_params(10 20)
+  test.assertEqual $ 30 "define with parameters failed"
+enddo
+
+define test_define_return
+  return 42
+enddef
+
+clear
+do
+  test_define_return
+  test.assertEqual $ 42 "define with return failed"
+enddo
+
+# Test 20: Optional "as" keyword after parameters
+log "Test 20: Optional 'as' keyword after parameters"
+def test_as_keyword $x $y as
+  math.add $x $y
+enddef
+
+clear
+do
+  test_as_keyword(5 10)
+  test.assertEqual $ 15 "def with 'as' keyword after parameters failed"
+enddo
+
+def test_as_keyword_no_params as
+  return "no params with as"
+enddef
+
+clear
+do
+  test_as_keyword_no_params
+  test.assertEqual $ "no params with as" "def with 'as' keyword and no params failed"
+enddo
+
+define test_define_with_as $a $b as
+  math.multiply $a $b
+enddef
+
+clear
+do
+  test_define_with_as(3 4)
+  test.assertEqual $ 12 "define with 'as' keyword after parameters failed"
+enddo
+
+def test_as_with_comment $value as # this is a comment
+  return $value
+enddef
+
+clear
+do
+  test_as_with_comment(99)
+  test.assertEqual $ 99 "def with 'as' and comment failed"
+enddo
+
+log "=== Function Tests Complete ==="

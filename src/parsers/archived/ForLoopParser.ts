@@ -1,6 +1,11 @@
+/*
+This is old code that is no longer used. It is kept here for reference.
+This is a line-based parser.
+*/
+
 /**
- * Parser for 'with' blocks (callback blocks)
- * Syntax: with [$param1 $param2 ...] [into $var] ... endwith
+ * Parser for 'for' loops
+ * Syntax: for $var in <expr> ... endfor
  * 
  * Supports both:
  * - Line-based parsing (legacy): parseBlock(startLine)
@@ -12,78 +17,83 @@ import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
-import type { CommentWithPosition, AttributePathSegment, ScopeBlock, Statement } from '../index';
+import type { CommentWithPosition, ForLoop, Statement } from '../types/Ast.type';
 
-export interface WithScopeHeader {
+export interface ForLoopHeader {
     /**
-     * Parameter names (without $)
+     * Loop variable name (without $)
      */
-    paramNames: string[];
+    varName: string;
     
     /**
-     * Into target (if present)
+     * Iterable expression as string
      */
-    intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null;
+    iterableExpr: string;
     
     /**
-     * Comments attached to the with statement
+     * Comments attached to the for statement
      */
     comments: CommentWithPosition[];
 }
 
-export class WithScopeParser extends BlockParserBase {
-    /**
-     * Whether to ignore "into" on the first line
-     * (it might be the command's "into", not the callback's)
-     */
-    private ignoreIntoOnFirstLine: boolean;
-    
-    constructor(context: BlockParserContext, ignoreIntoOnFirstLine: boolean = false) {
+export class ForLoopParser extends BlockParserBase {
+    constructor(context: BlockParserContext) {
         super(context);
-        this.ignoreIntoOnFirstLine = ignoreIntoOnFirstLine;
     }
     
     /**
-     * Parse the 'with' block header
-     * Syntax: with [$param1 $param2 ...] [into $var]
+     * Parse the 'for' loop header
+     * Syntax: for $var in <expr>
      */
-    parseHeader(): WithScopeHeader {
+    parseHeader(): ForLoopHeader {
         const line = this.context.originalLine.trim();
         const tokens = Lexer.tokenize(line);
         
-        // Check for "into $var" after "with" (can be after parameters)
-        // But ignore it if ignoreIntoOnFirstLine is true (it's the command's "into", not the callback's)
-        const { target: intoTarget, intoIndex } = this.ignoreIntoOnFirstLine 
-            ? { target: null, intoIndex: -1 }
-            : this.parseIntoTarget(tokens, 1); // Start search from index 1 (after "with")
-        const paramEndIndex = intoIndex >= 0 ? intoIndex : tokens.length;
+        // Parse: for $var in <expr>
+        if (tokens.length < 4) {
+            throw this.createError('for loop requires: for $var in <expr>');
+        }
         
-        // Parse parameter names (optional): with $a $b or with $a $b into $var
-        // Start from token index 1 (after "with"), stop before "into" if present
-        const paramNames = this.parseParameterNames(tokens, 1, paramEndIndex);
+        if (tokens[0] !== 'for') {
+            throw this.createError('expected for keyword');
+        }
         
-        // Extract inline comment from scope line
+        // Get loop variable
+        if (!LexerUtils.isVariable(tokens[1])) {
+            throw this.createError('for loop variable must be a variable (e.g., $i, $item)');
+        }
+        const varName = tokens[1].slice(1); // Remove $
+        
+        if (tokens[2] !== 'in') {
+            throw this.createError("for loop requires 'in' keyword");
+        }
+        
+        // Get iterable expression (everything after 'in')
+        const exprTokens = tokens.slice(3);
+        const iterableExpr = exprTokens.join(' ');
+        
+        // Extract inline comment from for line
         const inlineComment = this.extractInlineComment(this.context.originalLine);
         const comments: CommentWithPosition[] = [];
         if (inlineComment) {
             comments.push(this.createInlineCommentWithPosition(this.context.originalLine, inlineComment));
         }
         
-        return { paramNames, intoTarget, comments };
+        return { varName, iterableExpr, comments };
     }
     
     /**
-     * Parse the complete 'with' block (header + body)
-     * Syntax: with [$param1 $param2 ...] [into $var] ... endwith
+     * Parse the complete 'for' loop (header + body)
+     * Syntax: for $var in <expr> ... endfor
      */
-    parseBlock(startLine: number): ScopeBlock {
+    parseBlock(startLine: number): ForLoop {
         // Parse header
         const header = this.parseHeader();
-        const { paramNames, intoTarget, comments } = header;
+        const { varName, iterableExpr, comments } = header;
         
         this.context.advanceLine();
 
-        const body: ScopeBlock['body'] = [];
+        const body: ForLoop['body'] = [];
         let closed = false;
         let pendingComments: string[] = [];
         const pendingCommentLines: number[] = [];
@@ -122,7 +132,7 @@ export class WithScopeParser extends BlockParserBase {
 
             const bodyTokens = Lexer.tokenize(bodyLine);
             
-            if (bodyTokens[0] === 'endwith') {
+            if (bodyTokens[0] === 'endfor') {
                 this.context.advanceLine();
                 closed = true;
                 break;
@@ -160,31 +170,21 @@ export class WithScopeParser extends BlockParserBase {
         }
 
         if (!closed) {
-            throw this.createError('missing endwith');
+            throw this.createError('missing endfor');
         }
 
-        // If parameters are declared, include them in the scope block
-        // Note: We use type 'do' to maintain AST compatibility
-        const endLine = this.context.getCurrentLine() - 1;
-        const scopeBlock: ScopeBlock = paramNames.length > 0 
-            ? { 
-                type: 'do', 
-                paramNames, 
-                body, 
-                into: intoTarget || undefined,
-                codePos: this.context.createCodePositionFromLines(startLine, endLine) 
-            }
-            : { 
-                type: 'do', 
-                body, 
-                into: intoTarget || undefined,
-                codePos: this.context.createCodePositionFromLines(startLine, endLine) 
-            };
+        const endLine = this.context.getCurrentLine() - 1; // endfor line
+        const result: ForLoop = { 
+            type: 'forLoop', 
+            varName, 
+            iterableExpr, 
+            body,
+            codePos: this.context.createCodePositionFromLines(startLine, endLine)
+        };
         if (comments.length > 0) {
-            scopeBlock.comments = comments;
+            result.comments = comments;
         }
-        
-        return scopeBlock;
+        return result;
     }
     
     // ========================================================================
@@ -192,35 +192,48 @@ export class WithScopeParser extends BlockParserBase {
     // ========================================================================
     
     /**
-     * Parse 'with' block from TokenStream - TOKEN-BASED VERSION
+     * Parse 'for' loop from TokenStream - TOKEN-BASED VERSION
      * 
-     * @param stream - TokenStream positioned at the 'with' keyword
-     * @param headerToken - The 'with' keyword token
+     * @param stream - TokenStream positioned at the 'for' keyword
+     * @param headerToken - The 'for' keyword token
      * @param context - Context with helper methods
-     * @param ignoreIntoOnFirstLine - If true, ignore "into" on the first line (it's the command's "into", not the callback's)
-     * @returns Parsed ScopeBlock
+     * @returns Parsed ForLoop
      */
     static parseFromStream(
         stream: TokenStream,
         headerToken: Token,
-        context: BlockTokenStreamContext,
-        ignoreIntoOnFirstLine: boolean = false
-    ): ScopeBlock {
-        // 1. Validate precondition: stream should be at 'with'
-        if (headerToken.text !== 'with') {
-            throw new Error(`parseFromStream expected 'with' keyword, got '${headerToken.text}'`);
+        context: BlockTokenStreamContext
+    ): ForLoop {
+        // 1. Validate precondition: stream should be at 'for'
+        if (headerToken.text !== 'for') {
+            throw new Error(`parseFromStream expected 'for' keyword, got '${headerToken.text}'`);
         }
         
-        // Consume 'with' keyword
+        // Consume 'for' keyword
         stream.next();
         
-        // 2. Parse header: parameters and 'into' target
-        const paramNames: string[] = [];
-        let intoTarget: { targetName: string; targetPath?: AttributePathSegment[] } | null = null;
+        // 2. Parse loop variable
+        stream.skip(TokenKind.COMMENT);
+        const varToken = stream.current();
+        if (!varToken || varToken.kind === TokenKind.EOF || varToken.kind === TokenKind.NEWLINE) {
+            throw new Error(`for loop requires a variable at line ${headerToken.line}`);
+        }
+        
+        if (varToken.kind !== TokenKind.VARIABLE && !LexerUtils.isVariable(varToken.text)) {
+            throw new Error(`for loop variable must be a variable (e.g., $i, $item) at line ${varToken.line}`);
+        }
+        
+        const varName = LexerUtils.parseVariablePath(varToken.text).name;
+        stream.next(); // consume variable token
+        
+        // 3. Expect 'in' keyword
+        stream.skip(TokenKind.COMMENT);
+        stream.expect('in', "for loop requires 'in' keyword");
+        
+        // 4. Parse iterable expression (everything after 'in' until newline)
+        const iterableTokens: Token[] = [];
         const headerComments: CommentWithPosition[] = [];
         
-        // Collect tokens until newline
-        const headerTokens: Token[] = [];
         while (!stream.isAtEnd()) {
             const t = stream.current();
             if (!t) break;
@@ -238,46 +251,14 @@ export class WithScopeParser extends BlockParserBase {
                 stream.next();
                 continue;
             }
-            headerTokens.push(t);
+            iterableTokens.push(t);
             stream.next();
         }
         
-        // Parse parameters and 'into' from header tokens
-        const tokenStrings = headerTokens.map(t => t.text);
+        // Build iterable expression string from tokens
+        const iterableExpr = iterableTokens.map(t => t.text).join(' ');
         
-        // Check for "into $var" after "with" (can be after parameters)
-        // But ignore it if ignoreIntoOnFirstLine is true
-        const { target: intoTargetResult, intoIndex } = ignoreIntoOnFirstLine
-            ? { target: null, intoIndex: -1 }
-            : (() => {
-                const idx = tokenStrings.indexOf('into');
-                if (idx >= 0 && idx < tokenStrings.length - 1) {
-                    const varToken = headerTokens[idx + 1];
-                    if (varToken && (varToken.kind === TokenKind.VARIABLE || LexerUtils.isVariable(varToken.text))) {
-                        const { name, path } = LexerUtils.parseVariablePath(varToken.text);
-                        return { target: { targetName: name, targetPath: path }, intoIndex: idx };
-                    }
-                }
-                return { target: null, intoIndex: -1 };
-            })();
-        intoTarget = intoTargetResult;
-        const paramEndIndex = intoIndex >= 0 ? intoIndex : tokenStrings.length;
-        
-        // Parse parameter names (optional): with $a $b or with $a $b into $var
-        for (let i = 0; i < paramEndIndex; i++) {
-            const token = headerTokens[i];
-            if (!token) continue;
-            
-            // Parameters should be variables (starting with $)
-            if (token.kind === TokenKind.VARIABLE || LexerUtils.isVariable(token.text)) {
-                const { name: paramName } = LexerUtils.parseVariablePath(token.text);
-                if (paramName && /^[A-Za-z_][A-Za-z0-9_]*$/.test(paramName)) {
-                    paramNames.push(paramName);
-                }
-            }
-        }
-        
-        // 3. Parse body tokens until matching 'endwith'
+        // 5. Parse body tokens until matching 'endfor'
         const body: Statement[] = [];
         const bodyStartToken = stream.current() ?? headerToken;
         let endToken = bodyStartToken;
@@ -288,12 +269,12 @@ export class WithScopeParser extends BlockParserBase {
             
             endToken = t;
             
-            // Check for 'endwith' keyword - this closes our block
-            if (t.kind === TokenKind.KEYWORD && t.text === 'endwith') {
-                // Found closing endwith for our block
-                stream.next(); // consume 'endwith'
+            // Check for 'endfor' keyword - this closes our block
+            if (t.kind === TokenKind.KEYWORD && t.text === 'endfor') {
+                // Found closing endfor for our block
+                stream.next(); // consume 'endfor'
                 
-                // Consume everything until end of line after 'endwith'
+                // Consume everything until end of line after 'endfor'
                 while (!stream.isAtEnd() && stream.current()?.kind !== TokenKind.NEWLINE) {
                     stream.next();
                 }
@@ -326,29 +307,22 @@ export class WithScopeParser extends BlockParserBase {
             }
         }
         
-        // 4. Build codePos from headerToken to endToken
+        // 6. Build codePos from headerToken to endToken
         const codePos = context.createCodePositionFromTokens(headerToken, endToken);
         
-        // 5. Build result (use type 'do' to maintain AST compatibility)
-        const scopeBlock: ScopeBlock = paramNames.length > 0 
-            ? { 
-                type: 'do', 
-                paramNames, 
-                body, 
-                into: intoTarget || undefined,
-                codePos
-            }
-            : { 
-                type: 'do', 
-                body, 
-                into: intoTarget || undefined,
-                codePos
-            };
+        // 7. Build result
+        const result: ForLoop = {
+            type: 'forLoop',
+            varName,
+            iterableExpr,
+            body,
+            codePos
+        };
         
         if (headerComments.length > 0) {
-            scopeBlock.comments = headerComments;
+            result.comments = headerComments;
         }
         
-        return scopeBlock;
+        return result;
     }
 }

@@ -1,0 +1,73 @@
+# Conditional Tests
+# Tests for if/else/elseif statements
+
+log "=== Conditional Tests ==="
+
+# Test 1: Inline conditional
+log "Test 1: Inline conditional"
+$balance = 100
+if $balance > 0 then log "Test 1 - Balance is positive"
+
+# Test 2: Block if with else
+log "Test 2: Block if with else"
+$score = 85
+if $score >= 90
+  log "Test 2 - Grade: A"
+elseif $score >= 80
+  log "Test 2 - Grade: B"
+elseif $score >= 70
+  log "Test 2 - Grade: C"
+else
+  log "Test 2 - Grade: F"
+endif
+
+# Test 3: Nested conditionals
+log "Test 3: Nested conditionals"
+$value = 42
+if $value > 0
+  if $value < 50
+    log "Test 3 - Value is between 0 and 50"
+  else
+    log "Test 3 - Value is 50 or greater"
+  endif
+else
+  log "Test 3 - Value is negative or zero"
+endif
+
+# Test 4: Conditional with complex expression
+log "Test 4: Conditional with complex expression"
+$age = 18
+$citizen = "yes"
+if ($age >= 18) && ($citizen == "yes") then log "Test 4 - Loan approved"
+
+# Test 5: Conditional with return statement
+log "Test 5: Conditional with return statement"
+def return_in_if
+  if true
+    return "if_return"
+  endif
+  return "after_if"
+enddef
+
+clear
+do
+  return_in_if
+  test.assertEqual $ "if_return" "Return in if block failed"
+enddo
+
+def return_in_else
+  if false
+    $temp = "if"
+  else
+    return "else_return"
+  endif
+  return "after_else"
+enddef
+
+clear
+do
+  return_in_else
+  test.assertEqual $ "else_return" "Return in else block failed"
+enddo
+
+log "=== Conditional Tests Complete ==="

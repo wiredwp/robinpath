@@ -8,7 +8,8 @@
  * - Handling comments, indentation, and code positioning
  */
 
-import type { Value, CommentWithPosition } from '../index';
+import type { Value } from '../utils/types';
+import type { CommentWithPosition } from '../types/Ast.type';
 
 export class ASTToCodeConverter {
     /**

@@ -168,7 +168,7 @@ Query available commands for autocomplete or help:
 const rp = new RobinPath();
 
 const commands = rp.getAvailableCommands();
-console.log(commands.native);      // Language keywords (if, def, etc.)
+console.log(commands.native);      // Native commands (if, def, etc.)
 console.log(commands.builtin);     // Root-level builtins
 console.log(commands.modules);     // Available modules
 console.log(commands.moduleFunctions); // Module.function names
@@ -339,6 +339,13 @@ $age = 25
 log $name $age
 ```
 
+You can declare variables with `var` (mutable) or `const` (immutable):
+
+```robinpath
+var $count 0
+const $MAX_RETRIES 5
+```
+
 ### Last Value Reference
 
 Use `$` to reference the last computed value:
@@ -361,7 +368,7 @@ log $sum        # Prints 8
 
 ### Variable-to-Variable Assignment
 
-Assign the value of one variable to another:
+Assign the value of one variable to another, including chained assignments:
 
 ```robinpath
 $city = "New York"
@@ -371,6 +378,32 @@ log $city2      # Prints "New York"
 $number1 = 42
 $number2 = $number1  # Copies 42 to $number2
 $number3 = $number2  # Can chain assignments
+```
+
+### Into Syntax
+
+Use `into $variable` to assign the result of a command, block, or function call directly to a variable:
+
+```robinpath
+math.add 10 20 into $sum
+log $sum  # Prints 30
+
+# Works with functions
+myFunction(1 2) into $result
+
+# Works with do blocks
+do into $blockResult
+  math.add 5 5
+  math.multiply $ 2
+enddo
+
+# Works with repeat loops
+repeat 3 with into $total
+   add $2 10
+endwith
+
+# Works with object property assignment
+math.add 1 2 into $obj.sum
 ```
 
 ### Attribute Access and Array Indexing
@@ -428,14 +461,16 @@ log $firstItem            # Prints "item1"
 ```
 
 **Error Handling:**
-- Accessing a property of `null` or `undefined` throws an error: `Cannot access property 'propertyName' of null`
-- Accessing a property of a non-object throws an error: `Cannot access property 'propertyName' of <type>`
-- Array indexing on a non-array throws an error: `Cannot access index X of non-array value`
-- Out-of-bounds array access returns `null` (doesn't throw)
+- Accessing a property of `null` or `undefined` throws an error.
+- Accessing a property of a non-object throws an error.
+- Array indexing on a non-array throws an error.
+- Out-of-bounds array access returns `null`.
 
-**Note:** Assignment targets must be simple variable names. You cannot assign directly to attributes (e.g., `$user.name = "Jane"` is not supported). Use the `set` function from the Object module instead:
+**Note:** Assignment targets must be simple variable names or object/array paths:
 ```robinpath
-set $user "name" "Jane"   # Use Object.set for attribute assignment
+$user.name = "Jane"       # Supported
+$arr[0] = 42              # Supported
+$data.items[0].price = 99 # Deep assignment supported
 ```
 
 ### Native Reserved Methods
@@ -449,36 +484,19 @@ log $name $age
 log "Result:" $(add 5 5)
 ```
 
-**`obj` - Create objects using JSON5 syntax:**
+**`obj` - Create objects using JSON5 syntax or builder pattern:**
 ```robinpath
 # Create empty object
 obj
 $empty = $
 
-# Create object with JSON5 syntax (unquoted keys, trailing commas allowed)
+# Create object with JSON5 syntax
 obj '{name: "John", age: 30}'
 $user = $
 
-# Nested objects and arrays
-obj '{nested: {key: "value"}, items: [1, 2, 3]}'
-$data = $
-
-# JSON5 features: unquoted keys, single quotes, trailing commas
-obj '{unquoted: "works", singleQuotes: "also works", trailing: true,}'
-$config = $
-
-# Access properties
-log $user.name    # Prints "John"
-log $user.age     # Prints 30
-log $data.nested.key  # Prints "value"
-log $data.items[0]    # Prints 1
+# Create object with key-value pairs (builder style)
+obj name "John" age 30
 ```
-
-The `obj` command uses JSON5 syntax, which is more flexible than standard JSON:
-- Keys don't need quotes (unless they contain special characters)
-- Single quotes are allowed for strings
-- Trailing commas are allowed
-- Comments are supported (though not shown in examples above)
 
 **`array` - Create arrays from arguments:**
 ```robinpath
@@ -489,42 +507,30 @@ $empty = $
 # Create array with elements
 array 1 2 3
 $numbers = $
-
-# Mixed types
-array "hello" "world" 42 true
-$mixed = $
-
-# Access elements
-log $numbers[0]    # Prints 1
-log $numbers[1]    # Prints 2
-log $mixed[0]      # Prints "hello"
-log $mixed[2]      # Prints 42
-
-# Use in expressions
-array 10 20 30
-$values = $
-math.add $values[0] $values[1]  # Adds 10 + 20 = 30
 ```
 
-The `array` command creates an array from all its arguments. If called without arguments, it returns an empty array `[]`.
+**`set` - Assign a value:**
+```robinpath
+set $var "value"
+set $var as "value"   # 'as' is optional
+set $obj.prop "value" # path assignment
+
+# Set with fallback (used if value is null/empty)
+set $var $maybeNull "default value"
+```
+
+**`get` - Get a value by path:**
+```robinpath
+get $user "address.city"
+```
 
 **`assign` - Assign a value to a variable (with optional fallback):**
 ```robinpath
 # Basic assignment
 assign $myVar "hello"
-assign $myVar 42
-assign $myVar $sourceVar
 
 # Assignment with fallback (3rd parameter used if 2nd is empty/null)
 assign $result $maybeEmpty "default value"
-assign $count $maybeNull 0
-assign $name $maybeEmpty "Unknown"
-
-# Fallback is only used when the value is:
-# - null or undefined
-# - empty string (after trimming)
-# - empty array
-# - empty object
 ```
 
 **`empty` - Clear/empty a variable:**
@@ -532,238 +538,88 @@ assign $name $maybeEmpty "Unknown"
 $myVar = "some value"
 empty $myVar
 log $myVar  # Prints null
-
-$arr = range 1 5
-empty $arr
-log $arr  # Prints null
 ```
 
 **`fallback` - Return variable value or fallback if empty/null:**
 ```robinpath
-# Return variable value or fallback
 $maybeEmpty = null
 fallback $maybeEmpty "default value"  # Returns "default value"
-
-$maybeEmpty = ""
-fallback $maybeEmpty "Unknown"         # Returns "Unknown"
-
-$hasValue = "Alice"
-fallback $hasValue "Unknown"           # Returns "Alice" (fallback not used)
-
-# Without fallback, returns the variable value (even if null)
-$maybeEmpty = null
-fallback $maybeEmpty                   # Returns null
 ```
 
-The `fallback` command checks if a variable is empty/null and returns the fallback value if provided. A value is considered empty if it is:
-- `null` or `undefined`
-- Empty string (after trimming)
-- Empty array
-- Empty object
-
-**`meta` - Add metadata to variables or functions:**
+**`meta` / `getMeta` - Manage metadata:**
 ```robinpath
-# Add metadata to a variable
-$testVar = 100
-meta $testVar description "A variable to store test values"
-meta $testVar version 5
-meta $testVar author "Test Author"
+# Set metadata for variables, functions, or constants
+meta $var description "Description"
+meta myFunction author "Author"
+meta $const version "1.0"
 
-# Add metadata to a function
-def calculate
-  math.add $1 $2
-enddef
-
-meta calculate description "A function to calculate sum"
-meta calculate version 1
-meta calculate category "math"
+# Get metadata
+getMeta $var description
+getMeta myFunction author
 ```
-
-The `meta` command stores arbitrary key-value metadata for variables or functions. The metadata is stored separately and does not affect the variable or function itself.
-
-**`getMeta` - Retrieve metadata from variables or functions:**
-```robinpath
-# Get all metadata for a variable
-$testVar = 100
-meta $testVar description "A variable"
-meta $testVar version 5
-
-getMeta $testVar
-$allMeta = $  # Returns {description: "A variable", version: 5}
-
-# Get specific metadata key
-getMeta $testVar description  # Returns "A variable"
-getMeta $testVar version      # Returns 5
-getMeta $testVar nonexistent  # Returns null
-
-# Get all metadata for a function
-def calculate
-  math.add $1 $2
-enddef
-
-meta calculate description "A function"
-meta calculate version 1
-
-getMeta calculate
-$funcMeta = $  # Returns {description: "A function", version: 1}
-
-# Get specific metadata key
-getMeta calculate description  # Returns "A function"
-getMeta calculate version      # Returns 1
-```
-
-The `getMeta` command retrieves metadata:
-- With one argument: returns all metadata as an object
-- With two arguments: returns the value for the specific key (or `null` if not found)
-- Returns an empty object `{}` if no metadata exists
 
 **`clear` - Clear the last return value ($):**
 ```robinpath
-# Clear the last value
-math.add 10 20  # $ = 30
-clear           # $ = null
-
-# Clear after chained operations
-math.add 5 5
-math.multiply $ 2  # $ = 20
-clear              # $ = null
-
-# Clear doesn't affect variables
-$testVar = 42
 math.add 10 20
 clear
-log $testVar  # Still prints 42
-log $         # Prints null
+log $  # Prints null
 ```
-
-The `clear` command sets the last return value (`$`) to `null`. It does not affect variables or any other state.
 
 **`forget` - Hide a variable or function in the current scope:**
 ```robinpath
-# Forget a variable in current scope
-$testVar = 100
-scope
-  forget $testVar
-  log $testVar  # Prints null (variable is hidden)
-endscope
-log $testVar    # Prints 100 (variable accessible again after scope)
-
-# Forget a function in current scope
-def my_function
-  return 42
-enddef
-
-scope
-  forget my_function
-  my_function  # Error: Function is forgotten in current scope
-endscope
-my_function     # Works normally (function accessible after scope)
-
-# Forget a built-in command in current scope
-scope
-  forget log
-  log "test"  # Error: Built-in command is forgotten in current scope
-endscope
-log "test"     # Works normally (built-in accessible after scope)
-
-# Forget only affects the current scope
-$outerVar = 200
-scope
-  forget $outerVar
-  scope
-    log $outerVar  # Prints 200 (accessible in child scope)
-  endscope
-  log $outerVar    # Prints null (forgotten in current scope)
-endscope
-log $outerVar      # Prints 200 (accessible again after scope)
+$val = 10
+do
+  forget $val
+  log $val # Prints null
+enddo
 ```
-
-The `forget` command hides a variable or function **only in the current scope**:
-- When a variable is forgotten, accessing it returns `null`
-- When a function or built-in is forgotten, calling it throws an error
-- The forget effect only applies to the scope where `forget` was called
-- After the scope ends, the variable/function is accessible again
-- Child scopes can still access forgotten items from parent scopes
-- Useful for temporarily hiding variables or functions to avoid name conflicts
 
 **`getType` - Get the type of a variable:**
 ```robinpath
-# Get type of different variables
-$str = "hello"
-getType $str      # Returns "string"
-
-$num = 42
-getType $num      # Returns "number"
-
-$bool = true
-getType $bool     # Returns "boolean"
-
-$nullVar = null
-getType $nullVar  # Returns "null"
-
-$arr = range 1 5
-getType $arr      # Returns "array"
-
-obj '{name: "John"}'
-$obj = $
-getType $obj      # Returns "object"
+getType "hello" # "string"
+getType 42      # "number"
+getType true    # "boolean"
+getType null    # "null"
+getType []      # "array"
+getType {}      # "object"
 ```
 
-The `getType` command returns the type of a variable as a string. Possible return values:
-- `"string"` - String values
-- `"number"` - Numeric values
-- `"boolean"` - Boolean values (true/false)
-- `"null"` - Null values
-- `"array"` - Array values
-- `"object"` - Object values (including empty objects)
-- `"undefined"` - Undefined values (rare in RobinPath)
+**`has` - Check if a variable or function exists:**
+```robinpath
+has $var
+has myFunction
+has math.add
+```
 
-**Isolated Scopes with Parameters:**
-Scopes can be declared with parameters to create isolated execution contexts that don't inherit from parent scopes:
+**`end` - Stop script execution:**
+```robinpath
+log "Start"
+end
+log "This is never reached"
+```
+
+### Do Blocks (Scopes)
+
+`do` blocks create a new scope. Variables defined inside are local to the scope.
 
 ```robinpath
-# Regular scope (inherits from parent)
-$parentVar = 100
-scope
-  log $parentVar  # Prints 100 (can access parent)
-  $localVar = 200
-endscope
-
-# Isolated scope with parameters (no parent access)
-$outerVar = 300
-scope $a $b
-  log $outerVar  # Prints null (cannot access parent)
-  log $a         # Prints null (parameter, defaults to null)
-  log $b         # Prints null (parameter, defaults to null)
-  $localVar = 400
-  log $localVar  # Prints 400 (local variable works)
-endscope
-log $outerVar    # Prints 300 (unchanged)
-
-# Isolated scope with multiple parameters
-scope $x $y $z
-  log $x         # Prints null (first parameter)
-  log $y         # Prints null (second parameter)
-  log $z         # Prints null (third parameter)
-  $local = 500
-endscope
-
-# Nested isolated scopes
-scope $x
-  log $x         # Prints null (parameter)
-  scope $y
-    log $x       # Prints null (cannot access outer scope parameter)
-    log $y       # Prints null (own parameter)
-  endscope
-endscope
+do
+  $local = 10
+enddo
+log $local # Prints null (if not defined globally)
 ```
 
-When a scope is declared with parameters:
-- The scope is **isolated** - it cannot access variables from parent scopes or globals
-- Only the declared parameters and variables created inside the scope are accessible
-- Parameters default to `null` if not provided
-- Variables created inside an isolated scope don't leak to parent scopes
-- Useful for creating clean, isolated execution contexts
+**Isolated Scopes with Parameters:**
+Scopes can be declared with parameters to create **isolated** execution contexts. Unlike regular `do` blocks, isolated scopes **do not inherit** variables from parent scopes unless they are explicitly passed as arguments.
+
+```robinpath
+$outer = 100
+do $a $b
+  # $outer is NOT accessible here (returns null)
+  # $a and $b are initialized from arguments passed to the block
+  $inner = 20
+enddo
+```
 
 ### Comments
 
@@ -809,205 +665,132 @@ for $num in $numbers
 endfor
 ```
 
-**Break statement:**
-Use `break` to exit a for loop early:
+**Repeat loop:**
+The `repeat` loop runs a block `N` times. Inside the block:
+- `$1` is the current iteration index (0-based).
+- `$2` is the result of the previous iteration (or `null` for the first).
+
+```robinpath
+repeat 5 with
+  log "Iteration:" $1 # 0, 1, 2, 3, 4
+endwith
+
+# Accumulate values
+repeat 5 with
+  if $2 == null
+    return 0
+  endif
+  math.add $2 $1  # Adds current index to sum
+endwith
+# Result: 10 (0+1+2+3+4)
+```
+
+**Break and Continue:**
+Use `break` to exit a loop early, and `continue` to skip to the next iteration.
+
 ```robinpath
 for $i in range 1 10
   if $i == 5
-    break  # Exits the loop when $i equals 5
+    break
   endif
-  log "Iteration:" $i
 endfor
-# This will only log iterations 1-4
-```
-
-The `break` statement:
-- Exits the innermost loop immediately
-- Can only be used inside a `for` loop (will throw an error if used outside)
-- Preserves the last value (`$`) from the iteration where `break` was executed
-- Works with nested loops (only breaks the innermost loop)
-
-**Example with nested loops:**
-```robinpath
-for $i in range 1 3
-  log "Outer:" $i
-  for $j in range 1 5
-    if $j == 3
-      break  # Only breaks the inner loop
-    endif
-    log "Inner:" $j
-  endfor
-endfor
-# Outer loop continues, inner loop breaks at $j == 3
 ```
 
 ### Functions
 
-Define custom functions:
+Define custom functions with `def` (or `define`):
 
 ```robinpath
-def greet
-$1
-$2
-log "Hello" $1
-log "Your age is" $2
-add $2 1
+def greet $name
+  log "Hello" $name
 enddef
 
-greet "Alice" 25
-log "Next year:" $  # Prints 26
-```
-
-**Function Definition with Named Parameters:**
-You can define functions with named parameter aliases:
-
-```robinpath
-def greet $name $age
-log "Hello" $name
-log "Your age is" $age
-# $name is an alias for $1, $age is an alias for $2
-# You can still use $1, $2, etc.
+# 'define' alias works too
+define sum $a $b
+  math.add $a $b
 enddef
-
-greet "Alice" 25
 ```
 
-**Function Call Syntax:**
-RobinPath supports two ways to call functions:
+**Named Parameters:**
+You can optionally use `as` after parameters.
 
-**CLI-style (existing):**
 ```robinpath
-greet "Alice" 25
-math.add 10 20 key1=value1 key2=value2
+def greet $name $age as
+  # $name is alias for $1
+  # $age is alias for $2
+  log "Hello" $name "Age" $age
+enddef
 ```
 
-**Parenthesized style (new, recommended for complex calls):**
+**Call Syntax:**
 ```robinpath
+# CLI-style
+greet "Alice" 25
+
+# Parenthesized style (commas optional)
 greet("Alice" 25)
-math.add(10 20 key1=value1 key2=value2)
-
-# Multi-line parenthesized calls (recommended for longer calls)
 greet(
   "Alice"
   25
 )
-
-math.add(
-  10
-  20
-  key1=value1
-  key2=value2
-)
 ```
-
-Both forms are equivalent. The parenthesized form is optimized for readability, multiline usage, and IDE tooling.
 
 **Named Arguments:**
-Functions can accept named arguments using `key=value` syntax:
-
 ```robinpath
-def process $data
-log "Data:" $data
-log "Retries:" $args.retries
-log "Timeout:" $args.timeout
-log "Verbose:" $args.verbose
+def config $env
+  log "Env:" $env "Key:" $args.key
 enddef
 
-# CLI-style with named arguments
-process $myData retries=3 timeout=30 verbose=true
-
-# Parenthesized style with named arguments
-process($myData retries=3 timeout=30 verbose=true)
-
-# Multi-line parenthesized call
-process(
-  $myData
-  retries=3
-  timeout=30
-  verbose=true
+config("prod" key="123")
+config(
+  "prod" 
+  key="123"
 )
 ```
 
-**Accessing Arguments Inside Functions:**
-Inside a function, you can access arguments in three ways:
-
-1. **Numeric position variables:** `$1`, `$2`, `$3`, etc.
-2. **Named parameter aliases:** `$name`, `$age`, etc. (if defined in function signature)
-3. **Named argument map:** `$args.keyName` for named arguments
-
+**Decorators:**
+Use decorators to add metadata to functions and variables:
 ```robinpath
-def example $a $b $c
-# Positional arguments
-log "First:" $1      # Same as $a
-log "Second:" $2     # Same as $b
-log "Third:" $3      # Same as $c
-
-# Named parameter aliases
-log "a:" $a          # Same as $1
-log "b:" $b          # Same as $2
-log "c:" $c          # Same as $3
-
-# Named arguments (from key=value in function call)
-log "key:" $args.key
-log "flag:" $args.flag
+@desc "Calculates sum"
+@param number $a "First number"
+@param number $b "Second number"
+@return number "The sum"
+def add $a $b
+  math.add $a $b
 enddef
-
-example("x" "y" "z" key=1 flag=true)
 ```
 
-**Parameter Binding Rules:**
-- `$a`, `$b`, `$c` are aliases for `$1`, `$2`, `$3` respectively
-- If more positional args are passed than declared, they're still accessible as `$4`, `$5`, etc.
-- If fewer arguments are passed than declared, missing ones are treated as `null`
-- Named arguments are always accessible via `$args.<name>`
-- If a named argument has the same name as a parameter, the parameter variable refers to the positional argument, and `$args.<name>` refers to the named argument
+Common decorators: `@desc`, `@title`, `@param`, `@arg`, `@required`, `@return`, `@deprecated`.
 
-Functions can return values in two ways:
+### Events
 
-**Implicit return (last value):**
-Functions automatically return the last computed value:
+Define event handlers with `on`. Multiple handlers can be defined for the same event.
 
 ```robinpath
-def sum_and_double
-add $1 $2
-multiply $ 2
-enddef
+on "user_login"
+  log "User logged in:" $1
+endon
 
-sum_and_double 10 20
-log $  # Prints 60
+# Trigger an event
+trigger "user_login" "Alice"
 ```
 
-**Explicit return statement:**
-Use the `return` statement to return a value and terminate function execution:
+### Parallel Execution
+
+Use `together` to run blocks in parallel:
 
 ```robinpath
-def calculate
-  if $1 > 10
-    return 100
-  endif
-  multiply $1 2
-enddef
-
-calculate 5
-log $  # Prints 10
-
-calculate 15
-log $  # Prints 100 (returned early)
-```
-
-The `return` statement can return:
-- A literal value: `return 42` or `return "hello"`
-- A variable: `return $result`
-- The last value (`$`): `return` (no value specified)
-- A subexpression: `return $(add 5 5)`
-
-**Return in global scope:**
-The `return` statement also works in global scope to terminate script execution:
-
-```robinpath
-log "This will execute"
-return "done"
-log "This will not execute"
+together
+  do
+    # Task 1
+    wait 1000
+    log "Task 1 done"
+  enddo
+  do
+    # Task 2
+    log "Task 2 done"
+  enddo
+endtogether
 ```
 
 ### Modules
@@ -1017,681 +800,48 @@ Use modules to access specialized functions:
 ```robinpath
 use math
 math.add 5 10
-
-use string
-string.length "hello"
-string.toUpperCase "world"
 ```
 
 **Available Modules:**
-- `math` - Mathematical operations (add, subtract, multiply, divide, etc.)
-- `string` - String manipulation (length, substring, replace, etc.)
-- `json` - JSON parsing and stringification (parse, stringify, isValid)
-- `object` - Object manipulation operations (get, set, keys, values, entries, merge, clone) - **Global module**
-- `time` - Date and time operations
-- `random` - Random number generation
-- `array` - Array operations (push, pop, slice, etc.)
-
-**Object Module (Global):**
-The Object module provides object manipulation functions and is available globally (no `use` command needed):
-
-```robinpath
-# Create objects using obj command (JSON5 syntax)
-obj '{name: "John", age: 30}'
-$user = $
-
-# Or use json.parse for standard JSON
-json.parse '{"name": "John", "age": 30}'
-$user2 = $
-
-# Get a value using dot-notation path
-get $user "name"          # Returns "John"
-get $user "age"           # Returns 30
-
-# Alternative: Use attribute access syntax (see Attribute Access section)
-# $user.name              # Also returns "John"
-# $user.age               # Also returns 30
-
-# Set a value using dot-notation path
-set $user "city" "NYC"    # Sets user.city = "NYC"
-get $user "city"          # Returns "NYC"
-
-# Get object keys, values, and entries
-keys $user                # Returns ["name", "age", "city"]
-values $user              # Returns ["John", 30, "NYC"]
-entries $user             # Returns [["name", "John"], ["age", 30], ["city", "NYC"]]
-
-# Merge objects
-obj '{a: 1}'
-$obj1 = $
-obj '{b: 2}'
-$obj2 = $
-merge $obj1 $obj2         # Returns {a: 1, b: 2}
-
-# Clone an object (deep copy)
-clone $user               # Returns a deep copy of $user
-```
+- **`math`**: `add`, `subtract`, `multiply`, `divide`, `modulo`, `power`, `sqrt`, `abs`, `round`, `floor`, `ceil`, `min`, `max`.
+- **`string`**: `length`, `substring`, `toUpperCase`, `toLowerCase`, `trim`, `replace`, `replaceAll`, `split`, `startsWith`, `endsWith`, `contains`, `indexOf`, `lastIndexOf`, `charAt`, `padStart`, `padEnd`, `repeat`, `concat`.
+- **`json`**: `parse`, `stringify`, `isValid`.
+- **`object`**: `keys`, `values`, `entries`, `merge`, `clone`. (Global commands like `keys` also available).
+- **`time`**: `now`, `timestamp`, `format`, `addDays`, `diffDays`.
+- **`random`**: `int`, `float`, `uuid`, `choice`.
+- **`array`**: `create`, `length`, `get`, `slice`, `push`, `concat`, `join`.
+- **`dom`**: `click` (with callback support), etc.
 
 ### Inline Subexpressions
 
-Use `$( ... )` for inline subexpressions to evaluate code and use its result:
+Use `$( ... )` for inline subexpressions. Subexpressions can be multi-line and contain multiple statements (returns result of the last one).
 
 ```robinpath
-# Single-line subexpression
-log "Result:" $(add 10 20)
+log "Result:" $(math.add 10 20)
 
-# Multi-line subexpression
-$result = $(
-  add 5 5
-  multiply $ 2
+$val = $(
+  math.add 5 5
+  math.multiply $ 2
 )
-log $result  # Prints 20
-
-# Nested subexpressions
-$value = $(add $(multiply 2 3) $(add 1 1))
-log $value  # Prints 8
-
-# Subexpression in conditionals
-if $(math.add 5 5) == 10
-  log "Equal to 10"
-endif
-
-# Function calls in subexpressions use parenthesized syntax
-if $(test.isBigger $value 5)
-  log "Value is bigger than 5"
-endif
+# $val is 20
 ```
 
-**Variable Scope in Subexpressions:**
-Subexpressions can read and modify variables from parent scopes. If a variable exists in a parent scope, the `assign` command will modify that variable:
+### Comparison Functions
 
-```robinpath
-$testVar = 10
-
-$result = $(
-  assign $testVar 42  # This modifies the parent $testVar
-  math.add $testVar 8  # Uses 42, returns 50
-)
-
-log $result    # Prints 50
-log $testVar   # Prints 42 (modified by subexpression)
-```
-
-If a variable doesn't exist in parent scopes, it will be created in the global scope:
-
-```robinpath
-$result = $(
-  assign $newVar 100  # Creates $newVar in global scope
-  math.add $newVar 1
-)
-log $result     # Prints 101
-log $newVar     # Prints 100 (created in global scope)
-```
-
-Note: Functions (`def`/`enddef`) maintain their own local scope and do not modify parent variables.
-
-### String Literals
-
-Strings can use single quotes, double quotes, or backticks:
-
-```robinpath
-$msg1 = "Hello"
-$msg2 = 'World'
-$msg3 = `Template`
-```
-
-**Automatic String Concatenation:**
-Adjacent string literals are automatically concatenated:
-
-```robinpath
-$long = "hello " "world " "from RobinPath"
-log $long  # Prints "hello world from RobinPath"
-```
-
-This is particularly useful with backslash line continuation (see below).
-
-### Numbers
-
-Numbers can be integers or decimals:
-
-```robinpath
-$int = 42
-$float = 3.14
-```
-
-### Backslash Line Continuation
-
-The backslash (`\`) allows a single logical command to be written across multiple physical lines. If a line's last non-whitespace character is a backslash, that line is continued onto the next line.
-
-**Basic Usage:**
-```robinpath
-log "this is a very long message " \
-    "that continues on the next line"
-```
-
-**Multiple Continuations:**
-```robinpath
-do_something $a $b $c \
-             $d $e $f \
-             $g $h $i
-```
-
-**With String Concatenation:**
-```robinpath
-$long = "hello " \
-        "world " \
-        "from RobinPath"
-# Becomes: $long = "hello " "world " "from RobinPath"
-# Which is automatically concatenated to: "hello world from RobinPath"
-```
-
-**With Function Calls:**
-```robinpath
-fn($a $b $c \
-   key1=1 \
-   key2=2)
-```
-
-**With If Conditions:**
-```robinpath
-if $a > 0 && \
-   $b < 10 && \
-   $c == "ok"
-  log "conditions met"
-endif
-```
-
-**With Assignments:**
-```robinpath
-$query = "SELECT * FROM users " \
-         "WHERE active = 1 " \
-         "ORDER BY created_at DESC"
-```
-
-**Rules:**
-- The backslash must be the last non-whitespace character on the line
-- The newline and any leading whitespace on the next line are replaced with a single space
-- The continuation ends at the first line that doesn't end with `\`
-- Works with any statement type (assignments, function calls, conditionals, etc.)
+RobinPath provides built-in comparison functions useful for testing and assertions:
+- `test.assertEqual`
+- `test.isEqual`
+- `test.isBigger`
+- `test.isSmaller`
+- `test.isEqualOrBigger`
+- `test.isEqualOrSmaller`
+- `test.assertTrue`
+- `test.assertFalse`
+- `test.assertNull`
+- `test.assertNotNull`
+- `test.assertType`
+- `test.assertContains`
 
 ## Creating Custom Modules
 
-You can extend RobinPath by creating your own custom modules. Modules provide a way to organize related functions and make them available through the `use` command.
-
-### Module Structure
-
-A module consists of three main parts:
-
-1. **Functions** - The actual function implementations
-2. **Function Metadata** - Documentation and type information for each function
-3. **Module Metadata** - Overall module description and method list
-
-### Step-by-Step Guide
-
-#### 1. Create a Module File
-
-Create a new TypeScript file in `src/modules/` directory, for example `src/modules/MyModule.ts`:
-
-```typescript
-import type { 
-    BuiltinHandler, 
-    FunctionMetadata, 
-    ModuleMetadata,
-    ModuleAdapter
-} from '../index';
-
-/**
- * MyModule for RobinPath
- * Provides custom functionality
- */
-
-// 1. Define your functions
-export const MyModuleFunctions: Record<string, BuiltinHandler> = {
-    greet: (args) => {
-        const name = String(args[0] ?? 'World');
-        return `Hello, ${name}!`;
-    },
-
-    double: (args) => {
-        const num = Number(args[0]) || 0;
-        return num * 2;
-    },
-
-    // Functions can be async
-    delay: async (args) => {
-        const ms = Number(args[0]) || 1000;
-        await new Promise(resolve => setTimeout(resolve, ms));
-        return `Waited ${ms}ms`;
-    }
-};
-
-// 2. Define function metadata (for documentation and type checking)
-export const MyModuleFunctionMetadata: Record<string, FunctionMetadata> = {
-    greet: {
-        description: 'Greets a person by name',
-        parameters: [
-            {
-                name: 'name',
-                dataType: 'string',
-                description: 'Name of the person to greet',
-                formInputType: 'text',
-                required: false,
-                defaultValue: 'World'
-            }
-        ],
-        returnType: 'string',
-        returnDescription: 'Greeting message',
-        example: 'mymodule.greet "Alice"  # Returns "Hello, Alice!"'
-    },
-
-    double: {
-        description: 'Doubles a number',
-        parameters: [
-            {
-                name: 'value',
-                dataType: 'number',
-                description: 'Number to double',
-                formInputType: 'number',
-                required: true
-            }
-        ],
-        returnType: 'number',
-        returnDescription: 'The input number multiplied by 2',
-        example: 'mymodule.double 5  # Returns 10'
-    },
-
-    delay: {
-        description: 'Waits for a specified number of milliseconds',
-        parameters: [
-            {
-                name: 'ms',
-                dataType: 'number',
-                description: 'Number of milliseconds to wait',
-                formInputType: 'number',
-                required: true
-            }
-        ],
-        returnType: 'string',
-        returnDescription: 'Confirmation message',
-        example: 'mymodule.delay 1000  # Waits 1 second'
-    }
-};
-
-// 3. Define module metadata
-export const MyModuleModuleMetadata: ModuleMetadata = {
-    description: 'Custom module providing greeting and utility functions',
-    methods: [
-        'greet',
-        'double',
-        'delay'
-    ]
-};
-
-// 4. Create and export the module adapter
-const MyModule: ModuleAdapter = {
-    name: 'mymodule',
-    functions: MyModuleFunctions,
-    functionMetadata: MyModuleFunctionMetadata,
-    moduleMetadata: MyModuleModuleMetadata
-};
-
-export default MyModule;
-```
-
-#### 2. Register the Module
-
-In `src/index.ts`, import your module and add it to the `NATIVE_MODULES` array:
-
-```typescript
-// Add import at the top with other module imports
-import MyModule from './modules/MyModule';
-
-// Add to NATIVE_MODULES array (around line 2504)
-private static readonly NATIVE_MODULES: ModuleAdapter[] = [
-    MathModule,
-    StringModule,
-    JsonModule,
-    TimeModule,
-    RandomModule,
-    ArrayModule,
-    TestModule,
-    MyModule  // Add your module here
-];
-```
-
-#### 3. Use Your Module
-
-Once registered, you can use your module in RobinPath scripts:
-
-```robinpath
-use mymodule
-mymodule.greet "Alice"
-mymodule.double 7
-mymodule.delay 500
-```
-
-### Function Implementation Guidelines
-
-1. **Function Signature**: Functions must match the `BuiltinHandler` type:
-   ```typescript
-   (args: Value[]) => Value | Promise<Value>
-   ```
-
-2. **Argument Handling**: Always handle missing or undefined arguments:
-   ```typescript
-   const value = args[0] ?? defaultValue;
-   const num = Number(args[0]) || 0;  // For numbers
-   const str = String(args[0] ?? ''); // For strings
-   ```
-
-3. **Error Handling**: Throw descriptive errors:
-   ```typescript
-   if (num < 0) {
-       throw new Error('Number must be non-negative');
-   }
-   ```
-
-4. **Async Functions**: Functions can return `Promise<Value>` for async operations:
-   ```typescript
-   asyncFunction: async (args) => {
-       await someAsyncOperation();
-       return result;
-   }
-   ```
-
-### Metadata Guidelines
-
-1. **Parameter Metadata**: Each parameter should include:
-   - `name`: Parameter name
-   - `dataType`: One of `'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' | 'any'`
-   - `description`: Human-readable description
-   - `formInputType`: UI input type (see `FormInputType` in code)
-   - `required`: Whether parameter is required (defaults to `true`)
-   - `defaultValue`: Optional default value
-
-2. **Function Metadata**: Each function should include:
-   - `description`: What the function does
-   - `parameters`: Array of parameter metadata
-   - `returnType`: Return data type
-   - `returnDescription`: What the function returns
-   - `example`: Optional usage example
-
-3. **Module Metadata**: Should include:
-   - `description`: Overall module description
-   - `methods`: Array of all function names in the module
-
-### Example: Complete Custom Module
-
-Here's a complete example of a utility module:
-
-```typescript
-import type { 
-    BuiltinHandler, 
-    FunctionMetadata, 
-    ModuleMetadata,
-    ModuleAdapter
-} from '../index';
-
-export const UtilFunctions: Record<string, BuiltinHandler> = {
-    reverse: (args) => {
-        const str = String(args[0] ?? '');
-        return str.split('').reverse().join('');
-    },
-
-    capitalize: (args) => {
-        const str = String(args[0] ?? '');
-        if (str.length === 0) return str;
-        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    },
-
-    isEmpty: (args) => {
-        const value = args[0];
-        if (value === null || value === undefined) return true;
-        if (typeof value === 'string') return value.length === 0;
-        if (Array.isArray(value)) return value.length === 0;
-        if (typeof value === 'object') return Object.keys(value).length === 0;
-        return false;
-    }
-};
-
-export const UtilFunctionMetadata: Record<string, FunctionMetadata> = {
-    reverse: {
-        description: 'Reverses a string',
-        parameters: [
-            {
-                name: 'str',
-                dataType: 'string',
-                description: 'String to reverse',
-                formInputType: 'text',
-                required: true
-            }
-        ],
-        returnType: 'string',
-        returnDescription: 'Reversed string',
-        example: 'util.reverse "hello"  # Returns "olleh"'
-    },
-    // ... other function metadata
-};
-
-export const UtilModuleMetadata: ModuleMetadata = {
-    description: 'Utility functions for common operations',
-    methods: ['reverse', 'capitalize', 'isEmpty']
-};
-
-const UtilModule: ModuleAdapter = {
-    name: 'util',
-    functions: UtilFunctions,
-    functionMetadata: UtilFunctionMetadata,
-    moduleMetadata: UtilModuleMetadata
-};
-
-export default UtilModule;
-```
-
-### Best Practices
-
-1. **Naming**: Use lowercase module names (e.g., `mymodule`, `util`, `custom`)
-2. **Organization**: Group related functions together
-3. **Documentation**: Provide clear descriptions and examples
-4. **Error Messages**: Use descriptive error messages
-5. **Type Safety**: Validate input types and handle edge cases
-6. **Consistency**: Follow the same patterns as existing modules
-
-### Testing Your Module
-
-After creating your module, test it in the REPL:
-
-```bash
-npm run cli
-```
-
-Then try:
-```robinpath
-use mymodule
-mymodule.greet "Test"
-```
-
-You can also check available modules:
-```robinpath
-module list
-```
-
-## Examples
-
-### Basic Math
-
-```robinpath
-add 10 20
-$result
-log "Sum:" $result
-
-multiply $result 2
-log "Double:" $
-```
-
-### Variable Assignment
-
-```robinpath
-# Direct assignment
-$name = "Alice"
-$age = 25
-
-# Variable-to-variable assignment
-$name2 = $name
-$age2 = $age
-
-# Chained assignments
-$original = 100
-$copy1 = $original
-$copy2 = $copy1
-
-log $name2 $age2  # Prints "Alice" 25
-log $copy2        # Prints 100
-```
-
-### Using assign and empty Commands
-
-**assign command:**
-```robinpath
-# Basic assignment
-assign $result "success"
-assign $count 42
-
-# Assignment with fallback
-$maybeEmpty = null
-assign $result $maybeEmpty "default"  # $result = "default"
-
-$maybeEmpty = ""
-assign $name $maybeEmpty "Unknown"   # $name = "Unknown"
-
-$hasValue = "Alice"
-assign $name $hasValue "Unknown"     # $name = "Alice" (fallback not used)
-```
-
-**empty command:**
-```robinpath
-$data = "some data"
-empty $data
-log $data  # Prints null
-
-$arr = range 1 5
-empty $arr
-log $arr  # Prints null
-```
-
-**fallback command:**
-```robinpath
-# Use fallback when variable might be empty
-$name = null
-$displayName = fallback $name "Guest"
-log $displayName  # Prints "Guest"
-
-$name = "Alice"
-$displayName = fallback $name "Guest"
-log $displayName  # Prints "Alice"
-
-# Chain with other operations
-$count = null
-add fallback $count 0 10  # Adds 0 + 10 = 10
-```
-
-### Conditional Logic
-
-```robinpath
-$age = 18
-$citizen = "yes"
-if ($age >= 18) && ($citizen == "yes") then log "Loan approved"
-```
-
-### Working with Arrays
-
-```robinpath
-$arr = range 1 5
-for $num in $arr
-  log "Number:" $num
-endfor
-```
-
-### Working with Objects and Attribute Access
-
-```robinpath
-# Create objects using obj command (JSON5 syntax - more flexible)
-obj '{name: "John", age: 30, address: {city: "NYC"}, scores: [85, 90, 95]}'
-$user = $
-
-# Or use json.parse for standard JSON
-json.parse '{"name": "John", "age": 30, "address": {"city": "NYC"}, "scores": [85, 90, 95]}'
-$user2 = $
-
-# Access properties using dot notation
-log "Name:" $user.name
-log "Age:" $user.age
-log "City:" $user.address.city
-
-# Access array elements
-log "First score:" $user.scores[0]
-log "Last score:" $user.scores[2]
-
-# Use in conditionals
-if $user.age >= 18
-  log "Adult user"
-endif
-
-# Use in calculations
-math.add $user.scores[0] $user.scores[1]
-log "Sum of first two scores:" $
-
-# Create objects with obj command (JSON5 features)
-obj '{unquoted: "keys work", trailing: "comma", allowed: true,}'
-$config = $
-log $config.unquoted  # Prints "keys work"
-```
-
-### Function with Return Value
-
-**Implicit return:**
-```robinpath
-def calculate
-multiply $1 $2
-add $ 10
-enddef
-
-calculate 5 3
-log "Result:" $  # Prints 25
-```
-
-**Explicit return:**
-```robinpath
-def calculate
-  if $1 > 10
-    return 100
-  endif
-  multiply $1 $2
-  add $ 10
-enddef
-
-calculate 15 3
-log "Result:" $  # Prints 100 (returned early)
-
-calculate 5 3
-log "Result:" $  # Prints 25
-```
-
-## Testing
-
-Run the test suite:
-
-```bash
-npm test
-```
-
-This will execute the test script located in `test/test.rp`.
-
-## Building
-
-Build the project:
-
-```bash
-npm run build
-```
-
+(Refer to "Creating Custom Modules" in the previous section of documentation for details on extending RobinPath with TypeScript).

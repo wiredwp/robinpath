@@ -1,0 +1,41 @@
+# Together Command Tests
+# Tests for parallel execution with together command
+
+log "=== Together Command Tests ==="
+
+# Test 1: together command - parallel execution
+log "Test 1: together command"
+together
+  do
+    math.add 10 20
+  enddo
+  do
+    math.multiply 5 6
+  enddo
+endtogether
+
+together
+  do into $result1a
+    math.add 5 5
+  enddo
+  do into $result1b
+    math.multiply 6 7
+  enddo
+endtogether
+test.assertEqual $result1a 10 "together - do into first block failed"
+test.assertEqual $result1b 42 "together - do into second block failed"
+
+together
+  do $a into $result1c
+    set $a 10
+    math.multiply $a 2
+  enddo
+  do $b into $result1d
+    set $b 5
+    math.multiply $b 3
+  enddo
+endtogether
+test.assertEqual $result1c 20 "together - do with params first block failed"
+test.assertEqual $result1d 15 "together - do with params second block failed"
+
+log "=== Together Command Tests Complete ==="

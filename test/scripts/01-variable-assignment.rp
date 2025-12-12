@@ -1,0 +1,202 @@
+# Variable Assignment Tests
+# These are the most fundamental tests - basic variable assignment operations
+
+log "=== Variable Assignment Tests ==="
+
+# Test 1: Basic variable assignment with literal values
+log "Test 1: Basic variable assignment"
+$str = "hello"
+test.assertEqual $str "hello" "String assignment failed"
+
+$num = 42
+test.assertEqual $num 42 "Number assignment failed"
+
+$bool = true
+test.assertTrue $bool "Boolean assignment failed"
+
+$nullVar = null
+test.assertNull $nullVar "Null assignment failed"
+
+# Test 2: Variable to variable assignment
+log "Test 2: Variable to variable assignment"
+$city = "New York"
+$city2 = $city
+test.assertEqual $city2 "New York" "Variable-to-variable assignment failed"
+
+$number1 = 42
+$number2 = $number1
+test.assertEqual $number2 42 "Number variable assignment failed"
+
+$bool1 = true
+$bool2 = $bool1
+test.assertEqual $bool2 true "Boolean variable assignment failed"
+
+# Test 3: Chained variable assignment
+log "Test 3: Chained variable assignment"
+$original = "test"
+$copy1 = $original
+$copy2 = $copy1
+test.assertEqual $copy2 "test" "Chained variable assignment failed"
+
+$num1 = 10
+$num2 = $num1
+$num3 = $num2
+math.add $num3 5
+$result = $
+test.assertEqual $result 15 "Variable assignment in expressions failed"
+
+# Test 4: Shorthand assignment (using last value $)
+log "Test 4: Shorthand assignment"
+math.add 5 3
+$sum = $
+test.assertEqual $sum 8 "Shorthand assignment failed"
+
+math.add 7 8
+math.multiply $ 2
+$chained = $
+test.assertEqual $chained 30 "Chained operations with shorthand assignment failed"
+
+# Test 5: Assignment with different types
+log "Test 5: Assignment with different types"
+$arr1 = range 1 3
+$arr2 = $arr1
+clear
+do
+  array.length $arr2
+  test.assertEqual $ 3 "Array variable assignment failed"
+enddo
+
+json.parse '{"name": "John", "age": 30}'
+$obj1 = $
+$obj2 = $obj1
+test.assertEqual $obj2.name "John" "Object variable assignment failed"
+test.assertEqual $obj2.age 30 "Object variable assignment - age failed"
+
+# Test 6: Assignment within do block
+log "Test 6: Assignment within do block"
+do
+  $doObj = { test: "value", num: 100 }
+  $doStr = "assigned in do"
+  $doNum = 999
+  $doArr = [10, 20, 30]
+  test.assertNotNull $doObj "Assignment in do block failed - $doObj is null"
+  test.assertEqual $doObj.test "value" "Assignment in do block failed - $doObj.test is not 'value'"
+  test.assertEqual $doObj.num 100 "Assignment in do block failed - $doObj.num is not 100"
+  test.assertEqual $doStr "assigned in do" "Assignment in do block failed - $doStr is not 'assigned in do'"
+  test.assertEqual $doNum 999 "Assignment in do block failed - $doNum is not 999"
+  test.assertEqual $doArr[0] 10 "Assignment in do block failed - $doArr[0] is not 10"
+enddo
+
+# Test 7: Variable to variable assignment within do block
+log "Test 7: Variable to variable assignment within do block"
+$sourceObj = { name: "source", value: 42 }
+do
+  $doCopy = $sourceObj
+  $doCopy2 = $doCopy
+  test.assertNotNull $doCopy "Variable assignment in do block failed - $doCopy is null"
+  test.assertEqual $doCopy.name "source" "Variable assignment in do block failed - $doCopy.name is not 'source'"
+  test.assertNotNull $doCopy2 "Variable assignment in do block failed - $doCopy2 is null"
+  test.assertEqual $doCopy2.value 42 "Variable assignment in do block failed - $doCopy2.value is not 42"
+enddo
+
+# Test 8: Assign lastValue from command to variable
+log "Test 8: Assign lastValue from command to variable"
+math.add 5 5
+$sumValue = $
+test.assertEqual $sumValue 10 "Assignment of lastValue to variable failed"
+
+# Test 9: Assign lastValue from command to object property
+log "Test 9: Assign lastValue from command to object property"
+math.add 5 5
+$resultObj = { sum: $ }
+test.assertNotNull $resultObj "Assignment of lastValue to object failed - $resultObj is null"
+test.assertEqual $resultObj.sum 10 "Assignment of lastValue to object failed - $resultObj.sum is not 10"
+
+# Test 10: Assign lastValue to existing object property
+log "Test 10: Assign lastValue to existing object property"
+$existingObj = { name: "test", value: 0 }
+math.add 3 7
+$existingObj.sum = $
+test.assertEqual $existingObj.name "test" "Assignment to object property failed - $existingObj.name changed"
+test.assertEqual $existingObj.value 0 "Assignment to object property failed - $existingObj.value changed"
+test.assertEqual $existingObj.sum 10 "Assignment of lastValue to object property failed - $existingObj.sum is not 10"
+
+# Test 11: Assign lastValue from command to object property within do block
+log "Test 11: Assign lastValue from command to object property within do block"
+do
+  math.add 5 5
+  $sumValue = $
+  $resultObj = { sum: $sumValue }
+  test.assertNotNull $resultObj "Assignment of lastValue to object in do block failed - $resultObj is null"
+  test.assertEqual $resultObj.sum 10 "Assignment of lastValue to object in do block failed - $resultObj.sum is not 10"
+enddo
+
+# Test 12: Assign lastValue to existing object property within do block
+log "Test 12: Assign lastValue to existing object property within do block"
+$existingObj2 = { name: "test2", value: 0 }
+do
+  math.add 3 7
+  $existingObj2.sum = $
+  test.assertEqual $existingObj2.name "test2" "Assignment to object property in do block failed - $existingObj2.name changed"
+  test.assertEqual $existingObj2.value 0 "Assignment to object property in do block failed - $existingObj2.value changed"
+  test.assertEqual $existingObj2.sum 10 "Assignment of lastValue to object property in do block failed - $existingObj2.sum is not 10"
+enddo
+
+# Test 13: Object literal assignment
+log "Test 13: Object literal assignment"
+$obj = { obj: true }
+test.assertEqual $obj.obj true "Object assignment failed"
+
+$nested = { outer: { inner: "value" } }
+$copy = $nested
+test.assertNotNull $copy "Nested object assignment failed - $copy is null"
+test.assertEqual $copy.outer.inner "value" "Nested object assignment failed - $copy.outer.inner is not 'value'"
+
+# Test 14: Array literal assignment
+log "Test 14: Array literal assignment"
+$arr = [1, 2, 3]
+$arrCopy = $arr
+test.assertNotNull $arrCopy "Array assignment failed - $arrCopy is null"
+test.assertEqual $arrCopy[0] 1 "Array assignment failed - $arrCopy[0] is not 1"
+
+# Test 15: set command without "as" keyword
+log "Test 15: set command without 'as' keyword"
+set $setVar1 "hello"
+test.assertEqual $setVar1 "hello" "set command without 'as' failed"
+
+set $setVar2 42
+test.assertEqual $setVar2 42 "set command with number without 'as' failed"
+
+set $setVar3 true
+test.assertEqual $setVar3 true "set command with boolean without 'as' failed"
+
+# Test 16: set command with "as" keyword
+log "Test 16: set command with 'as' keyword"
+set $setVar4 as "world"
+test.assertEqual $setVar4 "world" "set command with 'as' keyword failed"
+
+set $setVar5 as 100
+test.assertEqual $setVar5 100 "set command with number and 'as' keyword failed"
+
+set $setVar6 as false
+test.assertEqual $setVar6 false "set command with boolean and 'as' keyword failed"
+
+# Test 17: set command with object path
+log "Test 17: set command with object path"
+set $obj.path "value"
+test.assertEqual $obj.path "value" "set command with object path failed"
+
+set $obj.nested.deep as "nested value"
+test.assertEqual $obj.nested.deep "nested value" "set command with nested object path and 'as' failed"
+
+# Test 18: set command with fallback (without "as")
+log "Test 18: set command with fallback without 'as'"
+set $fallbackVar1 "" "default"
+test.assertEqual $fallbackVar1 "default" "set command with fallback without 'as' failed"
+
+# Test 19: set command with fallback (with "as")
+log "Test 19: set command with fallback with 'as'"
+set $fallbackVar2 as "" "default value"
+test.assertEqual $fallbackVar2 "default value" "set command with fallback and 'as' keyword failed"
+
+log "=== Variable Assignment Tests Complete ==="

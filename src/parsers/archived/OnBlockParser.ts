@@ -1,3 +1,8 @@
+/*
+This is old code that is no longer used. It is kept here for reference.
+This is a line-based parser.
+*/
+
 /**
  * Parser for 'on' blocks (event handlers)
  * Syntax: on "eventName" ... endon
@@ -12,7 +17,7 @@ import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { LexerUtils } from '../utils';
 import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
-import type { Statement, CommentWithPosition, OnBlock } from '../index';
+import type { Statement, CommentWithPosition, OnBlock } from '../types/Ast.type';
 
 export interface OnBlockHeader {
     /**

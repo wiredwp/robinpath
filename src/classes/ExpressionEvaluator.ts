@@ -3,7 +3,8 @@
  */
 
 import { LexerUtils, valueToJS, evalExpression, isTruthy, type Value, type AttributePathSegment } from '../utils';
-import type { Frame, Environment, Arg } from '../index';
+import type { Frame, Environment } from '../index';
+import type { Arg } from '../types/Ast.type';
 import type { Executor } from './Executor';
 
 export class ExpressionEvaluator {

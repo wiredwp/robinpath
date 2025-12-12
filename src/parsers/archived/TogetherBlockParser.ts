@@ -1,3 +1,8 @@
+/*
+This is old code that is no longer used. It is kept here for reference.
+This is a line-based parser.
+*/
+
 /**
  * Parser for 'together' blocks
  * Syntax: together ... endtogether
@@ -12,7 +17,7 @@ import type { Token } from '../classes/Lexer';
 import { TokenStream } from '../classes/TokenStream';
 import { BlockParserBase, type BlockParserContext, type BlockTokenStreamContext } from './BlockParserBase';
 import { ScopeParser } from './ScopeParser';
-import type { CommentWithPosition, TogetherBlock, ScopeBlock } from '../index';
+import type { CommentWithPosition, TogetherBlock, ScopeBlock } from '../types/Ast.type';
 
 export interface TogetherBlockHeader {
     /**
@@ -115,24 +120,35 @@ export class TogetherBlockParser extends BlockParserBase {
                 throw this.createError('together block can only contain do blocks');
             }
 
-            // Parse the do block (can be regular do or do into $var)
-            // Create a fresh context for the do block parser with the current line
-            const doBlockContext: import('./BlockParserBase').BlockParserContext = {
-                originalLine: this.context.lines[currentLine],
-                lineNumber: currentLine,
-                lines: this.context.lines,
-                getCurrentLine: () => this.context.getCurrentLine(),
-                advanceLine: () => this.context.advanceLine(),
-                getTrimmedLine: (ln: number) => this.context.getTrimmedLine(ln),
-                extractInlineCommentFromLine: (ln: number) => this.context.extractInlineCommentFromLine(ln),
-                createCodePositionFromLines: (startRow: number, endRow: number) => this.context.createCodePositionFromLines(startRow, endRow),
-                createGroupedCommentNode: (comments: string[], commentLines: number[]) => this.context.createGroupedCommentNode(comments, commentLines),
-                parseStatement: () => this.context.parseStatement()
-            };
-            const scopeParser = new ScopeParser(doBlockContext);
-            const doBlock = scopeParser.parseBlock(currentLine);
+            // Parse the do block using token stream approach
+            // Tokenize the line and find the 'do' token
+            const lineTokens = Lexer.tokenizeFull(trimmedBodyLine);
+            const doTokenIndex = lineTokens.findIndex(t => t.kind === TokenKind.KEYWORD && t.text === 'do');
+            if (doTokenIndex < 0) {
+                throw this.createError('expected do block');
+            }
             
-            // parseBlock now returns ScopeBlock with optional into property
+            const doToken = lineTokens[doTokenIndex];
+            const stream = new TokenStream(lineTokens, doTokenIndex);
+            
+            // Create a token stream context for the do block
+            const doBlockContext: BlockTokenStreamContext = {
+                lines: this.context.lines,
+                parseStatementFromTokens: (_tokenStream: TokenStream) => {
+                    // This is a simplified context - in practice, this should delegate to the main parser
+                    // For now, we'll use the line-based parseStatement from the context
+                    return this.context.parseStatement();
+                },
+                createCodePositionFromTokens: (startToken: Token, endToken: Token) => {
+                    return this.context.createCodePositionFromLines(startToken.line - 1, endToken.line - 1);
+                },
+                createCodePositionFromLines: (startRow: number, endRow: number) => this.context.createCodePositionFromLines(startRow, endRow),
+                createGroupedCommentNode: (comments: string[], commentLines: number[]) => this.context.createGroupedCommentNode(comments, commentLines)
+            };
+            
+            const doBlock = ScopeParser.parseFromStream(stream, doToken, doBlockContext);
+            
+            // parseFromStream now returns ScopeBlock with optional into property
             if (doBlock.type === 'do') {
                 blocks.push(doBlock);
             } else {

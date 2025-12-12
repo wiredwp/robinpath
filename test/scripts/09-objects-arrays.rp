@@ -1,0 +1,250 @@
+# Objects and Arrays Tests
+# Tests for object/array literals, access, and assignment
+
+log "=== Objects and Arrays Tests ==="
+
+# Test 1: Object and Array Literal Syntax {} and []
+log "Test 1: Object and Array Literals"
+# Test empty object literal
+{}
+$emptyObjLit = $
+test.assertType $emptyObjLit "object" "Empty object literal {} failed"
+clear
+do
+  keys $emptyObjLit
+  $emptyKeys = $
+  array.length $emptyKeys
+  test.assertEqual $ 0 "Empty object literal keys failed"
+enddo
+
+# Test basic object literal
+{name: "John", age: 30}
+$objLit = $
+test.assertEqual $objLit.name "John" "Object literal basic creation failed"
+test.assertEqual $objLit.age 30 "Object literal with number failed"
+
+# Test object literal with nested object
+{nested: {key: "value"}, array: [1, 2, 3]}
+$complexObjLit = $
+test.assertEqual $complexObjLit.nested.key "value" "Object literal nested object failed"
+test.assertEqual $complexObjLit.array[0] 1 "Object literal with array failed"
+
+# Test object literal with JSON5 features
+{unquoted: "works", singleQuotes: "also works", numbers: 42, bool: true}
+$json5ObjLit = $
+test.assertEqual $json5ObjLit.unquoted "works" "Object literal unquoted keys failed"
+test.assertEqual $json5ObjLit.singleQuotes "also works" "Object literal single quotes failed"
+test.assertEqual $json5ObjLit.numbers 42 "Object literal number values failed"
+test.assertEqual $json5ObjLit.bool true "Object literal boolean values failed"
+
+# Test empty array literal
+[]
+$emptyArrLit = $
+clear
+do
+  array.length $emptyArrLit
+  test.assertEqual $ 0 "Empty array literal [] failed"
+enddo
+
+# Test basic array literal
+[1, 2, 3]
+$arrLit = $
+clear
+do
+  array.length $arrLit
+  test.assertEqual $ 3 "Array literal length failed"
+enddo
+test.assertEqual $arrLit[0] 1 "Array literal first element failed"
+test.assertEqual $arrLit[1] 2 "Array literal second element failed"
+test.assertEqual $arrLit[2] 3 "Array literal third element failed"
+
+# Test array literal with mixed types
+["hello", "world", 42, true]
+$mixedArrLit = $
+clear
+do
+  array.length $mixedArrLit
+  test.assertEqual $ 4 "Array literal mixed types length failed"
+enddo
+test.assertEqual $mixedArrLit[0] "hello" "Array literal string element failed"
+test.assertEqual $mixedArrLit[2] 42 "Array literal number element failed"
+test.assertEqual $mixedArrLit[3] true "Array literal boolean element failed"
+
+# Test 2: Variable interpolation in object and array literals
+log "Test 2: Variable interpolation in literals"
+$a = 1
+$b = { a: $a }
+test.assertEqual $b.a 1 "Variable interpolation in object literal failed"
+
+$key = "key"
+$b = { [$key]: 1 }
+test.assertEqual $b.key 1 "Computed property name in object literal failed"
+
+$num = 42
+$arr = [$num, 43]
+test.assertEqual $arr[0] 42 "Variable interpolation in array literal failed"
+test.assertEqual $arr[1] 43 "Variable interpolation in array literal - second element failed"
+
+$name = "John"
+$age = 30
+$obj = { name: $name, age: $age }
+test.assertEqual $obj.name "John" "Multiple variable interpolation in object literal failed"
+test.assertEqual $obj.age 30 "Multiple variable interpolation in object literal - age failed"
+
+# Test 3: Attribute access and array indexing
+log "Test 3: Attribute access and array indexing"
+json.parse '{"name": "John", "age": 30, "address": {"city": "NYC", "zip": 10001}}'
+$user = $
+test.assertEqual $user.name "John" "Basic property access failed"
+test.assertEqual $user.age 30 "Basic property access with number failed"
+test.assertEqual $user.address.city "NYC" "Nested property access failed"
+test.assertEqual $user.address.zip 10001 "Nested property access with number failed"
+
+# Test array indexing
+$arr = range 10 15
+test.assertEqual $arr[0] 10 "Array index 0 failed"
+test.assertEqual $arr[2] 12 "Array index 2 failed"
+test.assertEqual $arr[5] 15 "Array index 5 failed"
+test.assertEqual $arr[10] null "Out of bounds array access should return null"
+
+# Test combined property and array access
+json.parse '{"items": [{"name": "item1", "price": 10}, {"name": "item2", "price": 20}]}'
+$data = $
+test.assertEqual $data.items[0].name "item1" "Combined property and array access failed"
+test.assertEqual $data.items[0].price 10 "Combined property and array access with number failed"
+test.assertEqual $data.items[1].name "item2" "Combined property and array access second item failed"
+
+# Test 4: Assignment to attribute paths and array indices
+log "Test 4: Assignment to attribute paths and array indices"
+json.parse '{"name": "John", "age": 30}'
+$user = $
+$user.city = "London"
+test.assertEqual $user.city "London" "Assignment to property path failed"
+test.assertEqual $user.name "John" "Assignment to property path should preserve other properties"
+
+# Test assignment to nested property path
+$user.address.city = "NYC"
+test.assertEqual $user.address.city "NYC" "Assignment to nested property path failed"
+test.assertEqual $user.name "John" "Assignment to nested property path should preserve other properties"
+
+# Test assignment to array index
+$arr = range 1 5
+$arr[0] = 100
+test.assertEqual $arr[0] 100 "Assignment to array index failed"
+test.assertEqual $arr[1] 2 "Assignment to array index should preserve other elements"
+
+# Test assignment to nested array index
+json.parse '{"items": [10, 20, 30]}'
+$data = $
+$data.items[0] = 100
+test.assertEqual $data.items[0] 100 "Assignment to nested array index failed"
+test.assertEqual $data.items[1] 20 "Assignment to nested array index should preserve other elements"
+
+# Test assignment to combined path
+json.parse '{"items": [{"name": "item1", "price": 10}]}'
+$data = $
+$data.items[0].price = 50
+test.assertEqual $data.items[0].price 50 "Assignment to combined path failed"
+test.assertEqual $data.items[0].name "item1" "Assignment to combined path should preserve other properties"
+
+# Test assignment creates intermediate objects
+$animal.cat = 5
+test.assertEqual $animal.cat 5 "Assignment creating intermediate object failed"
+
+# Test assignment creates nested intermediate objects
+$config.database.host = "localhost"
+test.assertEqual $config.database.host "localhost" "Assignment creating nested intermediate objects failed"
+
+# Test assignment to array index out of bounds (should extend array)
+$arr = range 1 3
+$arr[5] = 100
+test.assertEqual $arr[5] 100 "Assignment to out of bounds array index failed"
+clear
+do
+  array.length $arr
+  test.assertEqual $ 6 "Assignment to out of bounds array index should extend array"
+enddo
+
+# Test 5: obj and array builtin commands
+log "Test 5: obj and array builtin commands"
+obj
+$emptyObj = $
+test.assertType $emptyObj "object" "obj without args failed"
+clear
+do
+  keys $emptyObj
+  $emptyKeys = $
+  array.length $emptyKeys
+  test.assertEqual $ 0 "obj empty object keys failed"
+enddo
+
+obj '{name: "John", age: 30}'
+$objCreated = $
+test.assertEqual $objCreated.name "John" "obj command basic creation failed"
+test.assertEqual $objCreated.age 30 "obj command with number failed"
+
+array
+$emptyArray = $
+clear
+do
+  array.length $emptyArray
+  test.assertEqual $ 0 "array without args failed"
+enddo
+
+array 1 2 3
+$arr1 = $
+clear
+do
+  array.length $arr1
+  test.assertEqual $ 3 "array command length failed"
+enddo
+test.assertEqual $arr1[0] 1 "array command first element failed"
+test.assertEqual $arr1[1] 2 "array command second element failed"
+test.assertEqual $arr1[2] 3 "array command third element failed"
+
+# Test 6: Multi-line object and array literals
+log "Test 6: Multi-line object and array literals"
+{
+  name: "Multi",
+  age: 25,
+  city: "NYC"
+}
+$multiLineObj = $
+test.assertEqual $multiLineObj.name "Multi" "Multi-line object literal failed"
+test.assertEqual $multiLineObj.age 25 "Multi-line object literal age failed"
+test.assertEqual $multiLineObj.city "NYC" "Multi-line object literal city failed"
+
+[
+  1,
+  2,
+  3
+]
+$multiLineArr = $
+clear
+do
+  array.length $multiLineArr
+  test.assertEqual $ 3 "Multi-line array literal length failed"
+enddo
+test.assertEqual $multiLineArr[1] 2 "Multi-line array literal element failed"
+
+# Test 23: Array manipulation with array.push
+log "Test 23: Array manipulation with array.push"
+$multiContinue = []
+for $i in range 1 10
+  if $i < 3
+    continue
+  endif
+  if $i > 7
+    continue
+  endif
+  set $multiContinue array.push $multiContinue $i
+endfor
+test.assertEqual $multiContinue[0] 3 "Array.push with continue - first element failed"
+test.assertEqual $multiContinue[4] 7 "Array.push with continue - last element failed"
+clear
+do
+  array.length $multiContinue
+  test.assertEqual $ 5 "Array.push with continue - length failed"
+enddo
+
+log "=== Objects and Arrays Tests Complete ==="

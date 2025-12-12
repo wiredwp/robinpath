@@ -1,0 +1,386 @@
+/**
+ * Parser for variable assignments
+ * Handles: $var = value, $var = $, $var = command, etc.
+ */
+
+import { TokenStream, ParsingContext } from '../classes/TokenStream';
+import { TokenKind } from '../classes/Lexer';
+import type { Token } from '../classes/Lexer';
+import { LexerUtils } from '../utils';
+import { CommandParser } from './CommandParser';
+import { ObjectLiteralParser } from './ObjectLiteralParser';
+import { ArrayLiteralParser } from './ArrayLiteralParser';
+import type { Assignment, CommandCall, CodePosition, Arg } from '../types/Ast.type';
+import type { AttributePathSegment } from '../utils/types';
+
+export class AssignmentParser {
+    /**
+     * Parse a variable assignment statement
+     * Expects stream to be positioned at the variable token
+     * 
+     * @param stream - TokenStream positioned at the variable token
+     * @returns Assignment AST node
+     */
+    static parse(stream: TokenStream): Assignment {
+        const startToken = stream.current();
+        if (!startToken) {
+            throw new Error('Unexpected end of input while parsing assignment');
+        }
+
+        // Parse target variable: $var or $var.path
+        if (startToken.kind !== TokenKind.VARIABLE) {
+            throw new Error(`Expected variable at ${stream.formatPosition()}, got ${startToken.kind}`);
+        }
+
+        const targetVar = startToken.text;
+        const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(targetVar);
+        stream.next(); // Consume variable token
+
+        // Skip whitespace and comments before the '=' token
+        while (!stream.isAtEnd()) {
+            const token = stream.current();
+            if (!token) break;
+            if (token.kind === TokenKind.COMMENT || 
+                (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
+                stream.next();
+                continue;
+            }
+            break;
+        }
+
+        // Expect = token
+        const assignToken = stream.current();
+        if (!assignToken || assignToken.kind !== TokenKind.ASSIGN) {
+            const found = assignToken ? `${assignToken.kind} '${assignToken.text}'` : 'end of input';
+            const position = assignToken 
+                ? `line ${assignToken.line}, column ${assignToken.column}`
+                : stream.formatPosition();
+            throw new Error(`Expected '=' after variable at ${position}, found ${found}`);
+        }
+        stream.next(); // Consume the '=' token
+
+        // Skip whitespace and comments after the '=' token
+        while (!stream.isAtEnd()) {
+            const token = stream.current();
+            if (!token) break;
+            if (token.kind === TokenKind.COMMENT || 
+                (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
+                stream.next();
+                continue;
+            }
+            break;
+        }
+
+        // Parse the assignment value
+        const valueResult = this.parseAssignmentValue(stream);
+        
+        // Create code position
+        const codePos = createCodePosition(startToken, valueResult.endToken);
+
+        return {
+            type: 'assignment',
+            targetName,
+            targetPath,
+            ...valueResult.assignmentData,
+            codePos
+        };
+    }
+
+    /**
+     * Parse the value part of an assignment
+     * Returns the assignment data and the end token
+     */
+    private static parseAssignmentValue(stream: TokenStream): {
+        assignmentData: Partial<Assignment>;
+        endToken: Token;
+    } {
+        const startToken = stream.current();
+        if (!startToken) {
+            throw new Error('Unexpected end of input while parsing assignment value');
+        }
+
+        // Check for last value: $
+        if (startToken.kind === TokenKind.VARIABLE && startToken.text === '$') {
+            stream.next();
+            return {
+                assignmentData: {
+                    literalValue: null,
+                    isLastValue: true
+                },
+                endToken: startToken
+            };
+        }
+
+        // Check for literal values
+        // Handle string concatenation: multiple strings on one line
+        if (startToken.kind === TokenKind.STRING) {
+            const strings: string[] = [];
+            let lastToken = startToken;
+            
+            // Parse the first string token (startToken)
+            // Always use parseString to ensure consistency - token.value might not always be set
+            const firstValue = LexerUtils.parseString(startToken.text);
+            strings.push(firstValue);
+            stream.next(); // Consume the first string token
+            
+            // Collect all consecutive string tokens
+            while (!stream.isAtEnd()) {
+                const token = stream.current();
+                if (!token) break;
+                if (token.kind === TokenKind.COMMENT || 
+                    (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
+                    stream.next();
+                    continue;
+                }
+                break;
+            }
+            
+            while (stream.check(TokenKind.STRING)) {
+                const token = stream.next();
+                if (!token) break;
+                // Always use parseString for consistency
+                const value = LexerUtils.parseString(token.text);
+                strings.push(value);
+                lastToken = token;
+                
+                // Skip whitespace between strings
+                while (!stream.isAtEnd()) {
+                    const t = stream.current();
+                    if (!t) break;
+                    if (t.kind === TokenKind.COMMENT || 
+                        (t.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
+                        stream.next();
+                        continue;
+                    }
+                    break;
+                }
+            }
+            
+            const concatenated = strings.join('');
+            return {
+                assignmentData: {
+                    literalValue: concatenated,
+                    literalValueType: 'string'
+                },
+                endToken: lastToken
+            };
+        }
+
+        if (startToken.kind === TokenKind.NUMBER) {
+            const value = startToken.value !== undefined ? startToken.value : parseFloat(startToken.text);
+            stream.next();
+            return {
+                assignmentData: {
+                    literalValue: value,
+                    literalValueType: 'number'
+                },
+                endToken: startToken
+            };
+        }
+
+        if (startToken.kind === TokenKind.BOOLEAN) {
+            const value = startToken.value !== undefined ? startToken.value : (startToken.text === 'true');
+            stream.next();
+            return {
+                assignmentData: {
+                    literalValue: value,
+                    literalValueType: 'boolean'
+                },
+                endToken: startToken
+            };
+        }
+
+        if (startToken.kind === TokenKind.NULL) {
+            stream.next();
+            return {
+                assignmentData: {
+                    literalValue: null,
+                    literalValueType: 'null'
+                },
+                endToken: startToken
+            };
+        }
+
+        // Check for variable assignment: $var1 = $var2 or $var1 = $1
+        // Note: $ alone is handled above as lastValue, so this handles $var, $1, etc.
+        if (startToken.kind === TokenKind.VARIABLE && startToken.text !== '$') {
+            const varText = startToken.text;
+            // For variable assignments, we always treat it as a variable reference
+            // (not a command), even if there's more on the line
+            const { name: varName, path } = LexerUtils.parseVariablePath(varText);
+            stream.next();
+            
+            // Skip any remaining tokens on the line (shouldn't be any for simple var assignment)
+            // But don't consume newline - let the main parser handle that
+            const endToken = startToken; // The variable token itself is the end
+            
+            return {
+                assignmentData: {
+                    command: {
+                        type: 'command',
+                        name: '_var',
+                        args: [{ type: 'var', name: varName, path }],
+                        codePos: createCodePosition(startToken, endToken)
+                    }
+                },
+                endToken: endToken
+            };
+        }
+
+        // Check for subexpression: $(...)
+        // The Lexer tokenizes $ and ( separately, so we need to check for VARIABLE($) followed by LPAREN
+        if (startToken.kind === TokenKind.VARIABLE && startToken.text === '$') {
+            const nextToken = stream.peek(1);
+            if (nextToken && nextToken.kind === TokenKind.LPAREN) {
+                const subexprResult = parseSubexpression(stream);
+                return {
+                    assignmentData: {
+                        command: {
+                            type: 'command',
+                            name: '_subexpr',
+                            args: [{ type: 'subexpr', code: subexprResult.code }],
+                            codePos: createCodePosition(startToken, subexprResult.endToken)
+                        }
+                    },
+                    endToken: subexprResult.endToken
+                };
+            }
+        }
+
+        // Check for object literal: {...}
+        if (startToken.kind === TokenKind.LBRACE) {
+            const objResult = ObjectLiteralParser.parse(stream);
+            return {
+                assignmentData: {
+                    command: {
+                        type: 'command',
+                        name: '_object',
+                        args: [{ type: 'object', code: objResult.code }],
+                        codePos: createCodePosition(objResult.startToken, objResult.endToken)
+                    }
+                },
+                endToken: objResult.endToken
+            };
+        }
+
+        // Check for array literal: [...]
+        if (startToken.kind === TokenKind.LBRACKET) {
+            const arrResult = ArrayLiteralParser.parse(stream);
+            return {
+                assignmentData: {
+                    command: {
+                        type: 'command',
+                        name: '_array',
+                        args: [{ type: 'array', code: arrResult.code }],
+                        codePos: createCodePosition(arrResult.startToken, arrResult.endToken)
+                    }
+                },
+                endToken: arrResult.endToken
+            };
+        }
+
+        // Otherwise, parse as command
+        const command = CommandParser.parse(stream);
+        const endToken = stream.current() || startToken;
+        return {
+            assignmentData: {
+                command
+            },
+            endToken: endToken
+        };
+    }
+}
+
+/**
+ * Helper: Skip whitespace and comment tokens
+ */
+function skipWhitespaceAndComments(stream: TokenStream): void {
+    while (!stream.isAtEnd()) {
+        const token = stream.current();
+        if (!token) break;
+        if (token.kind === TokenKind.COMMENT || 
+            (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
+            stream.next();
+            continue;
+        }
+        break;
+    }
+}
+
+/**
+ * Helper: Parse subexpression $(...)
+ */
+function parseSubexpression(stream: TokenStream): { code: string; endToken: Token } {
+    const dollarToken = stream.current();
+    if (!dollarToken || dollarToken.kind !== TokenKind.VARIABLE || dollarToken.text !== '$') {
+        throw new Error('Expected $ at start of subexpression');
+    }
+    
+    // Push subexpression context
+    stream.pushContext(ParsingContext.SUBEXPRESSION);
+    
+    try {
+        stream.next(); // Consume $
+
+        const lparen = stream.expect(TokenKind.LPAREN, 'Expected ( after $ in subexpression');
+        
+        // Collect tokens until matching )
+        let depth = 1;
+        const tokens: Token[] = [];
+        
+        while (!stream.isAtEnd() && depth > 0) {
+            const token = stream.current();
+            if (!token) break;
+            
+            // Skip string tokens - they're already tokenized
+            if (token.kind === TokenKind.STRING) {
+                tokens.push(token);
+                stream.next();
+                continue;
+            }
+            
+            if (token.kind === TokenKind.LPAREN) {
+                depth++;
+            } else if (token.kind === TokenKind.RPAREN) {
+                depth--;
+                if (depth === 0) {
+                    stream.next(); // Consume closing paren
+                    break;
+                }
+            }
+            
+            if (depth > 0) {
+                tokens.push(token);
+            }
+            
+            stream.next();
+        }
+        
+        if (depth > 0) {
+            throw new Error('Unclosed subexpression');
+        }
+        
+        const endToken = stream.current() || lparen;
+        // Reconstruct the code from tokens, preserving spacing
+        const code = tokens.map(t => t.text).join('');
+        
+        return { code, endToken };
+    } finally {
+        // Always pop the context
+        stream.popContext();
+    }
+}
+
+
+
+/**
+ * Helper: Create CodePosition from start and end tokens
+ */
+function createCodePosition(startToken: Token, endToken: Token): CodePosition {
+    return {
+        startRow: startToken.line - 1, // Convert to 0-based
+        startCol: startToken.column,
+        endRow: endToken.line - 1, // Convert to 0-based
+        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
+    };
+}

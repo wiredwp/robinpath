@@ -1,0 +1,205 @@
+# Into Syntax Tests
+# Tests for the "into" syntax sugar for assignment
+
+log "=== Into Syntax Tests ==="
+
+# Test 1: Basic command with into
+log "Test 1: Basic command with into"
+add 1 2 into $result1
+test.assertEqual $result1 3 "into syntax - basic command failed"
+
+# Test 2: Command with into should not affect last value
+log "Test 2: Into preserves last value"
+math.add 10 20
+$beforeInto = $
+add 5 5 into $result2
+test.assertEqual $beforeInto 30 "into syntax - should preserve last value before into"
+test.assertEqual $result2 10 "into syntax - basic command result failed"
+
+# Test 3: Module function with into
+log "Test 3: Module function with into"
+math.add 15 25 into $result3
+test.assertEqual $result3 40 "into syntax - module function failed"
+
+math.multiply 6 7 into $result3b
+test.assertEqual $result3b 42 "into syntax - module function multiply failed"
+
+# Test 4: String function with into
+log "Test 4: String function with into"
+string.concat "hello" " " "world" into $result4
+test.assertEqual $result4 "hello world" "into syntax - string function failed"
+
+# Test 5: Array function with into
+log "Test 5: Array function with into"
+array.create 1 2 3 into $result5
+clear
+do
+  array.length $result5
+  test.assertEqual $ 3 "into syntax - array function length failed"
+enddo
+test.assertEqual $result5[0] 1 "into syntax - array function element access failed"
+
+# Test 6: Do block with into
+log "Test 6: Do block with into"
+do into $result6
+  math.add 20 30
+  math.multiply $ 2
+enddo
+test.assertEqual $result6 100 "into syntax - do block failed"
+
+# Test 7: Do block with into should not affect last value
+log "Test 7: Do block with into preserves last value"
+math.add 1 1
+$beforeDoInto = $
+do into $result7
+  math.add 5 5
+enddo
+test.assertEqual $beforeDoInto 2 "into syntax - do block should preserve last value"
+test.assertEqual $result7 10 "into syntax - do block result failed"
+
+# Test 8: Do block with parameters and into
+log "Test 8: Do block with parameters and into"
+$outerVar8 = 300
+clear
+do $a $b into $result8
+  # Should not be able to access $outerVar8 (isolated scope)
+  test.assertEqual $outerVar8 null "do with params and into - should not access parent variables"
+  test.assertEqual $a null "do with params and into - first param should be accessible"
+  test.assertEqual $b null "do with params and into - second param should be accessible"
+  # Set values and compute result
+  set $a 5
+  set $b 3
+  math.add $a $b
+enddo
+test.assertEqual $outerVar8 300 "do with params and into - parent variable should be unchanged"
+test.assertEqual $result8 8 "do with params and into - should return computed result"
+
+# Test 9: Parenthesized function call with into (single line)
+log "Test 9: Parenthesized call with into"
+math.add(10 20) into $result9
+test.assertEqual $result9 30 "into syntax - parenthesized call single line failed"
+
+# Test 10: Parenthesized function call with into (multiline)
+log "Test 10: Multiline parenthesized call with into"
+math.add(
+  15
+  25
+) into $result10
+test.assertEqual $result10 40 "into syntax - parenthesized call multiline failed"
+
+# Test 11: Parenthesized function call with named arguments and into
+log "Test 11: Parenthesized call with named args and into"
+def testIntoFn $a $b
+  math.add $a $b
+enddef
+
+testIntoFn($a=10 $b=20) into $result11
+test.assertEqual $result11 30 "into syntax - parenthesized call with named args failed"
+
+# Test 12: Multiline parenthesized call with named arguments and into
+log "Test 12: Multiline parenthesized call with named args and into"
+testIntoFn(
+  $a=5
+  $b=15
+) into $result12
+test.assertEqual $result12 20 "into syntax - multiline parenthesized call with named args failed"
+
+# Test 13: Into with attribute path assignment
+log "Test 13: Into with attribute path assignment"
+json.parse '{"value": 0}'
+$obj13 = $
+math.add 10 20 into $obj13.result
+test.assertEqual $obj13.result 30 "into syntax - attribute path assignment failed"
+test.assertEqual $obj13.value 0 "into syntax - attribute path should preserve other properties"
+
+# Test 14: Into should work with user-defined functions
+log "Test 14: Into with user-defined functions"
+def addTen $x
+  math.add $x 10
+enddef
+
+addTen(15) into $result14
+test.assertEqual $result14 25 "into syntax - user-defined function failed"
+
+# Test 15: Into with array indexing
+log "Test 15: Into with array indexing"
+range 1 5
+$arr15 = $
+array.length($arr15) into $arr15.length
+test.assertEqual $arr15.length 5 "into syntax - array indexing assignment failed"
+
+# Test 16: Multiple into statements in sequence
+log "Test 16: Multiple into statements"
+math.add 1 1 into $a16
+math.add 2 2 into $b16
+math.add 3 3 into $c16
+test.assertEqual $a16 2 "into syntax - multiple statements first failed"
+test.assertEqual $b16 4 "into syntax - multiple statements second failed"
+test.assertEqual $c16 6 "into syntax - multiple statements third failed"
+
+# Test 17: Into with empty do block
+log "Test 17: Into with empty do block"
+do into $result17
+enddo
+test.assertEqual $result17 null "into syntax - empty do block should return null"
+
+# Test 18: Into with do block that has parameters
+log "Test 18: Into with do block parameters"
+do $x $y into $result18
+  math.add $x $y
+enddo
+test.assertEqual $result18 0 "into syntax - do block with parameters (no args) should return 0"
+
+# Test 19: Return statement in do block with into
+log "Test 19: Return in do block with into"
+do into $result19
+  math.add 10 20
+  return 100
+  math.add 1 1  # This should not execute
+enddo
+test.assertEqual $result19 100 "return in do block - should return specified value"
+
+# Test 20: Return statement in do block without value (returns $)
+log "Test 20: Return in do block without value"
+do into $result20
+  math.add 5 5
+  return  # Should return $ (which is 10)
+enddo
+test.assertEqual $result20 10 "return in do block - should return last value when no value specified"
+
+# Test 21: Return stops execution of remaining code
+log "Test 21: Return stops execution"
+$testVar21 = 0
+do into $result21
+  set $testVar21 1
+  return 42
+  set $testVar21 2  # This should not execute
+enddo
+test.assertEqual $result21 42 "return in do block - should return correct value"
+test.assertEqual $testVar21 1 "return in do block - should stop execution before remaining statements"
+
+# Test 22: Into preserves last value after assignment
+log "Test 22: Into preserves last value after assignment"
+math.add 100 200
+$beforeInto22 = $
+math.add 5 5 into $result22
+test.assertEqual $beforeInto22 300 "into syntax - should preserve last value"
+test.assertEqual $result22 10 "into syntax - should assign result correctly"
+
+# Test 23: Into with object literal
+log "Test 23: Into with object literal"
+obj '{name: "Test", value: 42}' into $obj23
+test.assertEqual $obj23.name "Test" "into syntax - object literal failed"
+test.assertEqual $obj23.value 42 "into syntax - object literal value failed"
+
+# Test 24: Into with array literal
+log "Test 24: Into with array literal"
+array(1 2 3 4 5) into $arr24
+clear
+do
+  array.length $arr24
+  test.assertEqual $ 5 "into syntax - array literal length failed"
+enddo
+test.assertEqual $arr24[2] 3 "into syntax - array literal element access failed"
+
+log "=== Into Syntax Tests Complete ==="

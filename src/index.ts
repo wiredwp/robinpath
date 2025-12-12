@@ -33,6 +33,54 @@ import {
 // Re-export types for external use
 export type { Value, AttributePathSegment };
 
+// Import AST types for internal use
+import type {
+    Statement,
+    Arg,
+    CommandCall,
+    Assignment,
+    ShorthandAssignment,
+    InlineIf,
+    IfBlock,
+    IfTrue,
+    IfFalse,
+    DefineFunction,
+    ScopeBlock,
+    TogetherBlock,
+    ForLoop,
+    ReturnStatement,
+    BreakStatement,
+    OnBlock,
+    CommentStatement,
+    CommentWithPosition,
+    CodePosition,
+    DecoratorCall
+} from './types/Ast.type';
+
+// Re-export AST types for external use (backward compatibility)
+export type {
+    Statement,
+    Arg,
+    CommandCall,
+    Assignment,
+    ShorthandAssignment,
+    InlineIf,
+    IfBlock,
+    IfTrue,
+    IfFalse,
+    DefineFunction,
+    ScopeBlock,
+    TogetherBlock,
+    ForLoop,
+    ReturnStatement,
+    BreakStatement,
+    OnBlock,
+    CommentStatement,
+    CommentWithPosition,
+    CodePosition,
+    DecoratorCall
+} from './types/Ast.type';
+
 // Import core modules
 import CoreModule from './modules/Core';
 import MathModule from './modules/Math';
@@ -51,6 +99,8 @@ import DomModule from './modules/Dom';
 // ============================================================================
 
 // Value type is imported from utils
+
+// Note: AST types are already imported above for use throughout this file
 
 export type BuiltinCallback = (callbackArgs: Value[]) => Promise<Value> | Value | null;
 export type BuiltinHandler = (args: Value[], callback?: BuiltinCallback | null) => Promise<Value> | Value | null;
@@ -125,180 +175,7 @@ export interface ModuleMetadata {
     methods: string[];
 }
 
-// AttributePathSegment type is imported from utils
-
-export type Arg = 
-    | { type: 'subexpr'; code: string }   // $( ... ) inline subexpression
-    | { type: 'var'; name: string; path?: AttributePathSegment[] }  // $var or $var.property or $var[0] or $var.property[0]
-    | { type: 'lastValue' }
-    | { type: 'literal'; value: Value }
-    | { type: 'number'; value: number }
-    | { type: 'string'; value: string }
-    | { type: 'object'; code: string }    // { ... } object literal
-    | { type: 'array'; code: string }     // [ ... ] array literal
-    | { type: 'namedArgs'; args: Record<string, Arg> }; // Named arguments object (key=value pairs)
-
-export interface CodePosition {
-    startRow: number; // 0-indexed row (line) number where statement starts
-    startCol: number; // 0-indexed column number where statement starts
-    endRow: number; // 0-indexed row (line) number where statement ends (inclusive)
-    endCol: number; // 0-indexed column number where statement ends (inclusive)
-}
-
-export interface CommandCall {
-    type: 'command';
-    name: string;
-    args: Arg[];
-    syntaxType?: 'space' | 'parentheses' | 'named-parentheses' | 'multiline-parentheses'; // Function call syntax style
-    decorators?: DecoratorCall[]; // Decorators attached to this command (for var/const)
-    into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
-    callback?: ScopeBlock; // Optional callback do block (for module functions)
-    comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface Assignment {
-    type: 'assignment';
-    targetName: string;
-    targetPath?: AttributePathSegment[]; // Path for attribute access assignment (e.g., $animal.cat)
-    command?: CommandCall;
-    literalValue?: Value;
-    literalValueType?: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array'; // Type of literalValue, deduced from the value
-    isLastValue?: boolean; // True if assignment is from $ (last value)
-    comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface ShorthandAssignment {
-    type: 'shorthand';
-    targetName: string;
-    comments?: CommentWithPosition[]; // Comments attached to this shorthand assignment (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface InlineIf {
-    type: 'inlineIf';
-    conditionExpr: string;
-    command: Statement;
-    comments?: CommentWithPosition[]; // Comments attached to this inline if (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface IfBlock {
-    type: 'ifBlock';
-    conditionExpr: string;
-    thenBranch: Statement[];
-    elseBranch?: Statement[];
-    elseifBranches?: Array<{ condition: string; body: Statement[] }>;
-    comments?: CommentWithPosition[]; // Comments attached to this if block (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface IfTrue {
-    type: 'ifTrue';
-    command: Statement;
-    comments?: CommentWithPosition[]; // Comments attached to this iftrue (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface IfFalse {
-    type: 'ifFalse';
-    command: Statement;
-    comments?: CommentWithPosition[]; // Comments attached to this iffalse (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface DecoratorCall {
-    name: string; // Decorator function name (without @)
-    args: Arg[]; // Arguments passed to the decorator
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface DefineFunction {
-    type: 'define';
-    name: string;
-    paramNames: string[]; // Parameter names (e.g., ['a', 'b', 'c']) - aliases for $1, $2, $3
-    body: Statement[];
-    decorators?: DecoratorCall[]; // Decorators attached to this function (must be immediately before def)
-    comments?: CommentWithPosition[]; // Comments attached to this function definition (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface ScopeBlock {
-    type: 'do';
-    paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
-    body: Statement[];
-    into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
-    comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface TogetherBlock {
-    type: 'together';
-    blocks: ScopeBlock[]; // Only do blocks are allowed
-    comments?: CommentWithPosition[]; // Comments attached to this together block (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface ForLoop {
-    type: 'forLoop';
-    varName: string;
-    iterableExpr: string;
-    body: Statement[];
-    comments?: CommentWithPosition[]; // Comments attached to this for loop (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface ReturnStatement {
-    type: 'return';
-    value?: Arg; // Optional value to return (if not provided, returns $)
-    comments?: CommentWithPosition[]; // Comments attached to this return statement (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface BreakStatement {
-    type: 'break';
-    comments?: CommentWithPosition[]; // Comments attached to this break statement (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface OnBlock {
-    type: 'onBlock';
-    eventName: string; // Event name (e.g., "test1")
-    body: Statement[]; // Body statements that execute when event is triggered
-    comments?: CommentWithPosition[]; // Comments attached to this on block (above and inline)
-    codePos: CodePosition; // Code position (row/col) in source code
-}
-
-export interface CommentWithPosition {
-    text: string; // Comment text without the #
-    codePos: CodePosition; // Code position (row/col) in source code
-    inline?: boolean; // true if this is an inline comment (on same line as code), false/undefined if above
-}
-
-export interface CommentStatement {
-    type: 'comment';
-    comments: CommentWithPosition[]; // Array of comment objects with position (always use this, never 'text')
-    lineNumber: number; // Original line number for reference (deprecated, derive from comments[0].codePos.startRow)
-    // codePos is derived from comments array - no need to store it separately
-}
-
-export type Statement = 
-    | CommandCall 
-    | Assignment 
-    | ShorthandAssignment 
-    | InlineIf 
-    | IfBlock 
-    | IfTrue 
-    | IfFalse 
-    | DefineFunction
-    | ScopeBlock
-    | TogetherBlock
-    | ForLoop
-    | ReturnStatement
-    | BreakStatement
-    | OnBlock
-    | CommentStatement;
+// AST types are now defined in types/Ast.type.ts and re-exported above
 
 // ============================================================================
 // Logical Line Splitter
@@ -1537,7 +1414,7 @@ export class RobinPath {
                     ...base,
                     name: stmt.name,
                     module: moduleName,
-                    args: stmt.args.map(arg => this.serializeArg(arg)),
+                    args: stmt.args.map((arg: Arg) => this.serializeArg(arg)),
                     syntaxType: (stmt as any).syntaxType,
                     into: stmt.into
                 };
@@ -1545,7 +1422,7 @@ export class RobinPath {
                     serializedCmd.callback = {
                         type: 'do',
                         paramNames: stmt.callback.paramNames,
-                        body: stmt.callback.body.map(s => this.serializeStatement(s, currentModuleContext)),
+                        body: stmt.callback.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
                         into: stmt.callback.into
                     };
                 }
@@ -1575,12 +1452,12 @@ export class RobinPath {
                 return {
                     ...base,
                     conditionExpr: stmt.conditionExpr,
-                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s, currentModuleContext)),
-                    elseifBranches: stmt.elseifBranches?.map(branch => ({
+                    thenBranch: stmt.thenBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
+                    elseifBranches: stmt.elseifBranches?.map((branch: { condition: string; body: Statement[] }) => ({
                         condition: branch.condition,
-                        body: branch.body.map(s => this.serializeStatement(s, currentModuleContext))
+                        body: branch.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                     })),
-                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s, currentModuleContext))
+                    elseBranch: stmt.elseBranch?.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
             case 'ifTrue':
                 return {
@@ -1597,20 +1474,20 @@ export class RobinPath {
                     ...base,
                     name: stmt.name,
                     paramNames: stmt.paramNames,
-                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext)),
+                    body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
                     decorators: stmt.decorators
                 };
             case 'do':
                 return {
                     ...base,
-                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
+                    body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
             case 'forLoop':
                 return {
                     ...base,
                     varName: stmt.varName,
                     iterableExpr: stmt.iterableExpr,
-                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
+                    body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
             case 'return':
                 return {
@@ -1627,18 +1504,19 @@ export class RobinPath {
                     comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
-            case 'together':
-                const togetherStmt = stmt as TogetherBlock;
+            case 'together': {
+                const togetherStmt: TogetherBlock = stmt as TogetherBlock;
                 return {
                     ...base,
-                    blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, currentModuleContext))
+                    blocks: (togetherStmt.blocks || []).map((block: ScopeBlock) => this.serializeStatement(block, currentModuleContext))
                 };
+            }
             case 'onBlock':
                 const onBlockStmt = stmt as OnBlock;
                 return {
                     ...base,
                     eventName: onBlockStmt.eventName,
-                    body: onBlockStmt.body.map(s => this.serializeStatement(s, currentModuleContext))
+                    body: onBlockStmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
         }
     }
@@ -1731,7 +1609,7 @@ export class RobinPath {
             this.environment.eventHandlers.set(handler.eventName, handlers);
         }
         
-        const executor = new Executor(this.environment, null);
+        const executor = new Executor(this.environment, null, script);
         
         this.lastExecutor = executor;
         const result = await executor.execute(statements);

@@ -1,0 +1,94 @@
+# Do Block Tests
+# Tests for do blocks and scope isolation
+
+log "=== Do Block Tests ==="
+
+# Test 1: Basic do block
+log "Test 1: Basic do block"
+do
+  math.add 5 10
+  test.assertEqual $ 15 "Basic do block failed"
+enddo
+
+# Test 2: Do block with last value
+log "Test 2: Do block with last value"
+do
+  math.add 10 20
+  math.multiply $ 2
+  test.assertEqual $ 60 "Do block with chained operations failed"
+enddo
+
+# Test 3: Scope without parameters inherits from parent
+log "Test 3: Scope without parameters inherits from parent"
+$parentVar = 100
+clear
+do
+  test.assertEqual $parentVar 100 "Scope without parameters should access parent variables"
+  $localVar = 200
+  test.assertEqual $localVar 200 "Scope without parameters should allow local variables"
+enddo
+test.assertEqual $parentVar 100 "Parent variable should be unchanged after do"
+
+# Test 4: Scope with parameters is isolated
+log "Test 4: Scope with parameters is isolated"
+$outerVar = 300
+clear
+do $a
+  # Should not be able to access $outerVar
+  test.assertEqual $outerVar null "Isolated do should not access parent variables"
+  test.assertEqual $a null "Parameter should be accessible (defaults to null)"
+  $localVar = 400
+  test.assertEqual $localVar 400 "Isolated do should allow local variables"
+enddo
+test.assertEqual $outerVar 300 "Parent variable should be unchanged after isolated do"
+
+# Test 5: Scope with multiple parameters
+log "Test 5: Scope with multiple parameters"
+$globalVar = 500
+clear
+do $x $y
+  test.assertEqual $globalVar null "Isolated do with multiple params should not access parent"
+  test.assertEqual $x null "First parameter should be accessible"
+  test.assertEqual $y null "Second parameter should be accessible"
+  $z = 600
+  test.assertEqual $z 600 "Local variable should work in isolated do"
+enddo
+
+# Test 6: Nested isolated dos
+log "Test 6: Nested isolated dos"
+$nestedOuter = 800
+clear
+do $a
+  test.assertEqual $nestedOuter null "Outer isolated do should not access parent"
+  test.assertEqual $a null "Parameter in outer do should be accessible"
+  clear
+  do $b
+    test.assertEqual $nestedOuter null "Inner isolated do should not access grandparent"
+    test.assertEqual $a null "Inner isolated do should not access outer do parameter"
+    test.assertEqual $b null "Parameter in inner do should be accessible"
+    $innerVar = 900
+    test.assertEqual $innerVar 900 "Inner do local variable should work"
+  enddo
+  test.assertEqual $a null "Outer do parameter should still be accessible"
+enddo
+
+# Test 7: Variables created in isolated block do not leak to parent
+log "Test 7: Variables do not leak from isolated do"
+clear
+do $x
+  $isolatedVar = 1000
+  test.assertEqual $isolatedVar 1000 "Variable in isolated do should work"
+enddo
+test.assertEqual $isolatedVar null "Variable from isolated do should not be accessible in parent"
+
+# Test 8: Isolated do can use declared parameters
+log "Test 8: Isolated do can use declared parameters"
+clear
+do $value
+  set $value 42
+  test.assertEqual $value 42 "Isolated do should be able to set parameter values"
+  math.add $value 8
+  test.assertEqual $ 50 "Isolated do should be able to use parameters in operations"
+enddo
+
+log "=== Do Block Tests Complete ==="

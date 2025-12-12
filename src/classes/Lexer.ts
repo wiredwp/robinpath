@@ -76,7 +76,7 @@ export const KEYWORDS = new Set([
     'def', 'enddef',
     'for', 'endfor', 'in',
     'on', 'endon',
-    'return', 'break',
+    'return', 'break', 'continue',
     'together', 'endtogether',
     'into',
     'var', 'const',
@@ -85,6 +85,7 @@ export const KEYWORDS = new Set([
     'null',
     'repeat',
     'iftrue', 'iffalse',
+    'not', 'and', 'or',
 ]);
 
 /**

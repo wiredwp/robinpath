@@ -1,0 +1,16 @@
+# Line Continuation Tests
+# Tests for backslash line continuation
+
+log "=== Line Continuation Tests ==="
+
+# Test 6: Backslash line continuation
+log "Test 6: Backslash line continuation"
+log "this is a very long message " \
+    "that continues on the next line"
+
+$long = "hello " \
+        "world " \
+        "from RobinPath"
+log "Test 6 - Long string:" $long
+
+log "=== Line Continuation Tests Complete ==="

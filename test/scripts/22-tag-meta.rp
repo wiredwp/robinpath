@@ -1,0 +1,122 @@
+# GetMeta and SetMeta Tests
+# Tests for getMeta and setMeta (meta) commands for metadata management
+
+log "=== GetMeta and SetMeta Tests ==="
+
+# Test 1: Basic setMeta (meta) and getMeta for variables
+log "Test 1: Basic metadata operations for variables"
+$testVar1 = 100
+clear
+do
+  meta $testVar1 description "A variable to store test values"
+  test.assertEqual $ null "meta command should return null"
+  test.assertEqual $testVar1 100 "meta command should not affect variable value"
+enddo
+
+getMeta $testVar1 description
+test.assertEqual $ "A variable to store test values" "getMeta should return description"
+
+# Test 2: Multiple metadata keys for same variable
+log "Test 2: Multiple metadata keys"
+$testVar2 = 42
+meta $testVar2 description "Test variable description"
+meta $testVar2 author "Test Author"
+meta $testVar2 version "1.0.0"
+
+getMeta $testVar2 description
+test.assertEqual $ "Test variable description" "getMeta description failed"
+getMeta $testVar2 author
+test.assertEqual $ "Test Author" "getMeta author failed"
+getMeta $testVar2 version
+test.assertEqual $ "1.0.0" "getMeta version failed"
+
+# Test 3: getMeta for functions
+log "Test 3: Metadata for functions"
+def testFunc3
+  return 42
+enddef
+
+meta testFunc3 description "A test function"
+getMeta testFunc3 description
+test.assertEqual $ "A test function" "getMeta for function description failed"
+
+meta testFunc3 category "utility"
+getMeta testFunc3 category
+test.assertEqual $ "utility" "getMeta for function category failed"
+
+# Test 4: getMeta for constants
+log "Test 4: Metadata for constants"
+const $TEST_CONST_4 200
+meta $TEST_CONST_4 description "A test constant"
+getMeta $TEST_CONST_4 description
+test.assertEqual $ "A test constant" "getMeta for constant description failed"
+
+# Test 5: Overwriting metadata
+log "Test 5: Overwriting metadata"
+$testVar5 = 50
+meta $testVar5 description "Original description"
+getMeta $testVar5 description
+test.assertEqual $ "Original description" "Initial metadata failed"
+
+meta $testVar5 description "Updated description"
+getMeta $testVar5 description
+test.assertEqual $ "Updated description" "Metadata overwrite failed"
+
+# Test 6: getMeta with non-existent key
+log "Test 6: getMeta with non-existent key"
+$testVar6 = 60
+meta $testVar6 description "Has description"
+getMeta $testVar6 description
+test.assertEqual $ "Has description" "Existing metadata failed"
+
+getMeta $testVar6 nonexistent
+test.assertNull $ "getMeta for non-existent key should return null"
+
+# Test 7: getMeta with non-existent variable/function
+log "Test 7: getMeta with non-existent target"
+getMeta $nonexistentVar description
+test.assertNull $ "getMeta for non-existent variable should return null"
+
+getMeta nonexistentFunc description
+test.assertNull $ "getMeta for non-existent function should return null"
+
+# Test 8: Complex metadata values
+log "Test 8: Complex metadata values"
+$testVar8 = 80
+meta $testVar8 tags "tag1,tag2,tag3"
+getMeta $testVar8 tags
+test.assertEqual $ "tag1,tag2,tag3" "getMeta for complex string value failed"
+
+meta $testVar8 config '{"enabled": true, "count": 5}'
+getMeta $testVar8 config
+$config8 = $
+string.contains $config8 "enabled"
+test.assertTrue $ "getMeta for JSON-like metadata failed"
+
+# Test 9: Metadata for arrays and objects
+log "Test 9: Metadata for arrays and objects"
+$testArr9 = range 1 5
+meta $testArr9 description "An array of numbers"
+getMeta $testArr9 description
+test.assertEqual $ "An array of numbers" "getMeta for array description failed"
+
+$testObj9 = obj name "John" age 30
+meta $testObj9 description "A person object"
+getMeta $testObj9 description
+test.assertEqual $ "A person object" "getMeta for object description failed"
+
+# Test 10: Multiple metadata operations in sequence
+log "Test 10: Multiple metadata operations"
+$testVar10 = 100
+meta $testVar10 key1 "value1"
+meta $testVar10 key2 "value2"
+meta $testVar10 key3 "value3"
+
+getMeta $testVar10 key1
+test.assertEqual $ "value1" "Sequential metadata key1 failed"
+getMeta $testVar10 key2
+test.assertEqual $ "value2" "Sequential metadata key2 failed"
+getMeta $testVar10 key3
+test.assertEqual $ "value3" "Sequential metadata key3 failed"
+
+log "=== GetMeta and SetMeta Tests Complete ==="
