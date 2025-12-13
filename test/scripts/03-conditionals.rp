@@ -70,4 +70,11 @@ do
   test.assertEqual $ "else_return" "Return in else block failed"
 enddo
 
+# test 6: allowing then indentation multi line conditional
+10
+if $ > 5 then
+  math.multiply $ 2
+endif
+test.assertEqual $ 20 "Last value in conditional should work"
+
 log "=== Conditional Tests Complete ==="

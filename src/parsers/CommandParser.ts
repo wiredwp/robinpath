@@ -326,8 +326,10 @@ export class CommandParser {
         } else {
             // Regular command parsing
             // Collect arguments until end of line or "into" keyword
+            // Allow multi-line constructs (objects, arrays, subexpressions) to span multiple lines
             let lastIndex = -1;
             let loopCount = 0;
+            let justFinishedMultilineConstruct = false;
             while (!stream.isAtEnd()) {
                 const currentIndex = stream.getPosition();
                 if (currentIndex === lastIndex) {
@@ -343,13 +345,8 @@ export class CommandParser {
                 const token = stream.current();
                 if (!token) break;
 
-                // Stop at EOF or newline
-                if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) {
-                    break;
-                }
-
-                // Stop if we've moved to a different line
-                if (token.line !== startLineNum) {
+                // Stop at EOF
+                if (token.kind === TokenKind.EOF) {
                     break;
                 }
 
@@ -357,6 +354,75 @@ export class CommandParser {
                 if (token.kind === TokenKind.COMMENT) {
                     stream.next();
                     continue;
+                }
+
+                // Check if we're inside a multi-line construct context
+                const isInMultilineContext = stream.isInContext(ParsingContext.OBJECT_LITERAL) ||
+                                            stream.isInContext(ParsingContext.ARRAY_LITERAL) ||
+                                            stream.isInContext(ParsingContext.SUBEXPRESSION);
+
+                // If we're inside a multi-line construct, continue parsing
+                if (isInMultilineContext) {
+                    // Parse argument (which will handle the multi-line construct)
+                    const argResult = this.parseArgument(stream, context);
+                    if (argResult) {
+                        if (argResult.isNamed) {
+                            namedArgs[argResult.key!] = argResult.arg;
+                        } else {
+                            args.push(argResult.arg);
+                        }
+                        // Check if we just finished a multi-line construct
+                        // Handle both new Expression types and legacy code-string types
+                        justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
+                                                         argResult.arg.type === 'array' ||
+                                                         argResult.arg.type === 'subexpression' ||
+                                                         argResult.arg.type === 'subexpr'; // legacy type
+                    } else {
+                        // If we can't parse, skip the token
+                        stream.next();
+                    }
+                    continue;
+                }
+
+                // Check if current token is the start of a multi-line construct
+                const isStartOfMultiline = token.kind === TokenKind.LBRACE ||
+                                          token.kind === TokenKind.LBRACKET ||
+                                          token.kind === TokenKind.SUBEXPRESSION_OPEN ||
+                                          (token.kind === TokenKind.VARIABLE && token.text === '$' && 
+                                           stream.peek(1)?.kind === TokenKind.LPAREN);
+
+                // If we just finished a multi-line construct or are starting one, continue parsing
+                if (justFinishedMultilineConstruct || isStartOfMultiline) {
+                    justFinishedMultilineConstruct = false;
+                    // Parse argument
+                    const argResult = this.parseArgument(stream, context);
+                    if (argResult) {
+                        if (argResult.isNamed) {
+                            namedArgs[argResult.key!] = argResult.arg;
+                        } else {
+                            args.push(argResult.arg);
+                        }
+                        // Check if we just finished a multi-line construct
+                        // Handle both new Expression types and legacy code-string types
+                        justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
+                                                         argResult.arg.type === 'array' ||
+                                                         argResult.arg.type === 'subexpression' ||
+                                                         argResult.arg.type === 'subexpr'; // legacy type
+                    } else {
+                        // If we can't parse, skip the token
+                        stream.next();
+                    }
+                    continue;
+                }
+
+                // Stop at newline if we're not in/after a multi-line construct
+                if (token.kind === TokenKind.NEWLINE) {
+                    break;
+                }
+
+                // Stop if we've moved to a different line and we're not in/after a multi-line construct
+                if (token.line !== startLineNum && !justFinishedMultilineConstruct) {
+                    break;
                 }
 
                 // If we're inside a subexpression context, stop at closing paren
@@ -386,6 +452,10 @@ export class CommandParser {
                     } else {
                         args.push(argResult.arg);
                     }
+                    // Check if we just finished a multi-line construct
+                    justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
+                                                     argResult.arg.type === 'array' ||
+                                                     argResult.arg.type === 'subexpression';
                 } else {
                     // If we can't parse, skip the token
                     stream.next();
@@ -507,8 +577,14 @@ export class CommandParser {
 
         // String
         if (token.kind === TokenKind.STRING) {
+            const isTemplateString = token.text.startsWith('`');
             const value = token.value !== undefined ? token.value : LexerUtils.parseString(token.text);
             stream.next();
+            // Store template string flag in the value by prefixing with special marker
+            // We'll detect this in evaluateExpression
+            if (isTemplateString) {
+                return { type: 'string', value: `\0TEMPLATE\0${value}` };
+            }
             return { type: 'string', value };
         }
 

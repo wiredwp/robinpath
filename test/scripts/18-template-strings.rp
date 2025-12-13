@@ -1,0 +1,284 @@
+# Template String Tests
+# Tests for backtick template strings with variable interpolation and subexpressions
+
+log "=== Template String Tests ==="
+
+# Test 1: Basic variable interpolation
+log "Test 1: Basic variable interpolation"
+$a = 5
+$result1 = `a is $a`
+test.assertEqual $result1 "a is 5" "Basic variable interpolation failed"
+
+$name = "Alice"
+$result2 = `Hello, $name!`
+test.assertEqual $result2 "Hello, Alice!" "Variable interpolation with text failed"
+
+# Test 2: Last value ($) interpolation
+log "Test 2: Last value interpolation"
+clear
+math.add 10 20
+$result3 = `result is $`
+test.assertEqual $result3 "result is 30" "Last value interpolation failed"
+
+clear
+string.concat "hello" "world"
+$result4 = `concatenated: $`
+test.assertEqual $result4 "concatenated: helloworld" "Last value with string failed"
+
+# Test 3: Subexpression interpolation $(...)
+log "Test 3: Subexpression interpolation"
+$result5 = `a is $(math.add 3 3)`
+test.assertEqual $result5 "a is 6" "Subexpression interpolation failed"
+
+$result6 = `sum: $(math.add 10 20 30)`
+test.assertEqual $result6 "sum: 60" "Subexpression with multiple args failed"
+
+# Test 4: Multiple interpolations in one string
+log "Test 4: Multiple interpolations"
+$a = 5
+$b = 10
+$result7 = `$a + $b = $(math.add $a $b)`
+test.assertEqual $result7 "5 + 10 = 15" "Multiple interpolations failed"
+
+$name = "Bob"
+$age = 25
+$result8 = `$name is $age years old`
+test.assertEqual $result8 "Bob is 25 years old" "Multiple variable interpolations failed"
+
+# Test 5: Nested subexpressions
+log "Test 5: Nested subexpressions"
+$result9 = `result: $(math.multiply $(math.add 2 3) 4)`
+test.assertEqual $result9 "result: 20" "Nested subexpressions failed"
+
+$result10 = `nested: $(math.add $(math.multiply 2 3) $(math.add 1 1))`
+test.assertEqual $result10 "nested: 8" "Complex nested subexpressions failed"
+
+# Test 6: Template strings with object properties
+log "Test 6: Template strings with object properties"
+$obj = {
+  name: "Test",
+  value: 100
+}
+$result11 = `name: $obj.name, value: $obj.value`
+test.assertEqual $result11 "name: Test, value: 100" "Object property interpolation failed"
+
+# Test 7: Template strings with array access
+log "Test 7: Template strings with array access"
+$arr = [10, 20, 30]
+$result12 = `first: $arr[0], second: $arr[1]`
+test.assertEqual $result12 "first: 10, second: 20" "Array access interpolation failed"
+
+# Test 8: Template strings with positional parameters
+log "Test 8: Template strings with positional parameters"
+def test_template $x $y
+  return `$x and $y`
+enddef
+
+$result13 = test_template("hello" "world")
+test.assertEqual $result13 "hello and world" "Template string with positional params failed"
+
+# Test 9: Escape sequences in template strings
+log "Test 9: Escape sequences"
+$result14 = `dollar: \$5, backtick: \`, newline: \n`
+test.assertEqual $result14 "dollar: $5, backtick: `, newline: \n" "Escape sequences failed"
+
+$result15 = `escaped paren: \(not evaluated)`
+test.assertEqual $result15 "escaped paren: (not evaluated)" "Escaped subexpression failed"
+
+# Test 10: Complex combinations
+log "Test 10: Complex combinations"
+$a = 5
+$b = 10
+$result16 = `$a + $b = $(math.add $a $b), product = $(math.multiply $a $b)`
+test.assertEqual $result16 "5 + 10 = 15, product = 50" "Complex combination failed"
+
+# Test 11: Template string with last value and subexpression
+log "Test 11: Last value and subexpression"
+clear
+math.add 5 5
+$result17 = `previous: $, next: $(math.multiply 2 3)`
+test.assertEqual $result17 "previous: 10, next: 6" "Last value and subexpression failed"
+
+# Test 12: Template string in function arguments
+log "Test 12: Template string in function arguments"
+def greet $name
+  return `Hello, $name!`
+enddef
+
+$result18 = greet("World")
+test.assertEqual $result18 "Hello, World!" "Template string in function return failed"
+
+# Test 13: Template string with conditional subexpression
+log "Test 13: Template string with conditional"
+$a = 10
+$result19 = `value is $(if $a > 5 then "high" else "low")`
+test.assertEqual $result19 "value is high" "Conditional subexpression failed"
+
+# Test 14: Template string concatenation
+log "Test 14: Template string concatenation"
+$a = "hello"
+$b = "world"
+$result20 = `$a ` + `$b`
+test.assertEqual $result20 "hello world" "Template string concatenation failed"
+
+# Test 15: Empty template string
+log "Test 15: Empty template string"
+$result21 = ``
+test.assertEqual $result21 "" "Empty template string failed"
+
+# Test 16: Template string with only literal text
+log "Test 16: Template string with only literal text"
+$result22 = `just text`
+test.assertEqual $result22 "just text" "Literal-only template string failed"
+
+# Test 17: Template string with variable that doesn't exist
+log "Test 17: Template string with undefined variable"
+$result23 = `value: $undefinedVar`
+test.assertEqual $result23 "value: null" "Undefined variable interpolation failed"
+
+# Test 18: Template string with nested object access
+log "Test 18: Nested object access"
+$nested = {
+  user: {
+    name: "Alice",
+    age: 30
+  }
+}
+$result24 = `User: $nested.user.name, Age: $nested.user.age`
+test.assertEqual $result24 "User: Alice, Age: 30" "Nested object access failed"
+
+# Test 19: Template string with array length
+log "Test 19: Template string with array operations"
+$arr = [1, 2, 3, 4, 5]
+$result25 = `array has $(array.length $arr) elements`
+test.assertEqual $result25 "array has 5 elements" "Array operation in subexpression failed"
+
+# Test 20: Template string with multiple subexpressions
+log "Test 20: Multiple subexpressions"
+$a = 2
+$b = 3
+$result26 = `$(math.add $a $b) + $(math.multiply $a $b) = $(math.add $(math.add $a $b) $(math.multiply $a $b))`
+test.assertEqual $result26 "5 + 6 = 11" "Multiple subexpressions calculation failed"
+
+# Test 21: Multi-line template string (basic)
+log "Test 21: Multi-line template string (basic)"
+$name = "Alice"
+$result27 = `
+Hello, $name!
+This is a multi-line
+template string.
+`
+test.assertEqual $result27 "\nHello, Alice!\nThis is a multi-line\ntemplate string.\n" "Multi-line template string failed"
+
+# Test 22: Multi-line template string with variables
+log "Test 22: Multi-line template string with variables"
+$a = 10
+$b = 20
+$result28 = `
+First value: $a
+Second value: $b
+Sum: $(math.add $a $b)
+`
+test.assertEqual $result28 "\nFirst value: 10\nSecond value: 20\nSum: 30\n" "Multi-line with variables failed"
+
+# Test 23: Multi-line template string with last value
+log "Test 23: Multi-line template string with last value"
+clear
+math.multiply 5 6
+$result29 = `
+Previous calculation result: $
+This is on a new line.
+`
+test.assertEqual $result29 "\nPrevious calculation result: 30\nThis is on a new line.\n" "Multi-line with last value failed"
+
+# Test 24: Multi-line template string with subexpressions
+log "Test 24: Multi-line template string with subexpressions"
+$x = 3
+$y = 4
+$result30 = `
+Calculation:
+  x = $x
+  y = $y
+  product = $(math.multiply $x $y)
+  sum = $(math.add $x $y)
+`
+test.assertEqual $result30 "\nCalculation:\n  x = 3\n  y = 4\n  product = 12\n  sum = 7\n" "Multi-line with subexpressions failed"
+
+# Test 25: Multi-line template string with object properties
+log "Test 25: Multi-line template string with object properties"
+$user = {
+  name: "Bob",
+  age: 25,
+  city: "New York"
+}
+$result31 = `
+User Information:
+  Name: $user.name
+  Age: $user.age
+  City: $user.city
+`
+test.assertEqual $result31 "\nUser Information:\n  Name: Bob\n  Age: 25\n  City: New York\n" "Multi-line with object properties failed"
+
+# Test 26: Multi-line template string with mixed content
+log "Test 26: Multi-line template string with mixed content"
+$title = "Report"
+$count = 5
+clear
+math.add 10 20
+$result32 = `
+Title: $title
+Items: $count
+Last value: $
+Calculation: $(math.multiply $count 2)
+End of report.
+`
+test.assertEqual $result32 "\nTitle: Report\nItems: 5\nLast value: 30\nCalculation: 10\nEnd of report.\n" "Multi-line with mixed content failed"
+
+# Test 27: Multi-line template string with nested subexpressions
+log "Test 27: Multi-line template string with nested subexpressions"
+$a = 2
+$b = 3
+$result33 = `
+Nested calculations:
+  First: $(math.add $a $b)
+  Second: $(math.multiply $(math.add $a $b) 2)
+  Third: $(math.add $(math.multiply $a 2) $(math.multiply $b 2))
+`
+test.assertEqual $result33 "\nNested calculations:\n  First: 5\n  Second: 10\n  Third: 10\n" "Multi-line with nested subexpressions failed"
+
+# Test 28: Multi-line template string with empty lines
+log "Test 28: Multi-line template string with empty lines"
+$result34 = `
+Line 1
+
+Line 3
+
+Line 5
+`
+test.assertEqual $result34 "\nLine 1\n\nLine 3\n\nLine 5\n" "Multi-line with empty lines failed"
+
+# Test 29: Multi-line template string with escape sequences
+log "Test 29: Multi-line template string with escape sequences"
+$result35 = `
+Dollar: \$5
+Backtick: \`
+Newline: \n
+Tab: \t
+`
+test.assertEqual $result35 "\nDollar: $5\nBacktick: `\nNewline: \n\nTab: \t\n" "Multi-line with escape sequences failed"
+
+# Test 30: Multi-line template string in function return
+log "Test 30: Multi-line template string in function return"
+def format_report $name $value
+  return `
+Report for: $name
+Value: $value
+Status: $(if $value > 10 then "High" else "Low")
+`
+enddef
+
+$result36 = format_report("Test" 15)
+test.assertEqual $result36 "\nReport for: Test\nValue: 15\nStatus: High\n" "Multi-line template string in function return failed"
+
+log "=== Template String Tests Complete ==="
+

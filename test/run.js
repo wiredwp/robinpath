@@ -71,6 +71,8 @@ const testFiles = [
     '15-meta.rp',
     '16-decorator.rp',
     '17-line-continuation.rp',
+    '18-template-strings.rp',
+    '19-last-value.rp',
 ];
 
 // Define test case files mapping (case number -> filename)

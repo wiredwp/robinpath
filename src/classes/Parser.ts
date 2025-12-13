@@ -17,6 +17,7 @@ import { parseTogether } from '../parsers/TogetherBlockParser';
 import { parseDecorators } from '../parsers/DecoratorParser';
 import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
 import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
+import { LexerUtils } from '../utils';
 import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
 
@@ -172,13 +173,15 @@ export class Parser {
                     // Look up the function
                     const func = this.extractedFunctions.find(f => f.name === functionName);
                     if (func) {
-                        console.log(`AST for function "${functionName}":`, JSON.stringify(func, null, 2));
+                        const serialized = this.serializeAST(func);
+                        console.log(`AST for function "${functionName}":`, JSON.stringify(serialized, null, 2));
                     } else {
                         console.log(`Function "${functionName}" not found. Available functions:`, this.extractedFunctions.map(f => f.name).join(', ') || 'none');
                     }
                 } else {
                     // No function name - show current AST
-                    console.log('Current AST:', JSON.stringify(statements, null, 2));
+                    const serialized = this.serializeAST(statements);
+                    console.log('Current AST:', JSON.stringify(serialized, null, 2));
                 }
                 continue;
             }
@@ -655,6 +658,85 @@ export class Parser {
             };
         }
 
+        // Check for standalone string literal: "..." or '...' or `...`
+        // These should set the last value ($) to the string value
+        if (currentToken.kind === TokenKind.STRING) {
+            const isTemplateString = currentToken.text.startsWith('`');
+            const value = currentToken.value !== undefined ? currentToken.value : LexerUtils.parseString(currentToken.text);
+            const stringToken = currentToken;
+            this.stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            // Mark template strings with special prefix
+            const stringValue = isTemplateString ? `\0TEMPLATE\0${value}` : value;
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'string', value: stringValue }],
+                codePos: createCodePosition(stringToken, stringToken)
+            };
+        }
+
+        // Check for standalone number literal
+        if (currentToken.kind === TokenKind.NUMBER) {
+            const value = currentToken.value !== undefined ? currentToken.value : parseFloat(currentToken.text);
+            const numberToken = currentToken;
+            this.stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'number', value }],
+                codePos: createCodePosition(numberToken, numberToken)
+            };
+        }
+
+        // Check for standalone boolean literal
+        if (currentToken.kind === TokenKind.BOOLEAN) {
+            const value = currentToken.value !== undefined ? currentToken.value : (currentToken.text === 'true');
+            const booleanToken = currentToken;
+            this.stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'literal', value }],
+                codePos: createCodePosition(booleanToken, booleanToken)
+            };
+        }
+
+        // Check for standalone null literal
+        if (currentToken.kind === TokenKind.NULL) {
+            const nullToken = currentToken;
+            this.stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'literal', value: null }],
+                codePos: createCodePosition(nullToken, nullToken)
+            };
+        }
+
         // Check for command call (identifier or keyword that's not a variable assignment or do block)
         if (currentToken.kind === TokenKind.IDENTIFIER || currentToken.kind === TokenKind.KEYWORD) {
             // Check if this is 'def' or 'define' (function definition)
@@ -902,5 +984,52 @@ export class Parser {
             }
             // If it's not a parse decorator, it will be executed at runtime by Executor
         }
+    }
+
+    /**
+     * Serialize AST to a JSON-serializable format
+     * Handles circular references and nested structures properly
+     */
+    private serializeAST(obj: any): any {
+        const seen = new WeakSet();
+        
+        const serialize = (value: any): any => {
+            // Handle null and undefined
+            if (value === null || value === undefined) {
+                return value;
+            }
+            
+            // Handle primitives
+            if (typeof value !== 'object') {
+                return value;
+            }
+            
+            // Handle arrays
+            if (Array.isArray(value)) {
+                return value.map(item => serialize(item));
+            }
+            
+            // Handle circular references
+            if (seen.has(value)) {
+                return '[Circular]';
+            }
+            seen.add(value);
+            
+            // Handle objects
+            const result: any = {};
+            for (const key in value) {
+                if (Object.prototype.hasOwnProperty.call(value, key)) {
+                    // Skip internal/private properties that shouldn't be serialized
+                    if (key.startsWith('_') && key !== '_subexpr') {
+                        continue;
+                    }
+                    result[key] = serialize(value[key]);
+                }
+            }
+            
+            return result;
+        };
+        
+        return serialize(obj);
     }
 }

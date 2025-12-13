@@ -1,0 +1,187 @@
+# Last Value ($) Tests
+# Tests for the last value functionality where literals and commands update $
+
+log "=== Last Value Tests ==="
+
+# Test 1: String literal sets last value
+log "Test 1: String literal sets last value"
+"hello"
+test.assertEqual $ "hello" "String literal should set $ to the string value"
+
+# Test 2: Number literal sets last value
+log "Test 2: Number literal sets last value"
+5
+test.assertEqual $ 5 "Number literal should set $ to the number value"
+
+# Test 3: Boolean literal sets last value
+log "Test 3: Boolean literal sets last value"
+true
+test.assertEqual $ true "Boolean true should set $ to true"
+
+false
+test.assertEqual $ false "Boolean false should set $ to false"
+
+# Test 4: Null literal sets last value
+log "Test 4: Null literal sets last value"
+null
+test.assertEqual $ null "Null literal should set $ to null"
+
+# Test 5: Array literal sets last value
+log "Test 5: Array literal sets last value"
+[1, 2, 3]
+test.assertEqual $ [1, 2, 3] "Array literal should set $ to the array value"
+
+# Test 6: Object literal sets last value
+log "Test 6: Object literal sets last value"
+{hello: 'world'}
+test.assertEqual $ {hello: 'world'} "Object literal should set $ to the object value"
+
+# Test 7: Multiple literals in sequence
+log "Test 7: Multiple literals in sequence"
+"first"
+test.assertEqual $ "first" "First literal should set $"
+
+42
+test.assertEqual $ 42 "Second literal should update $"
+
+[1, 2, 3]
+test.assertEqual $ [1, 2, 3] "Third literal should update $"
+
+# Test 8: say command returns value and sets last value
+log "Test 8: say command returns value and sets last value"
+say "hello"
+test.assertEqual $ "hello" "say command should set $ to the concatenated output"
+
+say "test" "multiple"
+test.assertEqual $ "testmultiple" "say with multiple args should set $ to concatenated string"
+
+# Test 9: Commands that return values update last value
+log "Test 9: Commands that return values update last value"
+math.add 10 20
+test.assertEqual $ 30 "math.add should set $ to the result"
+
+string.concat "hello" "world"
+test.assertEqual $ "helloworld" "string.concat should set $ to the result"
+
+# Test 10: Using last value in expressions
+log "Test 10: Using last value in expressions"
+10
+math.multiply $ 2
+test.assertEqual $ 20 "Using $ in math.multiply should work"
+
+"hello"
+string.concat $ " world"
+test.assertEqual $ "hello world" "Using $ in string.concat should work"
+
+# Test 11: Last value with into assignment
+log "Test 11: Last value with into assignment"
+math.add 5 5 into $result
+test.assertEqual $result 10 "into assignment should work with last value"
+
+# Test 12: Last value in subexpressions
+log "Test 12: Last value in subexpressions"
+10
+$(math.multiply $ 3)
+test.assertEqual $ 30 "Last value in subexpression should work"
+
+# Test 13: Last value in template strings
+log "Test 13: Last value in template strings"
+"world"
+$template = `Hello, $!`
+test.assertEqual $template "Hello, world!" "Last value in template string should work"
+
+# Test 14: Last value with function calls
+log "Test 14: Last value with function calls"
+def get_value
+  return 42
+enddef
+
+get_value
+test.assertEqual $ 42 "Function return should set $"
+
+# Test 15: Last value with object/array operations
+log "Test 15: Last value with object/array operations"
+{name: "Alice", age: 30}
+get $ "name"
+test.assertEqual $ "Alice" "get should set $ to the property value"
+
+[1, 2, 3, 4, 5]
+array.length $
+test.assertEqual $ 5 "array.length should set $ to the length"
+
+# Test 16: Last value chain
+log "Test 16: Last value chain"
+10
+math.add $ 5
+math.multiply $ 2
+math.subtract $ 3
+test.assertEqual $ 27 "Last value chain should work (10 + 5 = 15, 15 * 2 = 30, 30 - 3 = 27)"
+
+# Test 17: Last value with conditional
+log "Test 17: Last value with conditional"
+10
+if $ > 5 then
+  math.multiply $ 2
+endif
+test.assertEqual $ 20 "Last value in conditional should work"
+
+# Test 18: Last value with loops
+log "Test 18: Last value with loops"
+0
+for $i in range(1, 5)
+  math.add $ $i
+endfor
+test.assertEqual $ 10 "Last value in loop should accumulate (0+1+2+3+4 = 10)"
+
+# Test 19: Last value with do blocks
+log "Test 19: Last value with do blocks"
+10
+do
+  math.multiply $ 2
+enddo
+test.assertEqual $ 20 "Last value in do block should work"
+
+# Test 20: Last value preservation with assignments
+log "Test 20: Last value preservation with assignments"
+"original"
+$a = "assigned"
+test.assertEqual $ "original" "Assignment should not change $ (into preserves it)"
+
+# Test 21: Empty last value
+log "Test 21: Empty last value"
+clear
+test.assertEqual $ null "clear should reset $ to null"
+
+# Test 22: Last value with nested operations
+log "Test 22: Last value with nested operations"
+5
+math.add $ $(math.multiply $ 2)
+test.assertEqual $ 15 "Nested subexpressions with $ should work (5 + (5 * 2) = 15)"
+
+# Test 23: Last value with say and log
+log "Test 23: Last value with say and log"
+say "test"
+log $  # Should log "test"
+test.assertEqual $ "test" "say should set $ and log should not change it"
+
+# Test 24: Last value with template string evaluation
+log "Test 24: Last value with template string evaluation"
+"Alice"
+$greeting = `Hello, $!`
+test.assertEqual $greeting "Hello, Alice!" "Template string with $ should work"
+
+# Test 25: Last value with complex object
+log "Test 25: Last value with complex object"
+{
+  user: {
+    name: "Bob",
+    age: 25,
+    tags: ["developer", "coder"]
+  }
+}
+get $ "user"
+get $ "name"
+test.assertEqual $ "Bob" "Nested object access with $ should work"
+
+log "=== Last Value Tests Complete ==="
+

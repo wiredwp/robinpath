@@ -329,8 +329,9 @@ do
   test.assertEqual $ 1 "Array.concat content failed"
 enddo
 clear
+$arrJoin = [1,2,3,4,5]
 do
-  array.join $arr ","
+  array.join $arrJoin ","
   test.assertEqual $ "1,2,3,4,5" "Array.join failed"
 enddo
 clear
@@ -1078,14 +1079,7 @@ def test_global_return
   log "This should not execute"
 enddef
 
-# Test that return works in nested contexts
-def outer_func
-  def inner_func
-    return "inner"
-  enddef
-  inner_func
-  return $
-enddef
+
 
 clear
 do

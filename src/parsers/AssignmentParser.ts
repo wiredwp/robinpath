@@ -132,8 +132,10 @@ export class AssignmentParser {
             
             // Parse the first string token (startToken)
             // Always use parseString to ensure consistency - token.value might not always be set
+            const isTemplateString = startToken.text.startsWith('`');
             const firstValue = LexerUtils.parseString(startToken.text);
-            strings.push(firstValue);
+            // Mark template strings with special prefix
+            strings.push(isTemplateString ? `\0TEMPLATE\0${firstValue}` : firstValue);
             stream.next(); // Consume the first string token
             
             // Collect all consecutive string tokens
@@ -152,8 +154,10 @@ export class AssignmentParser {
                 const token = stream.next();
                 if (!token) break;
                 // Always use parseString for consistency
+                const isTemplateString = token.text.startsWith('`');
                 const value = LexerUtils.parseString(token.text);
-                strings.push(value);
+                // Mark template strings with special prefix
+                strings.push(isTemplateString ? `\0TEMPLATE\0${value}` : value);
                 lastToken = token;
                 
                 // Skip whitespace between strings

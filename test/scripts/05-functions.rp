@@ -432,4 +432,422 @@ do
   test.assertEqual $ 99 "def with 'as' and comment failed"
 enddo
 
+
+# Test multi-line object literal as function argument (direct)
+clear
+do
+  get {
+    name: "Test",
+    value: 100,
+    active: true
+  } "name"
+  test.assertEqual $ "Test" "Multi-line object as function argument (direct) failed"
+enddo
+
+# Test multi-line object literal as function argument (via variable)
+clear
+do
+  get {
+    name: "Test",
+    value: 100,
+    active: true
+  } "name"
+  test.assertEqual $ "Test" "Multi-line object as function argument (via variable) failed"
+enddo
+
+# Test multi-line array literal as function argument
+clear
+do
+  array.length [
+    10,
+    20,
+    30,
+    40
+  ]
+  test.assertEqual $ 4 "Multi-line array as function argument failed"
+enddo
+
+# Test multi-line object literal in parenthesized call
+clear
+do
+  get({
+    id: 123,
+    status: "active"
+  } "id")
+  test.assertEqual $ 123 "Multi-line object in parenthesized call failed"
+enddo
+
+# Test multi-line array literal in parenthesized call
+clear
+do
+  array.length([
+    "one",
+    "two",
+    "three"
+  ])
+  test.assertEqual $ 3 "Multi-line array in parenthesized call failed"
+enddo
+
+def defObjectTest
+  log $1
+  test.assertEqual $1.hello "world" "Function should accept object argument in $1 $2"
+enddef
+
+defObjectTest {
+  hello: "world"
+}
+
+# Test 21: Object literal as named argument with $param= syntax
+log "Test 21: Object literal as named argument"
+def testObjNamed $obj
+  test.assertEqual $obj.name "Alice" "Object as named argument failed"
+  test.assertEqual $obj.age 30 "Object property access in named arg failed"
+enddef
+
+clear
+do
+  testObjNamed $obj={
+    name: "Alice",
+    age: 30
+  }
+  test.assertEqual $ null "Object literal as named argument with $param= failed"
+enddo
+
+# Test 22: Array literal as named argument with $param= syntax
+log "Test 22: Array literal as named argument"
+def testArrNamed $arr
+  array.length $arr
+enddef
+
+clear
+do
+  testArrNamed $arr=[1, 2, 3, 4, 5]
+  test.assertEqual $ 5 "Array literal as named argument with $param= failed"
+enddo
+
+# Test 23: Object literal in parenthesized call with named argument
+log "Test 23: Object in parenthesized call with named argument"
+def testObjParen $data
+  test.assertEqual $data.id 123 "Object in parenthesized call failed"
+  test.assertEqual $data.status "active" "Object property in parenthesized call failed"
+enddef
+
+clear
+do
+  testObjParen($data={
+    id: 123,
+    status: "active"
+  })
+  test.assertEqual $ null "Object in parenthesized call with named arg failed"
+enddo
+
+# Test 24: Array literal in parenthesized call with named argument
+log "Test 24: Array in parenthesized call with named argument"
+def testArrParen $items
+  array.length $items
+enddef
+
+clear
+do
+  testArrParen($items=["a", "b", "c"])
+  test.assertEqual $ 3 "Array in parenthesized call with named arg failed"
+enddo
+
+# Test 25: Multiple objects as arguments (positional)
+log "Test 25: Multiple objects as positional arguments"
+def testMultiObj $obj1 $obj2
+  test.assertEqual $obj1.key "first" "First object argument failed"
+  test.assertEqual $obj2.key "second" "Second object argument failed"
+enddef
+
+clear
+do
+  testMultiObj {
+    key: "first"
+  } {
+    key: "second"
+  }
+  test.assertEqual $ null "Multiple objects as positional args failed"
+enddo
+
+# Test 26: Multiple arrays as arguments (positional)
+log "Test 26: Multiple arrays as positional arguments"
+def testMultiArr $arr1 $arr2
+  array.length $arr1
+  $len1 = $
+  array.length $arr2
+  $len2 = $
+  math.add $len1 $len2
+enddef
+
+clear
+do
+  testMultiArr [1, 2] [3, 4, 5]
+  test.assertEqual $ 5 "Multiple arrays as positional args failed"
+enddo
+
+# Test 27: Object and array mixed as positional arguments
+log "Test 27: Object and array mixed as positional arguments"
+def testMixedObjArr $obj $arr
+  test.assertEqual $obj.name "Test" "Object in mixed args failed"
+  array.length $arr
+  test.assertEqual $ 3 "Array in mixed args failed"
+enddef
+
+clear
+do
+  testMixedObjArr {
+    name: "Test"
+  } ["x", "y", "z"]
+  test.assertEqual $ 3 "Object and array mixed as positional args failed"
+enddo
+
+# Test 28: Object as positional, array as named argument
+log "Test 28: Object positional, array as named argument"
+def testObjPosArrNamed $obj $arr
+  test.assertEqual $obj.id 100 "Positional object failed"
+  array.length $arr
+  test.assertEqual $ 2 "Named array argument failed"
+enddef
+
+clear
+do
+  testObjPosArrNamed {
+    id: 100
+  } $arr=["one", "two"]
+  test.assertEqual $ 2 "Object positional with array named arg failed"
+enddo
+
+# Test 29: Array as positional, object as named argument
+log "Test 29: Array positional, object as named argument"
+def testArrPosObjNamed $arr $obj
+  array.length $arr
+  test.assertEqual $ 2 "Positional array failed"
+  test.assertEqual $obj.value 200 "Named object argument failed"
+enddef
+
+clear
+do
+  testArrPosObjNamed [10, 20] $obj={
+    value: 200
+  }
+  test.assertEqual $ 200 "Array positional with object named arg failed"
+enddo
+
+# Test 30: Multiple named arguments with objects and arrays
+log "Test 30: Multiple named arguments with objects and arrays"
+def testMultiNamed $config $items $metadata
+  test.assertEqual $config.env "prod" "First named object failed"
+  array.length $items
+  test.assertEqual $ 4 "Named array failed"
+  test.assertEqual $metadata.version "1.0" "Second named object failed"
+enddef
+
+clear
+do
+  testMultiNamed $config={
+    env: "prod",
+    debug: false
+  } $items=[1, 2, 3, 4] $metadata={
+    version: "1.0",
+    author: "test"
+  }
+  test.assertEqual $ "1.0" "Multiple named args with objects/arrays failed"
+enddo
+
+# Test 31: Object in parenthesized call with multiple named arguments
+log "Test 31: Object in parenthesized call with multiple named args"
+def testObjParenMulti $data $options $flags
+  test.assertEqual $data.name "User" "Object in parenthesized multi-named failed"
+  test.assertEqual $options.count 5 "Second named object failed"
+  test.assertEqual $flags.enabled true "Third named object failed"
+enddef
+
+clear
+do
+  testObjParenMulti($data={
+    name: "User",
+    id: 1
+  } $options={
+    count: 5,
+    limit: 10
+  } $flags={
+    enabled: true,
+    visible: false
+  })
+  test.assertEqual $ true "Object in parenthesized call with multiple named args failed"
+enddo
+
+# Test 32: Array in parenthesized call with multiple named arguments
+log "Test 32: Array in parenthesized call with multiple named args"
+def testArrParenMulti $primary $secondary $tertiary
+  array.length $primary
+  $p = $
+  array.length $secondary
+  $s = $
+  array.length $tertiary
+  $t = $
+  math.add $p $s
+  math.add $ $t
+enddef
+
+clear
+do
+  testArrParenMulti($primary=[1, 2] $secondary=[3, 4, 5] $tertiary=[6, 7, 8, 9])
+  test.assertEqual $ 9 "Array in parenthesized call with multiple named args failed"
+enddo
+
+# Test 33: Mixed positional and named with objects/arrays
+log "Test 33: Mixed positional and named with objects/arrays"
+def testMixedComplex $first $second $third
+  test.assertEqual $first.type "object" "First positional object failed"
+  array.length $second
+  test.assertEqual $ 3 "Second positional array failed"
+  test.assertEqual $third.key "named" "Named object argument failed"
+enddef
+
+clear
+do
+  testMixedComplex {
+    type: "object"
+  } ["a", "b", "c"] $third={
+    key: "named",
+    value: 42
+  }
+  test.assertEqual $ "named" "Mixed positional and named with objects/arrays failed"
+enddo
+
+# Test 34: Nested objects in function arguments
+log "Test 34: Nested objects in function arguments"
+def testNestedObj $data
+  test.assertEqual $data.user.name "John" "Nested object property access failed"
+  test.assertEqual $data.user.age 25 "Nested object second property failed"
+  test.assertEqual $data.settings.theme "dark" "Deeply nested property failed"
+enddef
+
+clear
+do
+  testNestedObj {
+    user: {
+      name: "John",
+      age: 25
+    },
+    settings: {
+      theme: "dark",
+      lang: "en"
+    }
+  }
+  test.assertEqual $ "dark" "Nested objects in function arguments failed"
+enddo
+
+# Test 35: Nested arrays in function arguments
+log "Test 35: Nested arrays in function arguments"
+def testNestedArr $matrix
+  array.length $matrix
+  test.assertEqual $ 2 "Outer array length failed"
+  array.get $matrix 0
+  $row1 = $
+  array.length $row1
+  test.assertEqual $ 3 "Inner array length failed"
+enddef
+
+clear
+do
+  testNestedArr [
+    [1, 2, 3],
+    [4, 5, 6]
+  ]
+  test.assertEqual $ 3 "Nested arrays in function arguments failed"
+enddo
+
+# Test 36: Object with array values as named argument
+log "Test 36: Object with array values as named argument"
+def testObjWithArr $config
+  test.assertEqual $config.name "Config" "Object property failed"
+  array.length $config.items
+  test.assertEqual $ 3 "Array property in object failed"
+enddef
+
+clear
+do
+  testObjWithArr $config={
+    name: "Config",
+    items: ["x", "y", "z"],
+    count: 3
+  }
+  test.assertEqual $ 3 "Object with array values as named argument failed"
+enddo
+
+# Test 37: Array with object elements as named argument
+log "Test 37: Array with object elements as named argument"
+def testArrWithObj $users
+  array.length $users
+  test.assertEqual $ 2 "Array length failed"
+  array.get $users 0
+  $user1 = $
+  test.assertEqual $user1.name "Alice" "Object element in array failed"
+enddef
+
+clear
+do
+  testArrWithObj $users=[
+    { name: "Alice", id: 1 },
+    { name: "Bob", id: 2 }
+  ]
+  test.assertEqual $ "Alice" "Array with object elements as named argument failed"
+enddo
+
+# Test 38: Complex multi-line object with named argument in parenthesized call
+log "Test 38: Complex multi-line object with named argument"
+def testComplexObj $payload
+  test.assertEqual $payload.request.method "POST" "Nested object property failed"
+  array.length $payload.request.headers
+  test.assertEqual $ 2 "Array in nested object failed"
+  test.assertEqual $payload.response.status 200 "Deeply nested property failed"
+enddef
+
+clear
+do
+  testComplexObj($payload={
+    request: {
+      method: "POST",
+      url: "/api",
+      headers: [
+        "Content-Type: application/json",
+        "Authorization: Bearer token"
+      ]
+    },
+    response: {
+      status: 200,
+      body: "success"
+    }
+  })
+  test.assertEqual $ 200 "Complex multi-line object with named argument failed"
+enddo
+
+# Test 39: Space-separated object with named argument
+log "Test 39: Space-separated object with named argument"
+def testSpaceObj $data
+  test.assertEqual $data.key "value" "Space-separated object named arg failed"
+enddef
+
+clear
+do
+  testSpaceObj $data={ key: "value", num: 42 }
+  test.assertEqual $ 42 "Space-separated object with named argument failed"
+enddo
+
+# Test 40: Space-separated array with named argument
+log "Test 40: Space-separated array with named argument"
+def testSpaceArr $list
+  array.length $list
+enddef
+
+clear
+do
+  testSpaceArr $list=[1, 2, 3, 4]
+  test.assertEqual $ 4 "Space-separated array with named argument failed"
+enddo
+
+
 log "=== Function Tests Complete ==="

@@ -29,13 +29,50 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
             return arg;
         });
         
+        // Generate timestamp with millisecond precision
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+        const timestamp = `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}]`;
+        
         // Always use Promise to ensure log completes before next command
         // The await in executeCommand will wait for this Promise to resolve
         return new Promise<null>((resolve) => {
             // Use console.log for consistent logging across environments
-            console.log(...formattedArgs);
+            // Prepend timestamp to the log output
+            console.log(timestamp, ...formattedArgs);
             resolve(null);
         });
+    },
+
+    say: async (args) => {
+        // Format arguments for printing (same as log but without timestamp)
+        const formattedArgs = args.map(arg => {
+            if (arg === null) return 'null';
+            if (arg === undefined) return 'undefined';
+            if (typeof arg === 'object') {
+                try {
+                    return JSON.stringify(arg);
+                } catch {
+                    return String(arg);
+                }
+            }
+            return String(arg);
+        });
+        
+        // Join all arguments without spaces and print to console without timestamp
+        const output = formattedArgs.join('');
+        console.log(output);
+        
+        // Return the concatenated output string (not just the last argument)
+        // This updates the last value ($) and allows: $a = say "hello" "world" where $a becomes "helloworld"
+        // Also allows: say "Hello World"; log $  # logs "Hello World"
+        return output;
     },
 
     obj: (args) => {
@@ -309,6 +346,30 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         returnType: 'null',
         returnDescription: 'Always returns null (does not affect last value)',
         example: 'log "Hello" "World"  # Prints: Hello World'
+    },
+
+    say: {
+        description: 'Prints values to the console without timestamp and returns the last value. Unlike log, say returns the value, allowing assignments like: $a = say "hello"',
+        parameters: [
+            {
+                name: 'args',
+                label: 'Arguments',
+                dataType: 'any',
+                description: 'Values to print (any number of arguments). Returns the last argument.',
+                formInputType: 'json',
+                required: false,
+                children: {
+                    name: 'value',
+                    dataType: 'any',
+                    description: 'Value to print',
+                    formInputType: 'json',
+                    required: false
+                }
+            }
+        ],
+        returnType: 'any',
+        returnDescription: 'Returns the last argument (or null if no arguments). This allows assignments like: $a = say "hello"',
+        example: '$a = say "hello"  # Prints: hello, and $a becomes "hello"'
     },
 
     obj: {

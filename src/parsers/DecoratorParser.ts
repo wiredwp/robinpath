@@ -88,16 +88,16 @@ export function parseDecorator(
             })
         });
         
-        if (arg) {
-            args.push(arg);
-            endToken = token;
+            if (arg) {
+                args.push(arg);
+                endToken = token;
             // Skip whitespace before checking for next argument
             stream.skipWhitespaceAndComments();
-            // Check if there's more on the same line
-            const nextToken = stream.current();
-            if (!nextToken || nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
-                break;
-            }
+                // Check if there's more on the same line
+                const nextToken = stream.current();
+                if (!nextToken || nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
+                    break;
+                }
             // If we've moved to a different line, stop
             if (nextToken.line !== startLine) {
                 break;
