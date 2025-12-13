@@ -57,10 +57,9 @@ export const ArrayFunctions: Record<string, BuiltinHandler> = {
             throw new Error('First argument must be an array');
         }
         
-        // Create a copy to avoid mutating the original
-        const newArr = [...arr];
-        newArr.push(value);
-        return newArr;
+        // Mutate the original array by reference
+        arr.push(value);
+        return arr;
     },
 
     concat: (args) => {
@@ -165,7 +164,7 @@ export const ArrayFunctionMetadata: Record<string, FunctionMetadata> = {
     },
 
     push: {
-        description: 'Adds an element to the end of an array (returns new array)',
+        description: 'Adds an element to the end of an array (mutates the original array)',
         parameters: [
             {
                 name: 'arr',
@@ -183,8 +182,8 @@ export const ArrayFunctionMetadata: Record<string, FunctionMetadata> = {
             }
         ],
         returnType: 'array',
-        returnDescription: 'New array with the element added',
-        example: 'push range 1 3 4  # Returns [1, 2, 3, 4]'
+        returnDescription: 'The same array with the element added (mutated in place)',
+        example: 'push range 1 3 4  # Mutates array to [1, 2, 3, 4]'
     },
 
     concat: {

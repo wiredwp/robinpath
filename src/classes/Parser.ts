@@ -5,21 +5,26 @@ import { TokenStream } from './TokenStream';
 import { AssignmentParser } from '../parsers/AssignmentParser';
 import { CommandParser } from '../parsers/CommandParser';
 import { DefineParser } from '../parsers/DefineParser';
+import { EventParser } from '../parsers/EventParser';
 import { ScopeParser } from '../parsers/ScopeParser';
 import { parseForLoop } from '../parsers/ForLoopParser';
 import { parseIf } from '../parsers/IfBlockParser';
 import { parseReturn } from '../parsers/ReturnParser';
 import { parseBreak } from '../parsers/BreakParser';
 import { parseContinue } from '../parsers/ContinueParser';
-import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock } from '../types/Ast.type';
+import { parseDecorators } from '../parsers/DecoratorParser';
+import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
+import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
+import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
+import type { Environment } from '../index';
 
 export class Parser {
     private tokens: Token[];
     private stream: TokenStream;
     private extractedFunctions: DefineFunction[] = [];
     private extractedEventHandlers: OnBlock[] = [];
-    private defBlockTokenIndices: Set<number> = new Set();
-    private onBlockTokenIndices: Set<number> = new Set();
+    private environment: Environment | null = null; // Optional environment for parse decorators
+    private decoratorBuffer: DecoratorCall[] = []; // Buffer for unclaimed decorators
 
     /**
      * Maximum number of iterations allowed before detecting an infinite loop
@@ -51,22 +56,22 @@ export class Parser {
     /**
      * Create a new Parser
      * @param source - Full source code as a single string
+     * @param environment - Optional environment for executing parse decorators
      */
-    constructor(source: string) {
+    constructor(source: string, environment?: Environment | null) {
         this.tokens = Lexer.tokenizeFull(source);
         this.stream = new TokenStream(this.tokens);
+        this.environment = environment || null;
     }
 
     /**
      * Parse the source code into an AST
      * @returns Array of statements
      */
-    parse(): Statement[] {
-        // First pass: extract def/on blocks
-        this.extractDefAndOnBlocks();
-
-        // Second pass: parse remaining statements (skip def/on blocks)
+    async parse(): Promise<Statement[]> {
+        // Single pass: parse all statements including def/on blocks
         this.stream = new TokenStream(this.tokens); // Reset stream
+        this.decoratorBuffer = []; // Reset decorator buffer
         const statements: Statement[] = [];
 
         let parseIteration = 0;
@@ -98,18 +103,20 @@ export class Parser {
                 lastPosition = currentIndex;
             }
             
-            // Skip tokens that are part of extracted def/on blocks
-            if (this.defBlockTokenIndices.has(currentIndex) || this.onBlockTokenIndices.has(currentIndex)) {
-                if (Parser.debug) {
-                    const timestamp = new Date().toISOString();
-                    console.log(`[Parser.parse] [${timestamp}] Skipping token at ${currentIndex} (part of def/on block)`);
-                }
-                this.stream.next();
-                continue;
-            }
-
             // Skip newlines
             if (this.stream.check(TokenKind.NEWLINE)) {
+                // Check if there are orphaned decorators (decorators followed by empty line)
+                if (this.decoratorBuffer.length > 0) {
+                    const nextToken = this.stream.peek(1);
+                    // If next token is also newline or EOF, it's an empty line
+                    if (!nextToken || nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
+                        throw new Error(
+                            `Orphaned decorators found at line ${token?.line || 'unknown'}. ` +
+                            `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                            `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
+                        );
+                    }
+                }
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
                     console.log(`[Parser.parse] [${timestamp}] Skipping newline at ${currentIndex}`);
@@ -131,6 +138,20 @@ export class Parser {
                 continue;
             }
 
+            // Collect decorators into buffer
+            const currentTokenForDecoratorCheck = this.stream.current();
+            // Use direct comparison instead of check() due to potential bug
+            const isDecorator = currentTokenForDecoratorCheck?.kind === TokenKind.DECORATOR;
+            if (isDecorator) {
+                const decoratorResult = parseDecorators(this.stream, {
+                    parseStatement: (s) => this.parseStatementFromStream(s),
+                    parseComment: (s) => this.parseCommentFromStream(s)
+                });
+                this.decoratorBuffer.push(...decoratorResult.decorators);
+                // parseDecorators should have left the stream at the next token (e.g., 'def')
+                continue;
+            }
+
             // Check for special __ast__ command
             if (token && (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) && token.text === '__ast__') {
                 // Consume the __ast__ token
@@ -149,7 +170,7 @@ export class Parser {
                     // Look up the function
                     const func = this.extractedFunctions.find(f => f.name === functionName);
                     if (func) {
-                        console.log(`AST for function "${functionName}":`, JSON.stringify(func.body, null, 2));
+                        console.log(`AST for function "${functionName}":`, JSON.stringify(func, null, 2));
                     } else {
                         console.log(`Function "${functionName}" not found. Available functions:`, this.extractedFunctions.map(f => f.name).join(', ') || 'none');
                     }
@@ -165,7 +186,7 @@ export class Parser {
                 const timestamp = new Date().toISOString();
                 console.log(`[Parser.parse] [${timestamp}] Attempting to parse statement at ${currentIndex}`);
             }
-            const statement = this.parseStatement();
+            const statement = await this.parseStatement();
             if (statement) {
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
@@ -175,6 +196,14 @@ export class Parser {
                 this.attachInlineComments(statement);
                 statements.push(statement);
             } else {
+                // If we can't parse anything, check if there are orphaned decorators
+                if (this.decoratorBuffer.length > 0) {
+                    throw new Error(
+                        `Orphaned decorators found at line ${token?.line || 'unknown'}. ` +
+                        `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                        `Found ${this.decoratorBuffer.length} unclaimed decorator(s) before '${token?.text || 'unknown'}'.`
+                    );
+                }
                 // If we can't parse anything, skip the current token to avoid infinite loop
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
@@ -183,6 +212,15 @@ export class Parser {
                 const skippedToken = this.stream.next();
                 if (!skippedToken) break;
             }
+        }
+        
+        // Check for orphaned decorators at end of file
+        if (this.decoratorBuffer.length > 0) {
+            throw new Error(
+                `Orphaned decorators found at end of file. ` +
+                `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
+            );
         }
 
         if (Parser.debug) {
@@ -193,78 +231,6 @@ export class Parser {
         return statements;
     }
 
-    /**
-     * First pass: Extract def/on blocks and mark their token indices
-     */
-    private extractDefAndOnBlocks(): void {
-        if (!this.tokens) {
-            return;
-        }
-        const scanStream = new TokenStream([...this.tokens]);
-
-        let lastIndex = -1;
-        let loopCount = 0;
-
-        while (!scanStream.isAtEnd()) {
-            const currentIndex = scanStream.getPosition();
-             // Safety check for infinite loop
-            if (currentIndex === lastIndex) {
-                loopCount++;
-                if (loopCount > 100) {
-                     const token = scanStream.current();
-                     throw new Error(`Infinite loop detected in Parser.extractDefAndOnBlocks at index ${currentIndex}, token: ${token?.text}`);
-                }
-            } else {
-                lastIndex = currentIndex;
-                loopCount = 0;
-            }
-
-            const token = scanStream.current();
-            if (!token) break;
-
-            // Skip newlines and comments
-            if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
-                scanStream.next();
-                continue;
-            }
-
-            // Check for 'def' keyword or 'define' identifier (alias)
-            const isDef = token.kind === TokenKind.KEYWORD && token.text === 'def';
-            const isDefine = token.kind === TokenKind.IDENTIFIER && token.text === 'define';
-            if (isDef || isDefine) {
-                const startIndex = scanStream.getPosition();
-                const savedPosition = scanStream.getPosition();
-                
-                // Parse the def block
-                try {
-                    const func = DefineParser.parse(
-                        scanStream,
-                        (s) => this.parseStatementFromStream(s),
-                        (s) => this.parseCommentFromStream(s)
-                    );
-                    this.extractedFunctions.push(func);
-
-                    // Mark all tokens from start to current position as part of def block
-                    const endIndex = scanStream.getPosition();
-                    for (let i = startIndex; i < endIndex; i++) {
-                        this.defBlockTokenIndices.add(i);
-                    }
-                } catch (error: any) {
-                    if (error.isNestedDefinitionError) {
-                        throw error; // Re-throw nested definition errors
-                    }
-                    // For other parsing errors, restore position and continue
-                    scanStream.setPosition(savedPosition);
-                    scanStream.next();
-                }
-                continue;
-            }
-
-            // TODO: Check for 'on' keyword and extract on blocks
-            // For now, just skip other tokens
-            scanStream.next();
-        }
-    }
 
     /**
      * Parse a statement from a stream (for use in DefineParser)
@@ -373,6 +339,24 @@ export class Parser {
             );
         }
 
+        // Check for 'else' keyword - this should only appear inside if blocks
+        // If we encounter it here, it means it's not part of an if block, which is an error
+        if (token.kind === TokenKind.KEYWORD && token.text === 'else') {
+            throw new Error(`'else' keyword found outside of if block at line ${token.line}`);
+        }
+
+        // Check for 'endif' keyword - this should only appear inside if blocks
+        // If we encounter it here, it means it's not part of an if block, which is an error
+        if (token.kind === TokenKind.KEYWORD && token.text === 'endif') {
+            throw new Error(`'endif' keyword found outside of if block at line ${token.line}`);
+        }
+
+        // Check for 'endon' keyword - this should only appear inside on blocks
+        // If we encounter it here, it means it's not part of an on block, which is an error
+        if (token.kind === TokenKind.KEYWORD && token.text === 'endon') {
+            throw new Error(`'endon' keyword found outside of on block at line ${token.line}`);
+        }
+
         // Check for command call
         if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
             return CommandParser.parse(stream, {
@@ -456,10 +440,12 @@ export class Parser {
         return this.extractedEventHandlers;
     }
 
+
+
     /**
      * Parse a single statement
      */
-    private parseStatement(): Statement | null {
+    private async parseStatement(): Promise<Statement | null> {
         const token = this.stream.current();
         if (!token) {
             if (Parser.debug) {
@@ -473,9 +459,15 @@ export class Parser {
             const timestamp = new Date().toISOString();
             console.log(`[Parser.parseStatement] [${timestamp}] Parsing statement at position ${this.stream.getPosition()}, token: ${token.text} (${token.kind}), line: ${token.line}`);
         }
-
+        
+        // Get the current token
+        const currentToken = this.stream.current();
+        if (!currentToken) {
+            return null;
+        }
+        
         // Check for variable assignment: $var = ...
-        if (token.kind === TokenKind.VARIABLE) {
+        if (currentToken.kind === TokenKind.VARIABLE) {
             // Look ahead to see if next token is = (skip whitespace/comments)
             let offset = 1;
             while (true) {
@@ -491,7 +483,7 @@ export class Parser {
                 
                 // Found the next non-whitespace token
                 if (nextToken.kind === TokenKind.ASSIGN) {
-                    return AssignmentParser.parse(this.stream, {
+                    const assignment = AssignmentParser.parse(this.stream, {
                         parseStatement: (s) => this.parseStatementFromStream(s),
                         createCodePosition: (start, end) => ({
                             startRow: start.line - 1,
@@ -500,13 +492,14 @@ export class Parser {
                             endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                         })
                     });
+                    return assignment;
                 }
                 break; // Not an assignment
             }
         }
 
         // Check for 'return' statement
-        if (token.kind === TokenKind.KEYWORD && token.text === 'return') {
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'return') {
             return parseReturn(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
@@ -519,7 +512,7 @@ export class Parser {
         }
 
         // Check for 'break' statement
-        if (token.kind === TokenKind.KEYWORD && token.text === 'break') {
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'break') {
             return parseBreak(this.stream, {
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
@@ -531,7 +524,7 @@ export class Parser {
         }
 
         // Check for 'continue' statement
-        if (token.kind === TokenKind.KEYWORD && token.text === 'continue') {
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'continue') {
             return parseContinue(this.stream, {
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
@@ -544,7 +537,7 @@ export class Parser {
 
         // Check for 'if' statement
         if (token.kind === TokenKind.KEYWORD && token.text === 'if') {
-            return parseIf(this.stream, {
+            const ifBlock = parseIf(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 parseComment: (s) => this.parseCommentFromStream(s),
                 createCodePosition: (start, end) => ({
@@ -554,11 +547,12 @@ export class Parser {
                     endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                 })
             });
+            return ifBlock;
         }
 
         // Check for 'for' loop
-        if (token.kind === TokenKind.KEYWORD && token.text === 'for') {
-            return parseForLoop(this.stream, {
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'for') {
+            const forLoop = parseForLoop(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 parseComment: (s) => this.parseCommentFromStream(s),
                 createCodePosition: (start, end) => ({
@@ -568,25 +562,116 @@ export class Parser {
                     endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                 })
             });
+            return forLoop;
         }
 
         // Check for 'do' scope block
-        if (token.kind === TokenKind.KEYWORD && token.text === 'do') {
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'do') {
             if (Parser.debug) {
                 const timestamp = new Date().toISOString();
                 console.log(`[Parser.parseStatement] [${timestamp}] Found 'do' keyword, calling ScopeParser.parse at position ${this.stream.getPosition()}`);
             }
-            return ScopeParser.parse(
+            const scopeBlock = ScopeParser.parse(
                 this.stream,
                 (s) => this.parseStatementFromStream(s),
                 (s) => this.parseCommentFromStream(s)
             );
+            return scopeBlock;
+        }
+
+        // Check for standalone object literal: {...}
+        if (currentToken.kind === TokenKind.LBRACE) {
+            const objResult = ObjectLiteralParser.parse(this.stream);
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_object',
+                args: [{ type: 'object', code: objResult.code }],
+                codePos: createCodePosition(objResult.startToken, objResult.endToken)
+            };
+        }
+
+        // Check for standalone array literal: [...]
+        if (currentToken.kind === TokenKind.LBRACKET) {
+            const arrResult = ArrayLiteralParser.parse(this.stream);
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_array',
+                args: [{ type: 'array', code: arrResult.code }],
+                codePos: createCodePosition(arrResult.startToken, arrResult.endToken)
+            };
         }
 
         // Check for command call (identifier or keyword that's not a variable assignment or do block)
-        if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
+        if (currentToken.kind === TokenKind.IDENTIFIER || currentToken.kind === TokenKind.KEYWORD) {
+            // Check if this is 'def' or 'define' (function definition)
+            const isDef = currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'def';
+            const isDefine = currentToken.kind === TokenKind.IDENTIFIER && currentToken.text === 'define';
+
+            if (isDef || isDefine) {
+                // Claim decorators from buffer and pass to DefineParser
+                const decorators: DecoratorCall[] = [];
+                if (this.decoratorBuffer.length > 0) {
+                    decorators.push(...this.decoratorBuffer);
+                    this.decoratorBuffer = []; // Clear buffer
+                }
+                
+                const func = await DefineParser.parse(
+                    this.stream,
+                    (s) => this.parseStatementFromStream(s),
+                    (s) => this.parseCommentFromStream(s),
+                    decorators.length > 0 ? decorators : undefined,
+                    this.environment
+                );
+                
+                // Add to extracted functions if not already present (for hoisting)
+                const existingFunc = this.extractedFunctions.find(f => f.name === func.name);
+                if (!existingFunc) {
+                    this.extractedFunctions.push(func);
+                }
+                
+                return func;
+            }
+            
+            // Check if this is 'on' (event handler)
+            if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'on') {
+                // Claim decorators from buffer and pass to EventParser
+                const decorators: DecoratorCall[] = [];
+                if (this.decoratorBuffer.length > 0) {
+                    decorators.push(...this.decoratorBuffer);
+                    this.decoratorBuffer = []; // Clear buffer
+                }
+                
+                const onBlock = await EventParser.parse(
+                    this.stream,
+                    (s) => this.parseStatementFromStream(s),
+                    (s) => this.parseCommentFromStream(s),
+                    decorators.length > 0 ? decorators : undefined,
+                    this.environment
+                );
+                
+                // Add to extracted event handlers if not already present (for hoisting)
+                const existingHandler = this.extractedEventHandlers.find(h => h.eventName === onBlock.eventName);
+                if (!existingHandler) {
+                    this.extractedEventHandlers.push(onBlock);
+                }
+                
+                return onBlock;
+            }
+            
             // Make sure it's not part of an assignment (we already checked for that above)
-            return CommandParser.parse(this.stream, {
+            const command = CommandParser.parse(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 createCodePosition: (start, end) => ({
                     startRow: start.line - 1,
@@ -599,6 +684,26 @@ export class Parser {
                     (s2) => this.parseCommentFromStream(s2)
                 )
             });
+            // Check if this is a var/const command and attach decorators
+            if (command.type === 'command' && (command.name === 'var' || command.name === 'const')) {
+                // Claim decorators from buffer
+                const decorators: DecoratorCall[] = [];
+                if (this.decoratorBuffer.length > 0) {
+                    decorators.push(...this.decoratorBuffer);
+                    this.decoratorBuffer = []; // Clear buffer
+                }
+                
+                if (decorators.length > 0) {
+                    command.decorators = decorators;
+                    // Extract variable name from command args (first arg should be the variable)
+                    if (command.args.length > 0 && command.args[0].type === 'var') {
+                        const varName = command.args[0].name;
+                        // Execute parse decorators during parsing
+                        await this.executeParseDecorators(decorators, varName, null);
+                    }
+                }
+            }
+            return command;
         }
 
         // TODO: Add other statement parsers here
@@ -723,5 +828,26 @@ export class Parser {
             comments,
             lineNumber: startLine // Deprecated but kept for compatibility
         };
+    }
+
+    /**
+     * Execute parse-time decorators during parsing
+     * Parse decorators inject metadata into AST nodes
+     */
+    private async executeParseDecorators(decorators: DecoratorCall[], targetName: string, func: DefineFunction | null): Promise<void> {
+        if (!this.environment) {
+            // No environment provided, skip parse decorators
+            return;
+        }
+
+        for (const decorator of decorators) {
+            // Check if this is a parse decorator
+            const parseDecoratorHandler = this.environment.parseDecorators.get(decorator.name);
+            if (parseDecoratorHandler) {
+                // Execute parse decorator with AST arguments (not evaluated)
+                await parseDecoratorHandler(targetName, func, decorator.args, this.environment);
+            }
+            // If it's not a parse decorator, it will be executed at runtime by Executor
+        }
     }
 }

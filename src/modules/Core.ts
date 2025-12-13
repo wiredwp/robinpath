@@ -84,6 +84,22 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         return null;
     },
 
+    setMeta: (args) => {
+        // setMeta command: setMeta [fn/variable] [meta key] [value]
+        // Alias for meta command - used to add metadata for functions or variables
+        // Examples:
+        //   setMeta $a description "A variable to add number"
+        //   setMeta fn description "function to do something"
+        //   setMeta $a version 5
+        // Note: The actual implementation is in executeCommand for special handling
+        // This registration ensures it's recognized as a valid command
+        if (args.length < 3) {
+            throw new Error('setMeta requires 3 arguments: target (fn/variable), meta key, and value');
+        }
+        // The actual metadata storage is handled in executeCommand
+        return null;
+    },
+
     getMeta: (args) => {
         // getMeta command: getMeta [fn/variable] [key?]
         // Used to retrieve metadata for functions or variables
@@ -395,6 +411,36 @@ export const CoreFunctionMetadata: Record<string, FunctionMetadata> = {
         example: 'meta $a description "A variable to add number"'
     },
 
+    setMeta: {
+        description: 'Adds metadata for functions or variables (alias for meta command, actual implementation handled by executeCommand)',
+        parameters: [
+            {
+                name: 'target',
+                dataType: 'string',
+                description: 'Target to add metadata to (fn/variable name)',
+                formInputType: 'text',
+                required: true
+            },
+            {
+                name: 'key',
+                dataType: 'string',
+                description: 'Metadata key',
+                formInputType: 'text',
+                required: true
+            },
+            {
+                name: 'value',
+                dataType: 'any',
+                description: 'Metadata value',
+                formInputType: 'json',
+                required: true
+            }
+        ],
+        returnType: 'null',
+        returnDescription: 'Always returns null',
+        example: 'setMeta $a description "A variable to add number"'
+    },
+
     getMeta: {
         description: 'Retrieves metadata for functions or variables (actual implementation handled by executeCommand)',
         parameters: [
@@ -582,6 +628,7 @@ export const CoreModuleMetadata: ModuleMetadata = {
         'array',
         'tag',
         'meta',
+        'setMeta',
         'getMeta',
         'getType',
         'clear',

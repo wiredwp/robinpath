@@ -1,0 +1,108 @@
+# with callback function Tests
+# Tests "with" using repeat function
+
+log "=== Repeat Function Tests ==="
+
+# Test 2: repeat function with callback
+log "Test 2: repeat function"
+clear
+repeat 5 with
+  if $2 == null
+    return 1
+  endif
+  add $2 1
+endwith
+test.assertEqual $ 5 "repeat should iterate 5 times and add 1 each time with explicit null check"
+
+clear
+repeat 3 with
+  if $2 == null
+    return 10
+  endif
+  add $2 5
+  return $
+endwith
+test.assertEqual $ 20 "repeat with explicit return should accumulate correctly (10 + 5 + 5)"
+
+clear
+repeat 4 with into $result2
+  if $2 == null
+    return 2
+  endif
+  math.multiply $2 2
+endwith
+test.assertEqual $result2 16 "repeat with into assignment should work (2 * 2 * 2 * 2 = 16)"
+
+clear
+repeat 0 with
+  return 100
+endwith
+test.assertNull $ "repeat with 0 iterations should return null"
+
+clear
+repeat 5 with
+  if $2 == null
+    return 0
+  endif
+  add $2 $1
+endwith
+test.assertEqual $ 10 "repeat should accumulate index values (0+1+2+3+4 = 10)"
+
+# Test 21: Repeat with subexpression using $1
+log "Test 21: Repeat with subexpression using $1"
+clear
+$sum = 0
+repeat 5 with
+  # $1 should be accessible inside subexpression and have the correct value (0, 1, 2, 3, 4)
+  $sum = $(add $sum $1)
+endwith
+test.assertEqual $sum 10 "repeat with subexpression should access $1 correctly (0+1+2+3+4 = 10)"
+
+# Test 22: Repeat with $1 used directly and in subexpression
+log "Test 22: Repeat with $1 in subexpression"
+clear
+repeat 5 with
+  log ">" $1
+  return $(add $1 2)
+endwith
+# Last value should be 6 (from last iteration: add 4 2)
+test.assertEqual $ 6 "repeat with $1 in subexpression should work correctly"
+
+# Test 23: Repeat with $1 and $2 in subexpression
+log "Test 23: Repeat with $1 and $2 in subexpression"
+clear
+repeat 3 with
+  if $2 == null
+    return 0
+  endif
+  $result = $(add $1 $2)
+  return $result
+endwith
+test.assertEqual $ 3 "repeat with $1 and $2 in subexpression failed (iterations: 0+null=0, 1+0=1, 2+1=3)"
+
+# Test 24: Repeat with nested subexpressions using $1
+log "Test 24: Repeat with nested subexpressions using $1"
+clear
+$product = 1
+repeat 4 with
+  if $2 == null
+    return 1
+  endif
+  $product = $(math.multiply $product $(add $1 1))
+  return $product
+endwith
+test.assertEqual $product 24 "repeat with nested subexpressions using $1 failed (should be 1*2*3*4=24)"
+
+# Test 25: Repeat with multi-line subexpression using $1
+log "Test 25: Repeat with multi-line subexpression using $1"
+clear
+repeat 3 with
+  $result = $(
+    add $1 5
+    math.multiply $ 2
+  )
+  return $result
+endwith
+test.assertEqual $ 14 "repeat with multi-line subexpression using $1 failed (last iteration: (2+5)*2=14)"
+
+log "=== Repeat Function Tests Complete ==="

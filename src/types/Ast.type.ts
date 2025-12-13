@@ -265,6 +265,7 @@ export interface Assignment {
     literalValueType?: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array'; // Type of literalValue, deduced from the value
     isLastValue?: boolean; // True if assignment is from $ (last value)
     comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
+    decorators?: DecoratorCall[]; // Decorators attached to this assignment
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -302,6 +303,7 @@ export interface IfBlock {
     thenBranch: Statement[];
     elseBranch?: Statement[];
     elseifBranches?: Array<{ condition: Expression; body: Statement[] }>;
+    decorators?: DecoratorCall[]; // Decorators attached to this if block
     comments?: CommentWithPosition[]; // Comments attached to this if block (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -351,6 +353,7 @@ export interface ScopeBlock {
     paramNames?: string[]; // Optional parameter names (e.g., ['a', 'b'])
     body: Statement[];
     into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
+    decorators?: DecoratorCall[]; // Decorators attached to this do block
     comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -377,6 +380,7 @@ export interface ForLoop {
     varName: string;
     iterable: Expression;
     body: Statement[];
+    decorators?: DecoratorCall[]; // Decorators attached to this for loop
     comments?: CommentWithPosition[]; // Comments attached to this for loop (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
@@ -424,6 +428,7 @@ export interface OnBlock {
     type: 'onBlock';
     eventName: string; // Event name (e.g., "test1")
     body: Statement[]; // Body statements that execute when event is triggered
+    decorators?: DecoratorCall[]; // Decorators attached to this on block
     comments?: CommentWithPosition[]; // Comments attached to this on block (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }

@@ -7,7 +7,9 @@ import { TokenStream, ParsingContext } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
-import type { DefineFunction, Statement, CommentWithPosition, CodePosition } from '../types/Ast.type';
+import type { DefineFunction, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
+import type { Environment } from '../index';
+
 export class DefineParser {
     /**
      * Parse a 'def' function definition block
@@ -16,13 +18,17 @@ export class DefineParser {
      * @param stream - TokenStream positioned at the 'def' keyword
      * @param parseStatement - Callback to parse a statement from the stream
      * @param parseComment - Callback to parse a comment from the stream
+     * @param decorators - Optional decorators to attach to this function
+     * @param environment - Optional environment for executing parse decorators
      * @returns Parsed DefineFunction
      */
-    static parse(
+    static async parse(
         stream: TokenStream,
         parseStatement: (stream: TokenStream) => Statement | null,
-        parseComment: (stream: TokenStream) => Statement | null
-    ): DefineFunction {
+        parseComment: (stream: TokenStream) => Statement | null,
+        decorators?: DecoratorCall[],
+        environment?: Environment | null
+    ): Promise<DefineFunction> {
         const defToken = stream.current();
         // Accept both 'def' (KEYWORD) and 'define' (IDENTIFIER) as aliases
         const isDef = defToken && defToken.kind === TokenKind.KEYWORD && defToken.text === 'def';
@@ -200,6 +206,20 @@ export class DefineParser {
 
             if (headerComments.length > 0) {
                 result.comments = headerComments;
+            }
+
+            // Attach decorators if provided
+            if (decorators && decorators.length > 0) {
+                result.decorators = decorators;
+                // Execute parse decorators during parsing
+                if (environment) {
+                    for (const decorator of decorators) {
+                        const parseDecoratorHandler = environment.parseDecorators.get(decorator.name);
+                        if (parseDecoratorHandler) {
+                            await parseDecoratorHandler(result.name, result, decorator.args, environment);
+                        }
+                    }
+                }
             }
 
             return result;

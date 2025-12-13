@@ -255,6 +255,16 @@ function parseIfBlock(
         if (stmt) {
             thenBranch.push(stmt);
         } else {
+            // If parseStatement returns null, check if the current token is 'endif', 'else', or 'elseif'
+            // These should have been caught by the checks above, but if parseStatement didn't advance
+            // the stream, we need to handle them here
+            if (token.kind === TokenKind.KEYWORD && 
+                (token.text === 'endif' || token.text === 'else' || token.text === 'elseif')) {
+                // These keywords should be handled by the checks above, but if we get here,
+                // it means parseStatement didn't advance the stream. Let the loop continue
+                // so the checks above can handle them.
+                continue;
+            }
             stream.next();
         }
     }

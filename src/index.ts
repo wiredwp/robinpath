@@ -92,12 +92,14 @@ import DomModule from './modules/Dom';
 export type BuiltinCallback = (callbackArgs: Value[]) => Promise<Value> | Value | null;
 export type BuiltinHandler = (args: Value[], callback?: BuiltinCallback | null) => Promise<Value> | Value | null;
 export type DecoratorHandler = (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => Promise<Value[] | Value | null | undefined>;
+export type ParseDecoratorHandler = (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => Promise<void> | void;
 
 export interface Environment {
     variables: Map<string, Value>;
     functions: Map<string, DefineFunction>;
     builtins: Map<string, BuiltinHandler>;
-    decorators: Map<string, DecoratorHandler>;
+    decorators: Map<string, DecoratorHandler>; // Runtime decorators
+    parseDecorators: Map<string, ParseDecoratorHandler>; // Parse-time decorators
     metadata: Map<string, FunctionMetadata>;
     moduleMetadata: Map<string, ModuleMetadata>;
     currentModule: string | null; // Current module context set by "use" command
@@ -228,6 +230,7 @@ export class RobinPath {
             functions: new Map(),
             builtins: new Map(),
             decorators: new Map(),
+            parseDecorators: new Map(),
             metadata: new Map(),
             moduleMetadata: new Map(),
             currentModule: null,
@@ -428,7 +431,8 @@ export class RobinPath {
     }
 
     /**
-     * Register a decorator function that can be used to modify function calls
+     * Register a runtime decorator function that can be used to modify function calls at execution time
+     * Runtime decorators execute during function execution and can modify arguments or behavior
      * Decorators are only available via API registration, not in scripts
      * @param name Decorator name (without @ prefix)
      * @param handler Decorator handler function
@@ -438,87 +442,95 @@ export class RobinPath {
     }
 
     /**
-     * Register built-in decorators (@desc/@description, @title)
-     * Note: These decorators need access to the executor's environment, which is provided
-     * via a closure that captures the environment from the executor when called.
+     * Register a parse-time decorator function that executes during parsing
+     * Parse decorators inject metadata into AST nodes (def, on, var, const)
+     * They run during parsing, not execution, and work with AST arguments
+     * @param name Decorator name (without @ prefix)
+     * @param handler Parse decorator handler function
+     */
+    registerParseDecorator(name: string, handler: ParseDecoratorHandler): void {
+        this.environment.parseDecorators.set(name, handler);
+    }
+
+    /**
+     * Register built-in parse-time decorators (@desc/@description, @title, @param, @arg, @required)
+     * These decorators execute during parsing and inject metadata into AST nodes
      */
     private registerBuiltinDecorators(): void {
         // @desc or @description - adds "description" metadata to function or variable
-        // The decorator handler will receive the environment from the executor via closure
-        const descHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
+        const descHandler: ParseDecoratorHandler = async (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@desc/@description decorator requires a value argument');
             }
             
-            const description = String(decoratorArgs[0]);
-            
-            // Access environment from the executor (passed via closure)
-            // This is set by Executor when calling the decorator
-            const env = (descHandler as any).__environment;
-            if (!env) {
-                throw new Error('Decorator environment not available');
+            // Extract description from first arg (should be a string literal)
+            let description: string;
+            const firstArg = decoratorArgs[0];
+            if (firstArg.type === 'string' && 'value' in firstArg) {
+                description = String(firstArg.value);
+            } else if (firstArg.type === 'literal' && 'value' in firstArg && typeof firstArg.value === 'string') {
+                description = String(firstArg.value);
+            } else {
+                throw new Error('@desc/@description decorator requires a string argument');
             }
             
             // Check if target is a function or variable
             if (func !== null) {
                 // Target is a function
-                if (!env.functionMetadata.has(targetName)) {
-                    env.functionMetadata.set(targetName, new Map());
+                if (!environment.functionMetadata.has(targetName)) {
+                    environment.functionMetadata.set(targetName, new Map());
             }
-                const funcMeta = env.functionMetadata.get(targetName)!;
+                const funcMeta = environment.functionMetadata.get(targetName)!;
             funcMeta.set('description', description);
             } else {
                 // Target is a variable
-                if (!env.variableMetadata.has(targetName)) {
-                    env.variableMetadata.set(targetName, new Map());
+                if (!environment.variableMetadata.has(targetName)) {
+                    environment.variableMetadata.set(targetName, new Map());
                 }
-                const varMeta = env.variableMetadata.get(targetName)!;
+                const varMeta = environment.variableMetadata.get(targetName)!;
                 varMeta.set('description', description);
             }
-            
-            // Return original args unchanged
-            return originalArgs;
         };
         
-        this.registerDecorator('desc', descHandler);
-        this.registerDecorator('description', descHandler);
+        this.registerParseDecorator('desc', descHandler);
+        this.registerParseDecorator('description', descHandler);
         
         // @title - adds "title" metadata to function or variable
-        const titleHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
+        const titleHandler: ParseDecoratorHandler = async (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => {
             if (decoratorArgs.length === 0) {
                 throw new Error('@title decorator requires a value argument');
             }
             
-            const title = String(decoratorArgs[0]);
-            
-            // Access environment from the executor (passed via closure)
-            const env = (titleHandler as any).__environment;
-            if (!env) {
-                throw new Error('Decorator environment not available');
+            // Extract title from first arg (should be a string literal)
+            let title: string;
+            const firstArg = decoratorArgs[0];
+            if (firstArg.type === 'string' && 'value' in firstArg) {
+                title = String(firstArg.value);
+            } else if (firstArg.type === 'literal' && 'value' in firstArg && typeof firstArg.value === 'string') {
+                title = String(firstArg.value);
+            } else {
+                throw new Error('@title decorator requires a string argument');
             }
             
             // Check if target is a function or variable
             if (func !== null) {
                 // Target is a function
-                if (!env.functionMetadata.has(targetName)) {
-                    env.functionMetadata.set(targetName, new Map());
+                if (!environment.functionMetadata.has(targetName)) {
+                    environment.functionMetadata.set(targetName, new Map());
             }
-                const funcMeta = env.functionMetadata.get(targetName)!;
+                const funcMeta = environment.functionMetadata.get(targetName)!;
             funcMeta.set('title', title);
             } else {
                 // Target is a variable
-                if (!env.variableMetadata.has(targetName)) {
-                    env.variableMetadata.set(targetName, new Map());
+                if (!environment.variableMetadata.has(targetName)) {
+                    environment.variableMetadata.set(targetName, new Map());
                 }
-                const varMeta = env.variableMetadata.get(targetName)!;
+                const varMeta = environment.variableMetadata.get(targetName)!;
                 varMeta.set('title', title);
             }
-            
-            // Return original args unchanged
-            return originalArgs;
         };
         
-        this.registerDecorator('title', titleHandler);
+        this.registerParseDecorator('title', titleHandler);
         
         // @param - adds parameter metadata to functions
         // Syntax: @param [type] [$name] [default] [description]
@@ -526,7 +538,7 @@ export class RobinPath {
         // $name: parameter name starting with $ (no quotes needed)
         // default: optional default value
         // description: optional description
-        const paramHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => {
+        const paramHandler: ParseDecoratorHandler = async (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => {
             if (decoratorArgs.length < 2) {
                 throw new Error('@param decorator requires at least 2 arguments: type and $name');
             }
@@ -536,28 +548,23 @@ export class RobinPath {
                 throw new Error('@param decorator can only be used on functions, not variables');
             }
             
-            // First arg is type (unquoted, so it's evaluated as a literal string)
-            const type = String(decoratorArgs[0]);
-            
-            // Second arg is $name - extract variable name from original AST arg if it's a variable
-            let keyName: string;
-            if (originalDecoratorArgs && originalDecoratorArgs.length >= 2 && originalDecoratorArgs[1].type === 'var') {
-                // Extract variable name from original AST arg
-                keyName = originalDecoratorArgs[1].name;
+            // First arg is type (literal string)
+            let type: string;
+            const firstArg = decoratorArgs[0];
+            if (firstArg.type === 'string' && 'value' in firstArg) {
+                type = String(firstArg.value);
+            } else if (firstArg.type === 'literal' && 'value' in firstArg) {
+                type = String(firstArg.value);
             } else {
-                // Fallback: try to extract from evaluated value
-                const secondArg = decoratorArgs[1];
-                if (secondArg === null || secondArg === undefined) {
-                    throw new Error('@param decorator: $name argument evaluated to null. Make sure to use $name syntax (e.g., @param string $name)');
-                } else if (typeof secondArg === 'string') {
-                    keyName = secondArg;
-                    // Remove $ if present
-                    if (keyName.startsWith('$')) {
-                        keyName = keyName.slice(1);
-                    }
-                } else {
-                    keyName = String(secondArg);
-                }
+                throw new Error('@param decorator: first argument must be a type (string literal)');
+            }
+            
+            // Second arg is $name - extract variable name from AST arg
+            let keyName: string;
+            if (decoratorArgs[1].type === 'var') {
+                keyName = decoratorArgs[1].name;
+            } else {
+                throw new Error('@param decorator: second argument must be a variable name (e.g., $name)');
             }
             
             // Determine default value and description based on argument count and types
@@ -570,11 +577,34 @@ export class RobinPath {
             if (decoratorArgs.length === 3) {
                 // 3 args: type, $name, description (no default)
                 defaultValue = undefined;
-                description = String(decoratorArgs[2]);
+                const descArg = decoratorArgs[2];
+                if (descArg.type === 'string' && 'value' in descArg) {
+                    description = String(descArg.value);
+                } else if (descArg.type === 'literal' && 'value' in descArg && typeof descArg.value === 'string') {
+                    description = String(descArg.value);
+                } else {
+                    description = '';
+                }
             } else if (decoratorArgs.length >= 4) {
                 // 4+ args: type, $name, default, description
-                defaultValue = decoratorArgs[2];
-                description = String(decoratorArgs[3]);
+                const defaultArg = decoratorArgs[2];
+                if (defaultArg.type === 'literal' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else if (defaultArg.type === 'number' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else if (defaultArg.type === 'string' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else {
+                    defaultValue = undefined;
+                }
+                const descArg = decoratorArgs[3];
+                if (descArg.type === 'string' && 'value' in descArg) {
+                    description = String(descArg.value);
+                } else if (descArg.type === 'literal' && 'value' in descArg && typeof descArg.value === 'string') {
+                    description = String(descArg.value);
+                } else {
+                    description = '';
+                }
             } else {
                 // 2 args: type, $name (no default, no description)
                 defaultValue = undefined;
@@ -590,17 +620,11 @@ export class RobinPath {
             // Normalize type (bool -> boolean)
             const normalizedType = type.toLowerCase() === 'bool' ? 'boolean' : type.toLowerCase();
             
-            // Access environment from the executor (passed via closure)
-            const env = (paramHandler as any).__environment;
-            if (!env) {
-                throw new Error('Decorator environment not available');
-            }
-            
             // Get or create function metadata map
-            if (!env.functionMetadata.has(targetName)) {
-                env.functionMetadata.set(targetName, new Map());
+            if (!environment.functionMetadata.has(targetName)) {
+                environment.functionMetadata.set(targetName, new Map());
             }
-            const funcMeta = env.functionMetadata.get(targetName)!;
+            const funcMeta = environment.functionMetadata.get(targetName)!;
             
             // Get or create parameters array
             let parameters: any[] = [];
@@ -634,17 +658,14 @@ export class RobinPath {
             
             // Store updated parameters array
             funcMeta.set('parameters', parameters);
-            
-            // Return original args unchanged
-            return originalArgs;
         };
         
-        this.registerDecorator('param', paramHandler);
+        this.registerParseDecorator('param', paramHandler);
         
         // @arg - adds child parameter to the "args" parameter (for variadic arguments)
         // Syntax: @arg [dataType] [defaultValue] [description]
         // Multiple @arg decorators add multiple children to the "args" parameter
-        const argHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], _originalDecoratorArgs?: Arg[]) => {
+        const argHandler: ParseDecoratorHandler = async (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => {
             if (decoratorArgs.length < 1) {
                 throw new Error('@arg decorator requires at least 1 argument: dataType');
             }
@@ -654,8 +675,16 @@ export class RobinPath {
                 throw new Error('@arg decorator can only be used on functions, not variables');
             }
             
-            // First arg is dataType (unquoted, so it's evaluated as a literal string)
-            const dataType = String(decoratorArgs[0]);
+            // First arg is dataType (literal string)
+            let dataType: string;
+            const firstArg = decoratorArgs[0];
+            if (firstArg.type === 'string' && 'value' in firstArg) {
+                dataType = String(firstArg.value);
+            } else if (firstArg.type === 'literal' && 'value' in firstArg) {
+                dataType = String(firstArg.value);
+            } else {
+                throw new Error('@arg decorator: first argument must be a dataType (string literal)');
+            }
             
             // Validate type
             const validTypes = ['array', 'number', 'string', 'object', 'bool', 'boolean', 'any'];
@@ -668,45 +697,61 @@ export class RobinPath {
             
             // Determine default value and description
             // Syntax: @arg [dataType] [defaultValue] [description]
-            // If 2 args: dataType, description (no default)
+            // If 2 args: dataType, description (no default) or dataType, defaultValue
             // If 3 args: dataType, defaultValue, description
             // If only 1 arg: dataType (no default, no description)
             let defaultValue: Value | undefined;
             let description: string;
             
             if (decoratorArgs.length === 2) {
-                // 2 args: dataType, description (no default)
-                // Check if second arg is a string (description) or other type (default value)
-                if (typeof decoratorArgs[1] === 'string') {
+                // 2 args: Check if second arg is a string (description) or other type (default value)
+                const secondArg = decoratorArgs[1];
+                if (secondArg.type === 'literal' && 'value' in secondArg && typeof secondArg.value === 'string') {
                     // Likely a description
                     defaultValue = undefined;
-                    description = String(decoratorArgs[1]);
+                    description = String(secondArg.value);
                 } else {
                     // Likely a default value
-                    defaultValue = decoratorArgs[1];
+                    if (secondArg.type === 'literal' && 'value' in secondArg) {
+                        defaultValue = secondArg.value;
+                    } else if (secondArg.type === 'number' && 'value' in secondArg) {
+                        defaultValue = secondArg.value;
+                    } else {
+                        defaultValue = undefined;
+                    }
                     description = '';
                 }
             } else if (decoratorArgs.length >= 3) {
                 // 3+ args: dataType, defaultValue, description
-                defaultValue = decoratorArgs[1];
-                description = String(decoratorArgs[2]);
+                const defaultArg = decoratorArgs[1];
+                if (defaultArg.type === 'literal' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else if (defaultArg.type === 'number' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else if (defaultArg.type === 'string' && 'value' in defaultArg) {
+                    defaultValue = defaultArg.value;
+                } else {
+                    defaultValue = undefined;
+                }
+                const descArg = decoratorArgs[2];
+                if (descArg.type === 'string' && 'value' in descArg) {
+                    description = String(descArg.value);
+                } else if (descArg.type === 'literal' && 'value' in descArg && typeof descArg.value === 'string') {
+                    description = String(descArg.value);
+                } else {
+                    description = '';
+                }
             } else {
                 // 1 arg: dataType (no default, no description)
                 defaultValue = undefined;
                 description = '';
             }
             
-            // Access environment from the executor (passed via closure)
-            const env = (argHandler as any).__environment;
-            if (!env) {
-                throw new Error('Decorator environment not available');
-            }
-            
             // Get or create function metadata map
-            if (!env.functionMetadata.has(targetName)) {
-                env.functionMetadata.set(targetName, new Map());
+            if (!environment.functionMetadata.has(targetName)) {
+                environment.functionMetadata.set(targetName, new Map());
             }
-            const funcMeta = env.functionMetadata.get(targetName)!;
+            const funcMeta = environment.functionMetadata.get(targetName)!;
             
             // Get or create parameters array
             let parameters: any[] = [];
@@ -774,17 +819,14 @@ export class RobinPath {
             
             // Store updated parameters array
             funcMeta.set('parameters', parameters);
-            
-            // Return original args unchanged
-            return originalArgs;
         };
         
-        this.registerDecorator('arg', argHandler);
+        this.registerParseDecorator('arg', argHandler);
         
         // @required - marks specific parameters as required
         // Syntax: @required $param1 $param2 ...
         // Updates the specified parameters to have required: true
-        const requiredHandler: DecoratorHandler = async (targetName: string, func: DefineFunction | null, originalArgs: Value[], decoratorArgs: Value[], originalDecoratorArgs?: Arg[]) => {
+        const requiredHandler: ParseDecoratorHandler = async (targetName: string, func: DefineFunction | null, decoratorArgs: Arg[], environment: Environment) => {
             if (decoratorArgs.length < 1) {
                 throw new Error('@required decorator requires at least 1 argument: parameter name(s)');
             }
@@ -797,46 +839,19 @@ export class RobinPath {
             // Extract parameter names from decorator arguments
             const paramNames: string[] = [];
             for (let i = 0; i < decoratorArgs.length; i++) {
-                let paramName: string;
-                
-                // Extract variable name from original AST arg if it's a variable
-                if (originalDecoratorArgs && originalDecoratorArgs.length > i && originalDecoratorArgs[i].type === 'var') {
-                    paramName = (originalDecoratorArgs[i] as { type: 'var'; name: string }).name;
-                } else {
-                    // Fallback: try to extract from evaluated value
                     const arg = decoratorArgs[i];
-                    if (arg === null || arg === undefined) {
-                        // Variable doesn't exist, extract name from original AST
-                        if (originalDecoratorArgs && originalDecoratorArgs.length > i && originalDecoratorArgs[i].type === 'var') {
-                            paramName = (originalDecoratorArgs[i] as { type: 'var'; name: string }).name;
+                if (arg.type === 'var') {
+                    paramNames.push(arg.name);
                         } else {
-                            throw new Error(`@required decorator: parameter name at index ${i} evaluated to null. Make sure to use $paramName syntax (e.g., @required $a $b)`);
-                        }
-                    } else if (typeof arg === 'string') {
-                        paramName = arg;
-                        // Remove $ if present
-                        if (paramName.startsWith('$')) {
-                            paramName = paramName.slice(1);
-                        }
-                    } else {
-                        throw new Error(`@required decorator: parameter name at index ${i} must be a variable name (e.g., $paramName)`);
+                    throw new Error(`@required decorator: argument at index ${i} must be a variable name (e.g., $paramName)`);
                     }
-                }
-                
-                paramNames.push(paramName);
-            }
-            
-            // Access environment from the executor (passed via closure)
-            const env = (requiredHandler as any).__environment;
-            if (!env) {
-                throw new Error('Decorator environment not available');
             }
             
             // Get or create function metadata map
-            if (!env.functionMetadata.has(targetName)) {
-                env.functionMetadata.set(targetName, new Map());
+            if (!environment.functionMetadata.has(targetName)) {
+                environment.functionMetadata.set(targetName, new Map());
             }
-            const funcMeta = env.functionMetadata.get(targetName)!;
+            const funcMeta = environment.functionMetadata.get(targetName)!;
             
             // Get or create parameters array
             let parameters: any[] = [];
@@ -874,12 +889,9 @@ export class RobinPath {
             
             // Store updated parameters array
             funcMeta.set('parameters', parameters);
-            
-            // Return original args unchanged
-            return originalArgs;
         };
         
-        this.registerDecorator('required', requiredHandler);
+        this.registerParseDecorator('required', requiredHandler);
     }
 
     /**
@@ -1212,10 +1224,10 @@ export class RobinPath {
      * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' } {
+    async needsMoreInput(script: string): Promise<{ needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'endon' | 'subexpr' | 'paren' | 'object' | 'array' }> {
         try {
             const parser = new Parser(script);
-            parser.parse();
+            await parser.parse();
             return { needsMore: false };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1269,10 +1281,10 @@ export class RobinPath {
      * 
      * Note: This method only parses the script, it does not execute it.
      */
-    getAST(script: string): any[] {
+    async getAST(script: string): Promise<any[]> {
         // Parse the script to get AST
         const parser = new Parser(script);
-        const statements = parser.parse();
+        const statements = await parser.parse();
 
         // Track "use" command context to determine module names
         let currentModuleContext: string | null = null;
@@ -1305,10 +1317,10 @@ export class RobinPath {
      * 
      * Note: This method only parses the script, it does not execute it.
      */
-    getExtractedFunctions(script: string): any[] {
+    async getExtractedFunctions(script: string): Promise<any[]> {
         // Parse the script to extract functions
         const parser = new Parser(script);
-        parser.parse(); // Parse to extract functions
+        await parser.parse(); // Parse to extract functions
         
         const extractedFunctions = parser.getExtractedFunctions();
         
@@ -1578,13 +1590,22 @@ export class RobinPath {
      */
     async executeScript(script: string): Promise<Value> {
         // Parser now handles source directly via TokenStream
-        const parser = new Parser(script);
-        const statements = parser.parse();
+        // Pass environment to parser so it can execute parse decorators
+        const parser = new Parser(script, this.environment);
+        const statements = await parser.parse();
+        
+        // Create executor early so we can use it to execute runtime decorators
+        const executor = new Executor(this.environment, null, script);
         
         // Register extracted function definitions first (before executing other statements)
         const extractedFunctions = parser.getExtractedFunctions();
         for (const func of extractedFunctions) {
             this.environment.functions.set(func.name, func);
+            // Parse decorators are already executed during parsing
+            // Only execute runtime decorators here
+            if (func.decorators && func.decorators.length > 0) {
+                await executor.executeDecorators(func.decorators, func.name, func, []);
+            }
         }
         
         // Register extracted event handlers first (before executing other statements)
@@ -1594,9 +1615,12 @@ export class RobinPath {
             const handlers = this.environment.eventHandlers.get(handler.eventName) || [];
             handlers.push(handler);
             this.environment.eventHandlers.set(handler.eventName, handlers);
+            // Parse decorators are already executed during parsing
+            // Only execute runtime decorators here
+            if (handler.decorators && handler.decorators.length > 0) {
+                await executor.executeDecorators(handler.decorators, handler.eventName, null, []);
+            }
         }
-        
-        const executor = new Executor(this.environment, null, script);
         
         this.lastExecutor = executor;
         const result = await executor.execute(statements);
@@ -1611,7 +1635,7 @@ export class RobinPath {
     async executeLine(line: string): Promise<Value> {
         // Parser now handles source directly via TokenStream
         const parser = new Parser(line);
-        const statements = parser.parse();
+        const statements = await parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
         const extractedFunctions = parser.getExtractedFunctions();
@@ -1654,7 +1678,7 @@ export class RobinPath {
             : line;
 
         // Ask if the accumulated buffer is syntactically complete
-        const more = this.needsMoreInput(this.replBuffer);
+        const more = await this.needsMoreInput(this.replBuffer);
 
         if (more.needsMore) {
             // Not ready yet – tell caller to keep reading input

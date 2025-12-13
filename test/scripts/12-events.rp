@@ -8,6 +8,8 @@ log "Test 1: Basic event handler"
 on "test1"
   log "Event Test 1 - Received args:" $1 $2 $3
 endon
+trigger "test1" "arg1" "arg2" "arg3"
+log ""
 
 # Test 2: Multiple handlers for the same event
 log "Test 2: Multiple handlers for same event"
@@ -18,6 +20,8 @@ endon
 on "test2"
   log "Event Test 2b - Handler 2:" $1
 endon
+trigger "test2" "multiple"
+log ""
 
 # Test 3: Event handler with calculations
 log "Test 3: Event handler with calculations"
@@ -25,6 +29,8 @@ on "test3"
   math.add $1 $2
   log "Event Test 3 - Sum:" $
 endon
+trigger "test3" 15 25
+log ""
 
 # Test 4: Event handler with conditional logic
 log "Test 4: Event handler with conditionals"
@@ -35,6 +41,9 @@ on "test4"
     log "Event Test 4 - Value is 10 or less:" $1
   endif
 endon
+trigger "test4" 15
+trigger "test4" 5
+log ""
 
 # Test 5: Event handler with string operations
 log "Test 5: Event handler with string operations"
@@ -42,6 +51,8 @@ on "test5"
   string.concat "Hello, " $1
   log "Event Test 5 - Greeting:" $
 endon
+trigger "test5" "World"
+log ""
 
 # Test 6: Event handler with object argument
 log "Test 6: Event handler with object argument"
@@ -50,6 +61,10 @@ on "test6"
   log "Event Test 6 - Object property name:" $1.name
   log "Event Test 6 - Object property age:" $1.age
 endon
+obj '{name: "Alice", age: 30}'
+$testObj = $
+trigger "test6" $testObj
+log ""
 
 # Test 7: Event handler with array argument
 log "Test 7: Event handler with array argument"
@@ -59,18 +74,45 @@ on "test7"
   log "Event Test 7 - First element:" $1[0]
   log "Event Test 7 - Second element:" $1[1]
 endon
+$testArray = range 10 12
+trigger "test7" $testArray
+log ""
 
 # Test 8: Trigger command tests
 log "Test 8: Trigger command"
+# Handler defined BEFORE trigger command
+on "test10"
+  log "Event Test 10 - Handler executed:" $1
+endon
+
+# Trigger handler defined before (should work)
+trigger "test10" "before"
+
 # Handler defined AFTER trigger command (should work because handlers are collected first)
 on "test9"
   log "Event Test 9 - Handler executed:" $1 $2
 endon
 
-# Handler defined BEFORE trigger command
-on "test10"
-  log "Event Test 10 - Handler executed:" $1
+# Trigger handler defined after (should work because handlers are collected first)
+trigger "test9" "hello" "world"
+log ""
+
+# Test 10: Trigger before handler definition (events collected first)
+log "Test 10: Trigger before handler definition"
+# Trigger appears BEFORE handler (should work because events are collected first)
+trigger "test11" "I'm triggered!"
+
+on "test11"
+  log "Event Test 11 - I'm triggered!" $1
 endon
+log ""
+
+
+# Trigger orphaned handlers (these don't have explicit endon)
+trigger "orphan1" "test1"
+trigger "orphan2" "test2"
+trigger "orphan3" "test3"
+log ""
 
 # Test 9: Orphaned on blocks (auto-closing)
 log "Test 9: Orphaned on blocks"
@@ -86,7 +128,5 @@ on "orphan3"
   log "Event orphan3 - Handler executed successfully"
   log "Event orphan3 - Received:" $1
 
-# Note: These handlers are tested by triggering them from run.js
-# The orphaned syntax (without explicit endon) should work correctly
 
 log "=== Event System Tests Complete ==="

@@ -33,7 +33,8 @@ export class RobinPathThread {
             variables: new Map(),                     // per-thread vars
             functions: new Map(),                     // per-thread def/enddef
             builtins: baseEnvironment.builtins,       // shared
-            decorators: baseEnvironment.decorators,   // shared
+            decorators: baseEnvironment.decorators,   // shared (runtime decorators)
+            parseDecorators: baseEnvironment.parseDecorators, // shared (parse-time decorators)
             metadata: baseEnvironment.metadata,       // shared
             moduleMetadata: baseEnvironment.moduleMetadata, // shared
             currentModule: null,                       // per-thread module context
@@ -51,11 +52,11 @@ export class RobinPathThread {
      * Returns { needsMore: true, waitingFor: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } if incomplete,
      * or { needsMore: false } if complete.
      */
-    needsMoreInput(script: string): { needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' } {
+    async needsMoreInput(script: string): Promise<{ needsMore: boolean; waitingFor?: 'endif' | 'enddef' | 'endfor' | 'enddo' | 'subexpr' | 'paren' | 'object' | 'array' }> {
         try {
             // Parser now handles the full source directly (including logical line splitting via tokenization)
             const parser = new Parser(script);
-            parser.parse();
+            await parser.parse();
             return { needsMore: false };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -105,13 +106,19 @@ export class RobinPathThread {
      */
     async executeScript(script: string): Promise<Value> {
         // Parser now handles source directly via TokenStream
-        const parser = new Parser(script);
-        const statements = parser.parse();
+        // Pass environment to parser so it can execute parse decorators
+        const parser = new Parser(script, this.environment);
+        const statements = await parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
         const extractedFunctions = parser.getExtractedFunctions();
         for (const func of extractedFunctions) {
             this.environment.functions.set(func.name, func);
+            // Parse decorators are already executed during parsing
+            // Only execute runtime decorators here
+            if (func.decorators && func.decorators.length > 0) {
+                await this.executor.executeDecorators(func.decorators, func.name, func, []);
+            }
         }
         
         // Register extracted event handlers first (before executing other statements)
@@ -121,6 +128,11 @@ export class RobinPathThread {
             const handlers = this.environment.eventHandlers.get(handler.eventName) || [];
             handlers.push(handler);
             this.environment.eventHandlers.set(handler.eventName, handlers);
+            // Parse decorators are already executed during parsing
+            // Only execute runtime decorators here
+            if (handler.decorators && handler.decorators.length > 0) {
+                await this.executor.executeDecorators(handler.decorators, handler.eventName, null, []);
+            }
         }
         
         const result = await this.executor.execute(statements);
@@ -133,7 +145,7 @@ export class RobinPathThread {
     async executeLine(line: string): Promise<Value> {
         // Parser now handles source directly via TokenStream
         const parser = new Parser(line);
-        const statements = parser.parse();
+        const statements = await parser.parse();
         
         // Register extracted function definitions first (before executing other statements)
         const extractedFunctions = parser.getExtractedFunctions();
@@ -203,10 +215,10 @@ export class RobinPathThread {
      * 
      * Note: This method only parses the script, it does not execute it.
      */
-    getAST(script: string): any[] {
+    async getAST(script: string): Promise<any[]> {
         // Parse the script to get AST
         const parser = new Parser(script);
-        const statements = parser.parse();
+        const statements = await parser.parse();
 
         // Track "use" command context to determine module names
         let currentModuleContext: string | null = null;
@@ -239,10 +251,10 @@ export class RobinPathThread {
      * 
      * Note: This method only parses the script, it does not execute it.
      */
-    getExtractedFunctions(script: string): any[] {
+    async getExtractedFunctions(script: string): Promise<any[]> {
         // Parse the script to extract functions
         const parser = new Parser(script);
-        parser.parse(); // Parse to extract functions
+        await parser.parse(); // Parse to extract functions
         
         const extractedFunctions = parser.getExtractedFunctions();
         
@@ -305,7 +317,7 @@ export class RobinPathThread {
     }> {
         // Parse the script to get AST
         const parser = new Parser(script);
-        const statements = parser.parse();
+        const statements = await parser.parse();
 
         // Execute with state tracking - track $ at each statement level
         const stateTracker = new ExecutionStateTracker();

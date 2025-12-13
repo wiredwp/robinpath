@@ -1,6 +1,10 @@
-def nested_subexpr_test
-  $result = $(log $(log 2) $(log 3) $(log 10))
+@desc "A test function with description"
+def testDescFn
+  log "Test 1.1 - Function with @desc decorator"
 enddef
-nested_subexpr_test 2 3
 
-__ast__ nested_subexpr_test 
+__ast__ testDescFn
+
+testDescFn
+
+log "log me!"

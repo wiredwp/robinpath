@@ -22,12 +22,16 @@
  *   - npm run test -- <test-number-1> <test-number-2> ...  (runs multiple specific tests)
  *   - npm run test -- <start>-<end>          (runs a range of tests, e.g., 0-7 runs tests 0 through 7)
  *   - npm run test -- c<case-number>         (runs a specific JavaScript case test)
+ *   - npm run test -- c<start>-c<end>        (runs a range of case tests, e.g., c0-c5 runs case tests 0 through 5)
+ *   - npm run test -- all                    (runs all RP script tests, then all JavaScript case tests)
  * 
  * Examples:
  *   - npm run test -- 0                      (runs test 0)
  *   - npm run test -- 0 1 2 3 4 5            (runs tests 0, 1, 2, 3, 4, 5)
  *   - npm run test -- 0-7                    (runs tests 0 through 7)
  *   - npm run test -- 5 --repeat 100         (runs test 5 one hundred times and shows average runtime)
+ *   - npm run test -- c0-c5                  (runs case tests 0 through 5)
+ *   - npm run test -- all                    (runs all tests)
  */
 
 import { existsSync } from 'fs';
@@ -58,11 +62,12 @@ const testFiles = [
     '10-builtin-commands.rp',
     '11-modules.rp',
     '12-events.rp',
-    '13-decorators.rp',
-    '15-end-command.rp',
+    '13-meta.rp',
+    '14-decorator.rp',
+    '15-empty.rp',
     '16-together.rp',
-    '17-repeat.rp',
-    '18-dom-click.rp',
+    '17-with.rp',
+    '18-empty.rp',
     '19-parenthesized-calls.rp',
     '20-comparison-functions.rp',
     '21-line-continuation.rp',
@@ -83,23 +88,83 @@ const testCases = [
 // Parse command-line arguments
 const args = process.argv.slice(2);
 let testNumbers = []; // Array of test numbers to run
-let testCase = null;
+let testCase = null; // Single case test (for backward compatibility)
+let testCaseNumbers = []; // Array of case test numbers to run
 let runAll = false;
 let repeatCount = 1; // Default to 1 run
 
 // Parse arguments
+// First pass: extract --repeat flag and its value
+const processedArgs = [];
+let repeatValue = null;
 for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     
     // Check for --repeat flag
-    if (arg === '--repeat' && i + 1 < args.length) {
-        repeatCount = parseInt(args[i + 1], 10);
-        if (isNaN(repeatCount) || repeatCount < 1) {
-            console.error('Invalid repeat count. Must be a positive number.');
+    if (arg === '--repeat') {
+        if (i + 1 >= args.length) {
+            console.error('Error: --repeat requires a number argument.');
+            console.error('Usage: npm run test -- <test-number> --repeat <count>');
             process.exit(1);
         }
+        const nextArg = args[i + 1];
+        const parsedRepeat = parseInt(nextArg, 10);
+        if (isNaN(parsedRepeat) || parsedRepeat < 1) {
+            console.error('Error: Invalid repeat count. Must be a positive number.');
+            console.error(`Received: "${nextArg}"`);
+            process.exit(1);
+        }
+        repeatValue = parsedRepeat;
         i++; // Skip the next argument (the count)
         continue;
+    }
+    
+    // Add non-repeat arguments to processed list
+    processedArgs.push(arg);
+}
+
+// Use the processed arguments (without --repeat and its value) for further parsing
+const filteredArgs = processedArgs;
+if (repeatValue !== null) {
+    repeatCount = repeatValue;
+}
+
+// Now parse the filtered arguments
+for (let i = 0; i < filteredArgs.length; i++) {
+    const arg = filteredArgs[i];
+    
+    // Check for "all" command
+    if (arg === 'all') {
+        runAll = true;
+        continue;
+    }
+    
+    // Check for case test range (e.g., "c0-c5")
+    if (arg.startsWith('c') && arg.includes('-')) {
+        const parts = arg.split('-');
+        if (parts.length === 2 && parts[0].startsWith('c') && parts[1].startsWith('c')) {
+            const start = parseInt(parts[0].substring(1), 10);
+            const end = parseInt(parts[1].substring(1), 10);
+            if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start && end < testCases.length) {
+                for (let j = start; j <= end; j++) {
+                    testCaseNumbers.push(j);
+                }
+                continue;
+            } else {
+                console.error('='.repeat(60));
+                console.error('Invalid case test range:', arg);
+                console.error('='.repeat(60));
+                console.error();
+                console.error('Available JavaScript Case Tests:');
+                testCases.forEach((file, index) => {
+                    console.error(`  c${index}: ${file}`);
+                });
+                console.error();
+                console.error('Usage: npm run test -- c<start>-c<end>');
+                console.error('Example: npm run test -- c0-c5  (runs case tests 0 through 5)');
+                process.exit(1);
+            }
+        }
     }
     
     // Check for case test (starts with 'c')
@@ -119,8 +184,8 @@ for (let i = 0; i < args.length; i++) {
             console.error('Example: npm run test -- c0  (runs c0-getAST.js)');
             process.exit(1);
         }
-        testCase = caseNumber;
-        break; // Case tests are single, so break
+        testCaseNumbers.push(caseNumber);
+        continue;
     }
     
     // Check for range syntax (e.g., "0-7")
@@ -161,15 +226,29 @@ for (let i = 0; i < args.length; i++) {
 
 // Remove duplicates and sort
 testNumbers = [...new Set(testNumbers)].sort((a, b) => a - b);
+testCaseNumbers = [...new Set(testCaseNumbers)].sort((a, b) => a - b);
 
-// If no arguments provided, run all tests
-if (args.length === 0) {
+// Validate --repeat usage: it only works with RP script tests, not case tests
+if (repeatCount > 1 && testCaseNumbers.length > 0) {
+    console.error('Error: --repeat can only be used with RP script tests, not JavaScript case tests.');
+    console.error('Usage: npm run test -- <test-number> --repeat <count>');
+    console.error('Example: npm run test -- 5 --repeat 100');
+    process.exit(1);
+}
+
+// If no arguments provided (after filtering), run all tests
+if (filteredArgs.length === 0) {
     runAll = true;
 }
 
-// If we have a case test, don't process test numbers
-if (testCase !== null) {
+// If we have case tests, don't process test numbers
+// Also handle backward compatibility: if testCase is set but testCaseNumbers is empty, add it
+if (testCase !== null && testCaseNumbers.length === 0) {
+    testCaseNumbers.push(testCase);
+}
+if (testCaseNumbers.length > 0) {
     testNumbers = [];
+    testCase = null; // Clear single testCase since we're using testCaseNumbers
 }
 
 // Helper function to suppress console output
@@ -405,45 +484,81 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             }
         }
         
-        // If a specific test case was provided, run only that case
-        if (testCase !== null) {
-            const caseFileName = testCases[testCase];
-            const caseFilePath = join(__dirname, 'cases', caseFileName);
+        // If case test(s) were provided, run them
+        if (testCaseNumbers.length > 0) {
+            const results = [];
+            let totalPassed = 0;
+            let totalFailed = 0;
+            const overallStartTime = Date.now();
             
-            if (!existsSync(caseFilePath)) {
-                console.error(`? Test case file not found: ${caseFilePath}`);
-                process.exit(1);
-            }
-            
-            console.log('='.repeat(60));
-            console.log(`Running JavaScript Case Test c${testCase}: ${caseFileName}`);
-            console.log('='.repeat(60));
-            console.log();
-            console.log('Note: This is a JavaScript test that requires calling RobinPath class methods.');
-            console.log();
-            
-            const startTime = Date.now();
-            
-            try {
-                await executeTestLogic(caseFilePath, true);
-                const endTime = Date.now();
-                const executionTime = endTime - startTime;
-                console.log();
-                console.log('='.repeat(60));
-                console.log(`? JavaScript Case Test c${testCase} (${caseFileName}) completed in ${executionTime}ms`);
-                console.log('='.repeat(60));
-                process.exit(0);
-            } catch (error) {
-                console.error();
-                console.error('='.repeat(60));
-                console.error(`? JavaScript Case Test c${testCase} (${caseFileName}) FAILED`);
-                console.error('='.repeat(60));
-                console.error('Error:', error.message);
-                if (error.stack) {
-                    console.error(error.stack);
+            for (const caseNum of testCaseNumbers) {
+                const caseFileName = testCases[caseNum];
+                const caseFilePath = join(__dirname, 'cases', caseFileName);
+                
+                if (!existsSync(caseFilePath)) {
+                    console.error(`? Test case file not found: ${caseFilePath}`);
+                    results.push({ caseNum, passed: false, error: 'File not found' });
+                    totalFailed++;
+                    continue;
                 }
-                process.exit(1);
+                
+                console.log('='.repeat(60));
+                console.log(`Running JavaScript Case Test c${caseNum}: ${caseFileName}`);
+                console.log('='.repeat(60));
+                console.log();
+                console.log('Note: This is a JavaScript test that requires calling RobinPath class methods.');
+                console.log();
+                
+                const startTime = Date.now();
+                
+                try {
+                    await executeTestLogic(caseFilePath, true);
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    totalPassed++;
+                    results.push({ caseNum, passed: true, time: executionTime });
+                    console.log();
+                    console.log('='.repeat(60));
+                    console.log(`? JavaScript Case Test c${caseNum} (${caseFileName}) completed in ${executionTime}ms`);
+                    console.log('='.repeat(60));
+                } catch (error) {
+                    totalFailed++;
+                    results.push({ caseNum, passed: false, error: error.message });
+                    console.error();
+                    console.error('='.repeat(60));
+                    console.error(`? JavaScript Case Test c${caseNum} (${caseFileName}) FAILED`);
+                    console.error('='.repeat(60));
+                    console.error('Error:', error.message);
+                    if (error.stack) {
+                        console.error(error.stack);
+                    }
+                }
+                console.log();
             }
+            
+            // Summary if multiple tests
+            if (testCaseNumbers.length > 1) {
+                const overallEndTime = Date.now();
+                const totalWallClockTime = overallEndTime - overallStartTime;
+                const totalRuntime = results.filter(r => r.passed).reduce((sum, r) => sum + (r.time || 0), 0);
+                
+                console.log('='.repeat(60));
+                console.log('Case Test Summary');
+                console.log('='.repeat(60));
+                console.log(`Total: ${testCaseNumbers.length} | Passed: ${totalPassed} | Failed: ${totalFailed}`);
+                console.log(`Total Runtime: ${totalRuntime.toFixed(2)}ms`);
+                console.log('='.repeat(60));
+                
+                if (totalFailed > 0) {
+                    console.log();
+                    console.log('Failed tests:');
+                    results.filter(r => !r.passed).forEach(r => {
+                        console.log(`  c${r.caseNum}: ${testCases[r.caseNum]} - ${r.error || 'Unknown error'}`);
+                    });
+                }
+            }
+            
+            process.exit(totalFailed > 0 ? 1 : 0);
         }
         
         // If specific test numbers were provided, run them

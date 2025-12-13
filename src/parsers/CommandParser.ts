@@ -546,10 +546,25 @@ export class CommandParser {
             return { type: 'array', code: arrResult.code };
         }
 
-        // Identifier/keyword as literal
+        // Identifier/keyword - check if it's module.function syntax
         if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
-            const value = token.text;
+            let value = token.text;
             stream.next();
+            
+            // Check for module.function syntax (e.g., "math.add")
+            stream.skipWhitespaceAndComments();
+            const dotToken = stream.current();
+            if (dotToken && dotToken.kind === TokenKind.DOT) {
+                stream.next(); // Consume '.'
+                stream.skipWhitespaceAndComments();
+                
+                const funcToken = stream.current();
+                if (funcToken && (funcToken.kind === TokenKind.IDENTIFIER || funcToken.kind === TokenKind.KEYWORD)) {
+                    value = `${value}.${funcToken.text}`;
+                    stream.next(); // Consume function name
+                }
+            }
+            
             return { type: 'literal', value };
         }
 
