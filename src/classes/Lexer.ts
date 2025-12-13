@@ -155,6 +155,32 @@ export class Lexer {
             const char = source[i];
             const nextChar = i + 1 < source.length ? source[i + 1] : '';
             
+            // Handle backslash line continuation: \ followed by optional whitespace and newline
+            // The \ and newline are cancelled (treated as if they don't exist)
+            // The \ itself is treated as a space, so we skip it and the newline
+            if (char === '\\') {
+                // Look ahead to see if this is a line continuation
+                let lookAhead = i + 1;
+                
+                // Skip whitespace after backslash
+                while (lookAhead < source.length && isWhitespace(source[lookAhead])) {
+                    lookAhead++;
+                }
+                
+                // Check if next non-whitespace is newline
+                if (lookAhead < source.length && source[lookAhead] === '\n') {
+                    // This is a line continuation: skip the \, whitespace, and newline
+                    // The \ is treated as a space, so we just skip everything
+                    // (spaces are normally skipped anyway, so no token is emitted)
+                    i = lookAhead + 1; // Skip past newline
+                    line++;
+                    column = 0;
+                    continue;
+                }
+                // If not a line continuation, fall through to handle as regular character
+                // (though \ shouldn't normally appear outside strings)
+            }
+            
             // Handle newlines
             if (char === '\n') {
                 tokens.push(makeToken(TokenKind.NEWLINE, '\n', line, column));

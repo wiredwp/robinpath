@@ -7,11 +7,13 @@ import { CommandParser } from '../parsers/CommandParser';
 import { DefineParser } from '../parsers/DefineParser';
 import { EventParser } from '../parsers/EventParser';
 import { ScopeParser } from '../parsers/ScopeParser';
+import { WithScopeParser } from '../parsers/WithScopeParser';
 import { parseForLoop } from '../parsers/ForLoopParser';
 import { parseIf } from '../parsers/IfBlockParser';
 import { parseReturn } from '../parsers/ReturnParser';
 import { parseBreak } from '../parsers/BreakParser';
 import { parseContinue } from '../parsers/ContinueParser';
+import { parseTogether } from '../parsers/TogetherBlockParser';
 import { parseDecorators } from '../parsers/DecoratorParser';
 import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
 import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
@@ -102,7 +104,7 @@ export class Parser {
                 stuckCount = 0;
                 lastPosition = currentIndex;
             }
-            
+
             // Skip newlines
             if (this.stream.check(TokenKind.NEWLINE)) {
                 // Check if there are orphaned decorators (decorators followed by empty line)
@@ -198,6 +200,8 @@ export class Parser {
             } else {
                 // If we can't parse anything, check if there are orphaned decorators
                 if (this.decoratorBuffer.length > 0) {
+            console.log(this.decoratorBuffer);
+                    
                     throw new Error(
                         `Orphaned decorators found at line ${token?.line || 'unknown'}. ` +
                         `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
@@ -304,6 +308,8 @@ export class Parser {
 
         // Check for 'if' statement
         if (token.kind === TokenKind.KEYWORD && token.text === 'if') {
+            // Note: parseStatementFromStream is used in nested contexts (def, do, etc.)
+            // where decorators are not available, so we don't pass decorators here
             return parseIf(stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 parseComment: (s) => this.parseCommentFromStream(s),
@@ -465,7 +471,7 @@ export class Parser {
         if (!currentToken) {
             return null;
         }
-        
+
         // Check for variable assignment: $var = ...
         if (currentToken.kind === TokenKind.VARIABLE) {
             // Look ahead to see if next token is = (skip whitespace/comments)
@@ -537,6 +543,11 @@ export class Parser {
 
         // Check for 'if' statement
         if (token.kind === TokenKind.KEYWORD && token.text === 'if') {
+            // Attach decorators if any are in the buffer
+            const decorators = this.decoratorBuffer.length > 0 ? [...this.decoratorBuffer] : undefined;
+            if (decorators) {
+                this.decoratorBuffer = []; // Clear buffer
+            }
             const ifBlock = parseIf(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 parseComment: (s) => this.parseCommentFromStream(s),
@@ -546,12 +557,17 @@ export class Parser {
                     endRow: end.line - 1,
                     endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                 })
-            });
+            }, decorators);
             return ifBlock;
         }
 
         // Check for 'for' loop
         if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'for') {
+            // Attach decorators if any are in the buffer
+            const decorators = this.decoratorBuffer.length > 0 ? [...this.decoratorBuffer] : undefined;
+            if (decorators) {
+                this.decoratorBuffer = []; // Clear buffer
+            }
             const forLoop = parseForLoop(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
                 parseComment: (s) => this.parseCommentFromStream(s),
@@ -561,8 +577,28 @@ export class Parser {
                     endRow: end.line - 1,
                     endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                 })
-            });
+            }, decorators);
             return forLoop;
+        }
+
+        // Check for 'together' block (must come before 'do' check since together contains do blocks)
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'together') {
+            // Attach decorators if any are in the buffer
+            const decorators = this.decoratorBuffer.length > 0 ? [...this.decoratorBuffer] : undefined;
+            if (decorators) {
+                this.decoratorBuffer = []; // Clear buffer
+            }
+            const togetherBlock = parseTogether(this.stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                parseComment: (s) => this.parseCommentFromStream(s),
+                createCodePosition: (start, end) => ({
+                    startRow: start.line - 1,
+                    startCol: start.column,
+                    endRow: end.line - 1,
+                    endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                })
+            }, decorators);
+            return togetherBlock;
         }
 
         // Check for 'do' scope block
@@ -571,10 +607,16 @@ export class Parser {
                 const timestamp = new Date().toISOString();
                 console.log(`[Parser.parseStatement] [${timestamp}] Found 'do' keyword, calling ScopeParser.parse at position ${this.stream.getPosition()}`);
             }
+            // Attach decorators if any are in the buffer
+            const decorators = this.decoratorBuffer.length > 0 ? [...this.decoratorBuffer] : undefined;
+            if (decorators) {
+                this.decoratorBuffer = []; // Clear buffer
+            }
             const scopeBlock = ScopeParser.parse(
                 this.stream,
                 (s) => this.parseStatementFromStream(s),
-                (s) => this.parseCommentFromStream(s)
+                (s) => this.parseCommentFromStream(s),
+                decorators
             );
             return scopeBlock;
         }
@@ -679,10 +721,21 @@ export class Parser {
                     endRow: end.line - 1,
                     endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
                 }),
-                parseScope: (s) => ScopeParser.parse(s, 
+                parseScope: (s) => {
+                    // Check if this is a 'with' block or 'do' block
+                    const currentToken = s.current();
+                    if (currentToken && currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'with') {
+                        return WithScopeParser.parse(s,
+                            (s2) => this.parseStatementFromStream(s2),
+                            (s2) => this.parseCommentFromStream(s2)
+                        );
+                    } else {
+                        return ScopeParser.parse(s,
                     (s2) => this.parseStatementFromStream(s2),
                     (s2) => this.parseCommentFromStream(s2)
-                )
+                        );
+                    }
+                }
             });
             // Check if this is a var/const command and attach decorators
             if (command.type === 'command' && (command.name === 'var' || command.name === 'const')) {

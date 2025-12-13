@@ -372,6 +372,12 @@ export class CommandParser {
                     break;
                 }
 
+                // Check for "with" keyword - stop parsing arguments if found
+                // This prevents "with" from being consumed as an argument
+                if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
+                    break;
+                }
+
                 // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
@@ -394,11 +400,13 @@ export class CommandParser {
             allArgs.push({ type: 'namedArgs', args: namedArgs as Record<string, Expression> });
         }
 
-        // Check for "into $var" (parseInto handles skipping whitespace/newlines)
-        const intoInfo = this.parseInto(stream);
-
-        // Check for callback block
+        // Check for callback block first (before 'into' to avoid position issues)
         const callback = this.parseCallback(stream, context);
+
+        // Check for "into $var" (parseInto handles skipping whitespace/newlines)
+        // Note: 'into' can appear after 'with' in the callback header (e.g., "repeat 5 with into $var")
+        // but for the command itself, 'into' comes before the callback
+        const intoInfo = this.parseInto(stream);
 
             const endToken = stream.current() || startToken;
             const codePos = context?.createCodePosition 
@@ -477,7 +485,7 @@ export class CommandParser {
     /**
      * Parse an argument value (handles literals, variables, subexpressions, objects, arrays)
      */
-    private static parseArgumentValue(
+    static parseArgumentValue(
         stream: TokenStream,
         context?: CommandParserContext
     ): Arg | null {
@@ -649,16 +657,23 @@ export class CommandParser {
         }
 
         const savedPos = stream.save();
-        
-        // Skip only comments and spaces (NOT newlines)
-        // Callbacks must be on the same line as the command
-        while (!stream.isAtEnd()) {
-            const token = stream.current();
+        const startLine = stream.current()?.line;
+
+        // Check current token and next tokens (skipping comments) on the same line
+        let checkedTokens = 0;
+        while (!stream.isAtEnd() && checkedTokens < 10) { // Limit to avoid infinite loops
+        const token = stream.current();
             if (!token) break;
+            
+            // Stop if we've moved to a different line
+            if (startLine !== undefined && token.line !== startLine) {
+                break;
+            }
             
             // Skip comments
             if (token.kind === TokenKind.COMMENT) {
                 stream.next();
+                checkedTokens++;
                 continue;
             }
             
@@ -670,22 +685,16 @@ export class CommandParser {
             // Stop at EOF
             if (token.kind === TokenKind.EOF) {
                 break;
+        }
+
+            // Check if this is 'with' keyword
+            if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
+                // Found 'with' - parse it (don't restore savedPos)
+            return context.parseScope(stream);
             }
             
-            // Found a non-comment, non-newline token
+            // Not 'with' and not a comment - stop looking
             break;
-        }
-
-        const token = stream.current();
-        if (!token) {
-            stream.restore(savedPos);
-            return undefined;
-        }
-
-        // Check for 'with' keyword only (do blocks are standalone statements, not callbacks)
-        if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
-            // Don't restore - we found a callback
-            return context.parseScope(stream);
         }
 
         stream.restore(savedPos);

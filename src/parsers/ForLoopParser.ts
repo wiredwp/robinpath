@@ -8,7 +8,7 @@ import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { parseExpression } from './ExpressionParser';
-import type { ForLoop, Statement, CommentWithPosition, CodePosition, Expression } from '../types/Ast.type';
+import type { ForLoop, Statement, CommentWithPosition, CodePosition, Expression, DecoratorCall } from '../types/Ast.type';
 
 export interface ForLoopParserContext {
     parseStatement: (stream: TokenStream) => Statement | null;
@@ -21,11 +21,13 @@ export interface ForLoopParserContext {
  * 
  * @param stream - TokenStream positioned at the 'for' keyword
  * @param context - Context with helper methods
+ * @param decorators - Optional decorators to attach to this for loop
  * @returns Parsed ForLoop
  */
 export function parseForLoop(
     stream: TokenStream,
-    context: ForLoopParserContext
+    context: ForLoopParserContext,
+    decorators?: DecoratorCall[]
 ): ForLoop {
     const headerToken = stream.current();
     if (!headerToken || headerToken.text !== 'for') {
@@ -180,6 +182,11 @@ export function parseForLoop(
 
     if (headerComments.length > 0) {
         result.comments = headerComments;
+    }
+
+    // Attach decorators if provided
+    if (decorators && decorators.length > 0) {
+        result.decorators = decorators;
     }
 
     return result;

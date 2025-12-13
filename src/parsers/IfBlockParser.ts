@@ -7,7 +7,7 @@ import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { parseExpression } from './ExpressionParser';
-import type { IfBlock, InlineIf, Statement, CodePosition, Expression } from '../types/Ast.type';
+import type { IfBlock, InlineIf, Statement, CodePosition, Expression, DecoratorCall } from '../types/Ast.type';
 
 export interface IfBlockParserContext {
     parseStatement: (stream: TokenStream) => Statement | null;
@@ -20,11 +20,13 @@ export interface IfBlockParserContext {
  * 
  * @param stream - TokenStream positioned at the 'if' keyword
  * @param context - Context with helper methods
+ * @param decorators - Optional decorators to attach to this if block
  * @returns Parsed IfBlock or InlineIf
  */
 export function parseIf(
     stream: TokenStream,
-    context: IfBlockParserContext
+    context: IfBlockParserContext,
+    decorators?: DecoratorCall[]
 ): IfBlock | InlineIf {
     const ifToken = stream.current();
     if (!ifToken || ifToken.text !== 'if') {
@@ -48,7 +50,7 @@ export function parseIf(
         return parseInlineIf(stream, ifToken, condition, context);
     } else {
         // If block: if condition ... endif
-        return parseIfBlock(stream, ifToken, condition, context);
+        return parseIfBlock(stream, ifToken, condition, context, decorators);
     }
 }
 
@@ -110,7 +112,8 @@ function parseIfBlock(
     stream: TokenStream,
     ifToken: Token,
     condition: Expression,
-    context: IfBlockParserContext
+    context: IfBlockParserContext,
+    decorators?: DecoratorCall[]
 ): IfBlock {
     const thenBranch: Statement[] = [];
     const elseifBranches: Array<{ condition: Expression; body: Statement[] }> = [];
@@ -282,6 +285,11 @@ function parseIfBlock(
 
     if (elseBranch) {
         result.elseBranch = elseBranch;
+    }
+
+    // Attach decorators if provided
+    if (decorators && decorators.length > 0) {
+        result.decorators = decorators;
     }
 
     return result;

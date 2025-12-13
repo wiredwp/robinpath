@@ -7,6 +7,7 @@ log "=== Repeat Function Tests ==="
 log "Test 2: repeat function"
 clear
 repeat 5 with
+  log "-> Test 2a: with block is run"
   if $2 == null
     return 1
   endif
@@ -16,6 +17,7 @@ test.assertEqual $ 5 "repeat should iterate 5 times and add 1 each time with exp
 
 clear
 repeat 3 with
+  log "-> Test 2b: with block is run"
   if $2 == null
     return 10
   endif
@@ -26,6 +28,7 @@ test.assertEqual $ 20 "repeat with explicit return should accumulate correctly (
 
 clear
 repeat 4 with into $result2
+  log "-> Test 2c: with block is run"
   if $2 == null
     return 2
   endif
@@ -35,12 +38,14 @@ test.assertEqual $result2 16 "repeat with into assignment should work (2 * 2 * 2
 
 clear
 repeat 0 with
+  log "-> Test 2d: with block is run (should not run)"
   return 100
 endwith
 test.assertNull $ "repeat with 0 iterations should return null"
 
 clear
 repeat 5 with
+  log "-> Test 2e: with block is run"
   if $2 == null
     return 0
   endif
@@ -53,6 +58,7 @@ log "Test 21: Repeat with subexpression using $1"
 clear
 $sum = 0
 repeat 5 with
+  log "-> Test 21: with block is run"
   # $1 should be accessible inside subexpression and have the correct value (0, 1, 2, 3, 4)
   $sum = $(add $sum $1)
 endwith
@@ -62,6 +68,7 @@ test.assertEqual $sum 10 "repeat with subexpression should access $1 correctly (
 log "Test 22: Repeat with $1 in subexpression"
 clear
 repeat 5 with
+  log "-> Test 22: with block is run"
   log ">" $1
   return $(add $1 2)
 endwith
@@ -72,6 +79,7 @@ test.assertEqual $ 6 "repeat with $1 in subexpression should work correctly"
 log "Test 23: Repeat with $1 and $2 in subexpression"
 clear
 repeat 3 with
+  log "-> Test 23: with block is run"
   if $2 == null
     return 0
   endif
@@ -85,6 +93,7 @@ log "Test 24: Repeat with nested subexpressions using $1"
 clear
 $product = 1
 repeat 4 with
+  log "-> Test 24: with block is run"
   if $2 == null
     return 1
   endif
@@ -97,6 +106,7 @@ test.assertEqual $product 24 "repeat with nested subexpressions using $1 failed 
 log "Test 25: Repeat with multi-line subexpression using $1"
 clear
 repeat 3 with
+  log "-> Test 25: with block is run"
   $result = $(
     add $1 5
     math.multiply $ 2

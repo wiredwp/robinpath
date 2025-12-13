@@ -12,7 +12,7 @@
 import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
-import { parseExpression } from './ExpressionParser';
+import { CommandParser } from './CommandParser';
 import type { DecoratorCall, CodePosition, Arg } from '../types/Ast.type';
 
 export interface DecoratorParserContext {
@@ -47,9 +47,10 @@ export function parseDecorator(
     // Skip whitespace and comments
     stream.skipWhitespaceAndComments();
     
-    // Parse decorator arguments
+    // Parse decorator arguments (similar to command arguments)
     const args: Arg[] = [];
     let endToken = decoratorToken;
+    const startLine = decoratorToken.line;
     
     // Parse arguments until we hit a newline or end of stream
     while (!stream.isAtEnd()) {
@@ -64,35 +65,45 @@ export function parseDecorator(
             break;
         }
         
+        // Stop if we've moved to a different line
+        if (token.line !== startLine) {
+            break;
+        }
+        
         // Skip comments (inline comments are allowed)
         if (token.kind === TokenKind.COMMENT) {
             stream.next();
             continue;
         }
         
-        // Parse argument as an expression
-        try {
-            const arg = parseExpression(
-                stream,
-                context.parseStatement,
-                context.parseComment
-            );
-            if (arg) {
-                args.push(arg);
-                endToken = token;
-                // Check if there's more on the same line
-                // Don't skip whitespace - parseExpression should have stopped at NEWLINE
-                // Just check what the current token is
-                const nextToken = stream.current();
-                if (!nextToken || nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
-                    break;
-                }
-            } else {
-                // If we can't parse an expression, we're done
+        // Parse argument using CommandParser's parseArgumentValue logic
+        // This handles literals, variables, subexpressions, objects, arrays, etc.
+        const arg = CommandParser.parseArgumentValue(stream, {
+            parseStatement: context.parseStatement,
+            createCodePosition: (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            })
+        });
+        
+        if (arg) {
+            args.push(arg);
+            endToken = token;
+            // Skip whitespace before checking for next argument
+            stream.skipWhitespaceAndComments();
+            // Check if there's more on the same line
+            const nextToken = stream.current();
+            if (!nextToken || nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
                 break;
             }
-        } catch (error) {
-            // If expression parsing fails, we're done with arguments
+            // If we've moved to a different line, stop
+            if (nextToken.line !== startLine) {
+                break;
+            }
+        } else {
+            // If we can't parse an argument, we're done
             break;
         }
     }

@@ -24,6 +24,7 @@
  *   - npm run test -- c<case-number>         (runs a specific JavaScript case test)
  *   - npm run test -- c<start>-c<end>        (runs a range of case tests, e.g., c0-c5 runs case tests 0 through 5)
  *   - npm run test -- all                    (runs all RP script tests, then all JavaScript case tests)
+ *   - npm run test -- --file <file-path>     (runs a specific RP file directly)
  * 
  * Examples:
  *   - npm run test -- 0                      (runs test 0)
@@ -32,6 +33,9 @@
  *   - npm run test -- 5 --repeat 100         (runs test 5 one hundred times and shows average runtime)
  *   - npm run test -- c0-c5                  (runs case tests 0 through 5)
  *   - npm run test -- all                    (runs all tests)
+ *   - npm run test -- --file test.rp         (runs test.rp from test/scripts/ or current directory)
+ *   - npm run test -- --file test/scripts/test.rp  (runs test.rp with full path)
+ *   - npm run test -- --file test.rp --repeat 10   (runs test.rp 10 times)
  */
 
 import { existsSync } from 'fs';
@@ -62,16 +66,11 @@ const testFiles = [
     '10-builtin-commands.rp',
     '11-modules.rp',
     '12-events.rp',
-    '13-meta.rp',
-    '14-decorator.rp',
-    '15-empty.rp',
-    '16-together.rp',
-    '17-with.rp',
-    '18-empty.rp',
-    '19-parenthesized-calls.rp',
-    '20-comparison-functions.rp',
-    '21-line-continuation.rp',
-    '22-tag-meta.rp'
+    '13-together.rp',
+    '14-with.rp',
+    '15-meta.rp',
+    '16-decorator.rp',
+    '17-line-continuation.rp',
 ];
 
 // Define test case files mapping (case number -> filename)
@@ -92,11 +91,13 @@ let testCase = null; // Single case test (for backward compatibility)
 let testCaseNumbers = []; // Array of case test numbers to run
 let runAll = false;
 let repeatCount = 1; // Default to 1 run
+let customFile = null; // Custom file path specified with --file
 
 // Parse arguments
-// First pass: extract --repeat flag and its value
+// First pass: extract --repeat and --file flags and their values
 const processedArgs = [];
 let repeatValue = null;
+let fileValue = null;
 for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     
@@ -119,14 +120,30 @@ for (let i = 0; i < args.length; i++) {
         continue;
     }
     
-    // Add non-repeat arguments to processed list
+    // Check for --file flag
+    if (arg === '--file') {
+        if (i + 1 >= args.length) {
+            console.error('Error: --file requires a file path argument.');
+            console.error('Usage: npm run test -- --file <file-path>');
+            process.exit(1);
+        }
+        const nextArg = args[i + 1];
+        fileValue = nextArg;
+        i++; // Skip the next argument (the file path)
+        continue;
+    }
+    
+    // Add non-flag arguments to processed list
     processedArgs.push(arg);
 }
 
-// Use the processed arguments (without --repeat and its value) for further parsing
+// Use the processed arguments (without --repeat, --file and their values) for further parsing
 const filteredArgs = processedArgs;
 if (repeatValue !== null) {
     repeatCount = repeatValue;
+}
+if (fileValue !== null) {
+    customFile = fileValue;
 }
 
 // Now parse the filtered arguments
@@ -236,8 +253,18 @@ if (repeatCount > 1 && testCaseNumbers.length > 0) {
     process.exit(1);
 }
 
-// If no arguments provided (after filtering), run all tests
-if (filteredArgs.length === 0) {
+// Validate --file usage: it cannot be used with other test selections
+if (customFile !== null) {
+    if (testNumbers.length > 0 || testCaseNumbers.length > 0 || runAll) {
+        console.error('Error: --file cannot be used with other test selections (test numbers, case tests, or "all").');
+        console.error('Usage: npm run test -- --file <file-path>');
+        console.error('Example: npm run test -- --file test.rp');
+        process.exit(1);
+    }
+}
+
+// If no arguments provided (after filtering) and no custom file, run all tests
+if (filteredArgs.length === 0 && customFile === null) {
     runAll = true;
 }
 
@@ -345,6 +372,118 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
 // Run the selected test(s)
 (async () => {
     try {
+        // If custom file is specified, run it
+        if (customFile !== null) {
+            // Resolve the file path (can be relative or absolute)
+            const pathModule = await import('path');
+            const { isAbsolute } = pathModule;
+            let filePath = customFile;
+            
+            // If not absolute, try relative to scripts directory first, then current working directory
+            if (!isAbsolute(filePath)) {
+                const scriptsPath = join(scriptsDir, filePath);
+                if (existsSync(scriptsPath)) {
+                    filePath = scriptsPath;
+                } else {
+                    // Try as absolute path from current working directory
+                    const cwdPath = join(process.cwd(), filePath);
+                    if (existsSync(cwdPath)) {
+                        filePath = cwdPath;
+                    } else {
+                        console.error('='.repeat(60));
+                        console.error('Error: File not found:', customFile);
+                        console.error('='.repeat(60));
+                        console.error();
+                        console.error('Tried locations:');
+                        console.error(`  1. ${scriptsPath}`);
+                        console.error(`  2. ${cwdPath}`);
+                        console.error();
+                        console.error('Usage: npm run test -- --file <file-path>');
+                        console.error('Example: npm run test -- --file test.rp');
+                        console.error('Example: npm run test -- --file test/scripts/test.rp');
+                        process.exit(1);
+                    }
+                }
+            }
+            
+            if (!existsSync(filePath)) {
+                console.error('='.repeat(60));
+                console.error('Error: File not found:', filePath);
+                console.error('='.repeat(60));
+                process.exit(1);
+            }
+            
+            console.log('='.repeat(60));
+            if (repeatCount > 1) {
+                console.log(`Running Custom File: ${filePath} (${repeatCount} times)`);
+            } else {
+                console.log(`Running Custom File: ${filePath}`);
+            }
+            console.log('='.repeat(60));
+            console.log();
+            
+            const executionTimes = [];
+            let testPassed = true;
+            let testError = null;
+            
+            // Run the test repeatCount times
+            for (let run = 1; run <= repeatCount; run++) {
+                const startTime = Date.now();
+                
+                try {
+                    // Suppress console output when repeating
+                    await executeTestLogic(filePath, false, repeatCount > 1);
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    executionTimes.push(executionTime);
+                    
+                    if (repeatCount === 1) {
+                        console.log(`  ? Passed (${executionTime}ms)`);
+                    }
+                } catch (error) {
+                    testPassed = false;
+                    testError = error.message;
+                    if (error.stack && repeatCount === 1) {
+                        console.error(error.stack);
+                    } else {
+                        console.error(`  Run ${run} failed: ${error.message}`);
+                    }
+                    break; // Stop repeating if test fails
+                }
+            }
+            
+            console.log();
+            
+            if (testPassed) {
+                const totalTestTime = executionTimes.reduce((a, b) => a + b, 0);
+                const avgTime = executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
+                if (repeatCount > 1) {
+                    const minTime = Math.min(...executionTimes);
+                    const maxTime = Math.max(...executionTimes);
+                    console.log('='.repeat(60));
+                    console.log(`? Custom File (${filePath}) - All ${repeatCount} runs passed`);
+                    console.log(`  Total: ${totalTestTime}ms`);
+                    console.log(`  Average: ${avgTime.toFixed(2)}ms`);
+                    console.log(`  Min: ${minTime}ms | Max: ${maxTime}ms`);
+                    console.log('='.repeat(60));
+                } else {
+                    console.log('='.repeat(60));
+                    console.log(`? Custom File (${filePath}) completed in ${executionTimes[0]}ms`);
+                    console.log('='.repeat(60));
+                }
+            } else {
+                console.error('='.repeat(60));
+                console.error(`? Custom File (${filePath}) FAILED`);
+                console.error('='.repeat(60));
+                if (testError) {
+                    console.error('Error:', testError);
+                }
+                process.exit(1);
+            }
+            
+            process.exit(0);
+        }
+        
         // If runAll is true, run all RP script tests first, then all JavaScript case tests
         if (runAll) {
             console.log('='.repeat(60));

@@ -716,9 +716,9 @@ Examples:
 
             // Set the variable (with path support)
             if (varPath && varPath.length > 0) {
-                this.setVariableAtPath(varName, varPath, value);
+                this.setVariableAtPath(varName, varPath, value, frameOverride);
             } else {
-                this.setVariable(varName, value);
+                this.setVariable(varName, value, frameOverride);
             }
 
             // Set lastValue to the assigned value
@@ -1263,6 +1263,9 @@ Examples:
             // Create callback function if callback block is present
             let callback: BuiltinCallback | null = null;
             if (cmd.callback) {
+                // Capture parent frame before creating callback (for into assignment)
+                const parentFrameForCallback = this.getCurrentFrame(frameOverride);
+                
                 callback = async (callbackArgs: Value[]): Promise<Value | null> => {
                     // Execute the callback scope block with the provided arguments
                     // The callback block's parameters ($1, $2, etc.) will be set from callbackArgs
@@ -1286,28 +1289,57 @@ Examples:
                         }
                     }
 
+                    // Track initial lastValue to detect if body produces a new value
+                    const initialLastValue = callbackFrame.lastValue;
+
                     // Push callback frame to call stack
                     this.callStack.push(callbackFrame);
 
+                    let scopeValue: Value = null;
                     try {
                         // Execute callback body
                         if (cmd.callback) {
                             for (const stmt of cmd.callback.body) {
                                 await this.executeStatement(stmt, callbackFrame);
                             }
-                        }
 
-                        return callbackFrame.lastValue;
+                            // Capture the scope's lastValue after executing all statements
+                            // If body is empty, scopeValue should be null
+                            // If body didn't produce a new value (lastValue unchanged), scopeValue should be null
+                            if (cmd.callback.body.length === 0) {
+                                scopeValue = null;
+                            } else if (callbackFrame.lastValue === initialLastValue) {
+                                // Body didn't produce a new value, return null
+                                scopeValue = null;
+                            } else {
+                                scopeValue = callbackFrame.lastValue;
+                            }
+                        }
                     } catch (error) {
                         if (error instanceof ReturnException) {
-                            // Return statement was executed in callback - return the value
-                            return error.value;
+                            // Return statement was executed in callback - set scopeValue to return value
+                            scopeValue = error.value;
+                            // Don't re-throw - we'll handle the value below
+                        } else {
+                            throw error;
                         }
-                        throw error;
                     } finally {
-                        // Clean up callback frame
+                        // Clean up callback frame first (before setting variable in parent scope)
                         this.callStack.pop();
+
+                        // Handle "into" assignment if present in the callback block
+                        // Set in parent scope AFTER popping callback frame
+                        if (cmd.callback && cmd.callback.into) {
+                            // Set variable in parent scope (the scope that called the command)
+                            if (cmd.callback.into.targetPath && cmd.callback.into.targetPath.length > 0) {
+                                this.setVariableAtPath(cmd.callback.into.targetName, cmd.callback.into.targetPath, scopeValue, parentFrameForCallback);
+                            } else {
+                                this.setVariable(cmd.callback.into.targetName, scopeValue, parentFrameForCallback);
+                            }
+                        }
                     }
+
+                    return scopeValue;
                 };
             }
 
@@ -1805,48 +1837,70 @@ Examples:
         const promises = together.blocks.map(async (doBlock) => {
             const isIsolated = doBlock.paramNames && doBlock.paramNames.length > 0;
 
+            // Track initial lastValue to detect if body produces a new value
+            const initialLastValue = isIsolated ? null : parentFrame.lastValue;
+
             const frame: Frame = {
                 locals: new Map(),
-                lastValue: null, // Start with null for do blocks
+                lastValue: initialLastValue, // Inherit parent's $ unless isolated scope
                 isFunctionFrame: true,
                 isIsolatedScope: isIsolated
             };
 
-            // If scope has parameters, initialize them
+            // If scope has parameters, initialize them with values from parent scope
+            // if variables with the same names exist, otherwise null
             if (doBlock.paramNames) {
                 for (const paramName of doBlock.paramNames) {
-                    frame.locals.set(paramName, null);
+                    // Try to get value from parent frame or globals
+                    let paramValue: Value = null;
+
+                    // Check parent frame locals
+                    if (parentFrame.locals.has(paramName)) {
+                        paramValue = parentFrame.locals.get(paramName)!;
+                    } else {
+                        // Check globals
+                        if (this.environment.variables.has(paramName)) {
+                            paramValue = this.environment.variables.get(paramName)!;
+                        }
+                    }
+
+                    frame.locals.set(paramName, paramValue);
                 }
             }
 
             this.callStack.push(frame);
 
-            let value: Value = null;
+            let scopeValue: Value = null;
             try {
                 // Execute scope body - pass frame directly to avoid race conditions
                 // This ensures each parallel block uses its own frame, not the shared callStack
                 for (const stmt of doBlock.body) {
                     await this.executeStatement(stmt, frame);
                 }
+
+                // Capture the scope's lastValue after executing all statements
+                // If body is empty, scopeValue should be null (not parent's last value)
+                // If body didn't produce a new value (lastValue unchanged), scopeValue should be null
+                if (doBlock.body.length === 0) {
+                    scopeValue = null;
+                } else if (frame.lastValue === initialLastValue) {
+                    // Body didn't produce a new value, return null
+                    scopeValue = null;
+                } else {
+                    scopeValue = frame.lastValue;
+                }
             } catch (error) {
                 // Handle return statements inside do blocks
                 if (error instanceof ReturnException) {
                     // Set frame.lastValue to the return value
-                    // We'll capture this in the finally block
                     frame.lastValue = error.value;
+                    scopeValue = error.value;
                     // Don't re-throw - exit normally so execution continues
                 } else {
                     // Re-throw other errors
                     throw error;
                 }
             } finally {
-                // Capture the value before popping the frame (after all statements execute)
-                // This ensures we get the last value whether there was a return statement or not
-                // Use the frame variable directly (not getCurrentFrame()) to avoid race conditions
-                // when blocks execute in parallel - each block has its own frame reference
-                if (doBlock.into) {
-                    value = frame.lastValue;
-                }
                 // Pop the scope frame
                 this.callStack.pop();
             }
@@ -1857,19 +1911,19 @@ Examples:
                 // Set variable in parent scope - check parent frame first, then globals
                 if (doBlock.into.targetPath && doBlock.into.targetPath.length > 0) {
                     // Path assignment - need to handle base value and path traversal
-                    this.setVariableAtPathInParentScope(parentFrame, doBlock.into.targetName, doBlock.into.targetPath, value);
+                    this.setVariableAtPathInParentScope(parentFrame, doBlock.into.targetName, doBlock.into.targetPath, scopeValue);
                 } else {
                     // Simple assignment - check parent frame locals, then globals
                     if (parentFrame.locals.has(doBlock.into.targetName)) {
-                        parentFrame.locals.set(doBlock.into.targetName, value);
+                        parentFrame.locals.set(doBlock.into.targetName, scopeValue);
                     } else if (this.environment.variables.has(doBlock.into.targetName)) {
-                        this.environment.variables.set(doBlock.into.targetName, value);
+                        this.environment.variables.set(doBlock.into.targetName, scopeValue);
                     } else {
                         // Variable doesn't exist - create in parent scope or globals
                         if (parentFrame.isFunctionFrame) {
-                            parentFrame.locals.set(doBlock.into.targetName, value);
+                            parentFrame.locals.set(doBlock.into.targetName, scopeValue);
                         } else {
-                            this.environment.variables.set(doBlock.into.targetName, value);
+                            this.environment.variables.set(doBlock.into.targetName, scopeValue);
                         }
                     }
                 }
@@ -2751,13 +2805,13 @@ Examples:
         return current;
     }
 
-    private setVariable(name: string, value: Value): void {
+    private setVariable(name: string, value: Value, frameOverride?: Frame): void {
         // Check if this is a constant - constants cannot be reassigned
         if (this.environment.constants.has(name)) {
             throw new Error(`Cannot reassign constant $${name}. Constants are immutable.`);
         }
 
-        const currentFrame = this.getCurrentFrame();
+        const currentFrame = this.getCurrentFrame(frameOverride);
         const isFunctionFrame = currentFrame.isFunctionFrame === true;
         const isIsolatedScope = currentFrame.isIsolatedScope === true;
 
@@ -2816,7 +2870,7 @@ Examples:
     /**
      * Set a value at an attribute path (e.g., $animal.cat = 5 or $.property = value)
      */
-    private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value): void {
+    private setVariableAtPath(name: string, path: AttributePathSegment[], value: Value, frameOverride?: Frame): void {
         // Check if this is a constant - constants cannot be reassigned
         // Note: We only check if the base variable is a constant (not path assignments)
         // Path assignments like $const.prop = value modify the object, not the constant itself
@@ -2826,7 +2880,7 @@ Examples:
             }
         }
 
-        const frame = this.getCurrentFrame();
+        const frame = this.getCurrentFrame(frameOverride);
         const isIsolatedScope = frame.isIsolatedScope === true;
 
         // Get the base variable value
@@ -2887,7 +2941,7 @@ Examples:
                     if (this.callStack.length === 1) {
                         this.environment.variables.set(name, baseValue);
                     } else {
-                        const currentFrame = this.getCurrentFrame();
+                        const currentFrame = this.getCurrentFrame(frameOverride);
                         const isFunctionFrame = currentFrame.isFunctionFrame === true;
                         if (isFunctionFrame) {
                             currentFrame.locals.set(name, baseValue);

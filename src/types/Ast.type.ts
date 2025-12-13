@@ -364,6 +364,7 @@ export interface ScopeBlock {
 export interface TogetherBlock {
     type: 'together';
     blocks: ScopeBlock[]; // Only do blocks are allowed
+    decorators?: DecoratorCall[]; // Decorators attached to this together block
     comments?: CommentWithPosition[]; // Comments attached to this together block (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }
