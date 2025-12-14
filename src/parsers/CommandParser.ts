@@ -350,8 +350,15 @@ export class CommandParser {
                     break;
                 }
 
-                // Skip comments
+                // Skip comments, but preserve inline comments (comments on the same line as the command)
                 if (token.kind === TokenKind.COMMENT) {
+                    // If comment is on the same line as the command, it's an inline comment - don't consume it
+                    // Let the Parser handle it after command parsing
+                    if (token.line === startLineNum) {
+                        // This is an inline comment - stop parsing arguments and let Parser handle it
+                        break;
+                    }
+                    // Otherwise, it's a comment on a different line - skip it
                     stream.next();
                     continue;
                 }

@@ -20,7 +20,7 @@ import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
 import { SubexpressionParser } from '../parsers/SubexpressionParser';
 import { CommentParser } from '../parsers/CommentParser';
 import { LexerUtils } from '../utils';
-import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
+import type { Statement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
 
 export class Parser {
@@ -132,7 +132,11 @@ export class Parser {
             }
 
             // Handle comments using CommentParser
-            if (this.stream.check(TokenKind.COMMENT)) {
+            const currentToken = this.stream.current();
+            const isComment = currentToken?.kind === TokenKind.COMMENT;
+            const checkResult = this.stream.check(TokenKind.COMMENT);
+            
+            if (isComment || checkResult) {
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
                     console.log(`[Parser.parse] [${timestamp}] Parsing comment at ${currentIndex}`);
@@ -1062,11 +1066,6 @@ export class Parser {
      * Attach inline comments to a statement if they exist on the same line
      */
     private attachInlineComments(statement: Statement): void {
-        // Check if statement supports comments
-        if (!('comments' in statement)) {
-            return;
-        }
-
         // Get the statement's line number from codePos
         let statementLine: number | undefined;
         if ('codePos' in statement && statement.codePos) {

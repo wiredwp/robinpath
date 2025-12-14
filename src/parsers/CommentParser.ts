@@ -17,8 +17,13 @@ export class CommentParser {
      * Parse comments from the stream and determine if they should be attached to the next statement
      * or kept as a standalone comment node
      * 
+     * Strategy:
+     * 1. Collect all consecutive comments
+     * 2. After comments, if we hit a newline, check if next token is also newline (blank line)
+     * 3. If blank line -> create standalone comment node
+     * 4. Otherwise -> return comments to attach to next statement
+     * 
      * @param stream - TokenStream positioned at a COMMENT token
-     * @param context - Optional context for parsing
      * @returns Object with:
      *   - comments: Array of CommentWithPosition for comments to attach
      *   - commentNode: CommentStatement if comments should be standalone (orphaned)
@@ -31,23 +36,34 @@ export class CommentParser {
         commentNode: CommentStatement | null;
         consumed: boolean;
     } {
-        if (!stream.check(TokenKind.COMMENT)) {
+        const currentToken = stream.current();
+        // console.log('[CommentParser] parseComments called, current token:', currentToken?.kind, currentToken?.text);
+        
+        // Check if current token is a comment (use direct comparison instead of check())
+        if (!currentToken || currentToken.kind !== TokenKind.COMMENT) {
+            // console.log('[CommentParser] No COMMENT token found, returning empty');
             return { comments: [], commentNode: null, consumed: false };
         }
 
         const comments: CommentWithPosition[] = [];
         let startLine = -1;
-        let lastCommentLine = -1;
         
-        // Collect consecutive comment tokens
-        while (stream.check(TokenKind.COMMENT)) {
-            const token = stream.next();
-            if (!token) break;
+        // console.log('[CommentParser] Starting to collect comments...');
+        
+        // Collect all consecutive comment tokens
+        while (true) {
+            const token = stream.current();
+            if (!token || token.kind !== TokenKind.COMMENT) {
+                break;
+            }
+            
+            // Consume the comment token
+            stream.next();
+            // console.log('[CommentParser] Found comment token:', token.text, 'on line', token.line);
 
             if (startLine === -1) {
                 startLine = token.line - 1; // Convert to 0-based
             }
-            lastCommentLine = token.line;
 
             // Extract comment text (remove #)
             const commentText = token.text.startsWith('#') 
@@ -64,42 +80,40 @@ export class CommentParser {
             comments.push({
                 text: commentText,
                 codePos,
-                inline: false // Will be determined later for inline comments
+                inline: false // Non-inline comments
             });
 
             // Skip newline after comment
-            if (stream.check(TokenKind.NEWLINE)) {
+            if (stream.current()?.kind === TokenKind.NEWLINE) {
                 stream.next();
             }
+            
+            // After consuming newline, check if next token is another comment (consecutive comments)
+            // If so, continue collecting. If it's another newline, that's a blank line - stop collecting.
+            const peekToken = stream.current();
+            if (peekToken?.kind === TokenKind.NEWLINE) {
+                // There's a blank line (two consecutive newlines) - stop collecting
+                // console.log('[CommentParser] Blank line detected after comment, stopping collection');
+                break;
+            }
         }
+
+        // console.log('[CommentParser] Collected comments:', comments.map(c => c.text));
 
         if (comments.length === 0) {
             return { comments: [], commentNode: null, consumed: false };
         }
 
-        // Check if there's a blank line between comments and next statement
-        // After consuming comments and their newlines, the stream should be at the next token
-        // If that token is more than 1 line away from the last comment, there's a blank line
-        const savedPos = stream.getPosition();
-        let nextToken = stream.current();
+        // After collecting comments and consuming their newlines, check what's next
+        // If the next token is a newline (blank line), create standalone comment node
+        // Otherwise, return comments to attach to next statement
+        const nextToken = stream.current();
+        // console.log('[CommentParser] Next token after comments:', nextToken?.kind, nextToken?.text);
         
-        // Skip any remaining newlines (shouldn't be any, but just in case)
-        while (nextToken && nextToken.kind === TokenKind.NEWLINE) {
-            stream.next();
-            nextToken = stream.current();
-        }
-        
-        let hasBlankLine = false;
-        if (nextToken) {
-            // Check if the next token's line is more than 1 away from the last comment line
-            hasBlankLine = nextToken.line > lastCommentLine + 1;
-        }
-        
-        stream.setPosition(savedPos);
-
-        // If there's a blank line, these are orphaned comments - return as standalone comment node
-        if (hasBlankLine) {
-            // Group consecutive comments into a single comment with newlines
+        // Check if there's a blank line (two consecutive newlines)
+        // We already consumed the newline after the last comment, so if current is also newline, it's a blank line
+        if (nextToken && nextToken.kind === TokenKind.NEWLINE) {
+            // This is a blank line - create standalone comment node
             const groupedText = comments.map(c => c.text).join('\n');
             const groupedCodePos: CodePosition = {
                 startRow: comments[0].codePos.startRow,
@@ -108,6 +122,8 @@ export class CommentParser {
                 endCol: comments[comments.length - 1].codePos.endCol
             };
 
+            // console.log('[CommentParser] Blank line detected, creating standalone comment node');
+            
             return {
                 comments: [],
                 commentNode: {
@@ -123,7 +139,7 @@ export class CommentParser {
             };
         }
 
-        // Comments should be attached to the next statement
+        // No blank line - comments should be attached to next statement
         // Group consecutive comments into a single comment with newlines
         const groupedText = comments.map(c => c.text).join('\n');
         const groupedCodePos: CodePosition = {
@@ -132,6 +148,8 @@ export class CommentParser {
             endRow: comments[comments.length - 1].codePos.endRow,
             endCol: comments[comments.length - 1].codePos.endCol
         };
+
+        // console.log('[CommentParser] No blank line, returning comments to attach:', groupedText);
 
         return {
             comments: [{
@@ -145,45 +163,6 @@ export class CommentParser {
     }
 
     /**
-     * Check if there's a blank line between the last comment line and the next statement
-     * A blank line means the next non-whitespace token is more than 1 line away from the last comment
-     */
-    private static checkForBlankLine(stream: TokenStream, lastCommentLine: number): boolean {
-        const savedPosition = stream.getPosition();
-
-        // Skip newlines to find the next non-whitespace token
-        // If we see multiple consecutive newlines, that indicates a blank line
-        let newlineCount = 0;
-        while (true) {
-            const token = stream.current();
-            if (!token) {
-                stream.setPosition(savedPosition);
-                return false; // End of file, no blank line
-            }
-
-            if (token.kind === TokenKind.NEWLINE) {
-                newlineCount++;
-                stream.next();
-                // Check if next token is also a newline (blank line)
-                const nextToken = stream.current();
-                if (nextToken && nextToken.kind === TokenKind.NEWLINE) {
-                    stream.setPosition(savedPosition);
-                    return true; // Found blank line (two consecutive newlines)
-                }
-                continue;
-            }
-
-            // Found a non-whitespace token
-            // Check if its line number is more than 1 away from the last comment line
-            // (meaning there's at least one blank line between them)
-            const hasBlankLine = token.line > lastCommentLine + 1;
-            
-            stream.setPosition(savedPosition);
-            return hasBlankLine;
-        }
-    }
-
-    /**
      * Parse inline comment from the stream (comment on same line as code)
      * 
      * @param stream - TokenStream positioned at a COMMENT token
@@ -194,12 +173,8 @@ export class CommentParser {
         stream: TokenStream,
         statementLine: number
     ): CommentWithPosition | null {
-        if (!stream.check(TokenKind.COMMENT)) {
-            return null;
-        }
-
         const token = stream.current();
-        if (!token) {
+        if (!token || token.kind !== TokenKind.COMMENT) {
             return null;
         }
 
@@ -234,18 +209,23 @@ export class CommentParser {
      * Attach comments to a statement
      */
     static attachComments(statement: Statement, comments: CommentWithPosition[]): void {
-        if (!('comments' in statement)) {
-            return;
-        }
-
-        if (!statement.comments) {
+        // console.log('[CommentParser.attachComments] Called with', comments.length, 'comments for statement type:', statement.type);
+        
+        // Initialize comments array if it doesn't exist
+        if (!(statement as any).comments) {
+            // console.log('[CommentParser.attachComments] Initializing comments array');
             (statement as any).comments = [];
         }
 
         // Add comments (above comments first, then inline)
         const aboveComments = comments.filter(c => !c.inline);
         const inlineComments = comments.filter(c => c.inline);
+        
+        // console.log('[CommentParser.attachComments] Adding comments - above:', aboveComments.length, 'inline:', inlineComments.length);
+        // console.log('[CommentParser.attachComments] Comments to add:', comments.map(c => ({ text: c.text, inline: c.inline })));
 
         (statement as any).comments.push(...aboveComments, ...inlineComments);
+        
+        // console.log('[CommentParser.attachComments] Statement comments after push:', (statement as any).comments?.length, 'comments');
     }
 }

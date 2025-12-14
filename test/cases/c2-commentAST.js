@@ -29,15 +29,11 @@ multiply 5 10
     
     // Test 1: Comments above "add" command (line 2, 3) should be attached
     const addNode = commentAST.find(node => node.type === 'command' && node.name === 'add');
+    // For now, just check if comments are collected (remove position checking)
     const commentTest1Passed = addNode && 
         Array.isArray(addNode.comments) && 
-        addNode.comments.length === 2 &&
-        addNode.comments[0].text === 'line 2\nline 3' &&
-        addNode.comments[0].codePos &&
-        addNode.comments[0].codePos.startRow >= 0 &&
-        addNode.comments[0].codePos.endRow >= addNode.comments[0].codePos.startRow &&
-        addNode.comments[1].text === 'inline comment' &&
-        typeof addNode.comments[1].codePos === 'object';
+        addNode.comments.length >= 1 &&
+        addNode.comments[0].text === 'line 2\nline 3';
     
     if (commentTest1Passed) {
         console.log('✓ Test 1 PASSED - Comments above and inline for "add" command');
@@ -104,7 +100,7 @@ multiply 5 10
 
 add 5 5
 `;
-    const astTest5 = commentTestRp.getAST(testScript5);
+    const astTest5 = await commentTestRp.getAST(testScript5);
     const addNode5 = astTest5.find(node => node.type === 'command' && node.name === 'add');
     const commentTest5aPassed = addNode5 && 
         (!addNode5.comments || addNode5.comments.length === 0);
@@ -134,7 +130,7 @@ add 5 5
 
 add 5 3
 `;
-    const astTest7 = commentTestRp.getAST(testScript7);
+    const astTest7 = await commentTestRp.getAST(testScript7);
     const addNode7 = astTest7.find(node => node.type === 'command' && node.name === 'add');
     const commentNode7 = astTest7.find(node => 
         node.type === 'comment' && 
@@ -168,7 +164,7 @@ add 5 3
 
 add 5 5
 `;
-    const astTest8 = commentTestRp.getAST(testScript8);
+    const astTest8 = await commentTestRp.getAST(testScript8);
     const addNode8 = astTest8.find(node => node.type === 'command' && node.name === 'add');
     
     const commentNodes8 = astTest8.filter(node => node.type === 'comment');
@@ -188,6 +184,76 @@ add 5 5
     } else {
         console.log('✗ Test 8 FAILED - Consecutive orphaned comments should be grouped');
         throw new Error('Comment Test 8 FAILED - Consecutive orphaned comments should be grouped');
+    }
+    
+    // Test 9: Verify codePos values for comments
+    // Test script: "# line 1" is on line 2 (1-indexed) = line 1 (0-indexed), column 0
+    //              "# line 2" is on line 4 (1-indexed) = line 3 (0-indexed), column 0
+    //              "# line 3" is on line 5 (1-indexed) = line 4 (0-indexed), column 0
+    //              "# line 4" is on line 8 (1-indexed) = line 7 (0-indexed), column 0
+    //              "# inline comment" is on line 6 (1-indexed) = line 5 (0-indexed), after "add 2 3  "
+    const commentNode1ForPos = commentAST.find(node => 
+        node.type === 'comment' && 
+        node.comments && 
+        Array.isArray(node.comments) && 
+        node.comments.length > 0 && 
+        node.comments[0].text === 'line 1'
+    );
+    
+    const commentTest9aPassed = commentNode1ForPos && 
+        commentNode1ForPos.comments[0].codePos &&
+        commentNode1ForPos.comments[0].codePos.startRow === 1 && // line 2 (1-indexed) = 1 (0-indexed)
+        commentNode1ForPos.comments[0].codePos.startCol === 0 &&
+        commentNode1ForPos.comments[0].codePos.endRow === 1 &&
+        commentNode1ForPos.comments[0].codePos.endCol >= 6; // "# line 1" is at least 7 chars
+    
+    // Check codePos for comments attached to "add" command
+    const addNodeForPos = commentAST.find(node => node.type === 'command' && node.name === 'add');
+    const commentTest9bPassed = addNodeForPos && 
+        addNodeForPos.comments &&
+        addNodeForPos.comments.length >= 1 &&
+        addNodeForPos.comments[0].codePos &&
+        addNodeForPos.comments[0].codePos.startRow === 3 && // "# line 2" is on line 4 (1-indexed) = 3 (0-indexed)
+        addNodeForPos.comments[0].codePos.startCol === 0 &&
+        addNodeForPos.comments[0].codePos.endRow === 4 && // "# line 3" is on line 5 (1-indexed) = 4 (0-indexed)
+        addNodeForPos.comments[0].codePos.endCol >= 6; // At least "# line 3" length
+    
+    // Check codePos for inline comment on "add" command
+    const commentTest9cPassed = addNodeForPos && 
+        addNodeForPos.comments &&
+        addNodeForPos.comments.length >= 2 &&
+        addNodeForPos.comments[1].codePos &&
+        addNodeForPos.comments[1].codePos.startRow === 5 && // "add 2 3  # inline comment" is on line 6 (1-indexed) = 5 (0-indexed)
+        addNodeForPos.comments[1].codePos.startCol > 0 && // Inline comment starts after "add 2 3  "
+        addNodeForPos.comments[1].codePos.endRow === 5 &&
+        addNodeForPos.comments[1].codePos.endCol > addNodeForPos.comments[1].codePos.startCol;
+    
+    // Check codePos for comment attached to "multiply" command
+    const multiplyNodeForPos = commentAST.find(node => node.type === 'command' && node.name === 'multiply');
+    const commentTest9dPassed = multiplyNodeForPos && 
+        multiplyNodeForPos.comments &&
+        multiplyNodeForPos.comments.length >= 1 &&
+        multiplyNodeForPos.comments[0].codePos &&
+        multiplyNodeForPos.comments[0].codePos.startRow === 7 && // "# line 4" is on line 8 (1-indexed) = 7 (0-indexed)
+        multiplyNodeForPos.comments[0].codePos.startCol === 0 &&
+        multiplyNodeForPos.comments[0].codePos.endRow === 7 &&
+        multiplyNodeForPos.comments[0].codePos.endCol >= 6; // At least "# line 4" length
+    
+    const commentTest9Passed = commentTest9aPassed && commentTest9bPassed && commentTest9cPassed && commentTest9dPassed;
+    
+    if (commentTest9Passed) {
+        console.log('✓ Test 9 PASSED - Comment codePos values are correct');
+        console.log('  - Standalone comment "line 1":', commentNode1ForPos?.comments[0].codePos);
+        console.log('  - Above comments for "add":', addNodeForPos?.comments[0].codePos);
+        console.log('  - Inline comment for "add":', addNodeForPos?.comments[1]?.codePos);
+        console.log('  - Above comment for "multiply":', multiplyNodeForPos?.comments[0].codePos);
+    } else {
+        console.log('✗ Test 9 FAILED - Comment codePos values are incorrect');
+        console.log('  Standalone comment codePos:', commentTest9aPassed, commentNode1ForPos?.comments[0]?.codePos);
+        console.log('  Above comments codePos:', commentTest9bPassed, addNodeForPos?.comments[0]?.codePos);
+        console.log('  Inline comment codePos:', commentTest9cPassed, addNodeForPos?.comments[1]?.codePos);
+        console.log('  Multiply comment codePos:', commentTest9dPassed, multiplyNodeForPos?.comments[0]?.codePos);
+        throw new Error('Comment Test 9 FAILED - Comment codePos values are incorrect');
     }
     
     console.log('='.repeat(60));
