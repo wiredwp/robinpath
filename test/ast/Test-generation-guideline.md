@@ -55,6 +55,8 @@ console.log(`Code position: startRow=${assignment.codePos.startRow}, startCol=${
 - Verify updated code contains the changes
 - Verify code positions are correct after updates
 
+**IMPORTANT**: `updateCodeFromAST()` is **async** and must be awaited. Always use `await` when calling it.
+
 **Example**:
 ```javascript
 // Update
@@ -75,7 +77,8 @@ const indexToRemove = modifiedAST.findIndex(node => node.variable === '$oldVar')
 modifiedAST.splice(indexToRemove, 1);
 
 // Generate and verify
-const updatedCode = testRp.updateCodeFromAST(originalScript, modifiedAST);
+// CRITICAL: updateCodeFromAST is async - must use await
+const updatedCode = await testRp.updateCodeFromAST(originalScript, modifiedAST);
 // Check positions and content
 ```
 
@@ -186,9 +189,10 @@ export async function runTest() {
     }
     
     // Generate updated code
+    // IMPORTANT: updateCodeFromAST is async and must be awaited
     let updatedCode;
     try {
-        updatedCode = testRp.updateCodeFromAST(updateScript, modifiedAST);
+        updatedCode = await testRp.updateCodeFromAST(updateScript, modifiedAST);
     } catch (error) {
         throw new Error(`Code generation failed: ${error.message}`);
     }
@@ -243,16 +247,88 @@ export async function runTest() {
    console.log('');
    ```
 
-2. **After Update**: Log the generated code **at the very bottom**, after all verifications are complete
+2. **After Update (Individual Tests)**: For each individual test that updates AST and generates code, log the generated code immediately after verification passes
+   ```javascript
+   if (verificationPasses) {
+       console.log(`✓ Test N PASSED - Description`);
+       console.log('\nCode after update:');
+       console.log(updatedCode);
+   } else {
+       // Error handling with AST and code logging
+   }
+   ```
+
+3. **After Update (Final Summary)**: Log the generated code **at the very bottom**, after all verifications are complete
    ```javascript
    // Code after update - Always at the bottom, side by side with original code
+   // This shows the final result from the main update script
    console.log('\n' + '='.repeat(60));
-   console.log('Code after update:');
+   console.log('Code after update (from main update script):');
    console.log('='.repeat(60));
    console.log(updatedCode);
    ```
 
-**CRITICAL**: The "Code after update" section must always be placed at the very end of the test function, after all verifications. This ensures the original code (logged at the top) and the updated code (logged at the bottom) appear side by side in the console output for easy visual comparison.
+**CRITICAL PATTERN**: 
+- **Every test that has "Code before update:" MUST also have "Code after update:"**
+- For individual update tests (like Test 16, 17, 18), log the "after" code immediately after the test passes
+- For the main update script (Tests 12-15), log the "after" code at the very end of the test function
+- This ensures the original code (logged at the top) and the updated code (logged after verification) appear side by side in the console output for easy visual comparison
+
+**Example Pattern**:
+```javascript
+// Test 16: Update multiline function call
+console.log('Code before update:');
+console.log(multilineUpdateScript);
+console.log('');
+
+// ... AST modifications ...
+
+const multilineUpdateCode = await testRp.updateCodeFromAST(multilineUpdateScript, multilineUpdateModified);
+
+// Verify
+if (verificationPasses) {
+    console.log(`✓ Test 16 PASSED - Multiline syntaxType preserved after update`);
+    console.log('\nCode after update:');
+    console.log(multilineUpdateCode);  // ← Always log after code here
+} else {
+    // Error handling
+}
+```
+
+## Critical Requirement: Exact AST->Code Conversion
+
+**CRITICAL**: AST->code conversion is a very serious operation. The generated code must be **exactly** what the AST represents. If the generated code does not match the AST, it is a **critical error** and must throw an error, not a warning.
+
+**NEVER** use warnings or skip tests for AST->code conversion issues. These are bugs that must be fixed:
+
+```javascript
+// ❌ WRONG - Never use warnings or skip tests
+if (updatedLine < 0) {
+    console.log('⚠ Test failed - update may not be visible');
+    // or
+    console.log('⚠ Skipped - code generation limitation');
+}
+
+// ❌ WRONG - Never skip verification
+console.log('⚠ Test skipped - parameter structure differs');
+
+// ✅ CORRECT - Always throw errors
+if (updatedLine < 0) {
+    console.log('\n❌ Test FAILED. Showing AST and code for debugging:');
+    console.log('\nModified AST:');
+    console.log(JSON.stringify(modifiedAST, null, 2));
+    console.log('\nGenerated code:');
+    console.log(updatedCode);
+    throw new Error('Test FAILED: Node was not updated in generated code - AST->code conversion is not exact');
+}
+```
+
+**Key Principles:**
+1. **Exact Match**: Generated code must exactly match what the AST represents
+2. **No Warnings**: Never use warnings for AST->code conversion failures
+3. **No Skipping**: Never skip tests or verifications for AST->code conversion
+4. **Always Debug**: When failures occur, always log both AST and generated code for debugging
+5. **Throw Errors**: All failures must throw errors to ensure tests properly fail
 
 ## Error Handling Pattern
 
@@ -266,15 +342,21 @@ if (updatedLine < 0) {
 
 // ✅ CORRECT - Throw errors
 if (updatedLine < 0) {
+    console.log('\n❌ Test FAILED. Showing AST and code for debugging:');
+    console.log('\nModified AST:');
+    console.log(JSON.stringify(modifiedAST, null, 2));
+    console.log('\nGenerated code:');
+    console.log(updatedCode);
     throw new Error('Test FAILED: Node was not updated in generated code');
 }
 ```
 
 **Exception**: Code generation failures should also throw errors, but **always log AST and code for debugging**:
 ```javascript
+// IMPORTANT: updateCodeFromAST is async and must be awaited
 let updatedCode;
 try {
-    updatedCode = testRp.updateCodeFromAST(updateScript, modifiedAST);
+    updatedCode = await testRp.updateCodeFromAST(updateScript, modifiedAST);
 } catch (error) {
     console.log('\n❌ Code generation failed. Showing AST and code for debugging:');
     console.log('\nModified AST:');
@@ -301,17 +383,20 @@ if (verificationPasses) {
 
 ## Best Practices
 
-1. **Isolation**: Each test should be independent and not rely on other tests
-2. **Clarity**: Use descriptive test names and console.log messages
-3. **Verification**: Always verify both AST structure and generated code
-4. **Positions**: Always check code positions, not just content
-5. **Error Handling**: Always throw errors (not warnings) when tests fail - this ensures tests properly fail
-6. **Code Logging**: 
+1. **Exact AST->Code Conversion**: The generated code must exactly match the AST. Never accept approximations or "close enough" results. This is a critical requirement.
+2. **Async Code Generation**: `updateCodeFromAST()` is async and **must be awaited**. Always use `await` when calling it.
+3. **Isolation**: Each test should be independent and not rely on other tests
+4. **Clarity**: Use descriptive test names and console.log messages
+5. **Verification**: Always verify both AST structure and generated code
+6. **Positions**: Always check code positions, not just content
+7. **Error Handling**: Always throw errors (not warnings) when tests fail - this ensures tests properly fail
+8. **No Skipping**: Never skip tests or verifications. If AST->code conversion doesn't work, it's a bug that must be fixed.
+9. **Code Logging**: 
    - Always log code before update (at the top, before AST modifications)
    - Always log code after update (at the very bottom, after all verifications)
    - This ensures original and updated code appear side by side in console output
-7. **Error Debugging**: When errors occur (code generation failures or verification failures), always log both the modified AST and the generated code to help with debugging
-8. **Coverage**: Test edge cases and various scenarios
+10. **Error Debugging**: When errors occur (code generation failures or verification failures), always log both the modified AST and the generated code to help with debugging
+11. **Coverage**: Test edge cases and various scenarios
 
 ## Running Tests
 
@@ -334,8 +419,10 @@ npm run test -- a1
 
 ## Notes
 
+- **Async Code Generation**: `updateCodeFromAST()` is async and **must be awaited**. Never call it without `await`.
 - All line numbers in `codePos` are 0-indexed
 - All column numbers in `codePos` are 0-indexed
 - When adding new nodes, ensure `codePos` is set correctly
 - When updating nodes, code positions may need adjustment
 - Always use `JSON.parse(JSON.stringify())` to deep clone AST before modifying
+- **Deletion Support**: The code generator now properly handles node deletions. When a node is removed from the AST, it will be removed from the generated code.

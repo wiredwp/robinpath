@@ -42,6 +42,7 @@ import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { Worker } from 'worker_threads';
+import { cpus } from 'os';
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -73,6 +74,7 @@ const testFiles = [
     '17-line-continuation.rp',
     '18-template-strings.rp',
     '19-last-value.rp',
+    '20-comments.rp',
 ];
 
 // Define test case files mapping (case number -> filename)
@@ -96,6 +98,10 @@ const astTestCases = [
     'ast/a2-expressions.js',         // a2 - matches 02-expressions.rp
     'ast/a3-conditionals.js',         // a3 - matches 03-conditionals.rp
     'ast/a4-loops.js',                 // a4 - matches 04-loops.rp
+    'ast/a5-functions.js',             // a5 - matches 05-functions.rp
+    'ast/a6-do-blocks.js',             // a6 - matches 06-do-blocks.rp
+    'ast/a7-into-syntax.js',           // a7 - matches 07-into-syntax.rp
+    'ast/a8-subexpressions.js',       // a8 - matches 08-subexpressions.rp
 ];
 
 // Parse command-line arguments
@@ -361,6 +367,96 @@ const suppressConsole = async (callback) => {
     }
 };
 
+/**
+ * Execute test logic with timeout and CPU monitoring
+ */
+const executeTestLogicWithTimeout = async (testFilePath, isCaseTest, suppressOutput = false, timeoutMs = 30000) => {
+    return new Promise(async (resolve, reject) => {
+        let testCompleted = false;
+        let cpuCheckInterval = null;
+        let timeoutHandle = null;
+        const startTime = Date.now();
+        let lastCpuCheck = Date.now();
+        let highCpuStartTime = null;
+        const HIGH_CPU_THRESHOLD = 5000; // 5 seconds of high CPU indicates stuck
+        
+        // Start CPU monitoring
+        const startCpuMonitoring = () => {
+            const cpuUsage = process.cpuUsage();
+            let lastUser = cpuUsage.user;
+            let lastSystem = cpuUsage.system;
+            
+            cpuCheckInterval = setInterval(() => {
+                if (testCompleted) {
+                    clearInterval(cpuCheckInterval);
+                    return;
+                }
+                
+                const currentCpu = process.cpuUsage();
+                const userDelta = currentCpu.user - lastUser;
+                const systemDelta = currentCpu.system - lastSystem;
+                const totalDelta = userDelta + systemDelta;
+                const elapsed = Date.now() - lastCpuCheck;
+                
+                // Convert to percentage (microseconds to milliseconds, then to percentage)
+                // Assuming 1 CPU core, 100% = 1000ms per second = 1,000,000 microseconds per second
+                const cpuPercent = (totalDelta / elapsed / 10) * 100; // Rough estimate
+                
+                // Check for high CPU usage (stuck in loop)
+                if (cpuPercent > 80) {
+                    if (highCpuStartTime === null) {
+                        highCpuStartTime = Date.now();
+                    } else {
+                        const highCpuDuration = Date.now() - highCpuStartTime;
+                        if (highCpuDuration > HIGH_CPU_THRESHOLD) {
+                            testCompleted = true;
+                            clearInterval(cpuCheckInterval);
+                            if (timeoutHandle) clearTimeout(timeoutHandle);
+                            reject(new Error(`Test appears to be stuck (high CPU usage >80% for ${Math.round(highCpuDuration/1000)}s). Test file: ${testFilePath}`));
+                            return;
+                        }
+                    }
+                } else {
+                    highCpuStartTime = null;
+                }
+                
+                lastUser = currentCpu.user;
+                lastSystem = currentCpu.system;
+                lastCpuCheck = Date.now();
+            }, 1000); // Check every second
+        };
+        
+        // Set timeout
+        timeoutHandle = setTimeout(() => {
+            if (!testCompleted) {
+                testCompleted = true;
+                clearInterval(cpuCheckInterval);
+                reject(new Error(`Test timed out after ${timeoutMs}ms. Test file: ${testFilePath}`));
+            }
+        }, timeoutMs);
+        
+        // Start CPU monitoring
+        startCpuMonitoring();
+        
+        try {
+            await executeTestLogic(testFilePath, isCaseTest, suppressOutput);
+            if (!testCompleted) {
+                testCompleted = true;
+                clearInterval(cpuCheckInterval);
+                if (timeoutHandle) clearTimeout(timeoutHandle);
+                resolve();
+            }
+        } catch (error) {
+            if (!testCompleted) {
+                testCompleted = true;
+                clearInterval(cpuCheckInterval);
+                if (timeoutHandle) clearTimeout(timeoutHandle);
+                reject(error);
+            }
+        }
+    });
+};
+
 // Helper function to execute the actual test logic
 const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false) => {
     if (suppressOutput) {
@@ -471,7 +567,8 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 
                 try {
                     // Suppress console output when repeating
-                    await executeTestLogic(filePath, false, repeatCount > 1);
+                    // Use timeout wrapper to detect stuck tests
+                    await executeTestLogicWithTimeout(filePath, false, repeatCount > 1, 30000);
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
                     executionTimes.push(executionTime);
@@ -556,7 +653,8 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 const startTime = Date.now();
                 
                 try {
-                    await executeTestLogic(testFilePath, false);
+                    // Use timeout wrapper to detect stuck tests
+                    await executeTestLogicWithTimeout(testFilePath, false, false, 30000);
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
                     passedRpTests++;
@@ -617,7 +715,9 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 
                 try {
                     console.log(`Running: ${caseFilePath}`);
-                    await executeTestLogic(caseFilePath, true);
+                    // Use timeout wrapper to detect stuck tests
+                    // Case tests should show their console output (suppressOutput = false)
+                    await executeTestLogicWithTimeout(caseFilePath, true, false, 30000);
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
                     passedCaseTests++;
@@ -699,7 +799,9 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 const startTime = Date.now();
                 
                 try {
-                    await executeTestLogic(caseFilePath, true);
+                    // Use timeout wrapper to detect stuck tests
+                    // Case tests should show their console output (suppressOutput = false)
+                    await executeTestLogicWithTimeout(caseFilePath, true, false, 30000);
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
                     totalPassed++;
@@ -794,7 +896,8 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                     
                     try {
                         // Suppress console output when repeating
-                        await executeTestLogic(testFilePath, false, repeatCount > 1);
+                        // Use timeout wrapper to detect stuck tests
+                        await executeTestLogicWithTimeout(testFilePath, false, repeatCount > 1, 30000);
                         const endTime = Date.now();
                         const executionTime = endTime - startTime;
                         executionTimes.push(executionTime);

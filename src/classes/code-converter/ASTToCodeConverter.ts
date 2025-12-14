@@ -29,10 +29,10 @@ export class ASTToCodeConverter {
      * @param ast The modified AST array (top-level nodes only)
      * @returns Updated source code
      */
-    updateCodeFromAST(originalScript: string, ast: Statement[]): string {
-        // Phase 1: Plan patches
+    async updateCodeFromAST(originalScript: string, ast: Statement[]): Promise<string> {
+        // Phase 1: Plan patches (including deletions)
         const planner = new PatchPlanner(originalScript);
-        const patches = planner.planPatches(ast);
+        const patches = await planner.planPatches(ast);
 
         // Phase 2: Apply patches
         return PatchApplier.apply(originalScript, patches);

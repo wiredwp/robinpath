@@ -1,0 +1,349 @@
+# Test file for comments within def functions
+# This tests various comment types inside function definitions
+
+# Test 1: Simple inline comment
+def test_inline
+  log "test"  # inline comment
+enddef
+
+# Test 2: Multiple inline comments
+def test_multiple_inline
+  log "first"  # first comment
+  log "second"  # second comment
+  log "third"  # third comment
+enddef
+
+# Test 3: Standalone comment lines within def
+def test_standalone_comments
+  # This is a standalone comment
+  log "before comment"
+  
+  # Another standalone comment
+  log "after comment"
+  
+  # Final comment
+  log "end"
+enddef
+
+# Test 4: Mixed comments (standalone and inline)
+def test_mixed_comments
+  # Standalone comment at start
+  log "test"  # inline comment
+  
+  # Standalone comment in middle
+  $value = 10  # inline assignment comment
+  
+  # Standalone comment before return
+  return $value  # inline return comment
+enddef
+
+# Test 5: Comments with multiple lines
+def test_multiline_comments
+  # First comment line
+  # Second comment line
+  log "test"
+  
+  # Another comment block
+  # With multiple lines
+  $x = 5  # inline after multiline
+enddef
+
+# Test 6: Comments with code on same line
+def test_comments_with_code
+  log "test"  # inline  # another inline (should handle gracefully)
+  $var = "value"  # assignment comment
+enddef
+
+# Test 7: Empty lines with comments
+def test_empty_lines_comments
+  
+  # Comment after empty line
+  log "test"
+  
+  # Another comment
+  log "done"
+  
+enddef
+
+# Test 8: Complex function with all comment types
+def complex_function $param1 $param2
+  # Function documentation comment
+  # This function does something complex
+  
+  # Validate parameters
+  if $param1 == null
+    log "param1 is null"  # warning comment
+    return false
+  endif
+
+  # Return result
+  return $result  # return comment
+enddef
+
+# Test 9: Nested comments (comments in if blocks within def)
+def test_nested_comments
+  if true
+    # Comment inside if block
+    log "inside if"  # inline in if
+  endif
+  
+  # Comment after if
+  log "after if"
+enddef
+
+# Test 10: Comments with special characters
+def test_special_chars
+  log "test"  # comment with # symbol
+  log "test"  # comment with @ symbol
+  log "test"  # comment with $ symbol
+enddef
+
+# ============================================
+# DO BLOCK COMMENT TESTS
+# ============================================
+
+# Test 11: Simple inline comment in do block
+do
+  log "test"  # inline comment in do
+enddo
+
+# Test 12: Multiple inline comments in do block
+do
+  log "first"  # first comment
+  log "second"  # second comment
+  $value = 10  # assignment comment
+enddo
+
+# Test 13: Standalone comment lines within do block
+do
+  # This is a standalone comment in do
+  log "before comment"
+  
+  # Another standalone comment
+  log "after comment"
+  
+  # Final comment
+  log "end"
+enddo
+
+# Test 14: Mixed comments in do block
+do
+  # Standalone comment at start
+  log "test"  # inline comment
+  
+  # Standalone comment in middle
+  $value = 10  # inline assignment comment
+  
+  # Standalone comment before end
+  log "done"  # final inline comment
+enddo
+
+# Test 15: Comments with nested do blocks
+do
+  # Outer do block comment
+  log "outer"  # outer inline
+  
+  do
+    # Inner do block comment
+    log "inner"  # inner inline
+  enddo
+  
+  # Comment after nested do
+  log "after nested"
+enddo
+
+# Test 16: Comments in do block with variables
+do
+  # Initialize variables
+  $x = 5  # x value
+  $y = 10  # y value
+  
+  # Log result
+  log "result:" $result  # result output
+enddo
+
+# Test 17: Comments in do block with conditionals
+do
+  # Check condition
+  if true
+    # Inside if in do
+    log "true"  # true comment
+  endif
+  
+  # After if in do
+  log "after if"
+enddo
+
+# ============================================
+# WITH BLOCK COMMENT TESTS
+# ============================================
+
+# Test 18: Simple inline comment in with block
+repeat 3 with
+  log "test"  # inline comment in with
+endwith
+
+# Test 19: Multiple inline comments in with block
+repeat 2 with
+  log "first"  # first comment
+  log "second"  # second comment
+  add $2 1  # increment comment
+endwith
+
+# Test 20: Standalone comment lines within with block
+repeat 2 with
+  # This is a standalone comment in with
+  log "before comment"
+  
+  # Another standalone comment
+  log "after comment"
+  
+  # Final comment
+  log "end"
+endwith
+
+# Test 21: Mixed comments in with block
+repeat 2 with
+  # Standalone comment at start
+  log "test"  # inline comment
+  
+  # Standalone comment in middle
+  add $2 5  # increment comment
+  
+  # Standalone comment before return
+  return $  # return comment
+endwith
+
+# Test 22: Comments in with block with into clause
+repeat 3 with into $result
+  # Process item
+  add $2 1  # increment by 1
+  
+  # Return accumulated value
+  return $  # return accumulated
+endwith
+
+# Test 23: Comments in with block with multiple statements
+repeat 2 with
+  # First comment
+  log "first"  # first inline
+  
+  # Second comment
+  log "second"  # second inline
+  
+  # Final comment
+  log "done"  # done inline
+endwith
+
+# Test 24: Comments in with block with conditionals
+repeat 5 with
+  # Check if even
+  if $2 % 2 == 0
+    # Even number comment
+    log "even"  # even comment
+  else
+    # Odd number comment
+    log "odd"  # odd comment
+  endif
+  
+  # After conditional
+  add $2 1  # increment
+endwith
+
+# Test 25: Comments in with block with variables
+repeat 3 with
+  # Initialize local variable
+  $local = $2  # copy iteration value
+  
+  # Process local variable
+  $local = $local * 2  # double it
+  
+  # Return processed value
+  return $local  # return doubled
+endwith
+
+# ============================================
+# MIXED BLOCK COMMENT TESTS
+# ============================================
+
+# Test 26: Comments in def with do block
+def test_def_with_do
+  # Function start comment
+  log "start"  # start inline
+  
+  do
+    # Do block in function
+    log "in do"  # do inline
+  enddo
+  
+  # After do in function
+  log "end"  # end inline
+enddef
+
+# Test 27: Comments in def with do block (with blocks not allowed in def)
+def test_def_with_do
+  # Function start comment
+  log "start"  # start inline
+  
+  do
+    # Do block in function
+    log "in do"  # do inline
+  enddo
+  
+  # After do in function
+  log "end"  # end inline
+enddef
+
+# Test 28: Comments in do with nested def call
+do
+  # Before function call
+  test_inline  # call function
+  
+  # After function call
+  log "done"  # done comment
+enddo
+
+# Test 29: Complex nested structure with comments
+def complex_nested
+  # Function documentation
+  # This function has nested blocks
+  
+  # Start processing
+  do
+    # Do block start
+    log "in do"  # do comment
+    
+    # Nested do block
+    do
+      # Inner do block
+      log "nested"  # nested comment
+    enddo
+    
+    # Do block end
+    log "do end"  # do end comment
+  enddo
+  
+  # Function end
+  return true  # return comment
+enddef
+
+# Test 30: Comments with all block types
+do
+  # Top level do comment
+  log "start"  # start inline
+  
+  # Nested do block
+  do
+    # Nested do comment
+    log "nested do"  # nested inline
+  enddo
+  
+  # Use with block at top level (not nested)
+  log "before with"  # before comment
+enddo
+
+# With block at top level
+repeat 2 with
+  # With comment
+  log "with"  # with inline
+endwith

@@ -401,7 +401,7 @@ multiply 2 3  # inline comment 2
     console.log('Test 6: Added new detached comment at row', lastRow);
     
     // Update code from modified AST
-    const updatedCode = commentTestRp.updateCodeFromAST(originalScript, modifiedAST);
+    const updatedCode = await commentTestRp.updateCodeFromAST(originalScript, modifiedAST);
     
     console.log('\nUpdated code:');
     console.log(updatedCode);

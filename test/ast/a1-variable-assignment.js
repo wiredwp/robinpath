@@ -392,7 +392,7 @@ $arr = [1, 2, 3]
     
     let updatedCode;
     try {
-        updatedCode = testRp.updateCodeFromAST(updateScript, modifiedASTForUpdate);
+        updatedCode = await testRp.updateCodeFromAST(updateScript, modifiedASTForUpdate);
     } catch (error) {
         // Log AST and code when code generation fails
         console.log('\n❌ Code generation failed. Showing AST and code for debugging:');

@@ -5,6 +5,7 @@
 import type { PrintContext } from '../types';
 import { Writer } from '../Writer';
 import { printArg, printIntoTarget } from './printArg';
+import { Printer } from '../Printer';
 
 export function printCommand(node: any, writer: Writer, ctx: PrintContext): void {
     // Special handling for _var command - just output the variable
@@ -15,10 +16,43 @@ export function printCommand(node: any, writer: Writer, ctx: PrintContext): void
     }
     
     // Special handling for _subexpr command
-    if (node.name === '_subexpr' && node.args && node.args.length === 1 && node.args[0] && node.args[0].type === 'subexpr') {
+    if (node.name === '_subexpr' && node.args && node.args.length === 1 && node.args[0]) {
         const subexprArg = node.args[0];
-        writer.pushLine(`$(${subexprArg.code || ''})`);
-        return;
+        // Handle both deprecated 'subexpr' type (with code) and new 'subexpression' type (with body)
+        if (subexprArg.type === 'subexpr') {
+            writer.pushLine(`$(${subexprArg.code || ''})`);
+            return;
+        } else if (subexprArg.type === 'subexpression') {
+            // Print subexpression with body
+            const subexprBody = subexprArg.body || [];
+            if (subexprBody.length === 0) {
+                writer.pushLine('$()');
+                return;
+            }
+            // Check if it's multiline (spans multiple lines)
+            const isMultiline = subexprBody.length > 1 || 
+                (subexprArg.codePos && subexprArg.codePos.endRow > subexprArg.codePos.startRow);
+            
+            if (isMultiline) {
+                writer.pushIndented('$(\n');
+                for (const stmt of subexprBody) {
+                    const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel + 1 });
+                    if (stmtCode) {
+                        writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                    }
+                }
+                writer.pushIndented(')');
+                writer.newline();
+            } else {
+                // Single line
+                const bodyCode = subexprBody.map(stmt => {
+                    const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: 0 });
+                    return stmtCode ? stmtCode.trim() : '';
+                }).filter(code => code).join(' ');
+                writer.pushLine(`$(${bodyCode})`);
+            }
+            return;
+        }
     }
     
     // Special handling for _object command
@@ -113,7 +147,13 @@ export function printCommand(node: any, writer: Writer, ctx: PrintContext): void
                 writer.pushIndented(part);
                 writer.newline();
             }
-            writer.pushIndented(')');
+            // Add "into $var" if present (before closing parenthesis)
+            let closingParen = ')';
+            if (node.into) {
+                const intoTarget = printIntoTarget(node.into.targetName, node.into.targetPath);
+                closingParen = `) into ${intoTarget}`;
+            }
+            writer.pushIndented(closingParen);
             writer.newline();
             return;
         } else {

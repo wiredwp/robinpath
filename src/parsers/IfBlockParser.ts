@@ -200,7 +200,17 @@ function parseIfBlock(
                 }
                 
                 if (t.kind === TokenKind.COMMENT) {
+                    // Parse comment statement
+                    const commentBeforeParse = stream.getPosition();
                     const comment = context.parseComment(stream);
+                    const commentAfterParse = stream.getPosition();
+                    
+                    // Ensure stream position advanced (parseComment should consume the comment token)
+                    const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
+                    if (commentAfterParse === commentBeforeParse || stillOnComment) {
+                        stream.next(); // Manually advance if parseComment didn't
+                    }
+                    
                     if (comment) {
                         elseifBody.push(comment);
                     }
@@ -242,7 +252,17 @@ function parseIfBlock(
                 }
                 
                 if (t.kind === TokenKind.COMMENT) {
+                    // Parse comment statement
+                    const commentBeforeParse = stream.getPosition();
                     const comment = context.parseComment(stream);
+                    const commentAfterParse = stream.getPosition();
+                    
+                    // Ensure stream position advanced (parseComment should consume the comment token)
+                    const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
+                    if (commentAfterParse === commentBeforeParse || stillOnComment) {
+                        stream.next(); // Manually advance if parseComment didn't
+                    }
+                    
                     if (comment) {
                         elseBranch = elseBranch || [];
                         elseBranch.push(comment);
@@ -297,7 +317,17 @@ function parseIfBlock(
         }
         
         if (token.kind === TokenKind.COMMENT) {
+            // Parse comment statement
+            const commentBeforeParse = stream.getPosition();
             const comment = context.parseComment(stream);
+            const commentAfterParse = stream.getPosition();
+            
+            // Ensure stream position advanced (parseComment should consume the comment token)
+            const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
+            if (commentAfterParse === commentBeforeParse || stillOnComment) {
+                stream.next(); // Manually advance if parseComment didn't
+            }
+            
             if (comment) {
                 thenBranch.push(comment);
             }

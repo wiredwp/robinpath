@@ -11,21 +11,69 @@ import type { Patch, LineIndex, CommentLayout as CommentLayoutType } from './typ
 import { LineIndexImpl } from './LineIndex';
 import { CommentLayoutNormalizer } from './CommentLayout';
 import { Printer } from './Printer';
+import { Parser } from '../Parser';
 
 export class PatchPlanner {
     private lineIndex: LineIndex;
     private patches: Patch[] = [];
+    private originalScript: string;
 
     constructor(originalScript: string) {
+        this.originalScript = originalScript;
         this.lineIndex = new LineIndexImpl(originalScript);
     }
 
     /**
      * Plan patches for all nodes in the AST
+     * This includes patches for:
+     * - Updated nodes (in modified AST)
+     * - New nodes (in modified AST but not in original)
+     * - Deleted nodes (in original AST but not in modified)
      */
-    planPatches(ast: Statement[]): Patch[] {
+    async planPatches(ast: Statement[]): Promise<Patch[]> {
         this.patches = [];
 
+        // Get original AST to detect deletions
+        const parser = new Parser(this.originalScript);
+        const originalAST = await parser.parse();
+
+        // Create a set of codePos ranges from modified AST for fast lookup
+        const modifiedRanges = new Set<string>();
+        for (const node of ast) {
+            if ('codePos' in node && node.codePos) {
+                const key = `${node.codePos.startRow}:${node.codePos.startCol}:${node.codePos.endRow}:${node.codePos.endCol}`;
+                modifiedRanges.add(key);
+            }
+        }
+
+        // Detect and plan patches for deleted nodes
+        for (const originalNode of originalAST) {
+            if ('codePos' in originalNode && originalNode.codePos) {
+                const key = `${originalNode.codePos.startRow}:${originalNode.codePos.startCol}:${originalNode.codePos.endRow}:${originalNode.codePos.endCol}`;
+                
+                // Check if this node still exists in modified AST (exact match)
+                if (!modifiedRanges.has(key)) {
+                    // Check if any modified node overlaps with this position (node might have been updated)
+                    const hasOverlap = ast.some(node => {
+                        if (!('codePos' in node) || !node.codePos) return false;
+                        // Check if ranges overlap
+                        return !(node.codePos.endRow < originalNode.codePos.startRow ||
+                                node.codePos.startRow > originalNode.codePos.endRow ||
+                                (node.codePos.endRow === originalNode.codePos.startRow && 
+                                 node.codePos.endCol < originalNode.codePos.startCol) ||
+                                (node.codePos.startRow === originalNode.codePos.endRow && 
+                                 node.codePos.startCol > originalNode.codePos.endCol));
+                    });
+
+                    // If no overlap, this node was deleted
+                    if (!hasOverlap) {
+                        this.planPatchForDeletedNode(originalNode, originalAST);
+                    }
+                }
+            }
+        }
+
+        // Plan patches for modified/new nodes
         // Use indexed loop to avoid O(n²) from indexOf
         for (let i = 0; i < ast.length; i++) {
             const node = ast[i];
@@ -35,8 +83,33 @@ export class PatchPlanner {
             this.planPatchForNode(node, prev, next);
         }
 
-
         return this.patches;
+    }
+
+    /**
+     * Plan a patch for a deleted node
+     */
+    private planPatchForDeletedNode(node: Statement, originalAST: Statement[]): void {
+        if (!('codePos' in node) || !node.codePos) return;
+
+        // Find the next node in original AST to determine deletion range
+        const nodeIndex = originalAST.indexOf(node);
+        const nextNode = nodeIndex >= 0 && nodeIndex < originalAST.length - 1 
+            ? originalAST[nodeIndex + 1] 
+            : null;
+
+        // Compute deletion range
+        const layout = CommentLayoutNormalizer.normalize(node, this.lineIndex);
+        const range = this.computeStatementRange(node, layout, nextNode);
+        
+        if (!range) return;
+
+        // Create deletion patch (empty replacement)
+        this.patches.push({
+            startOffset: range.startOffset,
+            endOffset: range.endOffset,
+            replacement: ''
+        });
     }
 
     /**
@@ -87,7 +160,19 @@ export class PatchPlanner {
             if (!range) return;
 
             // Generate replacement without leading comments (they're handled separately)
-            const replacement = this.generateReplacementWithoutLeadingComments(node);
+            let replacement = this.generateReplacementWithoutLeadingComments(node);
+            
+            // Handle new nodes being added beyond the end of the script
+            // Similar to how comments are handled - need to add newline prefix
+            const lineCount = this.lineIndex.lineCount();
+            if ('codePos' in node && node.codePos && node.codePos.startRow >= lineCount) {
+                // This is a new node being added at the end
+                // Always add newline before the replacement for new nodes
+                // This ensures proper separation from existing content
+                if (replacement) {
+                    replacement = '\n' + replacement;
+                }
+            }
             
             this.patches.push({
                 startOffset: range.startOffset,
@@ -221,6 +306,30 @@ export class PatchPlanner {
             indentLevel: 0,
             lineIndex: this.lineIndex
         });
+
+        // Handle new nodes being added beyond the end of the script
+        const lineCount = this.lineIndex.lineCount();
+        const isNewNode = firstComment.codePos.startRow >= lineCount;
+
+        if (isNewNode) {
+            // This is a new comment being added at the end
+            // Compute offset at the end of the script
+            const lastLine = lineCount > 0 ? this.lineIndex.getLine(lineCount - 1) : '';
+            const endOfScript = lineCount > 0 
+                ? this.lineIndex.offsetAt(lineCount - 1, lastLine.length, true)
+                : 0;
+            
+            // Add newline before comment if script doesn't end with newline
+            const needsNewline = lineCount > 0 && !this.lineIndex.hasNewline(lineCount - 1);
+            const replacement = needsNewline ? '\n' + commentCode : commentCode;
+            
+            this.patches.push({
+                startOffset: endOfScript,
+                endOffset: endOfScript,
+                replacement
+            });
+            return;
+        }
 
         // If comment code is empty, we're deleting
         if (commentCode === '') {
@@ -396,14 +505,12 @@ export class PatchPlanner {
         const lineCount = this.lineIndex.lineCount();
         if (node.codePos.startRow >= lineCount) {
             // This is a new node being added at the end
-            // Compute offset at the end of the script
-            const lastLine = lineCount > 0 ? this.lineIndex.getLine(lineCount - 1) : '';
-            const endOfScript = lineCount > 0 
-                ? this.lineIndex.offsetAt(lineCount - 1, lastLine.length, true)
-                : 0;
+            // Use offsetAt with a row beyond the file to get the script length
+            // This ensures we append after any existing content, including newlines
+            const scriptLength = this.lineIndex.offsetAt(lineCount, 0, true);
             return {
-                startOffset: endOfScript,
-                endOffset: endOfScript
+                startOffset: scriptLength,
+                endOffset: scriptLength
             };
         }
 

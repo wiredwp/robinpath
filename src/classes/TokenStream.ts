@@ -31,11 +31,20 @@ export class TokenStream {
     private contextStack: ParsingContext[] = [];
     private lastNextPosition: number = -1; // Track last position where next() was called
     private consecutiveNextCalls: number = 0; // Track consecutive next() calls at same position
+    private positionHistory: number[] = []; // Track recent position changes for stuck detection
+    private operationsSinceLastAdvance: number = 0; // Operations since position last advanced
+    private lastPositionValue: number = 0; // Last position value to detect changes
     
     /**
      * Maximum number of consecutive next() calls allowed at the same position before throwing
      */
     static readonly MAX_CONSECUTIVE_NEXT_AT_SAME_POSITION = 3;
+    
+    /**
+     * Maximum number of operations without position advancement before detecting stuck
+     * Only counts operations that should advance (next, match, expect, etc.)
+     */
+    static readonly MAX_OPERATIONS_WITHOUT_ADVANCE = 100;
     
     /**
      * Debug mode flag - set to true to enable logging
@@ -70,6 +79,9 @@ export class TokenStream {
         this.position = startIndex;
         this.lastNextPosition = -1;
         this.consecutiveNextCalls = 0;
+        this.positionHistory = [startIndex];
+        this.operationsSinceLastAdvance = 0;
+        this.lastPositionValue = startIndex;
     }
     
     /**
@@ -79,7 +91,20 @@ export class TokenStream {
      * @returns New TokenStream instance starting at the given index
      */
     cloneFrom(index: number): TokenStream {
-        return new TokenStream(this.tokens, index);
+        const newStream = new TokenStream(this.tokens, index);
+        // Inherit context stack
+        newStream.contextStack = [...this.contextStack];
+        return newStream;
+    }
+    
+    /**
+     * Reset stuck detection counters (useful when manually advancing position)
+     */
+    resetStuckDetection(): void {
+        this.operationsSinceLastAdvance = 0;
+        this.consecutiveNextCalls = 0;
+        this.lastNextPosition = -1;
+        this.lastPositionValue = this.position;
     }
     
     /**
@@ -87,7 +112,20 @@ export class TokenStream {
      * @param position - New position
      */
     setPosition(position: number): void {
+        const oldPosition = this.position;
         this.position = position;
+        
+        // Track position change
+        if (position !== oldPosition) {
+            this.positionHistory.push(position);
+            // Keep only last 10 positions for history
+            if (this.positionHistory.length > 10) {
+                this.positionHistory.shift();
+            }
+            this.operationsSinceLastAdvance = 0;
+            this.lastPositionValue = position;
+        }
+        
         // Reset tracking when position is set manually
         this.lastNextPosition = -1;
         this.consecutiveNextCalls = 0;
@@ -120,6 +158,8 @@ export class TokenStream {
      * @throws Error if called multiple times at the same position (indicates infinite loop)
      */
     next(): Token | null {
+        this.operationsSinceLastAdvance++;
+        
         if (this.position >= this.tokens.length) {
             if (TokenStream.debug) {
                 const timestamp = new Date().toISOString();
@@ -133,7 +173,15 @@ export class TokenStream {
             this.consecutiveNextCalls++;
             if (this.consecutiveNextCalls >= TokenStream.MAX_CONSECUTIVE_NEXT_AT_SAME_POSITION) {
                 const token = this.tokens[this.position];
-                throw new Error(`[TokenStream] Infinite loop detected! next() called ${this.consecutiveNextCalls} times at position ${this.position} without advancing. Token: ${token?.text || 'null'} (${token?.kind || 'EOF'}), line: ${token?.line || 'N/A'}`);
+                const context = this.getCurrentContext();
+                throw new Error(
+                    `[TokenStream] Infinite loop detected! next() called ${this.consecutiveNextCalls} times at position ${this.position} without advancing.\n` +
+                    `  Token: ${token?.text || 'null'} (${token?.kind || 'EOF'})\n` +
+                    `  Location: line ${token?.line || 'N/A'}, column ${token?.column || 'N/A'}\n` +
+                    `  Context: ${context}\n` +
+                `  Recent positions: ${this.positionHistory.slice(-5).join(' -> ')}\n` +
+                `  Operations since last advance: ${this.operationsSinceLastAdvance}`
+            );
             }
             if (TokenStream.debug) {
                 const timestamp = new Date().toISOString();
@@ -149,6 +197,20 @@ export class TokenStream {
         const oldPosition = this.position;
         this.position++;
         
+        // Track position change
+        if (this.position !== oldPosition) {
+            this.positionHistory.push(this.position);
+            // Keep only last 10 positions for history
+            if (this.positionHistory.length > 10) {
+                this.positionHistory.shift();
+            }
+            this.operationsSinceLastAdvance = 0;
+            this.lastPositionValue = this.position;
+        } else {
+            // Position didn't change, check for stuck condition
+            this.checkStuckCondition('next');
+        }
+        
         if (TokenStream.debug) {
             const timestamp = new Date().toISOString();
             console.log(`[TokenStream] [${timestamp}] next() - Advanced from position ${oldPosition} to ${this.position}:`, {
@@ -160,6 +222,36 @@ export class TokenStream {
             });
         }
         return token;
+    }
+    
+    /**
+     * Check if the stream appears to be stuck (no position advancement)
+     * @param operation - Name of the operation being performed
+     * @throws Error if stuck condition detected
+     */
+    private checkStuckCondition(operation: string): void {
+        // Don't check if we're at the end
+        if (this.position >= this.tokens.length) {
+            return;
+        }
+        
+        const positionHasChanged = this.position !== this.lastPositionValue;
+        
+        // Check if too many operations without advancement (operation-based)
+        // Only trigger if position hasn't changed
+        if (!positionHasChanged && this.operationsSinceLastAdvance > TokenStream.MAX_OPERATIONS_WITHOUT_ADVANCE) {
+            const token = this.current();
+            const context = this.getCurrentContext();
+            throw new Error(
+                `[TokenStream] Stream appears stuck! ${this.operationsSinceLastAdvance} operations without position advancement.\n` +
+                `  Operation: ${operation}\n` +
+                `  Current position: ${this.position}/${this.tokens.length}\n` +
+                `  Token: ${token?.text || 'null'} (${token?.kind || 'EOF'})\n` +
+                `  Location: line ${token?.line || 'N/A'}, column ${token?.column || 'N/A'}\n` +
+                `  Context: ${context}\n` +
+                `  Recent positions: ${this.positionHistory.slice(-5).join(' -> ')}`
+            );
+        }
     }
     
     /**
@@ -177,6 +269,7 @@ export class TokenStream {
      * @returns True if the current token matches
      */
     check(kindOrText: TokenKind | string): boolean {
+        // check() doesn't advance position, so we don't count it for stuck detection
         const token = this.current();
         if (!token) return false;
         
@@ -196,7 +289,7 @@ export class TokenStream {
      */
     match(kindOrText: TokenKind | string): boolean {
         if (this.check(kindOrText)) {
-            this.next();
+            this.next(); // next() will handle stuck detection
             return true;
         }
         return false;

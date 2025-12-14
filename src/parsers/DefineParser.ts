@@ -175,7 +175,17 @@ export class DefineParser {
 
             if (t.kind === TokenKind.COMMENT) {
                 // Parse comment statement
+                const commentBeforeParse = stream.getPosition();
                 const comment = parseComment(stream);
+                const commentAfterParse = stream.getPosition();
+                
+                // Ensure stream position advanced (parseComment should consume the comment token)
+                // If position didn't change OR we're still on a comment token, manually advance
+                const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
+                if (commentAfterParse === commentBeforeParse || stillOnComment) {
+                    stream.next(); // Manually advance if parseComment didn't
+                }
+                
                 if (comment) {
                     body.push(comment);
                 }

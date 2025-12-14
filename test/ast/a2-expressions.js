@@ -298,7 +298,7 @@ math.multiply $result 2
     // Generate updated code
     let updatedCode;
     try {
-        updatedCode = testRp.updateCodeFromAST(updateScript, modifiedAST);
+        updatedCode = await testRp.updateCodeFromAST(updateScript, modifiedAST);
     } catch (error) {
         console.log('\n❌ Code generation failed. Showing AST and code for debugging:');
         console.log('\nModified AST:');

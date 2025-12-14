@@ -24,7 +24,10 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
     }
     
     // Print function definition
-    const params = node.paramNames.join(' ');
+    // Parameters must always start with $ prefix
+    const params = node.paramNames && node.paramNames.length > 0
+        ? node.paramNames.map((name: string) => '$' + name).join(' ')
+        : '';
     writer.pushLine(`def ${node.name}${params ? ' ' + params : ''}`);
     
     // Print body

@@ -95,6 +95,7 @@ export class Parser {
             }
             
             // Detect if we're stuck (position not advancing)
+            // TokenStream now has its own stuck detection, but we keep this as a backup
             if (currentIndex === lastPosition) {
                 stuckCount++;
                 if (Parser.debug) {
@@ -102,11 +103,20 @@ export class Parser {
                     console.log(`[Parser.parse] [${timestamp}] WARNING: Position stuck at ${currentIndex} (count: ${stuckCount})`);
                 }
                 if (stuckCount > Parser.MAX_STUCK_ITERATIONS) {
-                    throw new Error(`[Parser.parse] Infinite loop detected! Stuck at position ${currentIndex} for ${stuckCount} iterations. Token: ${token?.text || 'null'} (${token?.kind || 'EOF'})`);
+                    const context = this.stream.getCurrentContext();
+                    throw new Error(
+                        `[Parser.parse] Infinite loop detected! Stuck at position ${currentIndex} for ${stuckCount} iterations.\n` +
+                        `  Token: ${token?.text || 'null'} (${token?.kind || 'EOF'})\n` +
+                        `  Location: line ${token?.line || 'N/A'}, column ${token?.column || 'N/A'}\n` +
+                        `  Context: ${context}\n` +
+                        `  Parse iteration: ${parseIteration}`
+                    );
                 }
             } else {
                 stuckCount = 0;
                 lastPosition = currentIndex;
+                // Reset TokenStream stuck detection when we advance
+                this.stream.resetStuckDetection();
             }
 
             // Skip newlines

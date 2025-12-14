@@ -1479,7 +1479,9 @@ export class RobinPath {
             case 'do':
                 return {
                     ...base,
-                    body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
+                    paramNames: stmt.paramNames,
+                    body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
+                    into: stmt.into
                 };
             case 'forLoop':
                 return {
@@ -1555,7 +1557,7 @@ export class RobinPath {
      * @param ast The modified AST array (top-level nodes only)
      * @returns Updated source code
      */
-    updateCodeFromAST(originalScript: string, ast: any[]): string {
+    async updateCodeFromAST(originalScript: string, ast: any[]): Promise<string> {
         return this.astToCodeConverter.updateCodeFromAST(originalScript, ast);
     }
 
@@ -1566,6 +1568,14 @@ export class RobinPath {
         switch (arg.type) {
             case 'subexpr':
                 return { type: 'subexpr', code: arg.code };
+            case 'subexpression':
+                // Serialize SubexpressionExpression
+                const subexpr = arg as any;
+                return {
+                    type: 'subexpression',
+                    body: subexpr.body ? subexpr.body.map((s: Statement) => this.serializeStatement(s, null)) : [],
+                    codePos: subexpr.codePos
+                };
             case 'var':
                 return { type: 'var', name: arg.name, path: arg.path };
             case 'lastValue':
