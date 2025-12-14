@@ -18,6 +18,7 @@ import { parseDecorators } from '../parsers/DecoratorParser';
 import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
 import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
 import { SubexpressionParser } from '../parsers/SubexpressionParser';
+import { CommentParser } from '../parsers/CommentParser';
 import { LexerUtils } from '../utils';
 import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
@@ -29,6 +30,7 @@ export class Parser {
     private extractedEventHandlers: OnBlock[] = [];
     private environment: Environment | null = null; // Optional environment for parse decorators
     private decoratorBuffer: DecoratorCall[] = []; // Buffer for unclaimed decorators
+    private pendingComments: CommentWithPosition[] = []; // Comments to attach to next statement
 
     /**
      * Maximum number of iterations allowed before detecting an infinite loop
@@ -129,15 +131,22 @@ export class Parser {
                 continue;
             }
 
-            // Skip comments (they'll be handled separately)
+            // Handle comments using CommentParser
             if (this.stream.check(TokenKind.COMMENT)) {
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
                     console.log(`[Parser.parse] [${timestamp}] Parsing comment at ${currentIndex}`);
                 }
-                const comment = this.parseComment();
-                if (comment) {
-                    statements.push(comment);
+                const commentResult = CommentParser.parseComments(this.stream);
+                
+                if (commentResult.consumed) {
+                    if (commentResult.commentNode) {
+                        // Orphaned comment (separated by blank line) - add as standalone node
+                        statements.push(commentResult.commentNode);
+                    } else if (commentResult.comments.length > 0) {
+                        // Comments to attach to next statement
+                        this.pendingComments.push(...commentResult.comments);
+                    }
                 }
                 continue;
             }
@@ -198,6 +207,11 @@ export class Parser {
                     const timestamp = new Date().toISOString();
                     console.log(`[Parser.parse] [${timestamp}] Parsed statement type: ${statement.type} at ${currentIndex}`);
                 }
+                // Attach pending comments (above the statement)
+                if (this.pendingComments.length > 0) {
+                    CommentParser.attachComments(statement, this.pendingComments);
+                    this.pendingComments = [];
+                }
                 // Attach inline comments if present
                 this.attachInlineComments(statement);
                 statements.push(statement);
@@ -230,7 +244,29 @@ export class Parser {
                 `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
             );
         }
-
+        
+        // Handle any pending comments at end of file (make them orphaned)
+        if (this.pendingComments.length > 0) {
+            const groupedText = this.pendingComments.map(c => c.text).join('\n');
+            const groupedCodePos: CodePosition = {
+                startRow: this.pendingComments[0].codePos.startRow,
+                startCol: this.pendingComments[0].codePos.startCol,
+                endRow: this.pendingComments[this.pendingComments.length - 1].codePos.endRow,
+                endCol: this.pendingComments[this.pendingComments.length - 1].codePos.endCol
+            };
+            
+            statements.push({
+                type: 'comment',
+                comments: [{
+                    text: groupedText,
+                    codePos: groupedCodePos,
+                    inline: false
+                }],
+                lineNumber: this.pendingComments[0].codePos.startRow
+            });
+            this.pendingComments = [];
+        }
+        
         if (Parser.debug) {
             const timestamp = new Date().toISOString();
             console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
@@ -1041,97 +1077,14 @@ export class Parser {
             return;
         }
 
-        // Collect inline comments (comments on the same line, before newline)
-        const inlineComments: CommentWithPosition[] = [];
+        // Use CommentParser to parse inline comment
+        const inlineComment = CommentParser.parseInlineComment(this.stream, statementLine);
         
-        // Check if the next token is a comment on the same line
-        const nextToken = this.stream.current();
-        if (nextToken && nextToken.kind === TokenKind.COMMENT) {
-            // Check if it's on the same line as the statement
-            if (nextToken.line - 1 === statementLine) {
-                const commentText = nextToken.text.startsWith('#') 
-                    ? nextToken.text.slice(1).trim() 
-                    : nextToken.text.trim();
-                
-                inlineComments.push({
-                    text: commentText,
-                    codePos: {
-                        startRow: nextToken.line - 1,
-                        startCol: nextToken.column,
-                        endRow: nextToken.line - 1,
-                        endCol: nextToken.column + nextToken.text.length - 1
-                    },
-                    inline: true
-                });
-                
-                // Consume the comment token
-                this.stream.next();
-            }
-        }
-
-        // Attach inline comments to the statement
-        if (inlineComments.length > 0) {
-            if (!statement.comments) {
-                (statement as any).comments = [];
-            }
-            (statement as any).comments.push(...inlineComments);
+        if (inlineComment) {
+            CommentParser.attachComments(statement, [inlineComment]);
         }
     }
 
-    /**
-     * Parse a comment statement
-     */
-    private parseComment(): CommentStatement | null {
-        const comments: CommentWithPosition[] = [];
-        let startLine = -1;
-
-        // Collect consecutive comment tokens
-        while (this.stream.check(TokenKind.COMMENT)) {
-            const token = this.stream.next();
-            if (!token) break;
-
-            if (startLine === -1) {
-                startLine = token.line - 1; // Convert to 0-based
-            }
-
-            // Extract comment text (remove #)
-            const commentText = token.text.startsWith('#') 
-                ? token.text.slice(1).trim() 
-                : token.text.trim();
-
-            // Determine if it's inline (same line as code) or standalone
-            // For now, we'll treat all comments as standalone
-            // This can be improved by checking if there are non-comment tokens on the same line
-
-            const codePos: CodePosition = {
-                startRow: token.line - 1,
-                startCol: token.column,
-                endRow: token.line - 1,
-                endCol: token.column + token.text.length - 1
-            };
-
-            comments.push({
-                text: commentText,
-                codePos,
-                inline: false // TODO: Determine if inline based on context
-            });
-
-            // Skip newline after comment
-            if (this.stream.check(TokenKind.NEWLINE)) {
-                this.stream.next();
-            }
-        }
-
-        if (comments.length === 0) {
-            return null;
-        }
-
-        return {
-            type: 'comment',
-            comments,
-            lineNumber: startLine // Deprecated but kept for compatibility
-        };
-    }
 
     /**
      * Execute parse-time decorators during parsing

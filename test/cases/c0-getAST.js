@@ -16,8 +16,8 @@ math.add 5 10
 string.length "hello"
 array.length [1, 2, 3]
 `;
-    const ast1 = astTestRp.getAST(testScript1);
-    
+    const ast1 = await astTestRp.getAST(testScript1);
+
     // Verify module names are included
     const test1Passed = 
         ast1[0]?.module === 'math' &&
@@ -43,7 +43,7 @@ multiply 3 4
 use string
 length "test"
 `;
-    const ast2 = astTestRp.getAST(testScript2);
+    const ast2 = await astTestRp.getAST(testScript2);
     
     // Note: getAST doesn't execute, so "use" won't affect currentModule
     // But we should still be able to find modules by searching metadata
@@ -68,7 +68,7 @@ length "test"
 log "test"
 $var = 10
 `;
-    const ast3 = astTestRp.getAST(testScript3);
+    const ast3 = await astTestRp.getAST(testScript3);
     
     // log should be a global command (no module)
     const test3Passed = ast3[0]?.module === null || ast3[0]?.module === undefined;
@@ -84,5 +84,46 @@ $var = 10
     
     console.log('='.repeat(60));
     console.log('✓ All getAST tests PASSED');
+    console.log('='.repeat(60));
+    
+    // Test 4: getASTWithState method
+    console.log();
+    console.log('='.repeat(60));
+    console.log('Testing getASTWithState method');
+    console.log('='.repeat(60));
+    
+    const thread = astTestRp.createThread('ast-test-thread');
+    const testScriptForAST = `
+add 5 5
+$result = $
+log 'Result:' $result
+if $result > 5
+  multiply $result 2
+  log 'Doubled:' $
+endif
+`;
+    
+    const astResult = await thread.getASTWithState(testScriptForAST);
+    
+    // Verify structure
+    if (!astResult || typeof astResult !== 'object') {
+        throw new Error('getASTWithState should return an object');
+    }
+    
+    if (!Array.isArray(astResult.ast)) {
+        throw new Error('getASTWithState.ast should be an array');
+    }
+    
+    if (!astResult.variables || typeof astResult.variables !== 'object') {
+        throw new Error('getASTWithState.variables should be an object');
+    }
+    
+    console.log('✓ Test 4 PASSED - getASTWithState structure is correct');
+    console.log(`  AST nodes: ${astResult.ast.length}`);
+    console.log(`  Variables: thread=${Object.keys(astResult.variables.thread || {}).length}, global=${Object.keys(astResult.variables.global || {}).length}`);
+    console.log(`  Last Value ($): ${astResult.lastValue}`);
+    console.log(`  Call Stack: ${astResult.callStack?.length || 0} frame(s)`);
+    console.log('='.repeat(60));
+    console.log('✓ All getAST and getASTWithState tests PASSED');
     console.log('='.repeat(60));
 }

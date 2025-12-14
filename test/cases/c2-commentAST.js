@@ -24,6 +24,8 @@ multiply 5 10
     // Use getASTWithState from the thread to test comment attachment
     const astWithState = await commentTestThread.getASTWithState(commentTestScript);
     const commentAST = astWithState.ast;
+
+    console.log('Comment AST:', JSON.stringify(commentAST, null, 2));
     
     // Test 1: Comments above "add" command (line 2, 3) should be attached
     const addNode = commentAST.find(node => node.type === 'command' && node.name === 'add');

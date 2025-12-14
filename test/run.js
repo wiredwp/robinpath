@@ -79,11 +79,10 @@ const testFiles = [
 // These are JavaScript tests that require calling RobinPath class methods
 const testCases = [
     'c0-getAST.js',
-    'c1-getASTWithState.js',
-    'c2-getExtractedFunctions.js',
-    'c3-commentAST.js',
-    'c4-togetherAST.js',
-    'c5-getEventAST.js'
+    'c1-getExtractedFunctions.js',
+    'c2-commentAST.js',
+    'c3-togetherAST.js',
+    'c4-getEventAST.js'
 ];
 
 // Parse command-line arguments
