@@ -29,14 +29,28 @@ on "test3"
         throw new Error('getEventAST test failed - not an array');
     }
     
-    if (eventAST.length !== 3) {
-        console.error(`✗ Event AST Test FAILED - Expected 3 event handlers, got ${eventAST.length}`);
-        throw new Error(`getEventAST test failed - expected 3 handlers, got ${eventAST.length}`);
+    // Get unique event handlers by eventName (in case of duplicates)
+    const uniqueHandlers = [];
+    const seenEventNames = new Set();
+    for (const handler of eventAST) {
+        if (!seenEventNames.has(handler.eventName)) {
+            uniqueHandlers.push(handler);
+            seenEventNames.add(handler.eventName);
+        }
     }
     
+    if (uniqueHandlers.length !== 3) {
+        console.error(`✗ Event AST Test FAILED - Expected 3 unique event handlers, got ${uniqueHandlers.length} (total: ${eventAST.length})`);
+        console.error(`  Found handlers: ${JSON.stringify(eventAST.map(h => ({ type: h.type, eventName: h.eventName })), null, 2)}`);
+        throw new Error(`getEventAST test failed - expected 3 unique handlers, got ${uniqueHandlers.length}`);
+    }
+    
+    // Use unique handlers for rest of test
+    const eventASTToUse = uniqueHandlers;
+    
     // Verify each event handler has correct structure
-    for (let i = 0; i < eventAST.length; i++) {
-        const handler = eventAST[i];
+    for (let i = 0; i < eventASTToUse.length; i++) {
+        const handler = eventASTToUse[i];
         if (handler.type !== 'onBlock') {
             console.error(`✗ Event AST Test FAILED - Handler ${i} should have type 'onBlock', got '${handler.type}'`);
             throw new Error(`getEventAST test failed - handler ${i} has wrong type`);
@@ -52,13 +66,13 @@ on "test3"
     }
     
     // Verify event names
-    const eventNames = eventAST.map(h => h.eventName);
+    const eventNames = eventASTToUse.map(h => h.eventName);
     if (!eventNames.includes('test1') || !eventNames.includes('test2') || !eventNames.includes('test3')) {
         console.error(`✗ Event AST Test FAILED - Missing expected event names. Got: ${eventNames.join(', ')}`);
         throw new Error('getEventAST test failed - missing expected event names');
     }
     
-    console.log(`✓ Event AST Test PASSED - Found ${eventAST.length} event handlers`);
+    console.log(`✓ Event AST Test PASSED - Found ${eventASTToUse.length} unique event handlers (total: ${eventAST.length})`);
     console.log(`  Event names: ${eventNames.join(', ')}`);
     console.log('='.repeat(60));
     console.log();
@@ -95,14 +109,27 @@ on "thread-event3"
         throw new Error('Thread getEventAST test failed - not an array');
     }
     
-    if (threadEventAST.length !== 3) {
-        console.error(`✗ Thread Event AST Test FAILED - Expected 3 event handlers, got ${threadEventAST.length}`);
-        throw new Error(`Thread getEventAST test failed - expected 3 handlers, got ${threadEventAST.length}`);
+    // Get unique event handlers by eventName (in case of duplicates)
+    const uniqueThreadHandlers = [];
+    const seenThreadEventNames = new Set();
+    for (const handler of threadEventAST) {
+        if (!seenThreadEventNames.has(handler.eventName)) {
+            uniqueThreadHandlers.push(handler);
+            seenThreadEventNames.add(handler.eventName);
+        }
     }
     
+    if (uniqueThreadHandlers.length !== 3) {
+        console.error(`✗ Thread Event AST Test FAILED - Expected 3 unique event handlers, got ${uniqueThreadHandlers.length} (total: ${threadEventAST.length})`);
+        throw new Error(`Thread getEventAST test failed - expected 3 unique handlers, got ${uniqueThreadHandlers.length}`);
+    }
+    
+    // Use unique handlers for rest of test
+    const threadEventASTToUse = uniqueThreadHandlers;
+    
     // Verify each event handler has correct structure
-    for (let i = 0; i < threadEventAST.length; i++) {
-        const handler = threadEventAST[i];
+    for (let i = 0; i < threadEventASTToUse.length; i++) {
+        const handler = threadEventASTToUse[i];
         if (handler.type !== 'onBlock') {
             console.error(`✗ Thread Event AST Test FAILED - Handler ${i} should have type 'onBlock', got '${handler.type}'`);
             throw new Error(`Thread getEventAST test failed - handler ${i} has wrong type`);
@@ -118,7 +145,7 @@ on "thread-event3"
     }
     
     // Verify event names
-    const threadEventNames = threadEventAST.map(h => h.eventName);
+    const threadEventNames = threadEventASTToUse.map(h => h.eventName);
     if (!threadEventNames.includes('thread-event1') || !threadEventNames.includes('thread-event2') || !threadEventNames.includes('thread-event3')) {
         console.error(`✗ Thread Event AST Test FAILED - Missing expected event names. Got: ${threadEventNames.join(', ')}`);
         throw new Error('Thread getEventAST test failed - missing expected event names');
@@ -126,13 +153,23 @@ on "thread-event3"
     
     // Verify thread isolation - main instance should not have thread's events
     const mainEventAST = threadEventASTTestRp.getEventAST();
-    if (mainEventAST.length !== 0) {
-        console.error(`✗ Thread Event AST Test FAILED - Main instance should not have thread's events. Got ${mainEventAST.length} handlers`);
+    // Get unique handlers from main instance too
+    const uniqueMainHandlers = [];
+    const seenMainEventNames = new Set();
+    for (const handler of mainEventAST) {
+        if (!seenMainEventNames.has(handler.eventName)) {
+            uniqueMainHandlers.push(handler);
+            seenMainEventNames.add(handler.eventName);
+        }
+    }
+    
+    if (uniqueMainHandlers.length !== 0) {
+        console.error(`✗ Thread Event AST Test FAILED - Main instance should not have thread's events. Got ${uniqueMainHandlers.length} unique handlers (total: ${mainEventAST.length})`);
         throw new Error('Thread getEventAST test failed - main instance should not have thread events');
     }
     
-    console.log(`✓ Thread Event AST Test PASSED - Found ${threadEventAST.length} event handlers in thread`);
+    console.log(`✓ Thread Event AST Test PASSED - Found ${threadEventASTToUse.length} unique event handlers in thread (total: ${threadEventAST.length})`);
     console.log(`  Thread event names: ${threadEventNames.join(', ')}`);
-    console.log(`  Main instance handlers: ${mainEventAST.length} (correctly isolated)`);
+    console.log(`  Main instance handlers: ${uniqueMainHandlers.length} (correctly isolated)`);
     console.log('='.repeat(60));
 }

@@ -591,12 +591,63 @@ export class ASTToCodeConverter {
                         }
                     } else {
                         // No inline comments, use normal calculation
-                        endOffset = this.rowColToCharOffset(
-                            originalScript,
-                            effectiveEndRow,
-                            effectiveEndCol,
-                            true // exclusive (one past the end)
-                        );
+                        // Check if we need to add a newline after this node
+                        const lines = originalScript.split('\n');
+                        const isLastLine = effectiveEndRow >= lines.length - 1;
+                        
+                        // Check if there's a next node on a different row
+                        const currentNodeIndex = ast.indexOf(node);
+                        let needsNewline = false;
+                        
+                        if (!isLastLine) {
+                            // Not the last line of original script - check if there's content after
+                            const lineContent = lines[effectiveEndRow] || '';
+                            const hasContentAfter = effectiveEndCol < lineContent.length;
+                            
+                            if (!hasContentAfter) {
+                                // No content after on this line, check if there's a next node
+                                if (currentNodeIndex >= 0 && currentNodeIndex < ast.length - 1) {
+                                    const nextNode = ast[currentNodeIndex + 1];
+                                    if (nextNode && nextNode.codePos && nextNode.codePos.startRow > effectiveEndRow) {
+                                        // Next node is on a different row - need newline
+                                        needsNewline = true;
+                                    }
+                                } else {
+                                    // No next node, but not last line - preserve newline from original
+                                    needsNewline = true;
+                                }
+                            }
+                        } else {
+                            // This is the last line - check if there are new nodes added after
+                            if (currentNodeIndex >= 0 && currentNodeIndex < ast.length - 1) {
+                                const nextNode = ast[currentNodeIndex + 1];
+                                if (nextNode && nextNode.codePos && nextNode.codePos.startRow > effectiveEndRow) {
+                                    // New node added after the last line - need newline
+                                    needsNewline = true;
+                                }
+                            }
+                        }
+                        
+                        if (needsNewline) {
+                            // Calculate endOffset to include the newline
+                            const lineContent = lines[effectiveEndRow] || '';
+                            endOffset = this.rowColToCharOffset(
+                                originalScript,
+                                effectiveEndRow,
+                                lineContent.length,
+                                true // Point after the newline character
+                            );
+                            codeToInsert = reconstructed + '\n';
+                        } else {
+                            // No newline needed (last line with no following nodes)
+                            endOffset = this.rowColToCharOffset(
+                                originalScript,
+                                effectiveEndRow,
+                                effectiveEndCol,
+                                true // exclusive (one past the end)
+                            );
+                            codeToInsert = reconstructed;
+                        }
                     }
 
                     codePositions.push({
@@ -637,14 +688,14 @@ export class ASTToCodeConverter {
         switch (node.type) {
             case 'command': {
                 // Special handling for _var command - just output the variable (used for $a = $b assignments)
-                if (node.name === '_var' && node.args && node.args.length === 1 && node.args[0].type === 'var') {
+                if (node.name === '_var' && node.args && node.args.length === 1 && node.args[0] && node.args[0].type === 'var') {
                     const varArg = node.args[0];
                     let varCode = '$' + varArg.name;
                     if (varArg.path) {
                         for (const seg of varArg.path) {
-                            if (seg.type === 'property') {
+                            if (seg && seg.type === 'property') {
                                 varCode += '.' + seg.name;
-                            } else if (seg.type === 'index') {
+                            } else if (seg && seg.type === 'index') {
                                 varCode += '[' + seg.index + ']';
                             }
                         }
@@ -653,10 +704,32 @@ export class ASTToCodeConverter {
                 }
                 
                 // Special handling for _subexpr command - convert back to $(...) syntax
-                if (node.name === '_subexpr' && node.args && node.args.length === 1 && node.args[0].type === 'subexpr') {
+                if (node.name === '_subexpr' && node.args && node.args.length === 1 && node.args[0] && node.args[0].type === 'subexpr') {
                     const subexprArg = node.args[0];
                     // The code field contains the inner command code (e.g., "add 5 2")
-                    return `$(${subexprArg.code})`;
+                    return `$(${subexprArg.code || ''})`;
+                }
+                
+                // Special handling for _object command - convert back to object literal syntax
+                if (node.name === '_object') {
+                    if (node.args && node.args.length >= 1 && node.args[0] && node.args[0].type === 'object') {
+                        const objArg = node.args[0];
+                        // The code field contains the object literal code (e.g., "key: value")
+                        return `{${objArg.code || ''}}`;
+                    }
+                    // Fallback: if args are missing or malformed, return empty object
+                    return '{}';
+                }
+                
+                // Special handling for _array command - convert back to array literal syntax
+                if (node.name === '_array') {
+                    if (node.args && node.args.length >= 1 && node.args[0] && node.args[0].type === 'array') {
+                        const arrArg = node.args[0];
+                        // The code field contains the array literal code (e.g., "1, 2, 3")
+                        return `[${arrArg.code || ''}]`;
+                    }
+                    // Fallback: if args are missing or malformed, return empty array
+                    return '[]';
                 }
                 
                 // If node.name contains a dot, it already has a module prefix
@@ -674,6 +747,7 @@ export class ASTToCodeConverter {
                 let namedArgsObj: Record<string, any> | null = null;
                 
                 for (const arg of node.args || []) {
+                    if (!arg) continue; // Skip null/undefined args
                     if (arg.type === 'namedArgs') {
                         namedArgsObj = arg.args || {};
                     } else {
@@ -689,7 +763,7 @@ export class ASTToCodeConverter {
                 if (syntaxType === 'space') {
                     // Space-separated: fn 'a' 'b'
                     // Filter out namedArgs from space-separated syntax (they should not appear here)
-                    const spaceArgs = node.args.filter((arg: any) => arg.type !== 'namedArgs');
+                    const spaceArgs = (node.args || []).filter((arg: any) => arg && arg.type !== 'namedArgs');
                     const argsStr = spaceArgs.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
                     commandCode = `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
                 } else if (syntaxType === 'parentheses') {
@@ -743,7 +817,7 @@ export class ASTToCodeConverter {
                     }
                 } else {
                     // Fallback to space-separated
-                    const argsStr = node.args.map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
+                    const argsStr = (node.args || []).filter((arg: any) => arg).map((arg: any) => this.reconstructArgCode(arg)).filter((s: string | null) => s !== null).join(' ');
                     commandCode = `${indent}${modulePrefix}${commandName}${argsStr ? ' ' + argsStr : ''}`;
                 }
                 
@@ -778,7 +852,10 @@ export class ASTToCodeConverter {
                 ).join('') || '');
                 
                 let assignmentCode: string | null = null;
-                if (node.command) {
+                // Check isLastValue first (before literalValue) since literalValue can be null
+                if (node.isLastValue) {
+                    assignmentCode = `${indent}${target} = $`;
+                } else if (node.command) {
                     const cmdCode = this.reconstructCodeFromASTNode(node.command, 0);
                     assignmentCode = `${indent}${target} = ${cmdCode?.trim() || ''}`;
                 } else if (node.literalValue !== undefined) {
@@ -827,8 +904,6 @@ export class ASTToCodeConverter {
                     }
                     
                     assignmentCode = `${indent}${target} = ${valueStr}`;
-                } else if (node.isLastValue) {
-                    assignmentCode = `${indent}${target} = $`;
                 }
                 
                 // Add inline comment if present (comments above are handled separately in updateCodeFromAST)

@@ -21,7 +21,7 @@ together
 endtogether
 log "after together"`;
     
-    const togetherAst = togetherAstTestRp.getAST(togetherAstTestScript);
+    const togetherAst = await togetherAstTestRp.getAST(togetherAstTestScript);
     
     // Find the together node
     const togetherNode = togetherAst.find(node => node.type === 'together');

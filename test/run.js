@@ -82,7 +82,20 @@ const testCases = [
     'c1-getExtractedFunctions.js',
     'c2-commentAST.js',
     'c3-togetherAST.js',
-    'c4-getEventAST.js'
+    'c4-getEventAST.js',
+    'c5-end-command.js',
+];
+
+// Define AST test case files mapping (case number -> filename)
+// These are JavaScript tests for AST reading, updating, and code generation
+// Each AST test file should match a corresponding script file in test/scripts/
+// Example: a1-variable-assignment.js matches 01-variable-assignment.rp
+const astTestCases = [
+    'ast/a0.js', // to keep it as 0 NOTE: DO NOT REMOVE!
+    'ast/a1-variable-assignment.js', // a1 - matches 01-variable-assignment.rp
+    'ast/a2-expressions.js',         // a2 - matches 02-expressions.rp
+    'ast/a3-conditionals.js',         // a3 - matches 03-conditionals.rp
+    'ast/a4-loops.js',                 // a4 - matches 04-loops.rp
 ];
 
 // Parse command-line arguments
@@ -90,6 +103,7 @@ const args = process.argv.slice(2);
 let testNumbers = []; // Array of test numbers to run
 let testCase = null; // Single case test (for backward compatibility)
 let testCaseNumbers = []; // Array of case test numbers to run
+let testCaseIsAST = []; // Array of flags indicating if each test case is an AST test
 let runAll = false;
 let repeatCount = 1; // Default to 1 run
 let customFile = null; // Custom file path specified with --file
@@ -166,6 +180,7 @@ for (let i = 0; i < filteredArgs.length; i++) {
             if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start && end < testCases.length) {
                 for (let j = start; j <= end; j++) {
                     testCaseNumbers.push(j);
+                    testCaseIsAST.push(false);
                 }
                 continue;
             } else {
@@ -183,6 +198,28 @@ for (let i = 0; i < filteredArgs.length; i++) {
                 process.exit(1);
             }
         }
+    }
+    
+    // Check for AST test (starts with 'a')
+    if (arg.startsWith('a')) {
+        const astCaseNumber = parseInt(arg.substring(1), 10);
+        if (isNaN(astCaseNumber) || astCaseNumber < 0 || astCaseNumber >= astTestCases.length) {
+            console.error('='.repeat(60));
+            console.error('Invalid AST test case:', arg);
+            console.error('='.repeat(60));
+            console.error();
+            console.error('Available AST Test Cases:');
+            astTestCases.forEach((file, index) => {
+                console.error(`  a${index}: ${file}`);
+            });
+            console.error();
+            console.error('Usage: npm run test -- a<case-number>');
+            console.error('Example: npm run test -- a0  (runs ast/a1-variable-assignment.js)');
+            process.exit(1);
+        }
+        testCaseNumbers.push(astCaseNumber);
+        testCaseIsAST.push(true);
+        continue;
     }
     
     // Check for case test (starts with 'c')
@@ -203,6 +240,7 @@ for (let i = 0; i < filteredArgs.length; i++) {
             process.exit(1);
         }
         testCaseNumbers.push(caseNumber);
+        testCaseIsAST.push(false);
         continue;
     }
     
@@ -570,7 +608,10 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 }
                 
                 totalCaseTests++;
-                console.log(`[c${i}] Running: ${caseFileName}`);
+                const prefix = caseFileName.includes('/') ? 'a' : 'c';
+                const astIndex = caseFileName.includes('/') ? astTestCases.indexOf(caseFileName) : -1;
+                const displayIndex = astIndex >= 0 ? astIndex : i;
+                console.log(`[${prefix}${displayIndex}] Running: ${caseFileName}`);
                 
                 const startTime = Date.now();
                 
@@ -631,9 +672,14 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             let totalFailed = 0;
             const overallStartTime = Date.now();
             
-            for (const caseNum of testCaseNumbers) {
-                const caseFileName = testCases[caseNum];
-                const caseFilePath = join(__dirname, 'cases', caseFileName);
+            for (let idx = 0; idx < testCaseNumbers.length; idx++) {
+                const caseNum = testCaseNumbers[idx];
+                const isAST = testCaseIsAST[idx] || false;
+                const caseFileName = isAST ? astTestCases[caseNum] : testCases[caseNum];
+                // Handle subdirectories like ast/
+                const caseFilePath = caseFileName.includes('/') 
+                    ? join(__dirname, caseFileName)
+                    : join(__dirname, 'cases', caseFileName);
                 
                 if (!existsSync(caseFilePath)) {
                     console.error(`? Test case file not found: ${caseFilePath}`);
@@ -642,8 +688,9 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                     continue;
                 }
                 
+                const testPrefix = isAST ? 'a' : 'c';
                 console.log('='.repeat(60));
-                console.log(`Running JavaScript Case Test c${caseNum}: ${caseFileName}`);
+                console.log(`Running JavaScript Case Test ${testPrefix}${caseNum}: ${caseFileName}`);
                 console.log('='.repeat(60));
                 console.log();
                 console.log('Note: This is a JavaScript test that requires calling RobinPath class methods.');
@@ -659,14 +706,14 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                     results.push({ caseNum, passed: true, time: executionTime });
                     console.log();
                     console.log('='.repeat(60));
-                    console.log(`? JavaScript Case Test c${caseNum} (${caseFileName}) completed in ${executionTime}ms`);
+                    console.log(`? JavaScript Case Test ${testPrefix}${caseNum} (${caseFileName}) completed in ${executionTime}ms`);
                     console.log('='.repeat(60));
                 } catch (error) {
                     totalFailed++;
                     results.push({ caseNum, passed: false, error: error.message });
                     console.error();
                     console.error('='.repeat(60));
-                    console.error(`? JavaScript Case Test c${caseNum} (${caseFileName}) FAILED`);
+                    console.error(`? JavaScript Case Test ${testPrefix}${caseNum} (${caseFileName}) FAILED`);
                     console.error('='.repeat(60));
                     console.error('Error:', error.message);
                     if (error.stack) {

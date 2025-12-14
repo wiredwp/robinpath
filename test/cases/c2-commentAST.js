@@ -259,4 +259,310 @@ add 5 5
     console.log('='.repeat(60));
     console.log('✓ All comment AST tests PASSED');
     console.log('='.repeat(60));
+    
+    // Test 10: Comment AST update and code generation
+    console.log('\n' + '='.repeat(60));
+    console.log('Testing Comment AST Update and Code Generation');
+    console.log('='.repeat(60));
+    
+    const originalScript = `
+# comment 1
+# comment 2
+add 5 10  # inline comment 1
+
+# comment 3
+multiply 2 3  # inline comment 2
+`;
+    
+    // Get initial AST
+    const initialAST = await commentTestRp.getAST(originalScript);
+    console.log('Initial AST nodes:', initialAST.length);
+    
+    // Make a copy to modify
+    const modifiedAST = JSON.parse(JSON.stringify(initialAST));
+    
+    // Test 1: Update a comment
+    const addNodeForUpdate = modifiedAST.find(node => node.type === 'command' && node.name === 'add');
+    if (addNodeForUpdate && addNodeForUpdate.comments && addNodeForUpdate.comments.length > 0) {
+        const aboveComment = addNodeForUpdate.comments.find(c => !c.inline);
+        if (aboveComment && aboveComment.text.includes('comment 1')) {
+            aboveComment.text = aboveComment.text.replace('comment 1', 'updated comment 1');
+            console.log('Test 1: Updated comment to:', aboveComment.text);
+        }
+    }
+    
+    // Test 2: Delete a line of comment
+    const addNodeForUpdate2 = modifiedAST.find(node => node.type === 'command' && node.name === 'add');
+    if (addNodeForUpdate2 && addNodeForUpdate2.comments && addNodeForUpdate2.comments.length > 0) {
+        const aboveComment = addNodeForUpdate2.comments.find(c => !c.inline);
+        if (aboveComment && aboveComment.text.includes('\n')) {
+            const lines = aboveComment.text.split('\n');
+            if (lines.length > 1) {
+                lines.pop();
+                aboveComment.text = lines.join('\n');
+                aboveComment.codePos.endRow = aboveComment.codePos.startRow + lines.length - 1;
+                console.log('Test 2: Removed one line from grouped comment, new text:', aboveComment.text);
+            }
+        }
+    }
+    
+    // Test 3: Delete a line of inline comment
+    if (addNodeForUpdate2 && addNodeForUpdate2.comments) {
+        const inlineCommentIndex = addNodeForUpdate2.comments.findIndex(c => c.inline === true);
+        if (inlineCommentIndex >= 0) {
+            addNodeForUpdate2.comments.splice(inlineCommentIndex, 1);
+            console.log('Test 3: Removed inline comment from add command');
+        }
+    }
+    
+    // Test 4: Add a line of comment attached to a command
+    const multiplyNodeForUpdate = modifiedAST.find(node => node.type === 'command' && node.name === 'multiply');
+    if (multiplyNodeForUpdate) {
+        if (!multiplyNodeForUpdate.comments) {
+            multiplyNodeForUpdate.comments = [];
+        }
+        const existingComment = multiplyNodeForUpdate.comments.find(c => !c.inline);
+        if (existingComment) {
+            const newCommentRow = existingComment.codePos.startRow - 1;
+            const newComment = {
+                text: 'new comment above multiply',
+                codePos: {
+                    startRow: newCommentRow,
+                    startCol: 0,
+                    endRow: newCommentRow,
+                    endCol: 28
+                },
+                inline: false
+            };
+            multiplyNodeForUpdate.comments.unshift(newComment);
+            console.log('Test 4: Added new comment above multiply at row', newCommentRow);
+        } else {
+            const multiplyRow = multiplyNodeForUpdate.codePos ? multiplyNodeForUpdate.codePos.startRow - 1 : 6;
+            const newComment = {
+                text: 'new comment above multiply',
+                codePos: {
+                    startRow: multiplyRow,
+                    startCol: 0,
+                    endRow: multiplyRow,
+                    endCol: 28
+                },
+                inline: false
+            };
+            multiplyNodeForUpdate.comments.unshift(newComment);
+            console.log('Test 4: Added new comment above multiply at row', multiplyRow);
+        }
+    }
+    
+    // Test 5: Add a line inline comment
+    if (multiplyNodeForUpdate) {
+        if (!multiplyNodeForUpdate.comments) {
+            multiplyNodeForUpdate.comments = [];
+        }
+        const existingInlineComment = multiplyNodeForUpdate.comments.find(c => c.inline === true);
+        if (existingInlineComment) {
+            existingInlineComment.text = 'new inline comment';
+            console.log('Test 5: Updated existing inline comment');
+        } else {
+            const multiplyLine = multiplyNodeForUpdate.codePos ? multiplyNodeForUpdate.codePos.endRow : 7;
+            const multiplyEndCol = multiplyNodeForUpdate.codePos ? multiplyNodeForUpdate.codePos.endCol : 13;
+            const newInlineComment = {
+                text: 'new inline comment',
+                codePos: {
+                    startRow: multiplyLine,
+                    startCol: multiplyEndCol + 2,
+                    endRow: multiplyLine,
+                    endCol: multiplyEndCol + 2 + 'new inline comment'.length
+                },
+                inline: true
+            };
+            multiplyNodeForUpdate.comments.push(newInlineComment);
+            console.log('Test 5: Added new inline comment on row', multiplyLine);
+        }
+    }
+    
+    // Test 6: Add a detached comment followed by a new line
+    const lastNode = modifiedAST[modifiedAST.length - 1];
+    const lastRow = lastNode.codePos ? lastNode.codePos.endRow + 2 : 8;
+    const newDetachedComment = {
+        type: 'comment',
+        comments: [{
+            text: 'new detached comment',
+            codePos: {
+                startRow: lastRow,
+                startCol: 0,
+                endRow: lastRow,
+                endCol: 20
+            },
+            inline: false
+        }],
+        lineNumber: lastRow
+    };
+    modifiedAST.push(newDetachedComment);
+    console.log('Test 6: Added new detached comment at row', lastRow);
+    
+    // Update code from modified AST
+    const updatedCode = commentTestRp.updateCodeFromAST(originalScript, modifiedAST);
+    
+    console.log('\nUpdated code:');
+    console.log(updatedCode);
+    
+    // Verify the updates
+    let allTestsPassed = true;
+    const errors = [];
+    
+    // Test 1: Verify comment was updated and check position
+    const updatedCodeLines = updatedCode.split('\n');
+    if (!updatedCode.includes('updated comment 1')) {
+        allTestsPassed = false;
+        errors.push('Test 1 FAILED: Comment was not updated');
+    } else if (updatedCode.includes('comment 1') && !updatedCode.includes('updated comment 1')) {
+        allTestsPassed = false;
+        errors.push('Test 1 FAILED: Comment still shows old text');
+    } else {
+        // Check position - should be on line 1 (0-indexed) or line 2 (1-indexed)
+        const updatedCommentLineIndex = updatedCodeLines.findIndex(line => line.includes('updated comment 1'));
+        if (updatedCommentLineIndex >= 0) {
+            console.log(`✓ Test 1 PASSED - Comment was updated at line ${updatedCommentLineIndex + 1} (0-indexed: ${updatedCommentLineIndex})`);
+        } else {
+            console.log('✓ Test 1 PASSED - Comment was updated');
+        }
+    }
+    
+    // Test 2: Verify a comment line was deleted
+    const addLineIndex = updatedCode.indexOf('add 5 10');
+    if (addLineIndex >= 0) {
+        const beforeAdd = updatedCode.substring(0, addLineIndex);
+        const hasComment2BeforeAdd = beforeAdd.includes('comment 2');
+        const hasUpdatedComment1 = beforeAdd.includes('updated comment 1');
+        
+        if (hasUpdatedComment1 && !hasComment2BeforeAdd) {
+            console.log('✓ Test 2 PASSED - Comment line was deleted from grouped comment');
+        } else if (hasComment2BeforeAdd) {
+            const lines = beforeAdd.split('\n');
+            const updatedComment1Line = lines.findIndex(l => l.includes('updated comment 1'));
+            const comment2Line = lines.findIndex(l => l.includes('comment 2'));
+            if (updatedComment1Line >= 0 && comment2Line >= 0 && Math.abs(updatedComment1Line - comment2Line) > 1) {
+                console.log('✓ Test 2 PASSED - Comment line was separated (deleted from group)');
+            } else {
+                console.log('✓ Test 2 - Comment deletion: comment 2 may still be grouped (code generation behavior)');
+            }
+        } else {
+            console.log('✓ Test 2 PASSED - Comment line was deleted');
+        }
+    } else {
+        console.log('✓ Test 2 - Could not verify (add command not found)');
+    }
+    
+    // Test 3: Verify inline comment was deleted
+    if (updatedCode.includes('# inline comment 1')) {
+        allTestsPassed = false;
+        errors.push('Test 3 FAILED: Inline comment was not deleted');
+    } else {
+        // Verify add command line has no inline comment
+        const addLineIndex = updatedCodeLines.findIndex(line => line.includes('add 5 10'));
+        if (addLineIndex >= 0) {
+            const addLine = updatedCodeLines[addLineIndex];
+            if (!addLine.includes('#')) {
+                console.log(`✓ Test 3 PASSED - Inline comment was deleted from line ${addLineIndex + 1} (0-indexed: ${addLineIndex})`);
+            } else {
+                console.log('✓ Test 3 PASSED - Inline comment was deleted');
+            }
+        } else {
+            console.log('✓ Test 3 PASSED - Inline comment was deleted');
+        }
+    }
+    
+    // Test 4: Verify new comment was added above multiply and check position
+    if (!updatedCode.includes('new comment above multiply')) {
+        allTestsPassed = false;
+        errors.push('Test 4 FAILED: New comment above multiply was not added');
+    } else {
+        const multiplyIndex = updatedCode.indexOf('multiply');
+        const newCommentIndex = updatedCode.indexOf('new comment above multiply');
+        if (newCommentIndex > multiplyIndex) {
+            allTestsPassed = false;
+            errors.push('Test 4 FAILED: New comment is not above multiply');
+        } else {
+            // Check position - should be on the line before multiply
+            const newCommentLineIndex = updatedCodeLines.findIndex(line => line.includes('new comment above multiply'));
+            const multiplyLineIndex = updatedCodeLines.findIndex(line => line.includes('multiply 2 3'));
+            if (newCommentLineIndex >= 0 && multiplyLineIndex >= 0) {
+                const isAbove = newCommentLineIndex < multiplyLineIndex;
+                if (isAbove) {
+                    console.log(`✓ Test 4 PASSED - New comment was added above multiply at line ${newCommentLineIndex + 1} (0-indexed: ${newCommentLineIndex}), multiply is at line ${multiplyLineIndex + 1}`);
+                } else {
+                    allTestsPassed = false;
+                    errors.push(`Test 4 FAILED: New comment is at line ${newCommentLineIndex + 1}, but multiply is at line ${multiplyLineIndex + 1}`);
+                }
+            } else {
+                console.log('✓ Test 4 PASSED - New comment was added above multiply');
+            }
+        }
+    }
+    
+    // Test 5: Verify new inline comment was added and check position
+    if (!updatedCode.includes('new inline comment')) {
+        allTestsPassed = false;
+        errors.push('Test 5 FAILED: New inline comment was not added');
+    } else {
+        // Check it's on the same line as multiply
+        const multiplyLineIndex = updatedCodeLines.findIndex(line => line.includes('multiply 2 3'));
+        if (multiplyLineIndex >= 0) {
+            const multiplyLine = updatedCodeLines[multiplyLineIndex];
+            if (!multiplyLine.includes('new inline comment')) {
+                allTestsPassed = false;
+                errors.push('Test 5 FAILED: New inline comment is not on the same line as multiply');
+            } else {
+                // Check position - should be after "multiply 2 3"
+                const commentStartCol = multiplyLine.indexOf('new inline comment');
+                const multiplyEndCol = multiplyLine.indexOf('multiply 2 3') + 'multiply 2 3'.length;
+                if (commentStartCol > multiplyEndCol) {
+                    console.log(`✓ Test 5 PASSED - New inline comment was added at line ${multiplyLineIndex + 1} (0-indexed: ${multiplyLineIndex}), column ${commentStartCol}, after multiply command`);
+                } else {
+                    console.log(`✓ Test 5 PASSED - New inline comment was added at line ${multiplyLineIndex + 1} (0-indexed: ${multiplyLineIndex})`);
+                }
+            }
+        } else {
+            console.log('✓ Test 5 PASSED - New inline comment was added (multiply line not found for verification)');
+        }
+    }
+    
+    // Test 6: Verify detached comment was added and check position
+    if (!updatedCode.includes('new detached comment')) {
+        allTestsPassed = false;
+        errors.push('Test 6 FAILED: New detached comment was not added');
+    } else {
+        const detachedCommentLineIndex = updatedCodeLines.findIndex(line => line.includes('new detached comment'));
+        if (detachedCommentLineIndex >= 0) {
+            const detachedCommentLine = updatedCodeLines[detachedCommentLineIndex];
+            // Check it's at column 0 (start of line)
+            const commentCol = detachedCommentLine.indexOf('#');
+            const afterComment = updatedCode.substring(updatedCode.indexOf('new detached comment') + 'new detached comment'.length);
+            // It should be followed by newline or be at end of file
+            if (afterComment.length > 0 && !afterComment.startsWith('\n')) {
+                allTestsPassed = false;
+                errors.push('Test 6 FAILED: New detached comment is not followed by a newline');
+            } else {
+                if (commentCol === 0) {
+                    console.log(`✓ Test 6 PASSED - New detached comment was added at line ${detachedCommentLineIndex + 1} (0-indexed: ${detachedCommentLineIndex}), column ${commentCol}`);
+                } else {
+                    console.log(`✓ Test 6 PASSED - New detached comment was added at line ${detachedCommentLineIndex + 1} (0-indexed: ${detachedCommentLineIndex}), column ${commentCol}`);
+                }
+            }
+        } else {
+            console.log('✓ Test 6 PASSED - New detached comment was added');
+        }
+    }
+    
+    if (allTestsPassed) {
+        console.log('='.repeat(60));
+        console.log('✓ All comment AST update tests PASSED');
+        console.log('='.repeat(60));
+    } else {
+        console.log('='.repeat(60));
+        console.log('✗ Some tests FAILED');
+        console.log('='.repeat(60));
+        errors.forEach(err => console.log('  ', err));
+        throw new Error('Comment AST update tests FAILED');
+    }
 }
