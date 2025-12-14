@@ -167,8 +167,55 @@ function parseReturnValue(stream: TokenStream, context: ReturnParserContext): Ar
         return { type: 'array', code: arrResult.code };
     }
 
-    // Identifier/keyword as literal
+    // Identifier/keyword - could be a literal or a command call
     if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
+        // Check if this looks like a command call (has arguments after it, not immediately followed by newline)
+        // Peek ahead to see if there are arguments
+        let peekOffset = 1;
+        let peekToken = stream.peek(peekOffset);
+        
+        // Skip comments when peeking
+        while (peekToken && peekToken.kind === TokenKind.COMMENT) {
+            peekOffset++;
+            peekToken = stream.peek(peekOffset);
+        }
+        
+        // If there's a newline or EOF immediately after, it's just a literal
+        if (!peekToken || peekToken.kind === TokenKind.NEWLINE || peekToken.kind === TokenKind.EOF) {
+            const value = token.text;
+            stream.next();
+            return { type: 'literal', value };
+        }
+        
+        // Otherwise, it looks like a command call - try to parse it as a statement
+        if (context.parseStatement) {
+            // Save current position
+            const savedPosition = stream.getPosition();
+            
+            try {
+                // Try to parse as a statement (command call)
+                const statement = context.parseStatement(stream);
+                
+                if (statement && statement.type === 'command') {
+                    // It's a command call - wrap it in a subexpression so it gets executed
+                    // and returns its result
+                    return {
+                        type: 'subexpression',
+                        body: [statement],
+                        codePos: context.createCodePosition(token, stream.current() || token)
+                    };
+                } else {
+                    // Parsed as something else (not a command) - restore position and treat as literal
+                    stream.setPosition(savedPosition);
+                }
+            } catch (error) {
+                // If parsing fails, fall back to literal
+                // Restore position
+                stream.setPosition(savedPosition);
+            }
+        }
+        
+        // Fall back to literal if we can't parse as command or parseStatement not available
         const value = token.text;
         stream.next();
         return { type: 'literal', value };

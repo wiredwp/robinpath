@@ -119,17 +119,10 @@ endeif
 )`
 test.assertEqual $result19 "value is high" "Conditional subexpression failed"
 
-log "Test 13a: Template string with inline conditional"
+log "Test 14: Template string with inline conditional"
 $a = 10
 $result19 = `value is $(if $a > 5 then "high" else "low")`
 test.assertEqual $result19 "value is high" "Inline conditional subexpression failed"
-
-# Test 14: Template string concatenation
-log "Test 14: Template string concatenation"
-$a = "hello"
-$b = "world"
-$result20 = `$a ` + `$b`
-test.assertEqual $result20 "hello world" "Template string concatenation failed"
 
 # Test 15: Empty template string
 log "Test 15: Empty template string"

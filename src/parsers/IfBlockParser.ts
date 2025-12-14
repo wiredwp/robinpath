@@ -64,7 +64,7 @@ export function parseIf(
             return parseIfBlock(stream, ifToken, condition, context, decorators);
         } else {
             // Inline if: if condition then command [else command]
-            return parseInlineIf(stream, ifToken, condition, context);
+        return parseInlineIf(stream, ifToken, condition, context);
         }
     } else {
         // If block: if condition ... endif
@@ -267,11 +267,25 @@ function parseIfBlock(
             stream.next(); // consume 'endif'
             
             // Consume everything until end of line after 'endif'
-            while (!stream.isAtEnd() && stream.current()?.kind !== TokenKind.NEWLINE) {
+            // But don't consume closing parentheses - those belong to subexpressions or function calls
+            while (!stream.isAtEnd()) {
+                const nextToken = stream.current();
+                if (!nextToken) break;
+                
+                // Stop at newline
+                if (nextToken.kind === TokenKind.NEWLINE) {
+                    stream.next(); // move to next logical statement
+                    break;
+                }
+                
+                // Stop at closing paren - this might be closing a subexpression or function call
+                // Don't consume it, let the parent parser handle it
+                if (nextToken.kind === TokenKind.RPAREN) {
+                    break;
+                }
+                
+                // Consume whitespace, comments, and other tokens on the same line
                 stream.next();
-            }
-            if (stream.current()?.kind === TokenKind.NEWLINE) {
-                stream.next(); // move to next logical statement
             }
             break;
         }

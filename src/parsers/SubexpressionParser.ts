@@ -86,17 +86,45 @@ export class SubexpressionParser {
                     body.push(statement);
                     lastToken = stream.current() || token;
                     
-                    // After parsing a statement, check if we've reached the closing paren
+                    // After parsing a statement, skip whitespace and comments, then check if we've reached the closing paren
                     // This prevents parsing additional statements beyond the subexpression boundary
+                    // Note: We need to manually skip whitespace/comments here because parseStatement might have consumed
+                    // a newline (e.g., after endif), and we need to check what comes next
+                    let foundClosingParen = false;
+                    while (!stream.isAtEnd()) {
+                        const peekToken = stream.current();
+                        if (!peekToken) break;
+                        
+                        if (peekToken.kind === TokenKind.NEWLINE || peekToken.kind === TokenKind.COMMENT) {
+                            stream.next();
+                            continue;
+                        }
+                        
+                        if (peekToken.kind === TokenKind.RPAREN) {
+                            // Found closing paren - done parsing
+                            lastToken = peekToken;
+                            stream.next(); // Consume closing ')'
+                            foundClosingParen = true;
+                            break;
+                        }
+                        
+                        // Not whitespace/comment and not RPAREN, so there's more to parse
+                        break;
+                    }
+                    
+                    // If we found the closing paren, exit the main loop
+                    if (foundClosingParen) {
+                        break;
+                    }
+                } else {
+                    // If we can't parse a statement, check if it's the closing paren
                     const currentToken = stream.current();
                     if (currentToken && currentToken.kind === TokenKind.RPAREN) {
-                        // Found closing paren - done parsing
                         lastToken = currentToken;
                         stream.next(); // Consume closing ')'
                         break;
                     }
-                } else {
-                    // If we can't parse a statement, skip the token
+                    // Otherwise skip the token
                     stream.next();
                 }
             }

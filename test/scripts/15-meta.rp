@@ -181,7 +181,7 @@ meta $testArr19 description "An array of numbers"
 getMeta $testArr19 description
 test.assertEqual $ "An array of numbers" "getMeta for array description failed"
 
-$testObj19 = obj name "John" age 30
+$testObj19 = { name: "John", age: 30 }
 meta $testObj19 description "A person object"
 getMeta $testObj19 description
 test.assertEqual $ "A person object" "getMeta for object description failed"

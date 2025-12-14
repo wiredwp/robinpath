@@ -1,6 +1,8 @@
-# test 6: allowing then indentation multi line conditional
-10
-if $ > 5 then
-  math.multiply $ 2
-endif
-test.assertEqual $ 20 "Last value in conditional should work"
+# Test 42: Nested subexpression with function calls
+log "Test 42: Nested subexpression with function calls"
+def double $x
+  return math.multiply $x 2
+enddef
+
+$(math.add $(double 5) $(double 3))
+test.assertEqual $ 16 "Nested subexpression with function calls should work (5*2=10, 3*2=6, 10+6=16)"
