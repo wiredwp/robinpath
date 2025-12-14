@@ -249,10 +249,71 @@ function parsePrimaryExpression(
     }
 
     // Handle array literals: [...]
-    // TODO: For now, we'll need to enhance ArrayLiteralParser to return Expression nodes
-    // For basic for loop iterables, we can skip this for now
     if (startToken.kind === TokenKind.LBRACKET) {
-        throw new Error('Array literal expressions in for loop iterables not yet implemented');
+        const startTokenForPos = startToken;
+        stream.next(); // consume '['
+        stream.skipWhitespaceAndComments();
+        
+        const elements: Expression[] = [];
+        
+        // Check for empty array first
+        const token = stream.current();
+        if (token && token.kind === TokenKind.RBRACKET) {
+            stream.next(); // consume ']'
+            return {
+                type: 'arrayLiteral',
+                elements: [],
+                codePos: createCodePosition(startTokenForPos, token)
+            };
+        }
+        
+        // Parse elements until we hit the closing bracket
+        while (true) {
+            const currentToken = stream.current();
+            if (!currentToken) {
+                throw new Error('Unexpected end of input while parsing array literal');
+            }
+            
+            // Check for closing bracket (handles trailing comma case)
+            if (currentToken.kind === TokenKind.RBRACKET) {
+                stream.next(); // consume ']'
+                return {
+                    type: 'arrayLiteral',
+                    elements,
+                    codePos: createCodePosition(startTokenForPos, currentToken)
+                };
+            }
+            
+            // Parse an expression element
+            const element = parseExpression(stream, parseStatement, parseComment);
+            elements.push(element);
+            
+            // Skip whitespace
+            stream.skipWhitespaceAndComments();
+            
+            // Check for comma or closing bracket
+            const nextToken = stream.current();
+            if (!nextToken) {
+                throw new Error('Unexpected end of input while parsing array literal');
+            }
+            
+            if (nextToken.kind === TokenKind.RBRACKET) {
+                stream.next(); // consume ']'
+                return {
+                    type: 'arrayLiteral',
+                    elements,
+                    codePos: createCodePosition(startTokenForPos, nextToken)
+                };
+            }
+            
+            if (nextToken.kind === TokenKind.COMMA) {
+                stream.next(); // consume ','
+                stream.skipWhitespaceAndComments();
+                // Continue to next element
+            } else {
+                throw new Error(`Unexpected token ${nextToken.kind} in array literal at line ${nextToken.line}, column ${nextToken.column}, expected comma or closing bracket`);
+            }
+        }
     }
 
 
@@ -326,6 +387,13 @@ function parsePrimaryExpression(
     // This shouldn't happen in a well-formed expression, but we should handle it gracefully
     if (startToken.kind === TokenKind.ASSIGN) {
         throw new Error(`Unexpected assignment operator in expression at line ${startToken.line}, column ${startToken.column}. Did you mean to use '==' for comparison?`);
+    }
+    
+    // If we encounter a closing bracket, it means we've gone too far
+    // This can happen when parsing nested structures - the bracket belongs to a parent context
+    // This shouldn't happen if array parsing is working correctly, but handle it gracefully
+    if (startToken.kind === TokenKind.RBRACKET) {
+        throw new Error(`Unexpected closing bracket ']' in expression at line ${startToken.line}, column ${startToken.column}. This may indicate a parsing issue with nested arrays or brackets.`);
     }
     
     throw new Error(`Unexpected token in expression: ${startToken.kind} '${startToken.text}' at line ${startToken.line}, column ${startToken.column}`);
@@ -477,6 +545,12 @@ function parseCallExpression(
                 break;
             }
             
+            // Stop at closing bracket - this shouldn't happen in a well-formed call,
+            // but if it does, it means we've gone too far (e.g., array was last arg)
+            if (token.kind === TokenKind.RBRACKET) {
+                break;
+            }
+            
             // Check if it's a binary operator (end of call expression)
             if (getBinaryOperator(token)) {
                 break;
@@ -495,9 +569,9 @@ function parseCallExpression(
             
             stream.skipWhitespaceAndComments();
             
-            // Check if next token is a binary operator or assignment (end of call)
+            // Check if next token is a binary operator, assignment, or closing bracket (end of call)
             const next = stream.current();
-            if (next && (getBinaryOperator(next) || next.kind === TokenKind.ASSIGN)) {
+            if (next && (getBinaryOperator(next) || next.kind === TokenKind.ASSIGN || next.kind === TokenKind.RBRACKET)) {
                 break;
             }
         }
