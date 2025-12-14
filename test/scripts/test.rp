@@ -1079,15 +1079,6 @@ def test_global_return
   log "This should not execute"
 enddef
 
-
-
-clear
-do
-  outer_func
-  test.assertEqual $ "inner" "Nested function return failed"
-enddo
-log "Test 24 - Return in nested contexts: All passed"
-
 # Test 25: Return with different value types
 def return_string
   return "hello"

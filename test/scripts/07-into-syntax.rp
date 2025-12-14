@@ -147,7 +147,7 @@ log "Test 17: Into with empty do block"
 do into $result17
   log "-> Test 17: this do is run"
 enddo
-test.assertEqual $result17 null "into syntax - empty do block should return null"
+test.assertEqual $result17 $ "into syntax - empty do block should have the last value"
 
 # Test 18: Into with do block that has parameters
 log "Test 18: Into with do block parameters"

@@ -1,16 +1,7 @@
-$b = 'a'
+# Test assignment with set command to last value attribute path
+json.parse '{"name": "Alice"}'
+log $ # correct json
+set $.age 25
+log $ # not json anymore it becomes 25
+test.assertEqual $.age 25 "set command with last value attribute path failed"
 
-$a = {
-  a: `$b`,
-  b: $(math.add 5 5),
-}
-
-log $a
-
-def double
-  return math.multiply $1 2
-enddef
-
-$arr = [$b, `$b`, $(math.add $(double 5) $(double 5))]
-
-log $arr

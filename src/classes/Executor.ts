@@ -729,11 +729,18 @@ Examples:
             // Set the variable (with path support)
             if (varPath && varPath.length > 0) {
                 this.setVariableAtPath(varName, varPath, value, frameOverride);
+                // If setting a path on last value ($.property), preserve the object
+                // setVariableAtPath already updates frame.lastValue if name is empty
+                if (varName === '') {
+                    // For $.property, the object is already updated in setVariableAtPath
+                    // Don't overwrite $ with the assigned value - keep the object
+                    return;
+                }
             } else {
                 this.setVariable(varName, value, frameOverride);
             }
             
-            // Set lastValue to the assigned value
+            // Set lastValue to the assigned value (only if not setting a path on $)
             frame.lastValue = value;
             return;
         }
@@ -1838,12 +1845,12 @@ Examples:
 
             // Capture the scope's lastValue before restoring parent's $
             // If body is empty, scopeValue should be null (not parent's last value)
-            // If body didn't produce a new value (lastValue unchanged), scopeValue should be null
+            // If body didn't produce a new value (lastValue unchanged), preserve the original value
             if (scope.body.length === 0) {
                 scopeValue = null;
             } else if (frame.lastValue === initialLastValue) {
-                // Body didn't produce a new value, return null
-                scopeValue = null;
+                // Body didn't produce a new value, preserve the original lastValue
+                scopeValue = initialLastValue;
             } else {
                 scopeValue = frame.lastValue;
             }
