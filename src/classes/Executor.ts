@@ -2252,28 +2252,67 @@ Examples:
         let result = code;
         
         // First, replace subexpressions $(...)
-        const subexprRegex = /\$\(([^)]*)\)/g;
-        let match;
+        // We need to handle nested subexpressions, so we'll find them manually
         const subexprPromises: Array<{ start: number; end: number; promise: Promise<string> }> = [];
+        let pos = 0;
         
-        while ((match = subexprRegex.exec(code)) !== null) {
-            const subexprCode = match[1];
-            const start = match.index;
-            const end = match.index + match[0].length;
-            
-            subexprPromises.push({
-                start,
-                end,
-                promise: this.executeSubexpression(subexprCode).then(val => {
-                    // Serialize the value to JSON5-compatible string
-                    if (val === null) return 'null';
-                    if (typeof val === 'string') return JSON.stringify(val);
-                    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-                    if (Array.isArray(val)) return JSON.stringify(val);
-                    if (typeof val === 'object') return JSON.stringify(val);
-                    return String(val);
-                })
-            });
+        while (pos < code.length) {
+            // Look for $( pattern
+            if (code[pos] === '$' && pos + 1 < code.length && code[pos + 1] === '(') {
+                // Found start of subexpression - find matching closing paren
+                let depth = 1;
+                let j = pos + 2; // Start after $(
+                
+                while (j < code.length && depth > 0) {
+                    if (code[j] === '\\') {
+                        // Skip escaped characters
+                        j += 2;
+                        continue;
+                    }
+                    if (code[j] === '$' && j + 1 < code.length && code[j + 1] === '(') {
+                        // Nested subexpression
+                        depth++;
+                        j += 2;
+                        continue;
+                    }
+                    if (code[j] === '(') {
+                        depth++;
+                    } else if (code[j] === ')') {
+                        depth--;
+                        if (depth === 0) {
+                            // Found matching closing paren
+                            const subexprCode = code.substring(pos + 2, j); // Content between $( and )
+                            const start = pos;
+                            const end = j + 1; // Include the closing )
+                            
+                            subexprPromises.push({
+                                start,
+                                end,
+                                promise: this.executeSubexpression(subexprCode).then(val => {
+                                    // Serialize the value to JSON5-compatible string
+                                    if (val === null) return 'null';
+                                    if (typeof val === 'string') return JSON.stringify(val);
+                                    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+                                    if (Array.isArray(val)) return JSON.stringify(val);
+                                    if (typeof val === 'object') return JSON.stringify(val);
+                                    return String(val);
+                                })
+                            });
+                            
+                            pos = j + 1; // Move past the closing paren
+                            break;
+                        }
+                    }
+                    j++;
+                }
+                
+                if (depth > 0) {
+                    // Unclosed subexpression - skip this $ and continue
+                    pos++;
+                }
+            } else {
+                pos++;
+            }
         }
         
         // Wait for all subexpressions to be evaluated
@@ -2283,6 +2322,48 @@ Examples:
         for (let i = subexprPromises.length - 1; i >= 0; i--) {
             const { start, end } = subexprPromises[i];
             const replacement = subexprResults[i];
+            result = result.substring(0, start) + replacement + result.substring(end);
+        }
+        
+        // Now process template strings (backtick strings) - replace them with JSON5-compatible quoted strings
+        // Template strings like `$var` should be evaluated and replaced with "value"
+        const templateStringRegex = /`([^`]*)`/g;
+        const templateStringPromises: Array<{ start: number; end: number; promise: Promise<string> }> = [];
+        let templateMatch;
+        
+        while ((templateMatch = templateStringRegex.exec(result)) !== null) {
+            const templateContent = templateMatch[1];
+            const start = templateMatch.index;
+            const end = templateMatch.index + templateMatch[0].length;
+            
+            templateStringPromises.push({
+                start,
+                end,
+                promise: StringTemplateParser.evaluate(templateContent, {
+                    resolveVariable: (name: string, path?: any[], frameOverride?: Frame) => {
+                        return this.resolveVariable(name, path, frameOverride);
+                    },
+                    getLastValue: (frameOverride?: Frame) => {
+                        const frame = this.getCurrentFrame(frameOverride);
+                        return frame.lastValue;
+                    },
+                    executeSubexpression: async (code: string, frameOverride?: Frame) => {
+                        return await this.executeSubexpressionWithFrame(code, frameOverride);
+                    }
+                }, frameOverride).then(evaluated => {
+                    // Convert the evaluated template string to a JSON5-compatible quoted string
+                    return JSON.stringify(evaluated);
+                })
+            });
+        }
+        
+        // Wait for all template strings to be evaluated
+        const templateStringResults = await Promise.all(templateStringPromises.map(p => p.promise));
+        
+        // Replace template strings in reverse order to maintain indices
+        for (let i = templateStringPromises.length - 1; i >= 0; i--) {
+            const { start, end } = templateStringPromises[i];
+            const replacement = templateStringResults[i];
             result = result.substring(0, start) + replacement + result.substring(end);
         }
         

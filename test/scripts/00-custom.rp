@@ -1,8 +1,16 @@
-# Test 42: Nested subexpression with function calls
-log "Test 42: Nested subexpression with function calls"
-def double $x
-  return math.multiply $x 2
+$b = 'a'
+
+$a = {
+  a: `$b`,
+  b: $(math.add 5 5),
+}
+
+log $a
+
+def double
+  return math.multiply $1 2
 enddef
 
-$(math.add $(double 5) $(double 3))
-test.assertEqual $ 16 "Nested subexpression with function calls should work (5*2=10, 3*2=6, 10+6=16)"
+$arr = [$b, `$b`, $(math.add $(double 5) $(double 5))]
+
+log $arr

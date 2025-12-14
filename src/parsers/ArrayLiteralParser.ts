@@ -56,6 +56,70 @@ export class ArrayLiteralParser {
                     continue;
                 }
 
+                // Handle subexpressions $(...) - extract the full subexpression to preserve spacing
+                // This handles both simple and nested subexpressions
+                if (token.kind === TokenKind.SUBEXPRESSION_OPEN) {
+                    // Collect the full subexpression including the $( and )
+                    // We need to track parentheses depth and handle nested subexpressions
+                    let subexprDepth = 1;
+                    const subexprTokens: Token[] = [token];
+                    stream.next(); // consume SUBEXPRESSION_OPEN
+                    
+                    while (!stream.isAtEnd() && subexprDepth > 0) {
+                        const subexprToken = stream.current();
+                        if (!subexprToken) break;
+                        
+                        // Handle nested subexpressions $(...) - they increase depth
+                        if (subexprToken.kind === TokenKind.SUBEXPRESSION_OPEN) {
+                            subexprDepth++;
+                        }
+                        
+                        // Track parentheses depth
+                        if (subexprToken.kind === TokenKind.LPAREN) {
+                            subexprDepth++;
+                        } else if (subexprToken.kind === TokenKind.RPAREN) {
+                            subexprDepth--;
+                            if (subexprDepth === 0) {
+                                // Found the matching closing paren
+                                subexprTokens.push(subexprToken);
+                                stream.next(); // consume RPAREN
+                                break;
+                            }
+                        }
+                        
+                        subexprTokens.push(subexprToken);
+                        stream.next();
+                    }
+                    
+                    // Reconstruct subexpression text with proper spacing
+                    // Use token positions to infer spacing
+                    let subexprText = '';
+                    for (let i = 0; i < subexprTokens.length; i++) {
+                        const t = subexprTokens[i];
+                        if (i > 0) {
+                            const prevToken = subexprTokens[i - 1];
+                            const prevEnd = prevToken.column + prevToken.text.length;
+                            const currentStart = t.column;
+                            // Add spaces if there's a gap between tokens
+                            if (currentStart > prevEnd) {
+                                subexprText += ' '.repeat(currentStart - prevEnd);
+                            }
+                        }
+                        subexprText += t.text;
+                    }
+                    
+                    // Create a synthetic token that represents the full subexpression
+                    const subexprToken: Token = {
+                        kind: TokenKind.STRING, // Use STRING kind as a marker
+                        text: subexprText,
+                        line: token.line,
+                        column: token.column,
+                        value: subexprText // Store the full text
+                    };
+                    tokens.push(subexprToken);
+                    continue;
+                }
+
                 // Track nested brackets (but not inside strings, which are already tokenized)
                 if (token.kind === TokenKind.LBRACKET) {
                     depth++;

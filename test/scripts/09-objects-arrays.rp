@@ -76,9 +76,9 @@ $a = 1
 $b = { a: $a }
 test.assertEqual $b.a 1 "Variable interpolation in object literal failed"
 
-$key = "key"
+$key = "keyname"
 $b = { [$key]: 1 }
-test.assertEqual $b.key 1 "Computed property name in object literal failed"
+test.assertEqual $b.keyname 1 "Computed property name in object literal failed"
 
 $num = 42
 $arr = [$num, 43]
@@ -247,5 +247,148 @@ do
   array.length $multiContinue
   test.assertEqual $ 5 "Array.push with continue - length failed"
 enddo
+
+# Test 8: Template strings and subexpressions in object literals
+log "Test 8: Template strings and subexpressions in object literals"
+$name = "Alice"
+$age = 25
+$city = "NYC"
+
+# Template strings in object literals
+{
+  name: `$name`,
+  greeting: `Hello, $name!`,
+  info: `$name is $age years old`
+}
+$templateObj = $
+test.assertEqual $templateObj.name "Alice" "Template string in object literal failed"
+test.assertEqual $templateObj.greeting "Hello, Alice!" "Template string with interpolation in object literal failed"
+test.assertEqual $templateObj.info "Alice is 25 years old" "Template string with multiple variables in object literal failed"
+
+# Subexpressions in object literals
+{
+  sum: $(math.add 10 20),
+  product: $(math.multiply 5 6),
+  difference: $(math.subtract 50 30)
+}
+$subexprObj = $
+test.assertEqual $subexprObj.sum 30 "Subexpression in object literal - sum failed"
+test.assertEqual $subexprObj.product 30 "Subexpression in object literal - product failed"
+test.assertEqual $subexprObj.difference 20 "Subexpression in object literal - difference failed"
+
+# Nested subexpressions in object literals
+def double $x
+  return math.multiply $x 2
+enddef
+
+{
+  result: $(math.add $(double 5) $(double 10)),
+  nested: $(math.multiply $(math.add 2 3) $(math.subtract 10 5))
+}
+$nestedSubexprObj = $
+test.assertEqual $nestedSubexprObj.result 30 "Nested subexpressions in object literal failed (5*2=10, 10*2=20, 10+20=30)"
+test.assertEqual $nestedSubexprObj.nested 25 "Nested subexpressions in object literal - nested calculation failed (2+3=5, 10-5=5, 5*5=25)"
+
+# Combined template strings and subexpressions
+{
+  message: `Sum is $(math.add 15 25)`,
+  description: `$name calculated $(math.multiply $age 2)`,
+  combined: `Result: $(math.add $(double 3) $(double 7))`
+}
+$combinedObj = $
+test.assertEqual $combinedObj.message "Sum is 40" "Combined template string and subexpression in object literal failed"
+test.assertEqual $combinedObj.description "Alice calculated 50" "Combined template string with variable and subexpression failed"
+test.assertEqual $combinedObj.combined "Result: 20" "Combined template string with nested subexpressions failed (3*2=6, 7*2=14, 6+14=20)"
+
+# Template strings with last value
+math.add 100 200
+{
+  lastValue: `Last was $`,
+  previous: `Previous: $`
+}
+$lastValueObj = $
+test.assertEqual $lastValueObj.lastValue "Last was 300" "Template string with last value in object literal failed"
+
+# Test 9: Template strings and subexpressions in array literals
+log "Test 9: Template strings and subexpressions in array literals"
+$item = "apple"
+$count = 5
+
+# Template strings in array literals
+[`$item`, `Count: $count`, `$item count is $count`]
+$templateArr = $
+test.assertEqual $templateArr[0] "apple" "Template string in array literal - first element failed"
+test.assertEqual $templateArr[1] "Count: 5" "Template string in array literal - second element failed"
+test.assertEqual $templateArr[2] "apple count is 5" "Template string in array literal - third element failed"
+
+# Subexpressions in array literals
+[$(math.add 1 2), $(math.multiply 3 4), $(math.subtract 10 3)]
+$subexprArr = $
+test.assertEqual $subexprArr[0] 3 "Subexpression in array literal - first element failed"
+test.assertEqual $subexprArr[1] 12 "Subexpression in array literal - second element failed"
+test.assertEqual $subexprArr[2] 7 "Subexpression in array literal - third element failed"
+
+# Nested subexpressions in array literals
+[$(math.add $(double 2) $(double 3)), $(math.multiply $(math.add 1 1) $(math.subtract 5 2))]
+$nestedSubexprArr = $
+test.assertEqual $nestedSubexprArr[0] 10 "Nested subexpressions in array literal failed (2*2=4, 3*2=6, 4+6=10)"
+test.assertEqual $nestedSubexprArr[1] 6 "Nested subexpressions in array literal - second element failed (1+1=2, 5-2=3, 2*3=6)"
+
+# Mixed: variables, template strings, and subexpressions
+[$item, `$item`, $(math.add $count $count), `Total: $(math.multiply $count 2)`]
+$mixedArr = $
+test.assertEqual $mixedArr[0] "apple" "Mixed array - variable failed"
+test.assertEqual $mixedArr[1] "apple" "Mixed array - template string failed"
+test.assertEqual $mixedArr[2] 10 "Mixed array - subexpression with variable failed"
+test.assertEqual $mixedArr[3] "Total: 10" "Mixed array - template string with subexpression failed"
+
+# Array with nested subexpressions and function calls
+def square $x
+  return math.multiply $x $x
+enddef
+
+[$(math.add $(square 3) $(square 4)), $(math.multiply $(double 5) $(double 6))]
+$functionArr = $
+test.assertEqual $functionArr[0] 25 "Array with function calls in subexpressions failed (3*3=9, 4*4=16, 9+16=25)"
+test.assertEqual $functionArr[1] 120 "Array with nested function calls failed (5*2=10, 6*2=12, 10*12=120)"
+
+# Test 10: Complex nested structures with template strings and subexpressions
+log "Test 10: Complex nested structures"
+$base = 10
+$multiplier = 3
+
+# Object with nested arrays containing subexpressions
+{
+  numbers: [$(math.add $base 5), $(math.multiply $base $multiplier), $(math.subtract $base 2)],
+  labels: [`Value: $base`, `Multiplied: $(math.multiply $base $multiplier)`, `Result: $(math.add $base $base)`],
+  nested: {
+    calculation: $(math.add $(double $base) $(double $multiplier)),
+    description: `Base $base times $multiplier is $(math.multiply $base $multiplier)`
+  }
+}
+$complexObj = $
+test.assertEqual $complexObj.numbers[0] 15 "Complex object - nested array with subexpression failed"
+test.assertEqual $complexObj.numbers[1] 30 "Complex object - nested array with variable subexpression failed"
+test.assertEqual $complexObj.labels[0] "Value: 10" "Complex object - nested array with template string failed"
+test.assertEqual $complexObj.labels[1] "Multiplied: 30" "Complex object - nested array with template and subexpression failed"
+test.assertEqual $complexObj.nested.calculation 26 "Complex object - nested object with subexpression failed (10*2=20, 3*2=6, 20+6=26)"
+test.assertEqual $complexObj.nested.description "Base 10 times 3 is 30" "Complex object - nested object with template and subexpression failed"
+
+# Array with nested objects containing subexpressions
+[
+  {
+    name: `Item $base`,
+    value: $(math.add $base 5)
+  },
+  {
+    name: `Item $(math.add $base $multiplier)`,
+    calculation: $(math.multiply $(double $base) $(double $multiplier))
+  }
+]
+$complexArr = $
+test.assertEqual $complexArr[0].name "Item 10" "Complex array - nested object with template string failed"
+test.assertEqual $complexArr[0].value 15 "Complex array - nested object with subexpression failed"
+test.assertEqual $complexArr[1].name "Item 13" "Complex array - nested object with template and subexpression in key failed"
+test.assertEqual $complexArr[1].calculation 120 "Complex array - nested object with nested subexpressions failed (10*2=20, 3*2=6, 20*6=120)"
 
 log "=== Objects and Arrays Tests Complete ==="

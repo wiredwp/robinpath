@@ -56,6 +56,64 @@ export class ObjectLiteralParser {
                     continue;
                 }
 
+                // Handle subexpressions $(...) - extract the full subexpression to preserve spacing
+                if (token.kind === TokenKind.SUBEXPRESSION_OPEN) {
+                    // Collect the full subexpression including the $( and )
+                    // We need to track parentheses depth to find the matching closing )
+                    let subexprDepth = 1;
+                    const subexprTokens: Token[] = [token];
+                    stream.next(); // consume SUBEXPRESSION_OPEN
+                    
+                    while (!stream.isAtEnd() && subexprDepth > 0) {
+                        const subexprToken = stream.current();
+                        if (!subexprToken) break;
+                        
+                        // Track parentheses depth
+                        if (subexprToken.kind === TokenKind.LPAREN) {
+                            subexprDepth++;
+                        } else if (subexprToken.kind === TokenKind.RPAREN) {
+                            subexprDepth--;
+                            if (subexprDepth === 0) {
+                                // Found the matching closing paren
+                                subexprTokens.push(subexprToken);
+                                stream.next(); // consume RPAREN
+                                break;
+                            }
+                        }
+                        
+                        subexprTokens.push(subexprToken);
+                        stream.next();
+                    }
+                    
+                    // Reconstruct subexpression text with proper spacing
+                    // Use token positions to infer spacing
+                    let subexprText = '';
+                    for (let i = 0; i < subexprTokens.length; i++) {
+                        const t = subexprTokens[i];
+                        if (i > 0) {
+                            const prevToken = subexprTokens[i - 1];
+                            const prevEnd = prevToken.column + prevToken.text.length;
+                            const currentStart = t.column;
+                            // Add spaces if there's a gap between tokens
+                            if (currentStart > prevEnd) {
+                                subexprText += ' '.repeat(currentStart - prevEnd);
+                            }
+                        }
+                        subexprText += t.text;
+                    }
+                    
+                    // Create a synthetic token that represents the full subexpression
+                    const subexprToken: Token = {
+                        kind: TokenKind.STRING, // Use STRING kind as a marker
+                        text: subexprText,
+                        line: token.line,
+                        column: token.column,
+                        value: subexprText // Store the full text
+                    };
+                    tokens.push(subexprToken);
+                    continue;
+                }
+
                 // Track nested braces (but not inside strings, which are already tokenized)
                 if (token.kind === TokenKind.LBRACE) {
                     depth++;
