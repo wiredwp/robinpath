@@ -229,6 +229,31 @@ export class Lexer {
                     
                     if (escaped) {
                         // Handle escape sequences
+                        // For template strings (backticks), preserve \$ and \( and \) for StringTemplateParser
+                        // by keeping the backslash in the string content
+                        if (quoteChar === '`') {
+                            switch (c) {
+                                case 'n': stringContent += '\n'; break;
+                                case 't': stringContent += '\t'; break;
+                                case 'r': stringContent += '\r'; break;
+                                case '\\': stringContent += '\\'; break;
+                                case '`': stringContent += '`'; break;
+                                case '$': 
+                                    // Preserve \$ for template parser - add backslash + dollar
+                                    stringContent += '\\$'; 
+                                    break;
+                                case '(': 
+                                    // Preserve \( for template parser - add backslash + paren
+                                    stringContent += '\\('; 
+                                    break;
+                                case ')': 
+                                    // Preserve \) for template parser - add backslash + paren
+                                    stringContent += '\\)'; 
+                                    break;
+                                default: stringContent += c; break;
+                            }
+                        } else {
+                            // For regular strings (", '), unescape normally
                         switch (c) {
                             case 'n': stringContent += '\n'; break;
                             case 't': stringContent += '\t'; break;
@@ -238,6 +263,7 @@ export class Lexer {
                             case "'": stringContent += "'"; break;
                             case '`': stringContent += '`'; break;
                             default: stringContent += c; break;
+                            }
                         }
                         escaped = false;
                         i++;

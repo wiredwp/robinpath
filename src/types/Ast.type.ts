@@ -284,12 +284,13 @@ export interface ShorthandAssignment {
 // ============================================================================
 
 /**
- * Represents an inline if statement (e.g., if condition then command)
+ * Represents an inline if statement (e.g., if condition then command [else command])
  */
 export interface InlineIf {
     type: 'inlineIf';
     condition: Expression;
     command: Statement;
+    elseCommand?: Statement; // Optional else clause for inline if
     comments?: CommentWithPosition[]; // Comments attached to this inline if (above and inline)
     codePos: CodePosition; // Code position (row/col) in source code
 }

@@ -111,8 +111,14 @@ function parseReturnValue(stream: TokenStream, context: ReturnParserContext): Ar
 
     // String
     if (token.kind === TokenKind.STRING) {
+        const isTemplateString = token.text.startsWith('`');
         const value = token.value !== undefined ? token.value : LexerUtils.parseString(token.text);
         stream.next();
+        // Store template string flag in the value by prefixing with special marker
+        // We'll detect this in evaluateExpression
+        if (isTemplateString) {
+            return { type: 'string', value: `\0TEMPLATE\0${value}` };
+        }
         return { type: 'string', value };
     }
 

@@ -1639,24 +1639,43 @@ Examples:
     }
 
     private async executeInlineIf(ifStmt: InlineIf, frameOverride?: Frame): Promise<void> {
+        // Use frameOverride directly if provided, otherwise get from call stack
+        const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
+        
         // Evaluate Expression node
-        const conditionValue = await this.evaluateExpression(ifStmt.condition, frameOverride);
+        const conditionValue = await this.evaluateExpression(ifStmt.condition, frame);
         const condition = isTruthy(conditionValue);
         
         if (condition) {
-            await this.executeStatement(ifStmt.command, frameOverride);
+            await this.executeStatement(ifStmt.command, frame);
+        } else if (ifStmt.elseCommand) {
+            // Execute else command if condition is false and else command exists
+            await this.executeStatement(ifStmt.elseCommand, frame);
         }
     }
 
     private async executeIfBlock(ifStmt: IfBlock, frameOverride?: Frame): Promise<void> {
+        // Use frameOverride directly if provided, otherwise get from call stack
+        // We need to use the same frame throughout to ensure lastValue is preserved correctly
+        const frame = frameOverride !== undefined ? frameOverride : this.getCurrentFrame();
+        
         // Evaluate Expression node for main condition
-        const conditionValue = await this.evaluateExpression(ifStmt.condition, frameOverride);
+        // Note: evaluateExpression should not modify lastValue
+        const conditionValue = await this.evaluateExpression(ifStmt.condition, frame);
         const condition = isTruthy(conditionValue);
         
+        // Store lastValue after condition evaluation (in case condition evaluation modified it)
+        // This will be restored if no branch executes
+        const lastValueAfterCondition = frame.lastValue;
+        
         if (condition) {
+            // Execute then branch - lastValue will be set by the last statement
+            // Explicitly pass the frame to ensure we're modifying the correct frame
             for (const stmt of ifStmt.thenBranch) {
-                await this.executeStatement(stmt, frameOverride);
+                await this.executeStatement(stmt, frame);
             }
+            // lastValue should now be set by the last statement in the branch
+            // It's already on the frame, so we just return
             return;
         }
 
@@ -1664,11 +1683,14 @@ Examples:
         if (ifStmt.elseifBranches) {
             for (const branch of ifStmt.elseifBranches) {
                 // branch.condition is Expression
-                const branchConditionValue = await this.evaluateExpression(branch.condition, frameOverride);
+                const branchConditionValue = await this.evaluateExpression(branch.condition, frame);
                 if (isTruthy(branchConditionValue)) {
+                    // Execute elseif branch - lastValue will be set by the last statement
+                    // Explicitly pass the frame to ensure we're modifying the correct frame
                     for (const stmt of branch.body) {
-                        await this.executeStatement(stmt, frameOverride);
+                        await this.executeStatement(stmt, frame);
                     }
+                    // lastValue is now set to the result of the last statement in the branch body
                     return;
                 }
             }
@@ -1676,9 +1698,15 @@ Examples:
 
         // Execute else branch if present
         if (ifStmt.elseBranch) {
+            // Execute else branch - lastValue will be set by the last statement
+            // Explicitly pass the frame to ensure we're modifying the correct frame
             for (const stmt of ifStmt.elseBranch) {
-                await this.executeStatement(stmt, frameOverride);
+                await this.executeStatement(stmt, frame);
             }
+            // lastValue is now set to the result of the last statement in elseBranch
+        } else {
+            // No branch executed - restore lastValue from after condition evaluation
+            frame.lastValue = lastValueAfterCondition;
         }
     }
 

@@ -85,6 +85,16 @@ export class SubexpressionParser {
                 if (statement) {
                     body.push(statement);
                     lastToken = stream.current() || token;
+                    
+                    // After parsing a statement, check if we've reached the closing paren
+                    // This prevents parsing additional statements beyond the subexpression boundary
+                    const currentToken = stream.current();
+                    if (currentToken && currentToken.kind === TokenKind.RPAREN) {
+                        // Found closing paren - done parsing
+                        lastToken = currentToken;
+                        stream.next(); // Consume closing ')'
+                        break;
+                    }
                 } else {
                     // If we can't parse a statement, skip the token
                     stream.next();

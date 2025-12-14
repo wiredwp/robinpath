@@ -46,8 +46,26 @@ export function parseIf(
     const nextToken = stream.current();
     
     if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'then') {
-        // Inline if: if condition then command
-        return parseInlineIf(stream, ifToken, condition, context);
+        // Check if 'then' is followed by a newline - if so, it's a block if, not inline
+        // Peek ahead to see what comes after 'then'
+        let peekOffset = 1;
+        let peekToken = stream.peek(peekOffset);
+        
+        // Skip comments when peeking (whitespace is not tokenized)
+        while (peekToken && peekToken.kind === TokenKind.COMMENT) {
+            peekOffset++;
+            peekToken = stream.peek(peekOffset);
+        }
+        
+        if (peekToken && peekToken.kind === TokenKind.NEWLINE) {
+            // Block if with 'then': if condition then ... endif
+            stream.next(); // consume 'then'
+            stream.skipWhitespaceAndComments();
+            return parseIfBlock(stream, ifToken, condition, context, decorators);
+        } else {
+            // Inline if: if condition then command [else command]
+            return parseInlineIf(stream, ifToken, condition, context);
+        }
     } else {
         // If block: if condition ... endif
         return parseIfBlock(stream, ifToken, condition, context, decorators);
@@ -72,7 +90,7 @@ function parseConditionExpression(
 }
 
 /**
- * Parse inline if: if condition then command
+ * Parse inline if: if condition then command [else command]
  */
 function parseInlineIf(
     stream: TokenStream,
@@ -94,13 +112,31 @@ function parseInlineIf(
         throw new Error(`Expected command after 'then' at line ${thenToken.line}`);
     }
 
-    // Find end token (end of command)
-    const endToken = stream.current() || thenToken;
+    // Check for optional 'else' clause
+    stream.skipWhitespaceAndComments();
+    const nextToken = stream.current();
+    let elseCommand: Statement | undefined;
+    let endToken = stream.current() || thenToken;
+
+    if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'else') {
+        // Consume 'else' keyword
+        stream.next();
+        stream.skipWhitespaceAndComments();
+
+        // Parse the else command statement
+        const parsedElseCommand = context.parseStatement(stream);
+        if (!parsedElseCommand) {
+            throw new Error(`Expected command after 'else' at line ${nextToken.line}`);
+        }
+        elseCommand = parsedElseCommand;
+        endToken = stream.current() || nextToken;
+    }
 
     return {
         type: 'inlineIf',
         condition,
         command,
+        elseCommand,
         codePos: context.createCodePosition(ifToken, endToken)
     };
 }

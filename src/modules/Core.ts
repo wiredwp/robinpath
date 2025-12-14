@@ -245,8 +245,6 @@ export const CoreFunctions: Record<string, BuiltinHandler> = {
         const step = args.length >= 3 ? Number(args[2]) : undefined;
         const result: number[] = [];
 
-        console.log('range', args);
-       
         // If step is provided, use it
         if (step !== undefined) {
             if (step === 0) {

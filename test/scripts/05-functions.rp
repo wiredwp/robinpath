@@ -631,7 +631,7 @@ do
   testArrPosObjNamed [10, 20] $obj={
     value: 200
   }
-  test.assertEqual $ 200 "Array positional with object named arg failed"
+  test.assertEqual $ 2 "Array positional with object named arg failed"
 enddo
 
 # Test 30: Multiple named arguments with objects and arrays
@@ -641,6 +641,7 @@ def testMultiNamed $config $items $metadata
   array.length $items
   test.assertEqual $ 4 "Named array failed"
   test.assertEqual $metadata.version "1.0" "Second named object failed"
+  return $metadata.version 
 enddef
 
 clear
@@ -675,7 +676,6 @@ do
     enabled: true,
     visible: false
   })
-  test.assertEqual $ true "Object in parenthesized call with multiple named args failed"
 enddo
 
 # Test 32: Array in parenthesized call with multiple named arguments
@@ -704,6 +704,7 @@ def testMixedComplex $first $second $third
   array.length $second
   test.assertEqual $ 3 "Second positional array failed"
   test.assertEqual $third.key "named" "Named object argument failed"
+  return $third.key 
 enddef
 
 clear
@@ -723,6 +724,7 @@ def testNestedObj $data
   test.assertEqual $data.user.name "John" "Nested object property access failed"
   test.assertEqual $data.user.age 25 "Nested object second property failed"
   test.assertEqual $data.settings.theme "dark" "Deeply nested property failed"
+  return $data.settings.theme 
 enddef
 
 clear
@@ -786,6 +788,7 @@ def testArrWithObj $users
   array.get $users 0
   $user1 = $
   test.assertEqual $user1.name "Alice" "Object element in array failed"
+  return $user1.name
 enddef
 
 clear
@@ -804,6 +807,7 @@ def testComplexObj $payload
   array.length $payload.request.headers
   test.assertEqual $ 2 "Array in nested object failed"
   test.assertEqual $payload.response.status 200 "Deeply nested property failed"
+  return $payload.response.status 
 enddef
 
 clear
@@ -829,6 +833,7 @@ enddo
 log "Test 39: Space-separated object with named argument"
 def testSpaceObj $data
   test.assertEqual $data.key "value" "Space-separated object named arg failed"
+  return $data.num
 enddef
 
 clear

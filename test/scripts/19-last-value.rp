@@ -183,5 +183,127 @@ get $ "user"
 get $ "name"
 test.assertEqual $ "Bob" "Nested object access with $ should work"
 
+# Test 26: Basic subexpression sets last value
+log "Test 26: Basic subexpression sets last value"
+$(math.add 5 3)
+test.assertEqual $ 8 "Subexpression should set $ to its result"
+
+# Test 27: Subexpression with string operations
+log "Test 27: Subexpression with string operations"
+$(string.concat "hello" "world")
+test.assertEqual $ "helloworld" "Subexpression with string.concat should set $"
+
+# Test 28: Subexpression with multiple statements
+log "Test 28: Subexpression with multiple statements"
+$(
+  math.add 10 5
+  math.multiply $ 2
+)
+test.assertEqual $ 30 "Subexpression with multiple statements should set $ to last result (10+5=15, 15*2=30)"
+
+# Test 29: Nested subexpression (2 levels)
+log "Test 29: Nested subexpression (2 levels)"
+$(math.add $(math.multiply 3 4) 5)
+test.assertEqual $ 17 "Nested subexpression should work (3*4=12, 12+5=17)"
+
+# Test 30: Deeply nested subexpression (3 levels)
+log "Test 30: Deeply nested subexpression (3 levels)"
+$(math.add $(math.multiply $(math.add 2 3) 2) 10)
+test.assertEqual $ 20 "Deeply nested subexpression should work (2+3=5, 5*2=10, 10+10=20)"
+
+# Test 31: Nested subexpression with last value from outer scope
+log "Test 31: Nested subexpression with last value from outer scope"
+10
+$(math.multiply $(math.add $ 5) 2)
+test.assertEqual $ 30 "Nested subexpression using outer $ should work (10+5=15, 15*2=30)"
+
+# Test 32: Subexpression chain
+log "Test 32: Subexpression chain"
+$(math.add 5 5)
+$(math.multiply $ 3)
+test.assertEqual $ 30 "Subexpression chain should work (5+5=10, 10*3=30)"
+
+# Test 33: Subexpression returning string
+log "Test 33: Subexpression returning string"
+$(string.concat "test" "value")
+test.assertEqual $ "testvalue" "Subexpression should return and set string value"
+
+# Test 34: Subexpression returning array
+log "Test 34: Subexpression returning array"
+$arr = $(array.create 1 2 3)
+test.assertEqual $arr [1, 2, 3] "Subexpression should return and set array value"
+
+# Test 35: Subexpression returning object
+log "Test 35: Subexpression returning object"
+$obj = $(
+  {name: "test", value: 42}
+)
+test.assertEqual $obj {name: "test", value: 42} "Subexpression should return and set object value"
+
+# Test 36: Nested subexpression with different operations
+log "Test 36: Nested subexpression with different operations"
+$(string.concat $(math.add 5 3) "result")
+test.assertEqual $ "8result" "Nested subexpression with math and string should work"
+
+# Test 37: Multiple nested subexpressions at same level
+log "Test 37: Multiple nested subexpressions at same level"
+$(math.add $(math.multiply 2 3) $(math.add 4 5))
+test.assertEqual $ 15 "Multiple nested subexpressions should work (2*3=6, 4+5=9, 6+9=15)"
+
+# Test 38: Subexpression with conditional inside
+log "Test 38: Subexpression with conditional inside"
+$(if true then
+  math.add 10 20
+else
+  math.add 5 5
+endif)
+test.assertEqual $ 30 "Subexpression with conditional should set $ to result"
+
+# Test 39: Nested subexpression preserving outer last value
+log "Test 39: Nested subexpression preserving outer last value"
+"outer"
+$(math.add 5 5)
+test.assertEqual $ 10 "Subexpression should update $ even after outer value"
+
+# Test 40: Deeply nested subexpression (4 levels)
+log "Test 40: Deeply nested subexpression (4 levels)"
+$(math.add $(math.multiply $(math.add $(math.multiply 2 2) 1) 2) 5)
+test.assertEqual $ 15 "4-level nested subexpression should work (2*2=4, 4+1=5, 5*2=10, 10+5=15)"
+
+# Test 41: Subexpression with function call
+log "Test 41: Subexpression with function call"
+def get_number
+  return 42
+enddef
+
+$(get_number)
+test.assertEqual $ 42 "Subexpression with function call should set $ to return value"
+
+# Test 42: Nested subexpression with function calls
+log "Test 42: Nested subexpression with function calls"
+def double $x
+  return math.multiply $x 2
+enddef
+
+$(math.add $(double 5) $(double 3))
+test.assertEqual $ 16 "Nested subexpression with function calls should work (5*2=10, 3*2=6, 10+6=16)"
+
+# Test 43: Subexpression with array operations
+log "Test 43: Subexpression with array operations"
+$result = $(array.length [1, 2, 3, 4, 5])
+test.assertEqual $result 5 "Subexpression with array.length should work"
+
+# Test 44: Nested subexpression with object access
+log "Test 44: Nested subexpression with object access"
+$data = {value: 10, nested: {value: 20}}
+$result = $(get $(get $data "nested") "value")
+test.assertEqual $result 20 "Nested subexpression with object access should work"
+
+# Test 45: Subexpression with last value in nested context
+log "Test 45: Subexpression with last value in nested context"
+5
+$(math.multiply $(math.add $ 3) 2)
+test.assertEqual $ 16 "Nested subexpression using outer $ should work (5+3=8, 8*2=16)"
+
 log "=== Last Value Tests Complete ==="
 

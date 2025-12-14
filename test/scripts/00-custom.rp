@@ -1,8 +1,6 @@
-
-
-
-log $(math.multiply $(math.add 2 3) 4)
-
-__ast__
-
-log "hi"
+# test 6: allowing then indentation multi line conditional
+10
+if $ > 5 then
+  math.multiply $ 2
+endif
+test.assertEqual $ 20 "Last value in conditional should work"

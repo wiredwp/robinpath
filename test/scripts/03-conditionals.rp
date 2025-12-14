@@ -77,4 +77,16 @@ if $ > 5 then
 endif
 test.assertEqual $ 20 "Last value in conditional should work"
 
+# Test 7: If block should return lastValue from executed branch
+log "Test 7: If block returns lastValue from executed branch"
+$a = 10
+"test"
+log $  # Should log "test"
+if $a > 5 
+  "high" 
+else 
+  "low"
+endif   
+test.assertEqual $ "high" "If block should return lastValue from executed branch"
+
 log "=== Conditional Tests Complete ==="

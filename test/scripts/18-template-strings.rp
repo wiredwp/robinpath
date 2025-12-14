@@ -79,7 +79,7 @@ test.assertEqual $result13 "hello and world" "Template string with positional pa
 
 # Test 9: Escape sequences in template strings
 log "Test 9: Escape sequences"
-$result14 = `dollar: \$5, backtick: \`, newline: \n`
+$result14 = `dollar: \$5, backtick: \`, newline: \\n`
 test.assertEqual $result14 "dollar: $5, backtick: `, newline: \n" "Escape sequences failed"
 
 $result15 = `escaped paren: \(not evaluated)`
@@ -111,8 +111,18 @@ test.assertEqual $result18 "Hello, World!" "Template string in function return f
 # Test 13: Template string with conditional subexpression
 log "Test 13: Template string with conditional"
 $a = 10
-$result19 = `value is $(if $a > 5 then "high" else "low")`
+$result19 = `value is $(if $a > 5 
+  "high" 
+else 
+  "low"
+endeif  
+)`
 test.assertEqual $result19 "value is high" "Conditional subexpression failed"
+
+log "Test 13a: Template string with inline conditional"
+$a = 10
+$result19 = `value is $(if $a > 5 then "high" else "low")`
+test.assertEqual $result19 "value is high" "Inline conditional subexpression failed"
 
 # Test 14: Template string concatenation
 log "Test 14: Template string concatenation"

@@ -356,10 +356,31 @@ export class CommandParser {
                     continue;
                 }
 
-                // Check if we're inside a multi-line construct context
+                // If we're inside a subexpression context, stop at closing paren or newline
+                // This allows subexpressions like $(math.add 5 5) to work correctly
+                // and ensures multiple statements are parsed separately
+                if (stream.isInContext(ParsingContext.SUBEXPRESSION)) {
+                    if (token.kind === TokenKind.RPAREN) {
+                        break;
+                    }
+                    // In subexpressions, newlines separate statements, so stop parsing arguments
+                    // unless we're in the middle of a multi-line construct (object/array/nested subexpr)
+                    if (token.kind === TokenKind.NEWLINE) {
+                        // Check if we're in the middle of parsing a multi-line construct argument
+                        const isInMultilineArg = stream.isInContext(ParsingContext.OBJECT_LITERAL) ||
+                                                stream.isInContext(ParsingContext.ARRAY_LITERAL);
+                        if (!isInMultilineArg && !justFinishedMultilineConstruct) {
+                            // Not in a multi-line construct - newline separates statements
+                            break;
+                        }
+                        // Otherwise, continue (we're in the middle of parsing a multi-line construct)
+                    }
+                }
+
+                // Check if we're inside a multi-line construct context (object/array, but NOT subexpression)
+                // Subexpressions are handled separately above to allow multiple statements
                 const isInMultilineContext = stream.isInContext(ParsingContext.OBJECT_LITERAL) ||
-                                            stream.isInContext(ParsingContext.ARRAY_LITERAL) ||
-                                            stream.isInContext(ParsingContext.SUBEXPRESSION);
+                                            stream.isInContext(ParsingContext.ARRAY_LITERAL);
 
                 // If we're inside a multi-line construct, continue parsing
                 if (isInMultilineContext) {
@@ -422,13 +443,6 @@ export class CommandParser {
 
                 // Stop if we've moved to a different line and we're not in/after a multi-line construct
                 if (token.line !== startLineNum && !justFinishedMultilineConstruct) {
-                    break;
-                }
-
-                // If we're inside a subexpression context, stop at closing paren
-                // This allows subexpressions like $(math.add 5 5) to work correctly
-                if (stream.isInContext(ParsingContext.SUBEXPRESSION) && 
-                    token.kind === TokenKind.RPAREN) {
                     break;
                 }
 

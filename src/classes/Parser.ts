@@ -17,6 +17,7 @@ import { parseTogether } from '../parsers/TogetherBlockParser';
 import { parseDecorators } from '../parsers/DecoratorParser';
 import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
 import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
+import { SubexpressionParser } from '../parsers/SubexpressionParser';
 import { LexerUtils } from '../utils';
 import type { Statement, CommentStatement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
@@ -364,6 +365,146 @@ export class Parser {
         // If we encounter it here, it means it's not part of an on block, which is an error
         if (token.kind === TokenKind.KEYWORD && token.text === 'endon') {
             throw new Error(`'endon' keyword found outside of on block at line ${token.line}`);
+        }
+
+        // Check for standalone object literal: {...}
+        if (token.kind === TokenKind.LBRACE) {
+            const objResult = ObjectLiteralParser.parse(stream);
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_object',
+                args: [{ type: 'object', code: objResult.code }],
+                codePos: createCodePosition(objResult.startToken, objResult.endToken)
+            };
+        }
+
+        // Check for standalone array literal: [...]
+        if (token.kind === TokenKind.LBRACKET) {
+            const arrResult = ArrayLiteralParser.parse(stream);
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_array',
+                args: [{ type: 'array', code: arrResult.code }],
+                codePos: createCodePosition(arrResult.startToken, arrResult.endToken)
+            };
+        }
+
+        // Check for standalone string literal: "..." or '...' or `...`
+        // These should set the last value ($) to the string value
+        if (token.kind === TokenKind.STRING) {
+            const isTemplateString = token.text.startsWith('`');
+            const value = token.value !== undefined ? token.value : LexerUtils.parseString(token.text);
+            const stringToken = token;
+            stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            // Mark template strings with special prefix
+            const stringValue = isTemplateString ? `\0TEMPLATE\0${value}` : value;
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'string', value: stringValue }],
+                codePos: createCodePosition(stringToken, stringToken)
+            };
+        }
+
+        // Check for standalone number literal
+        if (token.kind === TokenKind.NUMBER) {
+            const value = token.value !== undefined ? token.value : parseFloat(token.text);
+            const numberToken = token;
+            stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'number', value }],
+                codePos: createCodePosition(numberToken, numberToken)
+            };
+        }
+
+        // Check for standalone boolean literal
+        if (token.kind === TokenKind.BOOLEAN) {
+            const value = token.value !== undefined ? token.value : (token.text === 'true');
+            const booleanToken = token;
+            stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'literal', value }],
+                codePos: createCodePosition(booleanToken, booleanToken)
+            };
+        }
+
+        // Check for standalone null literal
+        if (token.kind === TokenKind.NULL) {
+            const nullToken = token;
+            stream.next();
+            const createCodePosition = (start: Token, end: Token) => ({
+                startRow: start.line - 1,
+                startCol: start.column,
+                endRow: end.line - 1,
+                endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+            });
+            return {
+                type: 'command',
+                name: '_literal',
+                args: [{ type: 'literal', value: null }],
+                codePos: createCodePosition(nullToken, nullToken)
+            };
+        }
+
+        // Check for standalone subexpression: $(...)
+        // These should set the last value ($) to the subexpression result
+        if (token.kind === TokenKind.SUBEXPRESSION_OPEN) {
+            const subexpr = SubexpressionParser.parse(stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                createCodePosition: (start, end) => ({
+                    startRow: start.line - 1,
+                    startCol: start.column,
+                    endRow: end.line - 1,
+                    endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                })
+            });
+
+            // Wrap in _subexpr command to set last value
+            // Pass as Expression type so evaluateArg can properly evaluate it
+            return {
+                type: 'command',
+                name: '_subexpr',
+                args: [{ 
+                    type: 'subexpression', 
+                    body: subexpr.body,
+                    codePos: subexpr.codePos
+                }],
+                codePos: subexpr.codePos
+            };
         }
 
         // Check for command call
@@ -734,6 +875,33 @@ export class Parser {
                 name: '_literal',
                 args: [{ type: 'literal', value: null }],
                 codePos: createCodePosition(nullToken, nullToken)
+            };
+        }
+
+        // Check for standalone subexpression: $(...)
+        // These should set the last value ($) to the subexpression result
+        if (currentToken.kind === TokenKind.SUBEXPRESSION_OPEN) {
+            const subexpr = SubexpressionParser.parse(this.stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                createCodePosition: (start, end) => ({
+                    startRow: start.line - 1,
+                    startCol: start.column,
+                    endRow: end.line - 1,
+                    endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                })
+            });
+
+            // Wrap in _subexpr command to set last value
+            // Pass as Expression type so evaluateArg can properly evaluate it
+            return {
+                type: 'command',
+                name: '_subexpr',
+                args: [{ 
+                    type: 'subexpression', 
+                    body: subexpr.body,
+                    codePos: subexpr.codePos
+                }],
+                codePos: subexpr.codePos
             };
         }
 
