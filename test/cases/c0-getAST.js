@@ -324,6 +324,65 @@ endon
         throw new Error('Test 6 FAILED - Def and On block updates do not preserve formatting');
     }
     
+    // Test 7: Comment formatting - no extra blank line between comment and statement
+    console.log('='.repeat(60));
+    console.log('Testing comment formatting preservation');
+    console.log('='.repeat(60));
+    
+    const commentTestScript = `# first comment
+
+$a = "hi"
+
+# 2nd comment
+
+log "hello!"
+
+def test
+  log "new one!"
+enddef
+`;
+
+    console.log('Original code:');
+    console.log(commentTestScript);
+    console.log('');
+    
+    const commentAST = await astTestRp.getAST(commentTestScript);
+    
+    // Update code from AST (no changes, just round-trip)
+    const updatedCommentCode = await astTestRp.updateCodeFromAST(commentTestScript, commentAST);
+    
+    console.log('Updated code:');
+    console.log(updatedCommentCode);
+    console.log('');
+    
+    // Check that there's exactly 1 blank line between "# first comment" and "$a = "hi""
+    // The original has 1 blank line between them, so the updated should also have 1 blank line
+    const firstCommentIndex = updatedCommentCode.indexOf('# first comment');
+    const assignmentIndex = updatedCommentCode.indexOf('$a = "hi"');
+    
+    if (firstCommentIndex >= 0 && assignmentIndex > firstCommentIndex) {
+        const betweenText = updatedCommentCode.substring(
+            firstCommentIndex + '# first comment'.length,
+            assignmentIndex
+        );
+        const newlineCount = (betweenText.match(/\n/g) || []).length;
+        // Should have exactly 2 newlines (1 for the comment line ending + 1 for the blank line)
+        // Not 3 newlines (which would indicate an extra blank line)
+        const hasCorrectSpacing = newlineCount === 2;
+        
+        if (hasCorrectSpacing) {
+            console.log('✓ Test 7 PASSED - Comment formatting preserved (no extra blank line)');
+            console.log('  - Blank lines between comment and statement: ✓');
+        } else {
+            console.log('✗ Test 7 FAILED - Extra blank line added between comment and statement');
+            console.log('  - Newline count between comment and assignment:', newlineCount, '(expected: 2)');
+            console.log('  - Text between:', JSON.stringify(betweenText));
+            throw new Error('Test 7 FAILED - Extra blank line added between comment and statement');
+        }
+    } else {
+        throw new Error('Test 7 FAILED - Could not find comment or assignment in updated code');
+    }
+    
     console.log('='.repeat(60));
     console.log('✓ All tests including formatting preservation PASSED');
     console.log('='.repeat(60));

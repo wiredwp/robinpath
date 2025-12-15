@@ -52,10 +52,10 @@ export function printOnBlock(node: any, writer: Writer, ctx: PrintContext): void
             const stmt = node.body[i];
             const prevStmt = i > 0 ? node.body[i - 1] : null;
             
-            // Try to extract original code if originalScript is available
+            // Try to extract original code if originalScript is available and extraction is allowed
             let stmtCode: string | null = null;
             let extractedFromOriginal = false;
-            if (ctx.originalScript && 'codePos' in stmt && stmt.codePos) {
+            if (ctx.originalScript && ctx.allowExtractOriginalCode !== false && 'codePos' in stmt && stmt.codePos) {
                 // Extract original code for this statement including leading blank lines
                 // Start from the end of previous statement (or end of block header) to include leading blank lines
                 let stmtStartOffset: number;
@@ -94,12 +94,25 @@ export function printOnBlock(node: any, writer: Writer, ctx: PrintContext): void
                         false
                     );
                 } else {
-                    // Last statement - end at the statement's end
+                    // Last statement - end before endon (which is at node.codePos.endRow)
+                    // Include blank lines after the statement up to (but not including) endon
+                    if ('codePos' in node && node.codePos) {
+                        // Find the endon line
+                        const endonRow = node.codePos.endRow;
+                        // End before the endon line (to include trailing blank lines)
+                        stmtEndOffset = ctx.lineIndex.offsetAt(
+                            endonRow,
+                            0,  // Start of endon line
+                            false  // Not exclusive - we want to end before endon
+                        );
+                    } else {
+                        // Fallback: end at the statement's end
                     stmtEndOffset = ctx.lineIndex.offsetAt(
                         stmt.codePos.endRow,
                         stmt.codePos.endCol,
                         true
                     );
+                    }
                 }
                 stmtCode = ctx.originalScript.substring(stmtStartOffset, stmtEndOffset);
                 extractedFromOriginal = true;
@@ -113,10 +126,38 @@ export function printOnBlock(node: any, writer: Writer, ctx: PrintContext): void
             if (stmtCode) {
                 // If we extracted from original, use it as-is (it already includes blank lines and formatting)
                 if (extractedFromOriginal) {
-                    writer.push(stmtCode);
+                    // Process line by line to normalize blank lines
+                    // Preserve the exact structure but normalize blank lines (remove trailing spaces from blank lines only)
+                    const lines = stmtCode.split('\n');
+                    const processedLines: string[] = [];
+                    
+                    for (let j = 0; j < lines.length; j++) {
+                        let line = lines[j];
+                        // Normalize blank lines (remove all whitespace to make them completely empty)
+                        // But preserve non-blank lines exactly as they are (including leading spaces)
+                        if (line.trim() === '') {
+                            processedLines.push('');
+                        } else {
+                            processedLines.push(line);
+                        }
+                    }
+                    
+                    // Join with newlines - preserve the original structure
+                    // If the original ended with a newline, the split would have created an extra empty line
+                    // We need to check if the original ended with a newline
+                    const endsWithNewline = stmtCode.endsWith('\n');
+                    let normalizedCode = processedLines.join('\n');
+                    if (endsWithNewline && !normalizedCode.endsWith('\n')) {
+                        normalizedCode += '\n';
+                    } else if (!endsWithNewline && normalizedCode.endsWith('\n')) {
+                        // Remove trailing newline if original didn't have it
+                        normalizedCode = normalizedCode.slice(0, -1);
+                    }
+                    writer.push(normalizedCode);
                 } else {
                     // Generated code - add newline and trailing blank lines
-                    writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                    const finalCode = stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n';
+                    writer.push(finalCode);
                     
                     // Handle trailingBlankLines for generated code
                     const trailingBlankLines = (stmt as any).trailingBlankLines;

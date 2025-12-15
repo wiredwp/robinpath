@@ -33,6 +33,7 @@ export interface PrintContext {
     indentLevel: number;
     lineIndex: LineIndex;
     originalScript?: string; // Optional: original script for extracting original code
+    allowExtractOriginalCode?: boolean; // If false, don't extract original code (node has changed)
 }
 
 /**

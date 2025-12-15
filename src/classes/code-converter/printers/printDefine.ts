@@ -54,10 +54,10 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
             const stmt = node.body[i];
             const prevStmt = i > 0 ? node.body[i - 1] : null;
             
-            // Try to extract original code if originalScript is available
+            // Try to extract original code if originalScript is available and extraction is allowed
             let stmtCode: string | null = null;
             let extractedFromOriginal = false;
-            if (ctx.originalScript && 'codePos' in stmt && stmt.codePos) {
+            if (ctx.originalScript && ctx.allowExtractOriginalCode !== false && 'codePos' in stmt && stmt.codePos) {
                 // Extract original code for this statement including leading blank lines
                 // Start from the end of previous statement (or end of block header) to include leading blank lines
                 let stmtStartOffset: number;

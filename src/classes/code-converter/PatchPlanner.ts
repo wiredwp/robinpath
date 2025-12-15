@@ -442,9 +442,10 @@ export class PatchPlanner {
             const endOffset = this.lineIndex.offsetAt(endRow, endCol, true);
 
             // Add blank lines to replacement if needed
+            // Note: commentCode already ends with a newline from Printer.printNode
             const blankLinesCount = endRow - lastComment.codePos.endRow;
             const replacement = blankLinesCount > 0
-                ? commentCode + '\n' + '\n'.repeat(blankLinesCount)
+                ? commentCode + '\n'.repeat(blankLinesCount)
                 : commentCode;
 
             this.patches.push({
@@ -646,13 +647,15 @@ export class PatchPlanner {
         }
         
         // Add statement code - preserve indentation if regenerating
+        // When regenerating, don't allow extracting original code (node has changed)
         const nodeCode = layout.leadingComments.length > 0
             ? Printer.printNode(node, {
                 indentLevel: 0,
                 lineIndex: this.lineIndex,
-                originalScript: this.originalScript
+                originalScript: this.originalScript,
+                allowExtractOriginalCode: false
             })
-            : this.generateCodeWithPreservedIndentation(node, range);
+            : this.generateCodeWithPreservedIndentation(node, range, false);
 
         if (nodeCode) {
             // Remove inline comment from nodeCode if it's already in layout
@@ -913,13 +916,15 @@ export class PatchPlanner {
      */
     private generateCodeWithPreservedIndentation(
         node: Statement,
-        _range: { startOffset: number; endOffset: number }
+        _range: { startOffset: number; endOffset: number },
+        allowExtractOriginalCode: boolean = false
     ): string {
         if (!('codePos' in node) || !node.codePos) {
             return Printer.printNode(node, {
                 indentLevel: 0,
                 lineIndex: this.lineIndex,
-                originalScript: this.originalScript
+                originalScript: this.originalScript,
+                allowExtractOriginalCode
             }) || '';
         }
 
@@ -930,7 +935,8 @@ export class PatchPlanner {
             return Printer.printNode(node, {
                 indentLevel: 0,
                 lineIndex: this.lineIndex,
-                originalScript: this.originalScript
+                originalScript: this.originalScript,
+                allowExtractOriginalCode
             }) || '';
         }
 
@@ -956,7 +962,8 @@ export class PatchPlanner {
         const newNodeCode = Printer.printNode(node, {
             indentLevel: 0,
             lineIndex: this.lineIndex,
-            originalScript: this.originalScript
+            originalScript: this.originalScript,
+            allowExtractOriginalCode
         }) || '';
         
         // Apply original indentation and spacing patterns to the generated code
