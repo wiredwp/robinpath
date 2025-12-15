@@ -7,7 +7,8 @@ import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { parseExpression } from './ExpressionParser';
-import type { IfBlock, InlineIf, Statement, CodePosition, Expression, DecoratorCall } from '../types/Ast.type';
+import type { IfBlock, InlineIf, Statement, CodePosition, Expression, DecoratorCall, CommentWithPosition } from '../types/Ast.type';
+import { CommentParser } from './CommentParser';
 
 export interface IfBlockParserContext {
     parseStatement: (stream: TokenStream) => Statement | null;
@@ -42,7 +43,11 @@ export function parseIf(
     const condition = parseConditionExpression(stream, context);
 
     // Check if this is an inline if (has 'then' keyword)
-    stream.skipWhitespaceAndComments();
+    // Don't skip comments here - we want to parse them in the thenBranch
+    // Only skip whitespace, not comments
+    while (!stream.isAtEnd() && stream.current()?.kind === TokenKind.NEWLINE) {
+        stream.next();
+    }
     const nextToken = stream.current();
     
     if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'then') {
@@ -157,7 +162,7 @@ function parseIfBlock(
     let endToken = ifToken;
 
     // Parse then branch (body after condition until elseif/else/endif)
-    stream.skipWhitespaceAndComments();
+    // Don't skip comments here - we want to parse them and attach to statements
     
     // If there's a newline, we're in block mode
     // Otherwise, it might be a single-line if block
@@ -167,6 +172,7 @@ function parseIfBlock(
     }
 
     // Parse statements until we hit elseif, else, or endif
+    let pendingComments: CommentWithPosition[] = []; // Comments to attach to next statement
     while (!stream.isAtEnd()) {
         const token = stream.current();
         if (!token || token.kind === TokenKind.EOF) break;
@@ -313,29 +319,109 @@ function parseIfBlock(
         // Parse statement in then branch
         if (token.kind === TokenKind.NEWLINE) {
             stream.next();
+            // Check if next token is also newline (blank line) - if so, comments are orphaned
+            const nextToken = stream.current();
+            if (nextToken && nextToken.kind === TokenKind.NEWLINE) {
+                // Blank line - any pending comments should be standalone
+                if (pendingComments.length > 0) {
+                    // Create standalone comment node
+                    const groupedText = pendingComments.map(c => c.text).join('\n');
+                    const groupedCodePos: CodePosition = {
+                        startRow: pendingComments[0].codePos.startRow,
+                        startCol: pendingComments[0].codePos.startCol,
+                        endRow: pendingComments[pendingComments.length - 1].codePos.endRow,
+                        endCol: pendingComments[pendingComments.length - 1].codePos.endCol
+                    };
+                    thenBranch.push({
+                        type: 'comment',
+                        comments: [{
+                            text: groupedText,
+                            codePos: groupedCodePos,
+                            inline: false
+                        }],
+                        lineNumber: pendingComments[0].codePos.startRow
+                    });
+                    pendingComments = [];
+                }
+            }
+            // If not a blank line, continue - pending comments will be attached to next statement
             continue;
         }
         
         if (token.kind === TokenKind.COMMENT) {
-            // Parse comment statement
-            const commentBeforeParse = stream.getPosition();
-            const comment = context.parseComment(stream);
-            const commentAfterParse = stream.getPosition();
+            // Parse comment directly from token - collect it for potential attachment to next statement
+            const commentText = token.text.startsWith('#') 
+                ? token.text.slice(1).trim() 
+                : token.text.trim();
             
-            // Ensure stream position advanced (parseComment should consume the comment token)
-            const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
-            if (commentAfterParse === commentBeforeParse || stillOnComment) {
-                stream.next(); // Manually advance if parseComment didn't
-            }
+            const commentCodePos: CodePosition = {
+                startRow: token.line - 1,
+                startCol: token.column,
+                endRow: token.line - 1,
+                endCol: token.column + token.text.length - 1
+            };
             
-            if (comment) {
-                thenBranch.push(comment);
+            const comment: CommentWithPosition = {
+                text: commentText,
+                codePos: commentCodePos,
+                inline: false
+            };
+            
+            pendingComments.push(comment);
+            
+            // Consume the comment token and its newline
+            stream.next();
+            if (stream.current()?.kind === TokenKind.NEWLINE) {
+                stream.next();
             }
             continue;
         }
         
         const stmt = context.parseStatement(stream);
         if (stmt) {
+            // Attach pending comments to this statement
+            if (pendingComments.length > 0) {
+                CommentParser.attachComments(stmt, pendingComments);
+                pendingComments = [];
+            }
+            
+            // Check for inline comment on the same line as the statement
+            if ('codePos' in stmt && stmt.codePos) {
+                const statementLine = stmt.codePos.endRow;
+                const currentToken = stream.current();
+                if (currentToken && currentToken.kind === TokenKind.COMMENT) {
+                    // Check if comment is on the same line as the statement
+                    const commentLine = currentToken.line - 1; // Convert to 0-based
+                    if (commentLine === statementLine) {
+                        // This is an inline comment
+                        const commentText = currentToken.text.startsWith('#') 
+                            ? currentToken.text.slice(1).trim() 
+                            : currentToken.text.trim();
+                        
+                        const commentCodePos: CodePosition = {
+                            startRow: commentLine,
+                            startCol: currentToken.column,
+                            endRow: commentLine,
+                            endCol: currentToken.column + currentToken.text.length - 1
+                        };
+                        
+                        const inlineComment: CommentWithPosition = {
+                            text: commentText,
+                            codePos: commentCodePos,
+                            inline: true
+                        };
+                        
+                        CommentParser.attachComments(stmt, [inlineComment]);
+                        
+                        // Consume the inline comment token and its newline
+                        stream.next();
+                        if (stream.current()?.kind === TokenKind.NEWLINE) {
+                            stream.next();
+                        }
+                    }
+                }
+            }
+            
             thenBranch.push(stmt);
         } else {
             // If parseStatement returns null, check if the current token is 'endif', 'else', or 'elseif'
@@ -350,6 +436,26 @@ function parseIfBlock(
             }
             stream.next();
         }
+    }
+    
+    // Handle any remaining pending comments at end of then branch (make them orphaned)
+    if (pendingComments.length > 0) {
+        const groupedText = pendingComments.map(c => c.text).join('\n');
+        const groupedCodePos: CodePosition = {
+            startRow: pendingComments[0].codePos.startRow,
+            startCol: pendingComments[0].codePos.startCol,
+            endRow: pendingComments[pendingComments.length - 1].codePos.endRow,
+            endCol: pendingComments[pendingComments.length - 1].codePos.endCol
+        };
+        thenBranch.push({
+            type: 'comment',
+            comments: [{
+                text: groupedText,
+                codePos: groupedCodePos,
+                inline: false
+            }],
+            lineNumber: pendingComments[0].codePos.startRow
+        });
     }
 
     const result: IfBlock = {

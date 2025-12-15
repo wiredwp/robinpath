@@ -9,6 +9,7 @@ import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import type { DefineFunction, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
+import { CommentParser } from './CommentParser';
 
 export class DefineParser {
     /**
@@ -118,6 +119,7 @@ export class DefineParser {
         let endToken = startToken;
         let lastPosition = -1;
         let loopCount = 0;
+        let pendingComments: CommentWithPosition[] = []; // Comments to attach to next statement
 
         while (!stream.isAtEnd()) {
             const currentPosition = stream.getPosition();
@@ -167,27 +169,65 @@ export class DefineParser {
                 break;
             }
 
-            // Skip newlines and comments at the statement boundary
+            // Skip newlines
             if (t.kind === TokenKind.NEWLINE) {
                 stream.next();
+                // Check if next token is also newline (blank line) - if so, comments are orphaned
+                const nextToken = stream.current();
+                if (nextToken && nextToken.kind === TokenKind.NEWLINE) {
+                    // Blank line - any pending comments should be standalone
+                    if (pendingComments.length > 0) {
+                        // Create standalone comment node
+                        const groupedText = pendingComments.map(c => c.text).join('\n');
+                        const groupedCodePos: CodePosition = {
+                            startRow: pendingComments[0].codePos.startRow,
+                            startCol: pendingComments[0].codePos.startCol,
+                            endRow: pendingComments[pendingComments.length - 1].codePos.endRow,
+                            endCol: pendingComments[pendingComments.length - 1].codePos.endCol
+                        };
+                        body.push({
+                            type: 'comment',
+                            comments: [{
+                                text: groupedText,
+                                codePos: groupedCodePos,
+                                inline: false
+                            }],
+                            lineNumber: pendingComments[0].codePos.startRow
+                        });
+                        pendingComments = [];
+                    }
+                }
                 continue;
             }
 
             if (t.kind === TokenKind.COMMENT) {
-                // Parse comment statement
-                const commentBeforeParse = stream.getPosition();
-                const comment = parseComment(stream);
-                const commentAfterParse = stream.getPosition();
+                // Parse comment directly from token - collect it for potential attachment to next statement
+                const commentText = t.text.startsWith('#') 
+                    ? t.text.slice(1).trim() 
+                    : t.text.trim();
                 
-                // Ensure stream position advanced (parseComment should consume the comment token)
-                // If position didn't change OR we're still on a comment token, manually advance
-                const stillOnComment = stream.current()?.kind === TokenKind.COMMENT;
-                if (commentAfterParse === commentBeforeParse || stillOnComment) {
-                    stream.next(); // Manually advance if parseComment didn't
-                }
+                const commentCodePos: CodePosition = {
+                    startRow: t.line - 1,
+                    startCol: t.column,
+                    endRow: t.line - 1,
+                    endCol: t.column + t.text.length - 1
+                };
                 
-                if (comment) {
-                    body.push(comment);
+                // Check if this is an inline comment (on same line as previous statement)
+                // We'll determine this by checking if there's a newline before this comment
+                // For now, treat all comments as non-inline (they'll be attached as leading comments)
+                const comment: CommentWithPosition = {
+                    text: commentText,
+                    codePos: commentCodePos,
+                    inline: false
+                };
+                
+                pendingComments.push(comment);
+                
+                // Consume the comment token and its newline
+                stream.next();
+                if (stream.current()?.kind === TokenKind.NEWLINE) {
+                    stream.next();
                 }
                 continue;
             }
@@ -195,11 +235,74 @@ export class DefineParser {
             // Parse statement using the callback
             const stmt = parseStatement(stream);
             if (stmt) {
+                // Attach pending comments to this statement
+                if (pendingComments.length > 0) {
+                    CommentParser.attachComments(stmt, pendingComments);
+                    pendingComments = [];
+                }
+                
+                // Check for inline comment on the same line as the statement
+                if ('codePos' in stmt && stmt.codePos) {
+                    const statementLine = stmt.codePos.endRow;
+                    const currentToken = stream.current();
+                    if (currentToken && currentToken.kind === TokenKind.COMMENT) {
+                        // Check if comment is on the same line as the statement
+                        const commentLine = currentToken.line - 1; // Convert to 0-based
+                        if (commentLine === statementLine) {
+                            // This is an inline comment
+                            const commentText = currentToken.text.startsWith('#') 
+                                ? currentToken.text.slice(1).trim() 
+                                : currentToken.text.trim();
+                            
+                            const commentCodePos: CodePosition = {
+                                startRow: commentLine,
+                                startCol: currentToken.column,
+                                endRow: commentLine,
+                                endCol: currentToken.column + currentToken.text.length - 1
+                            };
+                            
+                            const inlineComment: CommentWithPosition = {
+                                text: commentText,
+                                codePos: commentCodePos,
+                                inline: true
+                            };
+                            
+                            CommentParser.attachComments(stmt, [inlineComment]);
+                            
+                            // Consume the inline comment token and its newline
+                            stream.next();
+                            if (stream.current()?.kind === TokenKind.NEWLINE) {
+                                stream.next();
+                            }
+                        }
+                    }
+                }
+                
                 body.push(stmt);
             } else {
                 // If we can't parse, skip the token to avoid infinite loop
                 stream.next();
             }
+        }
+        
+        // Handle any remaining pending comments at end of def block (make them orphaned)
+        if (pendingComments.length > 0) {
+            const groupedText = pendingComments.map(c => c.text).join('\n');
+            const groupedCodePos: CodePosition = {
+                startRow: pendingComments[0].codePos.startRow,
+                startCol: pendingComments[0].codePos.startCol,
+                endRow: pendingComments[pendingComments.length - 1].codePos.endRow,
+                endCol: pendingComments[pendingComments.length - 1].codePos.endCol
+            };
+            body.push({
+                type: 'comment',
+                comments: [{
+                    text: groupedText,
+                    codePos: groupedCodePos,
+                    inline: false
+                }],
+                lineNumber: pendingComments[0].codePos.startRow
+            });
         }
 
             // Build codePos from startToken to endToken

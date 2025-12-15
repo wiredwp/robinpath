@@ -22,6 +22,7 @@
     "push": "npm run build && npm publish --access public",
     "test": "npm run build && node test/run.js",
     "test-perform": "npm run build && node test/run-performance.js",
+    "test-code-convert": "npm run build && node test/test-code-convert.js",
     "cli": "npm run build && node bin/robinpath.js"
   },
   "files": [

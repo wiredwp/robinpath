@@ -2,9 +2,9 @@
  * Print assignment node
  */
 
-import type { PrintContext } from '../types';
-import { Writer } from '../Writer';
-import { Printer } from '../Printer';
+import type { PrintContext } from '../ASTToCodeConverter';
+import { Writer, Printer } from '../ASTToCodeConverter';
+import { getInlineComment, formatInlineComment } from './printComment';
 
 export function printAssignment(node: any, writer: Writer, ctx: PrintContext): void {
     const target = '$' + node.targetName + (node.targetPath?.map((seg: any) => 
@@ -63,11 +63,9 @@ export function printAssignment(node: any, writer: Writer, ctx: PrintContext): v
     }
     
     // Add inline comment if present
-    if (node.comments && Array.isArray(node.comments)) {
-        const inlineComment = node.comments.find((c: any) => c.inline === true && c.text && c.text.trim() !== '');
-        if (inlineComment) {
-            assignmentLine += `  # ${inlineComment.text}`;
-        }
+    const inlineComment = getInlineComment(node);
+    if (inlineComment) {
+        assignmentLine += formatInlineComment(inlineComment);
     }
     
     writer.pushLine(assignmentLine);

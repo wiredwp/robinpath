@@ -1564,9 +1564,9 @@ export class RobinPath {
      * @returns Updated source code
      */
     async updateCodeFromAST(originalScript: string, ast: any[]): Promise<string> {
-        console.log('---original------->', originalScript);
+        console.log('---original------->\n', originalScript);
         const result = await this.astToCodeConverter.updateCodeFromAST(originalScript, ast);
-        console.log('---result------->', result);
+        console.log('---result------->\n', result);
         return result;
     }
 

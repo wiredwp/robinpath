@@ -2,7 +2,7 @@
  * Print argument/expression code
  */
 
-import type { PrintContext } from '../types';
+import type { PrintContext } from '../ASTToCodeConverter';
 
 export function printArg(arg: any, _ctx: PrintContext): string | null {
     if (!arg) return null;

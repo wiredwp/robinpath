@@ -2,10 +2,10 @@
  * Print command node
  */
 
-import type { PrintContext } from '../types';
-import { Writer } from '../Writer';
+import type { PrintContext } from '../ASTToCodeConverter';
+import { Writer, Printer } from '../ASTToCodeConverter';
 import { printArg, printIntoTarget } from './printArg';
-import { Printer } from '../Printer';
+import { getInlineComment, formatInlineComment } from './printComment';
 
 export function printCommand(node: any, writer: Writer, ctx: PrintContext): void {
     // Special handling for _var command - just output the variable
@@ -172,11 +172,9 @@ export function printCommand(node: any, writer: Writer, ctx: PrintContext): void
     }
     
     // Add inline comment if present
-    if (node.comments && Array.isArray(node.comments)) {
-        const inlineComment = node.comments.find((c: any) => c.inline === true && c.text && c.text.trim() !== '');
-        if (inlineComment) {
-            commandLine += `  # ${inlineComment.text}`;
-        }
+    const inlineComment = getInlineComment(node);
+    if (inlineComment) {
+        commandLine += formatInlineComment(inlineComment);
     }
     
     writer.pushLine(commandLine);
