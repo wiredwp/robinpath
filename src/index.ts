@@ -1406,6 +1406,12 @@ export class RobinPath {
             base.comments = comments;
         }
 
+        // Add trailingBlankLines if present
+        const trailingBlankLines = (stmt as any).trailingBlankLines;
+        if (trailingBlankLines !== undefined && trailingBlankLines !== null) {
+            base.trailingBlankLines = trailingBlankLines;
+        }
+
         switch (stmt.type) {
             case 'command':
                 const moduleName = this.findModuleName(stmt.name, currentModuleContext);
@@ -1558,7 +1564,10 @@ export class RobinPath {
      * @returns Updated source code
      */
     async updateCodeFromAST(originalScript: string, ast: any[]): Promise<string> {
-        return this.astToCodeConverter.updateCodeFromAST(originalScript, ast);
+        console.log('---original------->', originalScript);
+        const result = await this.astToCodeConverter.updateCodeFromAST(originalScript, ast);
+        console.log('---result------->', result);
+        return result;
     }
 
     /**

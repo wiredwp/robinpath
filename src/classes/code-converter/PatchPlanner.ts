@@ -17,6 +17,7 @@ export class PatchPlanner {
     private lineIndex: LineIndex;
     private patches: Patch[] = [];
     private originalScript: string;
+    private originalAST: Statement[] | null = null;
 
     constructor(originalScript: string) {
         this.originalScript = originalScript;
@@ -33,9 +34,9 @@ export class PatchPlanner {
     async planPatches(ast: Statement[]): Promise<Patch[]> {
         this.patches = [];
 
-        // Get original AST to detect deletions
+        // Get original AST to detect deletions and compare for changes
         const parser = new Parser(this.originalScript);
-        const originalAST = await parser.parse();
+        this.originalAST = await parser.parse();
 
         // Create a set of codePos ranges from modified AST for fast lookup
         const modifiedRanges = new Set<string>();
@@ -47,7 +48,7 @@ export class PatchPlanner {
         }
 
         // Detect and plan patches for deleted nodes
-        for (const originalNode of originalAST) {
+        for (const originalNode of this.originalAST) {
             if ('codePos' in originalNode && originalNode.codePos) {
                 const key = `${originalNode.codePos.startRow}:${originalNode.codePos.startCol}:${originalNode.codePos.endRow}:${originalNode.codePos.endCol}`;
                 
@@ -67,7 +68,7 @@ export class PatchPlanner {
 
                     // If no overlap, this node was deleted
                     if (!hasOverlap) {
-                        this.planPatchForDeletedNode(originalNode, originalAST);
+                        this.planPatchForDeletedNode(originalNode, this.originalAST);
                     }
                 }
             }
@@ -143,7 +144,7 @@ export class PatchPlanner {
             const range = this.computeStatementRange(node, layout, next);
             if (!range) return;
 
-            const replacement = this.generateReplacement(node, layout);
+            const replacement = this.generateReplacement(node, layout, range);
             this.patches.push({
                 startOffset: range.startOffset,
                 endOffset: range.endOffset,
@@ -160,7 +161,7 @@ export class PatchPlanner {
             if (!range) return;
 
             // Generate replacement without leading comments (they're handled separately)
-            let replacement = this.generateReplacementWithoutLeadingComments(node);
+            let replacement = this.generateReplacementWithoutLeadingComments(node, range);
             
             // Handle new nodes being added beyond the end of the script
             // Similar to how comments are handled - need to add newline prefix
@@ -276,14 +277,72 @@ export class PatchPlanner {
      * Generate replacement without leading comments (for non-overlapping case)
      */
     private generateReplacementWithoutLeadingComments(
-        node: Statement
+        node: Statement,
+        range: { startOffset: number; endOffset: number }
     ): string {
-        const nodeCode = Printer.printNode(node, {
-            indentLevel: 0,
-            lineIndex: this.lineIndex
-        });
-
-        return nodeCode || '';
+        // Try to preserve original code formatting if the node hasn't changed
+        // Extract original code from the script
+        const originalCode = this.extractOriginalCode(node, range);
+        
+        if (originalCode !== null) {
+            // Node hasn't changed - use original code with formatting preserved
+            return originalCode;
+        }
+        
+        // Node has changed - regenerate but preserve indentation
+        const nodeCode = this.generateCodeWithPreservedIndentation(node, range);
+        
+        // Check if this is the last node in the file
+        const scriptLength = this.originalScript.length;
+        const isLastNode = range.endOffset >= scriptLength;
+        
+        // Try to use trailingBlankLines from the node first (before falling back to preserveBlankLinesInRange)
+        const nodeTrailingBlankLines = (node as any).trailingBlankLines;
+        let blankLines = '';
+        if (nodeTrailingBlankLines !== undefined && nodeTrailingBlankLines !== null) {
+            // For the last node, check if the original file had a trailing newline
+            if (isLastNode) {
+                const originalEndsWithNewline = this.originalScript.endsWith('\n');
+                // If original doesn't end with newline, don't add trailing blank lines
+                if (!originalEndsWithNewline) {
+                    blankLines = '';
+                } else if (nodeTrailingBlankLines === 1) {
+                    // Original ends with newline and trailingBlankLines=1 means the newline is already in the range
+                    blankLines = '';
+                } else {
+                    // Original ends with newline and trailingBlankLines > 1 means there were extra blank lines
+                    // But since it's the last node, we should only preserve what was there
+                    // The range already includes the newline, so we add (trailingBlankLines - 1) more
+                    const nodeType = node.type;
+                    const nodeName = (node as any).name || '';
+                    const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
+                    const traceComment = `# [BLANK] generateReplacement: count=${nodeTrailingBlankLines} after=${nodeInfo} from=node`;
+                    blankLines = '\n' + traceComment + '\n'.repeat(nodeTrailingBlankLines - 2);
+                }
+            } else {
+                // Not the last node - add trailing blank lines normally
+                const nodeType = node.type;
+                const nodeName = (node as any).name || '';
+                const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
+                const traceComment = `# [BLANK] generateReplacement: count=${nodeTrailingBlankLines} after=${nodeInfo} from=node`;
+                // Return: newline + comment + remaining blank lines
+                if (nodeTrailingBlankLines === 1) {
+                    blankLines = '\n' + traceComment;
+                } else {
+                    blankLines = '\n' + traceComment + '\n'.repeat(nodeTrailingBlankLines - 1);
+                }
+            }
+        } else {
+            // Fallback: preserve blank lines that were included in the range
+            // Note: nodeCode already ends with a newline, so we need to be careful
+            blankLines = this.preserveBlankLinesInRange(node, range);
+        }
+        
+        // The generated code should already end with a newline
+        // We only need to add the blank lines (which are additional newlines)
+        // So if blankLines is "\n\n", that means 2 blank lines after the node's line
+        // Note: preserveBlankLinesInRange already includes trace comments, so we just append
+        return (nodeCode || '') + blankLines;
     }
 
     /**
@@ -552,6 +611,9 @@ export class PatchPlanner {
         }
 
         const startOffset = this.lineIndex.offsetAt(startRow, startCol, false);
+        // For endOffset, we want to include the blank lines including their newlines
+        // But we need to be careful: if endRow is the last blank line, we want to include its newline
+        // So we use exclusive=true to get the offset after the last blank line (after its newline)
         const endOffset = this.lineIndex.offsetAt(endRow, endCol, true);
 
         return { startOffset, endOffset };
@@ -560,7 +622,11 @@ export class PatchPlanner {
     /**
      * Generate replacement text for a node
      */
-    private generateReplacement(node: Statement, layout: CommentLayoutType): string {
+    private generateReplacement(
+        node: Statement, 
+        layout: CommentLayoutType,
+        range: { startOffset: number; endOffset: number }
+    ): string {
         const parts: string[] = [];
 
         // Add leading comments
@@ -578,11 +644,21 @@ export class PatchPlanner {
             parts.push(...Array(layout.leadingGapLines).fill(''));
         }
 
-        // Add statement code
-        const nodeCode = Printer.printNode(node, {
-            indentLevel: 0,
-            lineIndex: this.lineIndex
-        });
+        // Try to preserve original code formatting if the node hasn't changed
+        const originalCode = this.extractOriginalCode(node, range);
+        
+        if (originalCode !== null && layout.leadingComments.length === 0) {
+            // Node hasn't changed and no leading comments - use original code
+            return originalCode;
+        }
+        
+        // Add statement code - preserve indentation if regenerating
+        const nodeCode = layout.leadingComments.length > 0
+            ? Printer.printNode(node, {
+                indentLevel: 0,
+                lineIndex: this.lineIndex
+            })
+            : this.generateCodeWithPreservedIndentation(node, range);
 
         if (nodeCode) {
             // Remove inline comment from nodeCode if it's already in layout
@@ -595,6 +671,299 @@ export class PatchPlanner {
             parts.push(nodeCode);
         }
 
-        return parts.join('\n');
+        const replacement = parts.join('\n');
+        
+        // Preserve blank lines that were included in the range
+        const blankLines = this.preserveBlankLinesInRange(node, range);
+        
+        // Note: preserveBlankLinesInRange already includes trace comments
+        return replacement + blankLines;
+    }
+
+    /**
+     * Preserve blank lines that were included in the range after the statement
+     */
+    private preserveBlankLinesInRange(
+        node: Statement,
+        range: { startOffset: number; endOffset: number }
+    ): string {
+        if (!('codePos' in node) || !node.codePos) {
+            return '';
+        }
+
+        // Check if this is the last node in the file
+        const scriptLength = this.originalScript.length;
+        const isLastNode = range.endOffset >= scriptLength;
+
+        // Try to get trailingBlankLines from the node first
+        let trailingBlankLines = (node as any).trailingBlankLines;
+        
+        // If not found in the modified node, try to find it from originalNode
+        if ((trailingBlankLines === undefined || trailingBlankLines === null) && this.originalAST) {
+            const originalNode = this.findOriginalNode(node);
+            if (originalNode) {
+                trailingBlankLines = (originalNode as any).trailingBlankLines;
+            }
+        }
+
+        if (trailingBlankLines !== undefined && trailingBlankLines !== null) {
+            // For the last node, check if the original file had a trailing newline
+            if (isLastNode) {
+                // Check if the original file ends with a newline
+                const originalEndsWithNewline = this.originalScript.endsWith('\n');
+                // If original doesn't end with newline, don't add trailing blank lines
+                if (!originalEndsWithNewline) {
+                    return '';
+                }
+                // If original ends with newline, trailingBlankLines should account for it
+                // trailingBlankLines=1 means there's a newline at the end (which is already in the range)
+                // So we don't need to add extra newlines
+                if (trailingBlankLines === 1) {
+                    return '';
+                }
+                // If trailingBlankLines > 1, it means there were multiple blank lines
+                // But for the last node, we should only preserve what was there
+                // Since the range already includes the newline, we add (trailingBlankLines - 1) more
+                return '\n'.repeat(trailingBlankLines - 1);
+            }
+            
+            // Not the last node - add trailing blank lines normally
+            if (trailingBlankLines === 1) {
+                return '\n';
+            } else {
+                return '\n'.repeat(trailingBlankLines - 1) + '\n';
+            }
+        }
+        
+        // No trailingBlankLines found in either node or originalNode - return empty
+        return '';
+    }
+
+    /**
+     * Extract original code from the script if the node hasn't changed
+     * Returns null if the node has changed and needs regeneration
+     * 
+     * This preserves all original formatting including:
+     * - Indentation (spaces and tabs)
+     * - Spacing within statements
+     * - Blank lines
+     */
+    private extractOriginalCode(
+        node: Statement,
+        range: { startOffset: number; endOffset: number }
+    ): string | null {
+        if (!('codePos' in node) || !node.codePos) {
+            return null;
+        }
+
+        // Check if this is a new node (being added)
+        const lineCount = this.lineIndex.lineCount();
+        if (node.codePos.startRow >= lineCount) {
+            // New node - must regenerate
+            return null;
+        }
+
+        // Check if the node has changed by comparing with original AST
+        if (this.originalAST) {
+            const originalNode = this.findOriginalNode(node);
+            const nodeType = node.type;
+            const nodeName = (node as any).name || '';
+            const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
+            
+            
+            if (originalNode && this.nodesAreEqual(node, originalNode)) {
+                // Node hasn't changed - use original code with all formatting preserved
+                const nodeStartOffset = this.lineIndex.offsetAt(
+                    node.codePos.startRow,
+                    node.codePos.startCol,
+                    false
+                );
+                const nodeEndOffset = this.lineIndex.offsetAt(
+                    node.codePos.endRow,
+                    node.codePos.endCol,
+                    true
+                );
+                // Extract original code - this includes the node's content but NOT the blank lines after it
+                // The blank lines are handled separately by preserveBlankLinesInRange
+                const originalCode = this.originalScript.substring(nodeStartOffset, nodeEndOffset);
+                
+                // Get blank lines using trailingBlankLines from AST (preferred) or from range
+                // Note: originalCode already ends with a newline (the node's line ending)
+                // So we only need to add the additional blank lines
+                // Try originalNode first (most reliable), then node
+                const originalTrailingBlankLines = (originalNode as any).trailingBlankLines;
+                const nodeTrailingBlankLines = (node as any).trailingBlankLines;
+                const trailingBlankLines = originalTrailingBlankLines ?? nodeTrailingBlankLines;
+                
+                // Check if this is the last node in the file
+                const scriptLength = this.originalScript.length;
+                const isLastNode = nodeEndOffset >= scriptLength;
+                
+                let blankLines = '';
+                if (trailingBlankLines !== undefined && trailingBlankLines !== null) {
+                    // For the last node, check if the original file had a trailing newline
+                    if (isLastNode) {
+                        const originalEndsWithNewline = this.originalScript.endsWith('\n');
+                        // If original doesn't end with newline, don't add trailing blank lines
+                        if (!originalEndsWithNewline) {
+                            blankLines = '';
+                        } else if (trailingBlankLines === 1) {
+                            // Original ends with newline and trailingBlankLines=1 means the newline is already in the range
+                            blankLines = '';
+                        } else {
+                            // Original ends with newline and trailingBlankLines > 1 means there were extra blank lines
+                            // But since it's the last node, we should only preserve what was there
+                            // The range already includes the newline, so we add (trailingBlankLines - 1) more
+                            const source = originalTrailingBlankLines !== undefined ? 'originalNode' : 'node';
+                            const traceComment = `# [BLANK] extractOriginalCode: count=${trailingBlankLines} after=${nodeInfo} from=${source}`;
+                            blankLines = '\n' + traceComment + '\n'.repeat(trailingBlankLines - 2);
+                        }
+                    } else {
+                        // Not the last node - add trailing blank lines normally
+                        const source = originalTrailingBlankLines !== undefined ? 'originalNode' : 'node';
+                        const traceComment = `# [BLANK] extractOriginalCode: count=${trailingBlankLines} after=${nodeInfo} from=${source}`;
+                        // Return: newline + comment + remaining blank lines
+                        if (trailingBlankLines === 1) {
+                            blankLines = '\n' + traceComment;
+                        } else {
+                            blankLines = '\n' + traceComment + '\n'.repeat(trailingBlankLines - 1);
+                        }
+                    }
+                } else {
+                    // No trailingBlankLines - use preserveBlankLinesInRange (which requires trailingBlankLines)
+                    // If trailingBlankLines is missing, this will return empty
+                    const debugInfo = `originalNode=${originalNode ? 'found' : 'NOT_FOUND'} originalNode.trailingBlankLines=${originalTrailingBlankLines} node.trailingBlankLines=${nodeTrailingBlankLines}`;
+                    blankLines = this.preserveBlankLinesInRange(node, range);
+                    // If blankLines is empty but we expected some, add a debug comment
+                    if (!blankLines && (originalTrailingBlankLines === undefined && nodeTrailingBlankLines === undefined)) {
+                        blankLines = `\n# [BLANK] extractOriginalCode: NO_TRAILING_BLANK_LINES (${debugInfo})`;
+                    }
+                }
+                
+                return originalCode + blankLines;
+            } else {
+                // Node not found or changed - must regenerate
+                return null;
+            }
+        }
+
+        // Node has changed or not found in original - must regenerate
+        return null;
+    }
+
+    /**
+     * Find the original node that corresponds to the modified node
+     */
+    private findOriginalNode(modifiedNode: Statement): Statement | null {
+        if (!('codePos' in modifiedNode) || !modifiedNode.codePos || !this.originalAST) {
+            return null;
+        }
+
+        // Find node with matching codePos
+        return this.originalAST.find(originalNode => {
+            if (!('codePos' in originalNode) || !originalNode.codePos) {
+                return false;
+            }
+            return originalNode.codePos.startRow === modifiedNode.codePos.startRow &&
+                   originalNode.codePos.startCol === modifiedNode.codePos.startCol &&
+                   originalNode.codePos.endRow === modifiedNode.codePos.endRow &&
+                   originalNode.codePos.endCol === modifiedNode.codePos.endCol;
+        }) || null;
+    }
+
+    /**
+     * Compare two nodes to see if they're equal (ignoring codePos)
+     */
+    private nodesAreEqual(node1: Statement, node2: Statement): boolean {
+        // Quick type check
+        if (node1.type !== node2.type) {
+            return false;
+        }
+
+        // Deep comparison of node properties (excluding codePos)
+        const node1Str = JSON.stringify(node1, (key, value) => {
+            return key === 'codePos' ? undefined : value;
+        });
+        const node2Str = JSON.stringify(node2, (key, value) => {
+            return key === 'codePos' ? undefined : value;
+        });
+
+        return node1Str === node2Str;
+    }
+
+    /**
+     * Generate code with preserved indentation and spacing from original
+     * This is used when we must regenerate code but want to preserve formatting
+     */
+    private generateCodeWithPreservedIndentation(
+        node: Statement,
+        _range: { startOffset: number; endOffset: number }
+    ): string {
+        if (!('codePos' in node) || !node.codePos) {
+            return Printer.printNode(node, {
+                indentLevel: 0,
+                lineIndex: this.lineIndex
+            }) || '';
+        }
+
+        // Check if this is a new node
+        const lineCount = this.lineIndex.lineCount();
+        if (node.codePos.startRow >= lineCount) {
+            // New node - use standard formatting
+            return Printer.printNode(node, {
+                indentLevel: 0,
+                lineIndex: this.lineIndex
+            }) || '';
+        }
+
+        // Extract original code to preserve its formatting patterns
+        const nodeStartOffset = this.lineIndex.offsetAt(
+            node.codePos.startRow,
+            node.codePos.startCol,
+            false
+        );
+        const nodeEndOffset = this.lineIndex.offsetAt(
+            node.codePos.endRow,
+            node.codePos.endCol,
+            true
+        );
+        const originalCode = this.originalScript.substring(nodeStartOffset, nodeEndOffset);
+        const originalLines = originalCode.split('\n');
+        
+        // Extract original indentation from the first line
+        const originalLine = this.lineIndex.getLine(node.codePos.startRow);
+        const originalIndent = originalLine.substring(0, node.codePos.startCol);
+        
+        // Generate new code
+        const newNodeCode = Printer.printNode(node, {
+            indentLevel: 0,
+            lineIndex: this.lineIndex
+        }) || '';
+        
+        // Apply original indentation and spacing patterns to the generated code
+        const lines = newNodeCode.split('\n');
+        const indentedLines = lines.map((line, index) => {
+            if (index === 0) {
+                // First line: use original indentation
+                return originalIndent + line.trimStart();
+            } else if (line.trim() === '') {
+                // Blank line: keep as is
+                return line;
+            } else if (index < originalLines.length) {
+                // Use original indentation for this line if available
+                const originalLineContent = originalLines[index];
+                const originalLineIndent = originalLineContent.match(/^(\s*)/)?.[1] || '';
+                return originalLineIndent + line.trimStart();
+            } else {
+                // New line not in original - preserve relative indentation
+                // Use the same indentation as the previous line
+                const prevLine: string = indentedLines[index - 1] || '';
+                const prevIndent: string = prevLine.match(/^(\s*)/)?.[1] || '';
+                // Add standard indentation increment (2 spaces) for nested content
+                return prevIndent + '  ' + line.trimStart();
+            }
+        });
+        
+        return indentedLines.join('\n');
     }
 }

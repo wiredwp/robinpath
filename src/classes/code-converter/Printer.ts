@@ -21,6 +21,7 @@ import { printArg } from './printers/printArg';
 export class Printer {
     /**
      * Print a statement node to code
+     * Note: trailingBlankLines are handled by PatchPlanner, not here
      */
     static printNode(node: Statement, ctx: PrintContext): string {
         const writer = new Writer();

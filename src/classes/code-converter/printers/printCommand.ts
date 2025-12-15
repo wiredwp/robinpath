@@ -20,8 +20,8 @@ export function printCommand(node: any, writer: Writer, ctx: PrintContext): void
         const subexprArg = node.args[0];
         // Handle both deprecated 'subexpr' type (with code) and new 'subexpression' type (with body)
         if (subexprArg.type === 'subexpr') {
-            writer.pushLine(`$(${subexprArg.code || ''})`);
-            return;
+        writer.pushLine(`$(${subexprArg.code || ''})`);
+        return;
         } else if (subexprArg.type === 'subexpression') {
             // Print subexpression with body
             const subexprBody = subexprArg.body || [];
@@ -45,10 +45,10 @@ export function printCommand(node: any, writer: Writer, ctx: PrintContext): void
                 writer.newline();
             } else {
                 // Single line
-                const bodyCode = subexprBody.map(stmt => {
+                const bodyCode = subexprBody.map((stmt: any) => {
                     const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: 0 });
                     return stmtCode ? stmtCode.trim() : '';
-                }).filter(code => code).join(' ');
+                }).filter((code: string) => code).join(' ');
                 writer.pushLine(`$(${bodyCode})`);
             }
             return;

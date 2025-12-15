@@ -26,6 +26,7 @@ import type { Environment } from '../index';
 export class Parser {
     private tokens: Token[];
     private stream: TokenStream;
+    private source: string; // Store source for blank line counting
     private extractedFunctions: DefineFunction[] = [];
     private extractedEventHandlers: OnBlock[] = [];
     private environment: Environment | null = null; // Optional environment for parse decorators
@@ -65,6 +66,7 @@ export class Parser {
      * @param environment - Optional environment for executing parse decorators
      */
     constructor(source: string, environment?: Environment | null) {
+        this.source = source;
         this.tokens = Lexer.tokenizeFull(source);
         this.stream = new TokenStream(this.tokens);
         this.environment = environment || null;
@@ -228,6 +230,8 @@ export class Parser {
                 }
                 // Attach inline comments if present
                 this.attachInlineComments(statement);
+                // Count blank lines after this statement
+                this.countTrailingBlankLines(statement);
                 statements.push(statement);
             } else {
                 // If we can't parse anything, check if there are orphaned decorators
@@ -1161,5 +1165,33 @@ export class Parser {
         };
         
         return serialize(obj);
+    }
+
+    /**
+     * Count trailing blank lines after a statement and store in trailingBlankLines
+     */
+    private countTrailingBlankLines(statement: Statement): void {
+        // CommentStatement doesn't have codePos, skip it
+        if (!('codePos' in statement) || !statement.codePos) return;
+        
+        const lines = this.source.split('\n');
+        const endRow = statement.codePos.endRow;
+        
+        // Count blank lines after this statement
+        let blankLineCount = 0;
+        for (let row = endRow + 1; row < lines.length; row++) {
+            const line = lines[row];
+            if (line.trim() === '') {
+                blankLineCount++;
+            } else {
+                // Stop at first non-blank line
+                break;
+            }
+        }
+        
+        // Store the count (only if > 0 to keep AST clean)
+        if (blankLineCount > 0) {
+            (statement as any).trailingBlankLines = blankLineCount;
+        }
     }
 }

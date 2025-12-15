@@ -250,6 +250,7 @@ export interface CommandCall {
     into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
     callback?: ScopeBlock; // Optional callback do block (for module functions)
     comments?: CommentWithPosition[]; // Comments attached to this command (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -266,6 +267,7 @@ export interface Assignment {
     isLastValue?: boolean; // True if assignment is from $ (last value)
     comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
     decorators?: DecoratorCall[]; // Decorators attached to this assignment
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -276,6 +278,7 @@ export interface ShorthandAssignment {
     type: 'shorthand';
     targetName: string;
     comments?: CommentWithPosition[]; // Comments attached to this shorthand assignment (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -292,6 +295,7 @@ export interface InlineIf {
     command: Statement;
     elseCommand?: Statement; // Optional else clause for inline if
     comments?: CommentWithPosition[]; // Comments attached to this inline if (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -306,6 +310,7 @@ export interface IfBlock {
     elseifBranches?: Array<{ condition: Expression; body: Statement[] }>;
     decorators?: DecoratorCall[]; // Decorators attached to this if block
     comments?: CommentWithPosition[]; // Comments attached to this if block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -316,6 +321,7 @@ export interface IfTrue {
     type: 'ifTrue';
     command: Statement;
     comments?: CommentWithPosition[]; // Comments attached to this iftrue (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -326,6 +332,7 @@ export interface IfFalse {
     type: 'ifFalse';
     command: Statement;
     comments?: CommentWithPosition[]; // Comments attached to this iffalse (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -343,6 +350,7 @@ export interface DefineFunction {
     body: Statement[];
     decorators?: DecoratorCall[]; // Decorators attached to this function (must be immediately before def)
     comments?: CommentWithPosition[]; // Comments attached to this function definition (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -356,6 +364,7 @@ export interface ScopeBlock {
     into?: { targetName: string; targetPath?: AttributePathSegment[] }; // Optional "into $var" assignment
     decorators?: DecoratorCall[]; // Decorators attached to this do block
     comments?: CommentWithPosition[]; // Comments attached to this scope block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -367,6 +376,7 @@ export interface TogetherBlock {
     blocks: ScopeBlock[]; // Only do blocks are allowed
     decorators?: DecoratorCall[]; // Decorators attached to this together block
     comments?: CommentWithPosition[]; // Comments attached to this together block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -384,6 +394,7 @@ export interface ForLoop {
     body: Statement[];
     decorators?: DecoratorCall[]; // Decorators attached to this for loop
     comments?: CommentWithPosition[]; // Comments attached to this for loop (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -398,6 +409,7 @@ export interface ReturnStatement {
     type: 'return';
     value?: Arg; // Optional value to return (if not provided, returns $)
     comments?: CommentWithPosition[]; // Comments attached to this return statement (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -407,6 +419,7 @@ export interface ReturnStatement {
 export interface BreakStatement {
     type: 'break';
     comments?: CommentWithPosition[]; // Comments attached to this break statement (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -416,6 +429,7 @@ export interface BreakStatement {
 export interface ContinueStatement {
     type: 'continue';
     comments?: CommentWithPosition[]; // Comments attached to this continue statement (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
@@ -432,6 +446,7 @@ export interface OnBlock {
     body: Statement[]; // Body statements that execute when event is triggered
     decorators?: DecoratorCall[]; // Decorators attached to this on block
     comments?: CommentWithPosition[]; // Comments attached to this on block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
     codePos: CodePosition; // Code position (row/col) in source code
 }
 
