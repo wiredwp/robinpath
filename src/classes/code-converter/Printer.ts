@@ -17,6 +17,7 @@ import { printDo } from './printers/printDo';
 import { printForLoop } from './printers/printForLoop';
 import { printComment } from './printers/printComment';
 import { printArg } from './printers/printArg';
+import { printOnBlock } from './printers/printOnBlock';
 
 export class Printer {
     /**
@@ -199,6 +200,7 @@ const printers: Record<string, PrinterFn> = {
     define: printDefine,
     do: printDo,
     forLoop: printForLoop,
+    onBlock: printOnBlock,
     return: (node, writer, ctx) => {
         if (node.value) {
             const valueCode = printArg(node.value, ctx);

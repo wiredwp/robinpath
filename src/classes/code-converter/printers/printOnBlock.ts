@@ -1,13 +1,13 @@
 /**
- * Print define (function definition) node
+ * Print onBlock (event handler) node
  */
 
 import type { PrintContext } from '../types';
 import { Writer } from '../Writer';
-import { printArg } from './printArg';
 import { Printer } from '../Printer';
+import { printArg } from './printArg';
 
-export function printDefine(node: any, writer: Writer, ctx: PrintContext): void {
+export function printOnBlock(node: any, writer: Writer, ctx: PrintContext): void {
     // Print decorators first (if any)
     if (node.decorators && Array.isArray(node.decorators) && node.decorators.length > 0) {
         for (const decorator of node.decorators) {
@@ -23,11 +23,9 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
         }
     }
     
-    // Print function definition
-    // Parameters must always start with $ prefix
-    const params = node.paramNames && node.paramNames.length > 0
-        ? node.paramNames.map((name: string) => '$' + name).join(' ')
-        : '';
+    // Print event handler definition
+    // Event name should be wrapped in quotes if it's a string literal
+    const eventNameStr = typeof node.eventName === 'string' ? `"${node.eventName}"` : String(node.eventName);
     
     // Get the header's indentation from original code if available
     let headerIndent = '';
@@ -42,10 +40,10 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
     // If we have header indent, use it; otherwise use current indent
     if (headerIndent) {
         writer.push(headerIndent);
-        writer.push(`def ${node.name}${params ? ' ' + params : ''}`);
+        writer.push(`on ${eventNameStr}`);
         writer.newline();
     } else {
-        writer.pushLine(`def ${node.name}${params ? ' ' + params : ''}`);
+        writer.pushLine(`on ${eventNameStr}`);
     }
     
     // Print body
@@ -69,9 +67,9 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
                         true  // exclusive: after the previous statement
                     );
                 } else {
-                    // First statement - start from the end of the block header (e.g., "def testAssign") to include leading blank lines
+                    // First statement - start from the end of the block header (e.g., "on "test"") to include leading blank lines
                     if ('codePos' in node && node.codePos) {
-                        // Start from the end of the block header line (def testAssign line)
+                        // Start from the end of the block header line (on "test" line)
                         // The block header is on node.codePos.startRow
                         const headerLineEnd = ctx.lineIndex.lineEndOffset(node.codePos.startRow);
                         stmtStartOffset = headerLineEnd;  // After the header line (includes newline)
@@ -103,9 +101,7 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
                         true
                     );
                 }
-                const extractedCode = ctx.originalScript.substring(stmtStartOffset, stmtEndOffset);
-                // Preserve the original code as-is (including indentation and blank lines)
-                stmtCode = extractedCode;
+                stmtCode = ctx.originalScript.substring(stmtStartOffset, stmtEndOffset);
                 extractedFromOriginal = true;
             }
             
@@ -133,12 +129,12 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
         }
     }
     
-    // Print enddef with the same indentation as the header
+    // Print endon with the same indentation as the header
     if (headerIndent) {
         writer.push(headerIndent);
-        writer.push('enddef');
+        writer.push('endon');
         writer.newline();
     } else {
-        writer.pushLine('enddef');
+        writer.pushLine('endon');
     }
 }

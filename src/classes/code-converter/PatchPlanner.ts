@@ -313,23 +313,15 @@ export class PatchPlanner {
                     // Original ends with newline and trailingBlankLines > 1 means there were extra blank lines
                     // But since it's the last node, we should only preserve what was there
                     // The range already includes the newline, so we add (trailingBlankLines - 1) more
-                    const nodeType = node.type;
-                    const nodeName = (node as any).name || '';
-                    const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
-                    const traceComment = `# [BLANK] generateReplacement: count=${nodeTrailingBlankLines} after=${nodeInfo} from=node`;
-                    blankLines = '\n' + traceComment + '\n'.repeat(nodeTrailingBlankLines - 2);
+                    blankLines =  '\n'.repeat(nodeTrailingBlankLines - 2) + '\n';
                 }
             } else {
                 // Not the last node - add trailing blank lines normally
-                const nodeType = node.type;
-                const nodeName = (node as any).name || '';
-                const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
-                const traceComment = `# [BLANK] generateReplacement: count=${nodeTrailingBlankLines} after=${nodeInfo} from=node`;
                 // Return: newline + comment + remaining blank lines
                 if (nodeTrailingBlankLines === 1) {
-                    blankLines = '\n' + traceComment;
+                    blankLines = '\n';
                 } else {
-                    blankLines = '\n' + traceComment + '\n'.repeat(nodeTrailingBlankLines - 1);
+                    blankLines = '\n'.repeat(nodeTrailingBlankLines - 1) + '\n';
                 }
             }
         } else {
@@ -363,7 +355,8 @@ export class PatchPlanner {
         // Generate comment code
         const commentCode = Printer.printNode(node, {
             indentLevel: 0,
-            lineIndex: this.lineIndex
+            lineIndex: this.lineIndex,
+            originalScript: this.originalScript
         });
 
         // Handle new nodes being added beyond the end of the script
@@ -656,7 +649,8 @@ export class PatchPlanner {
         const nodeCode = layout.leadingComments.length > 0
             ? Printer.printNode(node, {
                 indentLevel: 0,
-                lineIndex: this.lineIndex
+                lineIndex: this.lineIndex,
+                originalScript: this.originalScript
             })
             : this.generateCodeWithPreservedIndentation(node, range);
 
@@ -771,7 +765,29 @@ export class PatchPlanner {
             const nodeInfo = nodeName ? `${nodeType}:${nodeName}` : nodeType;
             
             
-            if (originalNode && this.nodesAreEqual(node, originalNode)) {
+            // For def and onBlock, check if body statements have changed
+            // If body statements changed, we need to regenerate to preserve formatting of changed statements
+            let shouldUseOriginalCode = originalNode && this.nodesAreEqual(node, originalNode);
+            if (shouldUseOriginalCode && (node.type === 'define' || node.type === 'onBlock')) {
+                // Check if any body statement has changed
+                const nodeBody = (node as any).body || [];
+                const originalBody = (originalNode as any).body || [];
+                if (nodeBody.length !== originalBody.length) {
+                    shouldUseOriginalCode = false;
+                } else {
+                    // Compare each body statement
+                    for (let i = 0; i < nodeBody.length; i++) {
+                        const stmt = nodeBody[i];
+                        const originalStmt = originalBody[i];
+                        if (!originalStmt || !this.nodesAreEqual(stmt, originalStmt)) {
+                            shouldUseOriginalCode = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldUseOriginalCode) {
                 // Node hasn't changed - use original code with all formatting preserved
                 const nodeStartOffset = this.lineIndex.offsetAt(
                     node.codePos.startRow,
@@ -902,7 +918,8 @@ export class PatchPlanner {
         if (!('codePos' in node) || !node.codePos) {
             return Printer.printNode(node, {
                 indentLevel: 0,
-                lineIndex: this.lineIndex
+                lineIndex: this.lineIndex,
+                originalScript: this.originalScript
             }) || '';
         }
 
@@ -912,7 +929,8 @@ export class PatchPlanner {
             // New node - use standard formatting
             return Printer.printNode(node, {
                 indentLevel: 0,
-                lineIndex: this.lineIndex
+                lineIndex: this.lineIndex,
+                originalScript: this.originalScript
             }) || '';
         }
 
@@ -937,32 +955,35 @@ export class PatchPlanner {
         // Generate new code
         const newNodeCode = Printer.printNode(node, {
             indentLevel: 0,
-            lineIndex: this.lineIndex
+            lineIndex: this.lineIndex,
+            originalScript: this.originalScript
         }) || '';
         
         // Apply original indentation and spacing patterns to the generated code
         const lines = newNodeCode.split('\n');
-        const indentedLines = lines.map((line, index) => {
+        const indentedLines: string[] = [];
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index];
             if (index === 0) {
                 // First line: use original indentation
-                return originalIndent + line.trimStart();
+                indentedLines.push(originalIndent + line.trimStart());
             } else if (line.trim() === '') {
                 // Blank line: keep as is
-                return line;
+                indentedLines.push(line);
             } else if (index < originalLines.length) {
                 // Use original indentation for this line if available
                 const originalLineContent = originalLines[index];
                 const originalLineIndent = originalLineContent.match(/^(\s*)/)?.[1] || '';
-                return originalLineIndent + line.trimStart();
+                indentedLines.push(originalLineIndent + line.trimStart());
             } else {
                 // New line not in original - preserve relative indentation
                 // Use the same indentation as the previous line
                 const prevLine: string = indentedLines[index - 1] || '';
                 const prevIndent: string = prevLine.match(/^(\s*)/)?.[1] || '';
                 // Add standard indentation increment (2 spaces) for nested content
-                return prevIndent + '  ' + line.trimStart();
+                indentedLines.push(prevIndent + '  ' + line.trimStart());
             }
-        });
+        }
         
         return indentedLines.join('\n');
     }

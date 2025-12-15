@@ -32,6 +32,7 @@ export interface CommentLayout {
 export interface PrintContext {
     indentLevel: number;
     lineIndex: LineIndex;
+    originalScript?: string; // Optional: original script for extracting original code
 }
 
 /**
