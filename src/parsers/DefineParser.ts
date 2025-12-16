@@ -26,7 +26,7 @@ export class DefineParser {
     static async parse(
         stream: TokenStream,
         parseStatement: (stream: TokenStream) => Statement | null,
-        parseComment: (stream: TokenStream) => Statement | null,
+        _parseComment: (stream: TokenStream) => Statement | null, // eslint-disable-line @typescript-eslint/no-unused-vars
         decorators?: DecoratorCall[],
         environment?: Environment | null
     ): Promise<DefineFunction> {

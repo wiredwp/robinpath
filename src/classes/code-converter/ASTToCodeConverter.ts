@@ -24,6 +24,9 @@ import { printDefine } from './printers/printDefine';
 import { printDo } from './printers/printDo';
 import { printForLoop } from './printers/printForLoop';
 import { printComment } from './printers/printComment';
+import { printChunkMarker } from './printers/printChunkMarker';
+import { printCellBlock } from './printers/printCellBlock';
+import { printPromptBlock } from './printers/printPromptBlock';
 import { printArg } from './printers/printArg';
 import { printOnBlock } from './printers/printOnBlock';
 
@@ -601,6 +604,9 @@ const printers: Record<string, PrinterFn> = {
         writer.pushLine('continue');
     },
     comment: printComment,
+    chunk_marker: printChunkMarker,
+    cell: printCellBlock,
+    prompt_block: printPromptBlock,
 };
 
 // ============================================================================

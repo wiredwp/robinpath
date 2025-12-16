@@ -1,0 +1,5 @@
+--- chunk:main ---
+$age = 18
+--- chunk:part2 tags:llm cache=content_hash ---
+log "hi"
+

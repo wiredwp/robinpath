@@ -63,6 +63,9 @@ export type {
     BreakStatement,
     OnBlock,
     CommentStatement,
+    ChunkMarkerStatement,
+    CellBlock,
+    PromptBlockStatement,
     CommentWithPosition,
     CodePosition,
     DecoratorCall

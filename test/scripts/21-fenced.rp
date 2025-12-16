@@ -1,0 +1,86 @@
+# Test 1: Chunk marker
+--- chunk:main ---
+$age = 18
+
+# Test 2: Chunk marker with metadata
+--- chunk:extract_invoice tags:llm cache=content_hash ---
+log "processing invoice"
+
+# Test 3: Cell block with code
+---cell code id:main---
+$name = "Alice"
+log "Hello, " + $name
+---end---
+
+# Test 4: Cell block with prompt type
+---cell prompt id:sys role:system---
+You are a helpful assistant.
+Please be concise and clear.
+---end---
+
+# Test 5: Prompt block (bare fences)
+---
+You are a helpful assistant.
+This is a prompt block.
+It can contain multiple lines.
+---
+
+# Test 6: Mixed fences - chunk, cell, and prompt
+--- chunk:test ---
+---cell code id:test_code---
+$result = 42
+log "Result: " + $result
+---end---
+---
+This is a prompt inside a chunk.
+It should be preserved.
+---
+
+# Test 7: Cell with code and nested prompt
+---cell code id:nested---
+$value = 10
+---
+This is a prompt inside a code cell.
+It should be preserved as raw text.
+---
+log "Done"
+---end---
+
+# Test 8: Multiple chunk markers
+--- chunk:part1 ---
+$part1 = "first"
+--- chunk:part2 tags:test priority:high ---
+$part2 = "second"
+log $part1 + " " + $part2
+
+# Test 9: Cell with metadata (id first, then sorted)
+---cell code id:main priority:high tags:test---
+$test = true
+---end---
+
+# Test 10: Empty cell
+---cell code id:empty---
+---end---
+
+# Test 11: Empty prompt block
+---
+
+---
+
+# Test 12: Prompt block with blank lines
+---
+Line 1
+
+Line 3
+---
+
+# Test 13: Schema cell
+---cell schema id:Invoice format:json---
+{
+  "type": "object",
+  "properties": {
+    "amount": { "type": "number" }
+  }
+}
+---end---
+

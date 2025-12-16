@@ -36,12 +36,12 @@ function getLeadingComments(stmt: any): CommentWithPosition[] {
     if (stmt?.comments && Array.isArray(stmt.comments)) {
         return stmt.comments.filter((c: any) => !c.inline);
     }
-    
+
     // Fall back to old format (stmt.leadingComments)
     if (stmt?.leadingComments && Array.isArray(stmt.leadingComments)) {
         return stmt.leadingComments;
     }
-    
+
     return [];
 }
 
@@ -52,7 +52,7 @@ export function getInlineComment(stmt: any): CommentWithPosition | null {
     if (!stmt?.comments || !Array.isArray(stmt.comments)) {
         return null;
     }
-    
+
     return stmt.comments.find((c: any) => c.inline === true) || null;
 }
 
@@ -73,7 +73,7 @@ export function formatInlineComment(comment: CommentWithPosition | null): string
 export function emitLeadingComments(
     stmt: any,
     writer: Writer,
-    ctx: PrintContext,
+    _ctx: PrintContext,
     indentLevel: number
 ): boolean {
     const leadingComments = getLeadingComments(stmt);
@@ -95,7 +95,7 @@ export function emitLeadingComments(
         if (commentCode) {
             writer.push(commentCode.endsWith('\n') ? commentCode : commentCode + '\n');
         }
-        
+
         // Check if there's a blank line gap before the next comment
         if (i < leadingComments.length - 1) {
             const nextComment = leadingComments[i + 1];
@@ -106,7 +106,7 @@ export function emitLeadingComments(
             }
         }
     }
-    
+
     return true;
 }
 
@@ -121,12 +121,12 @@ export function emitBlankLineAfterComments(
     if (!stmt || !('codePos' in stmt) || !stmt.codePos) {
         return;
     }
-    
+
     const leadingComments = getLeadingComments(stmt);
     if (leadingComments.length === 0) {
         return;
     }
-    
+
     const lastComment = leadingComments[leadingComments.length - 1];
     const gap = stmt.codePos.startRow - (lastComment?.codePos?.endRow ?? 0);
     // If gap > 1, there's at least one blank line between last comment and statement
@@ -147,12 +147,12 @@ export function emitBlankLineBetweenStatements(
     if (!prevStmt || !currentStmt) {
         return;
     }
-    
+
     if (!('codePos' in prevStmt) || !prevStmt.codePos ||
         !('codePos' in currentStmt) || !currentStmt.codePos) {
         return;
     }
-    
+
     const prevEndRow = prevStmt.codePos.endRow;
     // Get the start row of the current statement or its first leading comment
     let currentStartRow = currentStmt.codePos.startRow;
@@ -160,7 +160,7 @@ export function emitBlankLineBetweenStatements(
     if (leadingComments.length > 0 && leadingComments[0]?.codePos) {
         currentStartRow = leadingComments[0].codePos.startRow;
     }
-    
+
     const gap = currentStartRow - prevEndRow;
     // If gap > 1, there's at least one blank line between statements
     if (gap > 1) {

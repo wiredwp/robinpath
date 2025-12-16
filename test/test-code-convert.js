@@ -48,22 +48,27 @@ const testFiles = [
     '18-template-strings.rp',
     '19-last-value.rp',
     '20-comments.rp',
+    '21-fenced.rp',
 ];
 
 /**
- * Split code into blocks separated by "---" lines
+ * Split code into blocks separated by "--- chunk:<id> ---" lines
  */
 function splitIntoBlocks(code) {
     const lines = code.split('\n');
     const blocks = [];
     let currentBlock = [];
     
+    // Regex to match chunk markers: --- chunk:<id> [meta] ---
+    const chunkMarkerRegex = /^\s*---\s*chunk:([A-Za-z_][A-Za-z0-9_-]*)\b.*?---\s*$/;
+    
     for (const line of lines) {
-        if (line.trim() === '---') {
+        if (chunkMarkerRegex.test(line)) {
             if (currentBlock.length > 0) {
                 blocks.push(currentBlock.join('\n'));
                 currentBlock = [];
             }
+            // Don't include the chunk marker line in the block
         } else {
             currentBlock.push(line);
         }
@@ -135,12 +140,12 @@ async function testFile(testNumber) {
         throw new Error(`Failed to read file: ${filePath}\n${error.message}`);
     }
     
-    // Split into blocks if "---" separator exists
+    // Split into blocks if "--- chunk:<id> ---" separator exists
     const blocks = splitIntoBlocks(originalCode);
     const hasMultipleBlocks = blocks.length > 1;
     
     if (hasMultipleBlocks) {
-        console.log(`Found ${blocks.length} test block(s) separated by "---"`);
+        console.log(`Found ${blocks.length} test block(s) separated by chunk markers`);
         console.log('');
     }
     
@@ -244,6 +249,10 @@ async function testFile(testNumber) {
                     filename,
                     discrepancies: comparison.discrepancies
                 });
+                
+                // Stop processing further blocks on mismatch
+                console.log(`\n  ⚠ Stopping at ${blockName} due to code mismatch`);
+                break;
             }
             
         } catch (error) {
@@ -255,6 +264,10 @@ async function testFile(testNumber) {
                 error: error.message,
                 stack: error.stack
             });
+            
+            // Stop processing further blocks on error
+            console.log(`\n  ⚠ Stopping at ${blockName} due to error`);
+            break;
         }
     }
     
@@ -279,11 +292,17 @@ async function testFile(testNumber) {
     
     if (allErrors.length === 0) {
         console.log(`✓ Test ${testNumber} (${filename}) PASSED`);
+        if (hasMultipleBlocks && blockNumber < blocks.length) {
+            console.log(`  (Processed ${blockNumber} of ${blocks.length} block(s))`);
+        }
         console.log('='.repeat(80));
         return true;
     } else {
         console.log(`✗ Test ${testNumber} (${filename}) FAILED`);
         console.log(`  ${allErrors.length} error(s) found`);
+        if (hasMultipleBlocks && blockNumber < blocks.length) {
+            console.log(`  (Stopped at block ${blockNumber} of ${blocks.length})`);
+        }
         console.log('='.repeat(80));
         return false;
     }

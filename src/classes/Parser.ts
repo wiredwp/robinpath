@@ -19,6 +19,10 @@ import { ObjectLiteralParser } from '../parsers/ObjectLiteralParser';
 import { ArrayLiteralParser } from '../parsers/ArrayLiteralParser';
 import { SubexpressionParser } from '../parsers/SubexpressionParser';
 import { CommentParser } from '../parsers/CommentParser';
+import { parseChunkMarker } from '../parsers/ChunkMarkerParser';
+import { parseCellBlock } from '../parsers/CellBlockParser';
+import { parsePromptBlock } from '../parsers/PromptBlockParser';
+import { classifyFenceLine } from '../parsers/FenceClassifier';
 import { LexerUtils } from '../utils';
 import type { Statement, CommentWithPosition, CodePosition, DefineFunction, OnBlock, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
@@ -37,7 +41,7 @@ export class Parser {
      * Maximum number of iterations allowed before detecting an infinite loop
      */
     static readonly MAX_STUCK_ITERATIONS = 100;
-    
+
     /**
      * Debug mode flag - set to true to enable logging
      * Can be controlled via VITE_DEBUG environment variable or set programmatically
@@ -90,12 +94,12 @@ export class Parser {
             parseIteration++;
             const currentIndex = this.stream.getPosition();
             const token = this.stream.current();
-            
+
             if (Parser.debug) {
                 const timestamp = new Date().toISOString();
                 console.log(`[Parser.parse] [${timestamp}] Iteration ${parseIteration}, position: ${currentIndex}, token: ${token?.text || 'null'} (${token?.kind || 'EOF'}), line: ${token?.line || 'N/A'}`);
             }
-            
+
             // Detect if we're stuck (position not advancing)
             // TokenStream now has its own stuck detection, but we keep this as a backup
             if (currentIndex === lastPosition) {
@@ -143,156 +147,222 @@ export class Parser {
                 continue;
             }
 
-            // Handle comments using CommentParser
-            const currentToken = this.stream.current();
-            const isComment = currentToken?.kind === TokenKind.COMMENT;
-            const checkResult = this.stream.check(TokenKind.COMMENT);
-            
-            if (isComment || checkResult) {
+            // Check for fences first (before comments and other statements)
+            // Priority order: cell_open, cell_end, chunk_marker, prompt_fence
+            // Check if current line starts with "---" by examining the raw line
+            if (token) {
+                const lines = this.source.split('\n');
+                const lineIndex = token.line - 1;
+                if (lineIndex >= 0 && lineIndex < lines.length) {
+                    const rawLine = lines[lineIndex];
+                    const trimmedLine = rawLine.trim();
+
+                    // Check if line starts with "---" (could be tokenized as separate tokens)
+                    if (trimmedLine.startsWith('---')) {
+                        const fenceClass = classifyFenceLine(rawLine);
+
+                        if (fenceClass) {
+                            // Priority 1: Cell open
+                            if (fenceClass.kind === 'cell_open') {
+                                if (Parser.debug) {
+                                    const timestamp = new Date().toISOString();
+                                    console.log(`[Parser.parse] [${timestamp}] Parsing cell block: ${fenceClass.cellType} at ${currentIndex}`);
+                                }
+                                const cellBlock = await parseCellBlock(
+                                    this.stream,
+                                    this.source,
+                                    (s) => this.parseStatementFromStream(s)
+                                );
+                                if (cellBlock) {
+                                    statements.push(cellBlock);
+                                    continue;
+                                }
+                            }
+                            // Priority 2: Cell end (should not appear at top level)
+                            else if (fenceClass.kind === 'cell_end') {
+                                throw new Error(
+                                    `Unexpected ---end--- at line ${token.line}. ` +
+                                    `Cell end fence must appear inside a cell block.`
+                                );
+                            }
+                            // Priority 3: Chunk marker
+                            else if (fenceClass.kind === 'chunk_marker') {
+                                if (Parser.debug) {
+                                    const timestamp = new Date().toISOString();
+                                    console.log(`[Parser.parse] [${timestamp}] Parsed chunk marker: ${fenceClass.id} at ${currentIndex}`);
+                                }
+                                const chunkMarker = parseChunkMarker(this.stream, this.source);
+                                if (chunkMarker) {
+                                    statements.push(chunkMarker);
+                                    continue;
+                                }
+                            }
+                            // Priority 4: Prompt fence
+                            else if (fenceClass.kind === 'prompt_fence') {
+                                if (Parser.debug) {
+                                    const timestamp = new Date().toISOString();
+                                    console.log(`[Parser.parse] [${timestamp}] Parsing prompt block at ${currentIndex}`);
+                                }
+                                const promptBlock = parsePromptBlock(this.stream, this.source);
+                                if (promptBlock) {
+                                    statements.push(promptBlock);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Handle comments using CommentParser
+                // Reuse token from top of loop
+                const isComment = token?.kind === TokenKind.COMMENT;
+                const checkResult = this.stream.check(TokenKind.COMMENT);
+
+                if (isComment || checkResult) {
+                    if (Parser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[Parser.parse] [${timestamp}] Parsing comment at ${currentIndex}`);
+                    }
+                    const commentResult = CommentParser.parseComments(this.stream);
+
+                    if (commentResult.consumed) {
+                        if (commentResult.commentNode) {
+                            // Orphaned comment (separated by blank line) - add as standalone node
+                            statements.push(commentResult.commentNode);
+                        } else if (commentResult.comments.length > 0) {
+                            // Comments to attach to next statement
+                            this.pendingComments.push(...commentResult.comments);
+                        }
+                    }
+                    continue;
+                }
+
+                // Collect decorators into buffer
+                // Reuse token from top of loop
+                // Use direct comparison instead of check() due to potential bug
+                const isDecorator = token?.kind === TokenKind.DECORATOR;
+                if (isDecorator) {
+                    const decoratorResult = parseDecorators(this.stream, {
+                        parseStatement: (s) => this.parseStatementFromStream(s),
+                        parseComment: (s) => this.parseCommentFromStream(s)
+                    });
+                    this.decoratorBuffer.push(...decoratorResult.decorators);
+                    // parseDecorators should have left the stream at the next token (e.g., 'def')
+                    continue;
+                }
+
+                // Check for special __ast__ command
+                if (token && (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) && token.text === '__ast__') {
+                    // Consume the __ast__ token
+                    this.stream.next();
+
+                    // Skip whitespace and comments
+                    this.stream.skipWhitespaceAndComments();
+
+                    // Check if there's a function name following
+                    const nextToken = this.stream.current();
+                    if (nextToken && (nextToken.kind === TokenKind.IDENTIFIER || nextToken.kind === TokenKind.KEYWORD)) {
+                        // There's a function name - show that function's AST
+                        const functionName = nextToken.text;
+                        this.stream.next(); // Consume the function name
+
+                        // Look up the function
+                        const func = this.extractedFunctions.find(f => f.name === functionName);
+                        if (func) {
+                            const serialized = this.serializeAST(func);
+                            console.log(`AST for function "${functionName}":`, JSON.stringify(serialized, null, 2));
+                        } else {
+                            console.log(`Function "${functionName}" not found. Available functions:`, this.extractedFunctions.map(f => f.name).join(', ') || 'none');
+                        }
+                    } else {
+                        // No function name - show current AST
+                        const serialized = this.serializeAST(statements);
+                        console.log('Current AST:', JSON.stringify(serialized, null, 2));
+                    }
+                    continue;
+                }
+
+                // Try to parse a statement
                 if (Parser.debug) {
                     const timestamp = new Date().toISOString();
-                    console.log(`[Parser.parse] [${timestamp}] Parsing comment at ${currentIndex}`);
+                    console.log(`[Parser.parse] [${timestamp}] Attempting to parse statement at ${currentIndex}`);
                 }
-                const commentResult = CommentParser.parseComments(this.stream);
-                
-                if (commentResult.consumed) {
-                    if (commentResult.commentNode) {
-                        // Orphaned comment (separated by blank line) - add as standalone node
-                        statements.push(commentResult.commentNode);
-                    } else if (commentResult.comments.length > 0) {
-                        // Comments to attach to next statement
-                        this.pendingComments.push(...commentResult.comments);
+                const statement = await this.parseStatement();
+                if (statement) {
+                    if (Parser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[Parser.parse] [${timestamp}] Parsed statement type: ${statement.type} at ${currentIndex}`);
                     }
-                }
-                continue;
-            }
-
-            // Collect decorators into buffer
-            const currentTokenForDecoratorCheck = this.stream.current();
-            // Use direct comparison instead of check() due to potential bug
-            const isDecorator = currentTokenForDecoratorCheck?.kind === TokenKind.DECORATOR;
-            if (isDecorator) {
-                const decoratorResult = parseDecorators(this.stream, {
-                    parseStatement: (s) => this.parseStatementFromStream(s),
-                    parseComment: (s) => this.parseCommentFromStream(s)
-                });
-                this.decoratorBuffer.push(...decoratorResult.decorators);
-                // parseDecorators should have left the stream at the next token (e.g., 'def')
-                continue;
-            }
-
-            // Check for special __ast__ command
-            if (token && (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) && token.text === '__ast__') {
-                // Consume the __ast__ token
-                this.stream.next();
-                
-                // Skip whitespace and comments
-                this.stream.skipWhitespaceAndComments();
-                
-                // Check if there's a function name following
-                const nextToken = this.stream.current();
-                if (nextToken && (nextToken.kind === TokenKind.IDENTIFIER || nextToken.kind === TokenKind.KEYWORD)) {
-                    // There's a function name - show that function's AST
-                    const functionName = nextToken.text;
-                    this.stream.next(); // Consume the function name
-                    
-                    // Look up the function
-                    const func = this.extractedFunctions.find(f => f.name === functionName);
-                    if (func) {
-                        const serialized = this.serializeAST(func);
-                        console.log(`AST for function "${functionName}":`, JSON.stringify(serialized, null, 2));
-                    } else {
-                        console.log(`Function "${functionName}" not found. Available functions:`, this.extractedFunctions.map(f => f.name).join(', ') || 'none');
+                    // Attach pending comments (above the statement)
+                    if (this.pendingComments.length > 0) {
+                        CommentParser.attachComments(statement, this.pendingComments);
+                        this.pendingComments = [];
                     }
+                    // Attach inline comments if present
+                    this.attachInlineComments(statement);
+                    // Count blank lines after this statement
+                    this.countTrailingBlankLines(statement);
+                    statements.push(statement);
                 } else {
-                    // No function name - show current AST
-                    const serialized = this.serializeAST(statements);
-                    console.log('Current AST:', JSON.stringify(serialized, null, 2));
+                    // If we can't parse anything, check if there are orphaned decorators
+                    if (this.decoratorBuffer.length > 0) {
+                        console.log(this.decoratorBuffer);
+
+                        throw new Error(
+                            `Orphaned decorators found at line ${token?.line || 'unknown'}. ` +
+                            `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                            `Found ${this.decoratorBuffer.length} unclaimed decorator(s) before '${token?.text || 'unknown'}'.`
+                        );
+                    }
+                    // If we can't parse anything, skip the current token to avoid infinite loop
+                    if (Parser.debug) {
+                        const timestamp = new Date().toISOString();
+                        console.log(`[Parser.parse] [${timestamp}] WARNING: Could not parse statement at ${currentIndex}, skipping token: ${token?.text || 'null'}`);
+                    }
+                    const skippedToken = this.stream.next();
+                    if (!skippedToken) break;
                 }
-                continue;
             }
 
-            // Try to parse a statement
+            // Check for orphaned decorators at end of file
+            if (this.decoratorBuffer.length > 0) {
+                throw new Error(
+                    `Orphaned decorators found at end of file. ` +
+                    `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                    `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
+                );
+            }
+
+            // Handle any pending comments at end of file (make them orphaned)
+            if (this.pendingComments.length > 0) {
+                const groupedText = this.pendingComments.map(c => c.text).join('\n');
+                const groupedCodePos: CodePosition = {
+                    startRow: this.pendingComments[0].codePos.startRow,
+                    startCol: this.pendingComments[0].codePos.startCol,
+                    endRow: this.pendingComments[this.pendingComments.length - 1].codePos.endRow,
+                    endCol: this.pendingComments[this.pendingComments.length - 1].codePos.endCol
+                };
+
+                statements.push({
+                    type: 'comment',
+                    comments: [{
+                        text: groupedText,
+                        codePos: groupedCodePos,
+                        inline: false
+                    }],
+                    lineNumber: this.pendingComments[0].codePos.startRow
+                });
+                this.pendingComments = [];
+            }
+
             if (Parser.debug) {
                 const timestamp = new Date().toISOString();
-                console.log(`[Parser.parse] [${timestamp}] Attempting to parse statement at ${currentIndex}`);
+                console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
             }
-            const statement = await this.parseStatement();
-            if (statement) {
-                if (Parser.debug) {
-                    const timestamp = new Date().toISOString();
-                    console.log(`[Parser.parse] [${timestamp}] Parsed statement type: ${statement.type} at ${currentIndex}`);
-                }
-                // Attach pending comments (above the statement)
-                if (this.pendingComments.length > 0) {
-                    CommentParser.attachComments(statement, this.pendingComments);
-                    this.pendingComments = [];
-                }
-                // Attach inline comments if present
-                this.attachInlineComments(statement);
-                // Count blank lines after this statement
-                this.countTrailingBlankLines(statement);
-                statements.push(statement);
-            } else {
-                // If we can't parse anything, check if there are orphaned decorators
-                if (this.decoratorBuffer.length > 0) {
-            console.log(this.decoratorBuffer);
-                    
-                    throw new Error(
-                        `Orphaned decorators found at line ${token?.line || 'unknown'}. ` +
-                        `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
-                        `Found ${this.decoratorBuffer.length} unclaimed decorator(s) before '${token?.text || 'unknown'}'.`
-                    );
-                }
-                // If we can't parse anything, skip the current token to avoid infinite loop
-                if (Parser.debug) {
-                    const timestamp = new Date().toISOString();
-                    console.log(`[Parser.parse] [${timestamp}] WARNING: Could not parse statement at ${currentIndex}, skipping token: ${token?.text || 'null'}`);
-                }
-                const skippedToken = this.stream.next();
-                if (!skippedToken) break;
-            }
-        }
-        
-        // Check for orphaned decorators at end of file
-        if (this.decoratorBuffer.length > 0) {
-            throw new Error(
-                `Orphaned decorators found at end of file. ` +
-                `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
-                `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
-            );
-        }
-        
-        // Handle any pending comments at end of file (make them orphaned)
-        if (this.pendingComments.length > 0) {
-            const groupedText = this.pendingComments.map(c => c.text).join('\n');
-            const groupedCodePos: CodePosition = {
-                startRow: this.pendingComments[0].codePos.startRow,
-                startCol: this.pendingComments[0].codePos.startCol,
-                endRow: this.pendingComments[this.pendingComments.length - 1].codePos.endRow,
-                endCol: this.pendingComments[this.pendingComments.length - 1].codePos.endCol
-            };
-            
-            statements.push({
-                type: 'comment',
-                comments: [{
-                    text: groupedText,
-                    codePos: groupedCodePos,
-                    inline: false
-                }],
-                lineNumber: this.pendingComments[0].codePos.startRow
-            });
-            this.pendingComments = [];
-        }
-        
-        if (Parser.debug) {
-            const timestamp = new Date().toISOString();
-            console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
-        }
 
-        return statements;
+            return statements;
+        }
     }
-
 
     /**
      * Parse a statement from a stream (for use in DefineParser)
@@ -307,7 +377,7 @@ export class Parser {
             while (true) {
                 const nextToken = stream.peek(offset);
                 if (!nextToken) break;
-                if (nextToken.kind === TokenKind.COMMENT || 
+                if (nextToken.kind === TokenKind.COMMENT ||
                     (nextToken.kind === TokenKind.NEWLINE && stream.peek(offset + 1)?.kind !== TokenKind.EOF)) {
                     offset++;
                     continue;
@@ -552,8 +622,8 @@ export class Parser {
             return {
                 type: 'command',
                 name: '_subexpr',
-                args: [{ 
-                    type: 'subexpression', 
+                args: [{
+                    type: 'subexpression',
                     body: subexpr.body,
                     codePos: subexpr.codePos
                 }],
@@ -601,8 +671,8 @@ export class Parser {
                 startLine = token.line - 1;
             }
 
-            const commentText = token.text.startsWith('#') 
-                ? token.text.slice(1).trim() 
+            const commentText = token.text.startsWith('#')
+                ? token.text.slice(1).trim()
                 : token.text.trim();
 
             const codePos: CodePosition = {
@@ -658,12 +728,12 @@ export class Parser {
             }
             return null;
         }
-        
+
         if (Parser.debug) {
             const timestamp = new Date().toISOString();
             console.log(`[Parser.parseStatement] [${timestamp}] Parsing statement at position ${this.stream.getPosition()}, token: ${token.text} (${token.kind}), line: ${token.line}`);
         }
-        
+
         // Get the current token
         const currentToken = this.stream.current();
         if (!currentToken) {
@@ -677,14 +747,14 @@ export class Parser {
             while (true) {
                 const nextToken = this.stream.peek(offset);
                 if (!nextToken) break;
-                
+
                 // Skip comments and newlines
-                if (nextToken.kind === TokenKind.COMMENT || 
+                if (nextToken.kind === TokenKind.COMMENT ||
                     (nextToken.kind === TokenKind.NEWLINE && this.stream.peek(offset + 1)?.kind !== TokenKind.EOF)) {
                     offset++;
                     continue;
                 }
-                
+
                 // Found the next non-whitespace token
                 if (nextToken.kind === TokenKind.ASSIGN) {
                     const assignment = AssignmentParser.parse(this.stream, {
@@ -950,8 +1020,8 @@ export class Parser {
             return {
                 type: 'command',
                 name: '_subexpr',
-                args: [{ 
-                    type: 'subexpression', 
+                args: [{
+                    type: 'subexpression',
                     body: subexpr.body,
                     codePos: subexpr.codePos
                 }],
@@ -972,7 +1042,7 @@ export class Parser {
                     decorators.push(...this.decoratorBuffer);
                     this.decoratorBuffer = []; // Clear buffer
                 }
-                
+
                 const func = await DefineParser.parse(
                     this.stream,
                     (s) => this.parseStatementFromStream(s),
@@ -980,16 +1050,16 @@ export class Parser {
                     decorators.length > 0 ? decorators : undefined,
                     this.environment
                 );
-                
+
                 // Add to extracted functions if not already present (for hoisting)
                 const existingFunc = this.extractedFunctions.find(f => f.name === func.name);
                 if (!existingFunc) {
                     this.extractedFunctions.push(func);
                 }
-                
+
                 return func;
             }
-            
+
             // Check if this is 'on' (event handler)
             if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'on') {
                 // Claim decorators from buffer and pass to EventParser
@@ -998,7 +1068,7 @@ export class Parser {
                     decorators.push(...this.decoratorBuffer);
                     this.decoratorBuffer = []; // Clear buffer
                 }
-                
+
                 const onBlock = await EventParser.parse(
                     this.stream,
                     (s) => this.parseStatementFromStream(s),
@@ -1006,16 +1076,16 @@ export class Parser {
                     decorators.length > 0 ? decorators : undefined,
                     this.environment
                 );
-                
+
                 // Add to extracted event handlers if not already present (for hoisting)
                 const existingHandler = this.extractedEventHandlers.find(h => h.eventName === onBlock.eventName);
                 if (!existingHandler) {
                     this.extractedEventHandlers.push(onBlock);
                 }
-                
+
                 return onBlock;
             }
-            
+
             // Make sure it's not part of an assignment (we already checked for that above)
             const command = CommandParser.parse(this.stream, {
                 parseStatement: (s) => this.parseStatementFromStream(s),
@@ -1035,8 +1105,8 @@ export class Parser {
                         );
                     } else {
                         return ScopeParser.parse(s,
-                    (s2) => this.parseStatementFromStream(s2),
-                    (s2) => this.parseCommentFromStream(s2)
+                            (s2) => this.parseStatementFromStream(s2),
+                            (s2) => this.parseCommentFromStream(s2)
                         );
                     }
                 }
@@ -1049,7 +1119,7 @@ export class Parser {
                     decorators.push(...this.decoratorBuffer);
                     this.decoratorBuffer = []; // Clear buffer
                 }
-                
+
                 if (decorators.length > 0) {
                     command.decorators = decorators;
                     // Extract variable name from command args (first arg should be the variable)
@@ -1092,7 +1162,7 @@ export class Parser {
 
         // Use CommentParser to parse inline comment
         const inlineComment = CommentParser.parseInlineComment(this.stream, statementLine);
-        
+
         if (inlineComment) {
             CommentParser.attachComments(statement, [inlineComment]);
         }
@@ -1126,29 +1196,29 @@ export class Parser {
      */
     private serializeAST(obj: any): any {
         const seen = new WeakSet();
-        
+
         const serialize = (value: any): any => {
             // Handle null and undefined
             if (value === null || value === undefined) {
                 return value;
             }
-            
+
             // Handle primitives
             if (typeof value !== 'object') {
                 return value;
             }
-            
+
             // Handle arrays
             if (Array.isArray(value)) {
                 return value.map(item => serialize(item));
             }
-            
+
             // Handle circular references
             if (seen.has(value)) {
                 return '[Circular]';
             }
             seen.add(value);
-            
+
             // Handle objects
             const result: any = {};
             for (const key in value) {
@@ -1160,10 +1230,10 @@ export class Parser {
                     result[key] = serialize(value[key]);
                 }
             }
-            
+
             return result;
         };
-        
+
         return serialize(obj);
     }
 
@@ -1173,10 +1243,10 @@ export class Parser {
     private countTrailingBlankLines(statement: Statement): void {
         // CommentStatement doesn't have codePos, skip it
         if (!('codePos' in statement) || !statement.codePos) return;
-        
+
         const lines = this.source.split('\n');
         const endRow = statement.codePos.endRow;
-        
+
         // Count blank lines after this statement
         let blankLineCount = 0;
         for (let row = endRow + 1; row < lines.length; row++) {
@@ -1188,7 +1258,7 @@ export class Parser {
                 break;
             }
         }
-        
+
         // Store the count (only if > 0 to keep AST clean)
         if (blankLineCount > 0) {
             (statement as any).trailingBlankLines = blankLineCount;

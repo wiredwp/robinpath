@@ -75,6 +75,7 @@ const testFiles = [
     '18-template-strings.rp',
     '19-last-value.rp',
     '20-comments.rp',
+    '21-fenced.rp',
 ];
 
 // Define test case files mapping (case number -> filename)

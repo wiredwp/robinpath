@@ -1,0 +1,227 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Variable Assignment Tests\nThese are the most fundamental tests - basic variable assignment operations",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 76
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 39
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Variable Assignment Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 6,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic variable assignment with literal values",
+        "codePos": {
+          "startRow": 5,
+          "startCol": 0,
+          "endRow": 5,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic variable assignment"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 13
+    },
+    "targetName": "str",
+    "targetPath": [],
+    "literalValue": "hello",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 56
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "str",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "String assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 8
+    },
+    "targetName": "num",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 51
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "num",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Number assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 11
+    },
+    "targetName": "bool",
+    "targetPath": [],
+    "literalValue": true,
+    "literalValueType": "boolean"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 49
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "bool",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Boolean assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 14
+    },
+    "targetName": "nullVar",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 49
+    },
+    "name": "test.assertNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "nullVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Null assignment failed"
+      }
+    ]
+  }
+]

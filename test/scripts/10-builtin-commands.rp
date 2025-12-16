@@ -1,3 +1,4 @@
+--- chunk:10 ---
 # Builtin Commands Tests
 # Tests for set, get, empty, fallback, clear, forget, var, const, etc.
 

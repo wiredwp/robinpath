@@ -1,3 +1,5 @@
+--- chunk:01 ---
+--- chunk:test1 ---
 # Variable Assignment Tests
 # These are the most fundamental tests - basic variable assignment operations
 
@@ -16,6 +18,8 @@ test.assertTrue $bool "Boolean assignment failed"
 
 $nullVar = null
 test.assertNull $nullVar "Null assignment failed"
+
+--- chunk:test2 ---
 
 # Test 2: Variable to variable assignment
 log "Test 2: Variable to variable assignment"

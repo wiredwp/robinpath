@@ -451,6 +451,62 @@ export interface OnBlock {
 }
 
 // ============================================================================
+// Cell Blocks
+// ============================================================================
+
+/**
+ * Represents a cell block (---cell <cellType> <meta...>--- ... ---end---)
+ */
+export interface CellBlock {
+    type: 'cell';
+    cellType: string; // Cell type (e.g., code, prompt, schema, test, notes)
+    meta: Record<string, string>; // Metadata key-value pairs
+    rawBody: string; // Exact text between fences (no closing fence line)
+    body?: Statement[]; // Parsed statements (only for cellType === "code")
+    headerPos: CodePosition; // Position of the opening fence line
+    bodyPos: CodePosition; // Position of the body content
+    codePos: CodePosition; // Full span including fences
+    comments?: CommentWithPosition[]; // Comments attached to this cell block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
+}
+
+// ============================================================================
+// Prompt Blocks
+// ============================================================================
+
+/**
+ * Represents a prompt block statement (--- ... ---)
+ */
+export interface PromptBlockStatement {
+    type: 'prompt_block';
+    rawText: string; // Verbatim inner text
+    fence: '---'; // Fence marker (reserved for future variants)
+    codePos: CodePosition; // Full span including fence lines
+    openPos: CodePosition; // Position of opening fence line
+    bodyPos: CodePosition; // Position of body content
+    closePos: CodePosition; // Position of closing fence line
+    comments?: CommentWithPosition[]; // Comments attached to this prompt block (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
+}
+
+// ============================================================================
+// Chunk Markers
+// ============================================================================
+
+/**
+ * Represents a chunk marker statement (--- chunk:<id> ---)
+ */
+export interface ChunkMarkerStatement {
+    type: 'chunk_marker';
+    id: string; // Chunk identifier
+    meta?: Record<string, string>; // Optional metadata key-value pairs
+    codePos: CodePosition; // Code position (row/col) in source code
+    raw?: string; // Optional: store original line for perfect preservation
+    comments?: CommentWithPosition[]; // Comments attached to this chunk marker (above and inline)
+    trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)
+}
+
+// ============================================================================
 // Statement Union Type
 // ============================================================================
 
@@ -473,4 +529,7 @@ export type Statement =
     | BreakStatement
     | ContinueStatement
     | OnBlock
-    | CommentStatement;
+    | CommentStatement
+    | ChunkMarkerStatement
+    | CellBlock
+    | PromptBlockStatement;
