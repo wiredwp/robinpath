@@ -1,0 +1,1366 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Conditional Tests\nTests for if/else/elseif statements",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 36
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 31
+    },
+    "trailingBlankLines": 2,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Conditional Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 1: Inline conditional",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 27
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Inline conditional"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 13
+    },
+    "targetName": "balance",
+    "targetPath": [],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "inlineIf",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 55
+    },
+    "trailingBlankLines": 2,
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "balance",
+        "path": [],
+        "codePos": {
+          "startRow": 9,
+          "startCol": 3,
+          "endRow": 9,
+          "endCol": 10
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 0,
+        "codePos": {
+          "startRow": 9,
+          "startCol": 14,
+          "endRow": 9,
+          "endCol": 14
+        }
+      },
+      "codePos": {
+        "startRow": 9,
+        "startCol": 3,
+        "endRow": 9,
+        "endCol": 12
+      }
+    },
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 9,
+        "startCol": 21,
+        "endRow": 9,
+        "endCol": 55
+      },
+      "name": "log",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "Test 1 - Balance is positive"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 2: Block if with else",
+        "codePos": {
+          "startRow": 12,
+          "startCol": 0,
+          "endRow": 12,
+          "endCol": 27
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Block if with else"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 10
+    },
+    "targetName": "score",
+    "targetPath": [],
+    "literalValue": 85,
+    "literalValueType": "number"
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 15,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "condition": {
+      "type": "binary",
+      "operator": ">=",
+      "left": {
+        "type": "var",
+        "name": "score",
+        "path": [],
+        "codePos": {
+          "startRow": 15,
+          "startCol": 3,
+          "endRow": 15,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 90,
+        "codePos": {
+          "startRow": 15,
+          "startCol": 13,
+          "endRow": 15,
+          "endCol": 14
+        }
+      },
+      "codePos": {
+        "startRow": 15,
+        "startCol": 3,
+        "endRow": 15,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 16,
+          "startCol": 2,
+          "endRow": 16,
+          "endCol": 25
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 2 - Grade: A"
+          }
+        ]
+      }
+    ],
+    "elseifBranches": [
+      {
+        "condition": {
+          "type": "binary",
+          "operator": ">=",
+          "left": {
+            "type": "var",
+            "name": "score",
+            "path": [],
+            "codePos": {
+              "startRow": 17,
+              "startCol": 7,
+              "endRow": 17,
+              "endCol": 12
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 80,
+            "codePos": {
+              "startRow": 17,
+              "startCol": 17,
+              "endRow": 17,
+              "endCol": 18
+            }
+          },
+          "codePos": {
+            "startRow": 17,
+            "startCol": 7,
+            "endRow": 17,
+            "endCol": 15
+          }
+        },
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 18,
+              "startCol": 2,
+              "endRow": 18,
+              "endCol": 25
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 2 - Grade: B"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "binary",
+          "operator": ">=",
+          "left": {
+            "type": "var",
+            "name": "score",
+            "path": [],
+            "codePos": {
+              "startRow": 19,
+              "startCol": 7,
+              "endRow": 19,
+              "endCol": 12
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 70,
+            "codePos": {
+              "startRow": 19,
+              "startCol": 17,
+              "endRow": 19,
+              "endCol": 18
+            }
+          },
+          "codePos": {
+            "startRow": 19,
+            "startCol": 7,
+            "endRow": 19,
+            "endCol": 15
+          }
+        },
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 20,
+              "startCol": 2,
+              "endRow": 20,
+              "endCol": 25
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 2 - Grade: C"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 22,
+          "startCol": 2,
+          "endRow": 22,
+          "endCol": 25
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 2 - Grade: F"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 3: Nested conditionals",
+        "codePos": {
+          "startRow": 26,
+          "startCol": 0,
+          "endRow": 26,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Nested conditionals"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 28,
+      "endCol": 10
+    },
+    "targetName": "value",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "value",
+        "path": [],
+        "codePos": {
+          "startRow": 29,
+          "startCol": 3,
+          "endRow": 29,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 0,
+        "codePos": {
+          "startRow": 29,
+          "startCol": 12,
+          "endRow": 29,
+          "endCol": 12
+        }
+      },
+      "codePos": {
+        "startRow": 29,
+        "startCol": 3,
+        "endRow": 29,
+        "endCol": 10
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 30,
+          "startCol": 2,
+          "endRow": 34,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "value",
+            "path": [],
+            "codePos": {
+              "startRow": 30,
+              "startCol": 5,
+              "endRow": 30,
+              "endCol": 10
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 50,
+            "codePos": {
+              "startRow": 30,
+              "startCol": 14,
+              "endRow": 30,
+              "endCol": 15
+            }
+          },
+          "codePos": {
+            "startRow": 30,
+            "startCol": 5,
+            "endRow": 30,
+            "endCol": 12
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 31,
+              "startCol": 4,
+              "endRow": 31,
+              "endCol": 44
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 3 - Value is between 0 and 50"
+              }
+            ]
+          }
+        ],
+        "elseBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 33,
+              "startCol": 4,
+              "endRow": 33,
+              "endCol": 41
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 3 - Value is 50 or greater"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 36,
+          "startCol": 2,
+          "endRow": 36,
+          "endCol": 42
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 3 - Value is negative or zero"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 49
+    },
+    "comments": [
+      {
+        "text": "Test 4: Conditional with complex expression",
+        "codePos": {
+          "startRow": 40,
+          "startCol": 0,
+          "endRow": 40,
+          "endCol": 44
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Conditional with complex expression"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 42,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 18,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 15
+    },
+    "targetName": "citizen",
+    "targetPath": [],
+    "literalValue": "yes",
+    "literalValueType": "string"
+  },
+  {
+    "type": "inlineIf",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 72
+    },
+    "trailingBlankLines": 2,
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "and",
+      "left": {
+        "type": "binary",
+        "operator": ">=",
+        "left": {
+          "type": "var",
+          "name": "age",
+          "path": [],
+          "codePos": {
+            "startRow": 44,
+            "startCol": 4,
+            "endRow": 44,
+            "endCol": 7
+          }
+        },
+        "right": {
+          "type": "number",
+          "value": 18,
+          "codePos": {
+            "startRow": 44,
+            "startCol": 12,
+            "endRow": 44,
+            "endCol": 13
+          }
+        },
+        "codePos": {
+          "startRow": 44,
+          "startCol": 3,
+          "endRow": 44,
+          "endCol": 10
+        },
+        "parenthesized": true
+      },
+      "right": {
+        "type": "binary",
+        "operator": "==",
+        "left": {
+          "type": "var",
+          "name": "citizen",
+          "path": [],
+          "codePos": {
+            "startRow": 44,
+            "startCol": 20,
+            "endRow": 44,
+            "endCol": 27
+          }
+        },
+        "right": {
+          "type": "string",
+          "value": "yes",
+          "codePos": {
+            "startRow": 44,
+            "startCol": 32,
+            "endRow": 44,
+            "endCol": 36
+          }
+        },
+        "codePos": {
+          "startRow": 44,
+          "startCol": 3,
+          "endRow": 44,
+          "endCol": 30
+        },
+        "parenthesized": true
+      },
+      "codePos": {
+        "startRow": 44,
+        "startCol": 3,
+        "endRow": 44,
+        "endCol": 17
+      },
+      "operatorText": "&&"
+    },
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 44,
+        "startCol": 44,
+        "endRow": 44,
+        "endCol": 72
+      },
+      "name": "log",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "Test 4 - Loan approved"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 48,
+      "startCol": 0,
+      "endRow": 48,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 5: Conditional with return statement",
+        "codePos": {
+          "startRow": 47,
+          "startCol": 0,
+          "endRow": 47,
+          "endCol": 42
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Conditional with return statement"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "return_in_if",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 50,
+          "startCol": 2,
+          "endRow": 52,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "literal",
+          "value": true,
+          "codePos": {
+            "startRow": 50,
+            "startCol": 5,
+            "endRow": 50,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "return",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 51,
+              "startCol": 4,
+              "endRow": 51,
+              "endCol": 22
+            },
+            "value": {
+              "type": "string",
+              "value": "if_return"
+            }
+          }
+        ]
+      },
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 53,
+          "startCol": 2,
+          "endRow": 53,
+          "endCol": 19
+        },
+        "value": {
+          "type": "string",
+          "value": "after_if"
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 58,
+          "startCol": 2,
+          "endRow": 59,
+          "endCol": 5
+        },
+        "name": "return_in_if",
+        "module": null,
+        "args": []
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 59,
+          "startCol": 2,
+          "endRow": 59,
+          "endCol": 60
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "if_return"
+          },
+          {
+            "type": "string",
+            "value": "Return in if block failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 69,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "return_in_else",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 63,
+          "startCol": 2,
+          "endRow": 67,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "literal",
+          "value": false,
+          "codePos": {
+            "startRow": 63,
+            "startCol": 5,
+            "endRow": 63,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "assignment",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 64,
+              "startCol": 4,
+              "endRow": 64,
+              "endCol": 15
+            },
+            "targetName": "temp",
+            "targetPath": [],
+            "literalValue": "if",
+            "literalValueType": "string"
+          }
+        ],
+        "elseBranch": [
+          {
+            "type": "return",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 66,
+              "startCol": 4,
+              "endRow": 66,
+              "endCol": 24
+            },
+            "value": {
+              "type": "string",
+              "value": "else_return"
+            }
+          }
+        ]
+      },
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 68,
+          "startCol": 2,
+          "endRow": 68,
+          "endCol": 21
+        },
+        "value": {
+          "type": "string",
+          "value": "after_else"
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 0,
+      "endRow": 72,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 72,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 73,
+          "startCol": 2,
+          "endRow": 74,
+          "endCol": 5
+        },
+        "name": "return_in_else",
+        "module": null,
+        "args": []
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 74,
+          "startCol": 2,
+          "endRow": 74,
+          "endCol": 64
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "else_return"
+          },
+          {
+            "type": "string",
+            "value": "Return in else block failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 1
+    },
+    "comments": [
+      {
+        "text": "test 6: allowing then indentation multi line conditional",
+        "codePos": {
+          "startRow": 78,
+          "startCol": 0,
+          "endRow": 78,
+          "endCol": 57
+        },
+        "inline": false
+      }
+    ],
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 4
+    },
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "lastValue",
+        "codePos": {
+          "startRow": 80,
+          "startCol": 3,
+          "endRow": 80,
+          "endCol": 3
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 80,
+          "startCol": 7,
+          "endRow": 80,
+          "endCol": 7
+        }
+      },
+      "codePos": {
+        "startRow": 80,
+        "startCol": 3,
+        "endRow": 80,
+        "endCol": 5
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 81,
+          "startCol": 2,
+          "endRow": 81,
+          "endCol": 19
+        },
+        "name": "math.multiply",
+        "module": "math",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 2
+          }
+        ]
+      }
+    ],
+    "hasThen": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 61
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Last value in conditional should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 61
+    },
+    "comments": [
+      {
+        "text": "Test 7: If block should return lastValue from executed branch",
+        "codePos": {
+          "startRow": 86,
+          "startCol": 0,
+          "endRow": 86,
+          "endCol": 62
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: If block returns lastValue from executed branch"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 88,
+      "endCol": 6
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 5
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 90,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Should log \"test\"",
+        "codePos": {
+          "startRow": 90,
+          "startCol": 7,
+          "endRow": 90,
+          "endCol": 25
+        },
+        "inline": true
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "lastValue"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 95,
+      "endCol": 4
+    },
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "a",
+        "path": [],
+        "codePos": {
+          "startRow": 91,
+          "startCol": 3,
+          "endRow": 91,
+          "endCol": 4
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 91,
+          "startCol": 8,
+          "endRow": 91,
+          "endCol": 8
+        }
+      },
+      "codePos": {
+        "startRow": 91,
+        "startCol": 3,
+        "endRow": 91,
+        "endCol": 6
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 92,
+          "startCol": 2,
+          "endRow": 92,
+          "endCol": 7
+        },
+        "name": "_literal",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "high"
+          }
+        ]
+      }
+    ],
+    "elseBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 94,
+          "startCol": 2,
+          "endRow": 94,
+          "endCol": 6
+        },
+        "name": "_literal",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "low"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 96,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "high"
+      },
+      {
+        "type": "string",
+        "value": "If block should return lastValue from executed branch"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 40
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Conditional Tests Complete ==="
+      }
+    ]
+  }
+]

@@ -7,7 +7,17 @@ import { Writer, Printer } from '../ASTToCodeConverter';
 import { emitLeadingComments } from './printComment';
 
 export function printDo(node: any, writer: Writer, ctx: PrintContext): void {
-    writer.pushLine('do');
+    // Build the do header with optional parameters and into target
+    let doHeader = 'do';
+    if (node.paramNames && Array.isArray(node.paramNames) && node.paramNames.length > 0) {
+        const params = node.paramNames.map((p: string) => p.startsWith('$') ? p : `$${p}`).join(' ');
+        doHeader += ` ${params}`;
+    }
+    if (node.into) {
+        const targetName = node.into.targetName.startsWith('$') ? node.into.targetName : `$${node.into.targetName}`;
+        doHeader += ` into ${targetName}`;
+    }
+    writer.pushLine(doHeader);
 
     if (node.body && Array.isArray(node.body)) {
         for (const stmt of node.body) {

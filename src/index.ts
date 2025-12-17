@@ -1456,17 +1456,26 @@ export class RobinPath {
                     conditionExpr: stmt.condition,
                     command: this.serializeStatement(stmt.command, currentModuleContext)
                 };
-            case 'ifBlock':
-                return {
+            case 'ifBlock': {
+                const ifBlockResult: any = {
                     ...base,
-                    conditionExpr: stmt.condition,
-                    thenBranch: stmt.thenBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext)),
-                    elseifBranches: stmt.elseifBranches?.map((branch: { condition: Expression; body: Statement[] }) => ({
+                    condition: stmt.condition,
+                    thenBranch: stmt.thenBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
+                };
+                if (stmt.elseifBranches && stmt.elseifBranches.length > 0) {
+                    ifBlockResult.elseifBranches = stmt.elseifBranches.map((branch: { condition: Expression; body: Statement[] }) => ({
                         condition: branch.condition,
                         body: branch.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
-                    })),
-                    elseBranch: stmt.elseBranch?.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
-                };
+                    }));
+                }
+                if (stmt.elseBranch && stmt.elseBranch.length > 0) {
+                    ifBlockResult.elseBranch = stmt.elseBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext));
+                }
+                if ((stmt as any).hasThen) {
+                    ifBlockResult.hasThen = true;
+                }
+                return ifBlockResult;
+            }
             case 'ifTrue':
                 return {
                     ...base,
@@ -1496,7 +1505,7 @@ export class RobinPath {
                 return {
                     ...base,
                     varName: stmt.varName,
-                    iterableExpr: stmt.iterable,
+                    iterable: stmt.iterable,
                     body: stmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
             case 'return':
@@ -1505,6 +1514,10 @@ export class RobinPath {
                     value: stmt.value ? this.serializeArg(stmt.value) : undefined
                 };
             case 'break':
+                return {
+                    ...base
+                };
+            case 'continue':
                 return {
                     ...base
                 };
@@ -1527,6 +1540,38 @@ export class RobinPath {
                     ...base,
                     eventName: onBlockStmt.eventName,
                     body: onBlockStmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
+                };
+            case 'chunk_marker':
+                const chunkMarkerStmt = stmt as any;
+                return {
+                    ...base,
+                    id: chunkMarkerStmt.id,
+                    meta: chunkMarkerStmt.meta,
+                    raw: chunkMarkerStmt.raw
+                };
+            case 'cell':
+                const cellBlockStmt = stmt as any;
+                const serializedCell: any = {
+                    ...base,
+                    cellType: cellBlockStmt.cellType,
+                    meta: cellBlockStmt.meta || {}
+                };
+                // Always include rawBody if present (needed for printing non-code cells)
+                if (cellBlockStmt.rawBody !== undefined && cellBlockStmt.rawBody !== null) {
+                    serializedCell.rawBody = cellBlockStmt.rawBody;
+                }
+                // Include body if present (for code cells)
+                if (cellBlockStmt.body && Array.isArray(cellBlockStmt.body) && cellBlockStmt.body.length > 0) {
+                    serializedCell.body = cellBlockStmt.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext));
+                }
+                return serializedCell;
+            case 'prompt_block':
+                const promptBlockStmt = stmt as any;
+                return {
+                    ...base,
+                    rawText: promptBlockStmt.rawText || '',
+                    fence: promptBlockStmt.fence || '---',
+                    bodyPos: promptBlockStmt.bodyPos
                 };
         }
     }
@@ -1604,6 +1649,12 @@ export class RobinPath {
                     serialized[key] = this.serializeArg(valueArg);
                 }
                 return { type: 'namedArgs', args: serialized };
+            case 'object':
+                return { type: 'object', code: (arg as any).code };
+            case 'array':
+                return { type: 'array', code: (arg as any).code };
+            default:
+                return null;
         }
     }
 

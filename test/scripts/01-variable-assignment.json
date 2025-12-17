@@ -25,7 +25,7 @@
       "endRow": 3,
       "endCol": 39
     },
-    "trailingBlankLines": 1,
+    "trailingBlankLines": 2,
     "name": "log",
     "module": null,
     "args": [
@@ -39,18 +39,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 6,
+      "startRow": 7,
       "startCol": 0,
-      "endRow": 6,
+      "endRow": 7,
       "endCol": 39
     },
     "comments": [
       {
         "text": "Test 1: Basic variable assignment with literal values",
         "codePos": {
-          "startRow": 5,
+          "startRow": 6,
           "startCol": 0,
-          "endRow": 5,
+          "endRow": 6,
           "endCol": 54
         },
         "inline": false
@@ -69,9 +69,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 7,
+      "startRow": 8,
       "startCol": 0,
-      "endRow": 7,
+      "endRow": 8,
       "endCol": 13
     },
     "targetName": "str",
@@ -83,9 +83,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 8,
+      "startRow": 9,
       "startCol": 0,
-      "endRow": 8,
+      "endRow": 9,
       "endCol": 56
     },
     "trailingBlankLines": 1,
@@ -111,9 +111,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 10,
+      "startRow": 11,
       "startCol": 0,
-      "endRow": 10,
+      "endRow": 11,
       "endCol": 8
     },
     "targetName": "num",
@@ -125,9 +125,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 11,
+      "startRow": 12,
       "startCol": 0,
-      "endRow": 11,
+      "endRow": 12,
       "endCol": 51
     },
     "trailingBlankLines": 1,
@@ -153,9 +153,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 13,
+      "startRow": 14,
       "startCol": 0,
-      "endRow": 13,
+      "endRow": 14,
       "endCol": 11
     },
     "targetName": "bool",
@@ -167,9 +167,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 14,
+      "startRow": 15,
       "startCol": 0,
-      "endRow": 14,
+      "endRow": 15,
       "endCol": 49
     },
     "trailingBlankLines": 1,
@@ -191,9 +191,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 16,
+      "startRow": 17,
       "startCol": 0,
-      "endRow": 16,
+      "endRow": 17,
       "endCol": 14
     },
     "targetName": "nullVar",
@@ -205,9 +205,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 17,
+      "startRow": 18,
       "startCol": 0,
-      "endRow": 17,
+      "endRow": 18,
       "endCol": 49
     },
     "name": "test.assertNull",

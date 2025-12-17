@@ -9,7 +9,7 @@ log "processing invoice"
 # Test 3: Cell block with code
 ---cell code id:main---
 $name = "Alice"
-log "Hello, " + $name
+log "Hello, " $name
 ---end---
 
 # Test 4: Cell block with prompt type
@@ -29,7 +29,7 @@ It can contain multiple lines.
 --- chunk:test ---
 ---cell code id:test_code---
 $result = 42
-log "Result: " + $result
+log "Result: " $result
 ---end---
 ---
 This is a prompt inside a chunk.
@@ -51,7 +51,7 @@ log "Done"
 $part1 = "first"
 --- chunk:part2 tags:test priority:high ---
 $part2 = "second"
-log $part1 + " " + $part2
+log $part1 " " $part2
 
 # Test 9: Cell with metadata (id first, then sorted)
 ---cell code id:main priority:high tags:test---

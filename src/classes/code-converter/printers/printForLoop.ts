@@ -9,18 +9,27 @@ import { emitLeadingComments } from './printComment';
 
 export function printForLoop(node: any, writer: Writer, ctx: PrintContext): void {
     const varName = node.varName || node.var || node.iterator || '$i';
+    const varPrefix = varName.startsWith('$') ? '' : '$';
 
+    // Handle range from original parser format
     if (node.range && node.range.from !== undefined && node.range.to !== undefined) {
         const from = printArg(node.range.from, ctx);
         const to = printArg(node.range.to, ctx);
-        writer.pushLine(`for ${varName} in range ${from} ${to}`);
-    } else {
-        const iterable = node.iterable ? printArg(node.iterable, ctx) : null;
-        writer.pushLine(`for ${varName} in ${iterable ?? ''}`.trimEnd());
+        writer.pushLine(`for ${varPrefix}${varName} in range ${from} ${to}`);
+    } 
+    // Handle iterable
+    else if (node.iterable) {
+        const iterableStr = printArg(node.iterable, ctx);
+        writer.pushLine(`for ${varPrefix}${varName} in ${iterableStr ?? ''}`.trimEnd());
+    }
+    else {
+        writer.pushLine(`for ${varPrefix}${varName} in `.trimEnd());
     }
 
     if (node.body && Array.isArray(node.body)) {
         for (const stmt of node.body) {
+            if (!stmt) continue;
+            
             emitLeadingComments(stmt, writer, ctx, ctx.indentLevel + 1);
 
             const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel + 1 });

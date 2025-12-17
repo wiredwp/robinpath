@@ -36,7 +36,18 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
             const prevStmt = i > 0 ? node.body[i - 1] : null;
             
             // Check for blank lines between previous statement and current statement
-            emitBlankLineBetweenStatements(prevStmt, stmt, writer);
+            if (i === 0 && 'codePos' in node && node.codePos && 'codePos' in stmt && stmt.codePos) {
+                // Check gap between header and first statement
+                // Approximate header end: startRow + decorators count
+                const decoratorsCount = (node.decorators && Array.isArray(node.decorators)) ? node.decorators.length : 0;
+                const headerEndRow = node.codePos.startRow + decoratorsCount;
+                const gap = stmt.codePos.startRow - headerEndRow;
+                if (gap > 1) {
+                    writer.pushBlankLine();
+                }
+            } else {
+                emitBlankLineBetweenStatements(prevStmt, stmt, writer);
+            }
             
             // Emit leading comments
             emitLeadingComments(stmt, writer, ctx, ctx.indentLevel + 1);
@@ -50,6 +61,17 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
             const trailingBlankLines = (stmt as any)?.trailingBlankLines;
             if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
                 writer.push('\n'.repeat(trailingBlankLines));
+            }
+        }
+
+        // Check for blank lines after last statement (before enddef)
+        if (node.body.length > 0 && 'codePos' in node && node.codePos) {
+            const lastStmt = node.body[node.body.length - 1];
+            if ('codePos' in lastStmt && lastStmt.codePos) {
+                const gap = node.codePos.endRow - lastStmt.codePos.endRow;
+                if (gap > 1) {
+                    writer.pushBlankLine();
+                }
             }
         }
     }

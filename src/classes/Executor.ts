@@ -62,6 +62,8 @@ export class Executor {
     private callStack: Frame[] = [];
     private parentThread: RobinPathThread | null = null;
     private sourceCode: string | null = null; // Store source code for error messages
+    private recursionDepth: Map<string, number> = new Map(); // Track recursion depth for each function
+    private static readonly MAX_RECURSION_DEPTH = 60000; // Maximum recursion depth (60k as requested)
 
     /**
      * Debug mode flag - set to true to enable logging
@@ -1473,6 +1475,15 @@ Examples:
     }
 
     private async callFunction(func: DefineFunction, args: Value[]): Promise<Value> {
+        // Check recursion depth
+        const currentDepth = this.recursionDepth.get(func.name) || 0;
+        if (currentDepth >= Executor.MAX_RECURSION_DEPTH) {
+            throw new Error(`Maximum recursion depth (${Executor.MAX_RECURSION_DEPTH}) exceeded for function "${func.name}". This usually indicates infinite recursion.`);
+        }
+        
+        // Increment recursion depth for this function
+        this.recursionDepth.set(func.name, currentDepth + 1);
+        
         // Execute decorators before function execution (in order, first decorator executes first)
         // Decorators can modify the args
         let modifiedArgs = args;
@@ -1575,6 +1586,14 @@ Examples:
             throw error;
         } finally {
             this.callStack.pop();
+            // Decrement recursion depth for this function
+            const currentDepth = this.recursionDepth.get(func.name) || 0;
+            if (currentDepth > 1) {
+                this.recursionDepth.set(func.name, currentDepth - 1);
+            } else {
+                // Remove from map when depth reaches 0
+                this.recursionDepth.delete(func.name);
+            }
         }
     }
 

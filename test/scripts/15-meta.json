@@ -1,0 +1,3633 @@
+[
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 4,
+      "endRow": 0,
+      "endCol": 16
+    },
+    "name": "chunk",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 15
+      }
+    ]
+  },
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "GetMeta and SetMeta Tests\nTests for getMeta and setMeta (meta) commands for metadata management",
+        "codePos": {
+          "startRow": 1,
+          "startCol": 0,
+          "endRow": 2,
+          "endCol": 70
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 1
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 39
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== GetMeta and SetMeta Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic setMeta (meta) and getMeta for variables",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic metadata operations for variables"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 14
+    },
+    "targetName": "testVar1",
+    "targetPath": [],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 11,
+          "startCol": 2,
+          "endRow": 11,
+          "endCol": 62
+        },
+        "name": "meta",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar1",
+            "path": []
+          },
+          {
+            "type": "literal",
+            "value": "description"
+          },
+          {
+            "type": "string",
+            "value": "A variable to store test values"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 12,
+          "startCol": 2,
+          "endRow": 12,
+          "endCol": 59
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "literal",
+            "value": null
+          },
+          {
+            "type": "string",
+            "value": "meta command should return null"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 13,
+          "startCol": 2,
+          "endRow": 13,
+          "endCol": 80
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar1",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 100
+          },
+          {
+            "type": "string",
+            "value": "meta command should not affect variable value"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar1",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 88
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A variable to store test values"
+      },
+      {
+        "type": "string",
+        "value": "getMeta should return description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 41
+    },
+    "comments": [
+      {
+        "text": "Test 2: Basic setMeta for variables (using setMeta command)",
+        "codePos": {
+          "startRow": 19,
+          "startCol": 0,
+          "endRow": 19,
+          "endCol": 60
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Basic setMeta for variables"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 18
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 22,
+      "startCol": 0,
+      "endRow": 22,
+      "endCol": 48
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "A test variable"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 28
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "version"
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "testVar2a value should be 100"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 52
+    },
+    "comments": [
+      {
+        "text": "Test 3: Basic getMeta for variables (with key)",
+        "codePos": {
+          "startRow": 26,
+          "startCol": 0,
+          "endRow": 26,
+          "endCol": 47
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Basic getMeta for variables (with key)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 75
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test variable"
+      },
+      {
+        "type": "string",
+        "value": "getMeta with key failed for variable"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 30,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "version"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 58
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "getMeta version failed for variable"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 55
+    },
+    "comments": [
+      {
+        "text": "Test 4: Basic getMeta for variables (without key - all metadata)",
+        "codePos": {
+          "startRow": 33,
+          "startCol": 0,
+          "endRow": 33,
+          "endCol": 65
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Basic getMeta for variables (without key)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 18
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 12
+    },
+    "targetName": "allMeta4",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 77
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta4",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "object"
+      },
+      {
+        "type": "string",
+        "value": "getMeta without key should return object"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 38,
+      "startCol": 0,
+      "endRow": 38,
+      "endCol": 100
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta4",
+        "path": [
+          {
+            "type": "property",
+            "name": "description"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "A test variable"
+      },
+      {
+        "type": "string",
+        "value": "getMeta all metadata - description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 39,
+      "startCol": 0,
+      "endRow": 39,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta4",
+        "path": [
+          {
+            "type": "property",
+            "name": "version"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "getMeta all metadata - version failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 42,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test 5: Multiple metadata keys for same variable",
+        "codePos": {
+          "startRow": 41,
+          "startCol": 0,
+          "endRow": 41,
+          "endCol": 49
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Multiple metadata keys"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 13
+    },
+    "targetName": "testVar5",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 54
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Test variable description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 35
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "author"
+      },
+      {
+        "type": "string",
+        "value": "Test Author"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 46,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 30
+    },
+    "trailingBlankLines": 1,
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "version"
+      },
+      {
+        "type": "string",
+        "value": "1.0.0"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 48,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 75
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Test variable description"
+      },
+      {
+        "type": "string",
+        "value": "getMeta description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "author"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 56
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Test Author"
+      },
+      {
+        "type": "string",
+        "value": "getMeta author failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 52,
+      "startCol": 0,
+      "endRow": 53,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar5",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "version"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 53,
+      "startCol": 0,
+      "endRow": 53,
+      "endCol": 51
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "1.0.0"
+      },
+      {
+        "type": "string",
+        "value": "getMeta version failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 56,
+      "endCol": 52
+    },
+    "comments": [
+      {
+        "text": "Test 6: Multiple metadata keys (using setMeta)",
+        "codePos": {
+          "startRow": 55,
+          "startCol": 0,
+          "endRow": 55,
+          "endCol": 47
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Multiple metadata keys (using setMeta)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 17
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar6",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 400
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 31
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar6",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key1"
+      },
+      {
+        "type": "string",
+        "value": "value1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 59,
+      "startCol": 0,
+      "endRow": 59,
+      "endCol": 31
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar6",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key2"
+      },
+      {
+        "type": "string",
+        "value": "value2"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 26
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar6",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key3"
+      },
+      {
+        "type": "number",
+        "value": 123
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 17
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar6",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 12
+    },
+    "targetName": "allMeta6",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 74
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta6",
+        "path": [
+          {
+            "type": "property",
+            "name": "key1"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "value1"
+      },
+      {
+        "type": "string",
+        "value": "Multiple metadata - key1 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 64,
+      "endCol": 74
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta6",
+        "path": [
+          {
+            "type": "property",
+            "name": "key2"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "value2"
+      },
+      {
+        "type": "string",
+        "value": "Multiple metadata - key2 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 69
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta6",
+        "path": [
+          {
+            "type": "property",
+            "name": "key3"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 123
+      },
+      {
+        "type": "string",
+        "value": "Multiple metadata - key3 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test 7: getMeta for functions",
+        "codePos": {
+          "startRow": 67,
+          "startCol": 0,
+          "endRow": 67,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Metadata for functions"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 71,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testFunc7",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 70,
+          "startCol": 2,
+          "endRow": 70,
+          "endCol": 11
+        },
+        "value": {
+          "type": "number",
+          "value": 42
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 73,
+      "startCol": 0,
+      "endRow": 73,
+      "endCol": 44
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFunc7"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "A test function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFunc7"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 75,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test function"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for function description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 0,
+      "endRow": 77,
+      "endCol": 33
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFunc7"
+      },
+      {
+        "type": "literal",
+        "value": "category"
+      },
+      {
+        "type": "string",
+        "value": "utility"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFunc7"
+      },
+      {
+        "type": "literal",
+        "value": "category"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "utility"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for function category failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 41
+    },
+    "comments": [
+      {
+        "text": "Test 8: Basic setMeta for functions",
+        "codePos": {
+          "startRow": 81,
+          "startCol": 0,
+          "endRow": 81,
+          "endCol": 36
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Basic setMeta for functions"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 85,
+      "endCol": 5
+    },
+    "name": "testFn8",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 84,
+          "startCol": 2,
+          "endRow": 84,
+          "endCol": 21
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test function"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 86,
+      "startCol": 0,
+      "endRow": 86,
+      "endCol": 45
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFn8"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "A test function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 36
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFn8"
+      },
+      {
+        "type": "literal",
+        "value": "author"
+      },
+      {
+        "type": "string",
+        "value": "Test Author"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 2
+    },
+    "name": "testFn8",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 52
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Basic getMeta for functions (with key)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 93,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFn8"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 93,
+      "endCol": 75
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test function"
+      },
+      {
+        "type": "string",
+        "value": "getMeta with key failed for function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 95,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFn8"
+      },
+      {
+        "type": "literal",
+        "value": "author"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 95,
+      "startCol": 0,
+      "endRow": 95,
+      "endCol": 69
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Test Author"
+      },
+      {
+        "type": "string",
+        "value": "getMeta author failed for function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 56
+    },
+    "comments": [
+      {
+        "text": "Test 10: Basic getMeta for functions (without key - all metadata)",
+        "codePos": {
+          "startRow": 97,
+          "startCol": 0,
+          "endRow": 97,
+          "endCol": 66
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Basic getMeta for functions (without key)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 99,
+      "startCol": 0,
+      "endRow": 100,
+      "endCol": 9
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testFn8"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 100,
+      "startCol": 0,
+      "endRow": 100,
+      "endCol": 13
+    },
+    "targetName": "allMeta10",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 101,
+      "startCol": 0,
+      "endRow": 101,
+      "endCol": 91
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta10",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "object"
+      },
+      {
+        "type": "string",
+        "value": "getMeta without key should return object for function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 102,
+      "startCol": 0,
+      "endRow": 102,
+      "endCol": 114
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta10",
+        "path": [
+          {
+            "type": "property",
+            "name": "description"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "A test function"
+      },
+      {
+        "type": "string",
+        "value": "getMeta all metadata - description failed for function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 100
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "allMeta10",
+        "path": [
+          {
+            "type": "property",
+            "name": "author"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Test Author"
+      },
+      {
+        "type": "string",
+        "value": "getMeta all metadata - author failed for function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 37
+    },
+    "comments": [
+      {
+        "text": "Test 11: getMeta for constants",
+        "codePos": {
+          "startRow": 105,
+          "startCol": 0,
+          "endRow": 105,
+          "endCol": 31
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Metadata for constants"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 107,
+      "startCol": 0,
+      "endRow": 107,
+      "endCol": 24
+    },
+    "name": "const",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "TEST_CONST_11",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 200
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 108,
+      "endCol": 49
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "TEST_CONST_11",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "A test constant"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 110,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "TEST_CONST_11",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 110,
+      "startCol": 0,
+      "endRow": 110,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test constant"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for constant description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 12: Overwriting metadata",
+        "codePos": {
+          "startRow": 112,
+          "startCol": 0,
+          "endRow": 112,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 12: Overwriting metadata"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 14
+    },
+    "targetName": "testVar12",
+    "targetPath": [],
+    "literalValue": 50,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 115,
+      "startCol": 0,
+      "endRow": 115,
+      "endCol": 50
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar12",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Original description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 116,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar12",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Original description"
+      },
+      {
+        "type": "string",
+        "value": "Initial metadata failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 49
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar12",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Updated description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 0,
+      "endRow": 121,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar12",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 121,
+      "startCol": 0,
+      "endRow": 121,
+      "endCol": 68
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Updated description"
+      },
+      {
+        "type": "string",
+        "value": "Metadata overwrite failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 124,
+      "startCol": 0,
+      "endRow": 124,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 13: Updating existing metadata (using setMeta)",
+        "codePos": {
+          "startRow": 123,
+          "startCol": 0,
+          "endRow": 123,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 13: Updating existing metadata (using setMeta)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 52
+    },
+    "name": "setMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Updated description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 0,
+      "endRow": 127,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 127,
+      "startCol": 0,
+      "endRow": 127,
+      "endCol": 67
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Updated description"
+      },
+      {
+        "type": "string",
+        "value": "Updating metadata failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 128,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "version"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 69
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "Updating metadata should not affect other keys"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 132,
+      "startCol": 0,
+      "endRow": 132,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 14: Using meta command (alias for setMeta)",
+        "codePos": {
+          "startRow": 131,
+          "startCol": 0,
+          "endRow": 131,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 14: Using meta command (alias for setMeta)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 133,
+      "startCol": 0,
+      "endRow": 133,
+      "endCol": 18
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar14",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 300
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 134,
+      "startCol": 0,
+      "endRow": 134,
+      "endCol": 48
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar14",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Using meta command"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 135,
+      "startCol": 0,
+      "endRow": 136,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar14",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 136,
+      "startCol": 0,
+      "endRow": 136,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Using meta command"
+      },
+      {
+        "type": "string",
+        "value": "meta command alias failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 139,
+      "startCol": 0,
+      "endRow": 139,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 15: getMeta with non-existent key",
+        "codePos": {
+          "startRow": 138,
+          "startCol": 0,
+          "endRow": 138,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 15: getMeta with non-existent key"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 140,
+      "startCol": 0,
+      "endRow": 140,
+      "endCol": 14
+    },
+    "targetName": "testVar15",
+    "targetPath": [],
+    "literalValue": 60,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 141,
+      "startCol": 0,
+      "endRow": 141,
+      "endCol": 45
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar15",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "Has description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 142,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar15",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Has description"
+      },
+      {
+        "type": "string",
+        "value": "Existing metadata failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 145,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar15",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "nonexistent"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 146,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for non-existent key should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 149,
+      "startCol": 0,
+      "endRow": 149,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 16: getMeta for non-existent metadata (should return null)",
+        "codePos": {
+          "startRow": 148,
+          "startCol": 0,
+          "endRow": 148,
+          "endCol": 64
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 16: getMeta for non-existent metadata"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 150,
+      "startCol": 0,
+      "endRow": 150,
+      "endCol": 18
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar16",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 200
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 151,
+      "startCol": 0,
+      "endRow": 152,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar16",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "nonexistent"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 152,
+      "startCol": 0,
+      "endRow": 152,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "getMeta for non-existent key should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 153,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "nonexistentFunction"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "getMeta for non-existent function should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 157,
+      "startCol": 0,
+      "endRow": 157,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 17: getMeta with non-existent variable/function",
+        "codePos": {
+          "startRow": 156,
+          "startCol": 0,
+          "endRow": 156,
+          "endCol": 53
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 17: getMeta with non-existent target"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "nonexistentVar",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 159,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for non-existent variable should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 161,
+      "startCol": 0,
+      "endRow": 162,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "nonexistentFunc"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 162,
+      "startCol": 0,
+      "endRow": 162,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for non-existent function should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 165,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 18: Complex metadata values",
+        "codePos": {
+          "startRow": 164,
+          "startCol": 0,
+          "endRow": 164,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 18: Complex metadata values"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 166,
+      "startCol": 0,
+      "endRow": 166,
+      "endCol": 14
+    },
+    "targetName": "testVar18",
+    "targetPath": [],
+    "literalValue": 80,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 167,
+      "startCol": 0,
+      "endRow": 167,
+      "endCol": 37
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar18",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "tags"
+      },
+      {
+        "type": "string",
+        "value": "tag1,tag2,tag3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 168,
+      "startCol": 0,
+      "endRow": 169,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar18",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "tags"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 169,
+      "startCol": 0,
+      "endRow": 169,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "tag1,tag2,tag3"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for complex string value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 171,
+      "startCol": 0,
+      "endRow": 171,
+      "endCol": 54
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar18",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "config"
+      },
+      {
+        "type": "string",
+        "value": "{\"enabled\": true, \"count\": 5}"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 0,
+      "endRow": 173,
+      "endCol": 8
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar18",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "config"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 173,
+      "startCol": 0,
+      "endRow": 173,
+      "endCol": 12
+    },
+    "targetName": "config18",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 174,
+      "startCol": 0,
+      "endRow": 174,
+      "endCol": 35
+    },
+    "name": "string.contains",
+    "module": "string",
+    "args": [
+      {
+        "type": "var",
+        "name": "config18",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "enabled"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 175,
+      "startCol": 0,
+      "endRow": 175,
+      "endCol": 57
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for JSON-like metadata failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 178,
+      "startCol": 0,
+      "endRow": 178,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 19: Metadata for arrays and objects",
+        "codePos": {
+          "startRow": 177,
+          "startCol": 0,
+          "endRow": 177,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 19: Metadata for arrays and objects"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 179,
+      "startCol": 0,
+      "endRow": 179,
+      "endCol": 22
+    },
+    "targetName": "testArr19",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 179,
+        "startCol": 13,
+        "endRow": 179,
+        "endCol": 22
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 1
+        },
+        {
+          "type": "number",
+          "value": 5
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 180,
+      "startCol": 0,
+      "endRow": 180,
+      "endCol": 49
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testArr19",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "An array of numbers"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 181,
+      "startCol": 0,
+      "endRow": 182,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testArr19",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 182,
+      "startCol": 0,
+      "endRow": 182,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "An array of numbers"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for array description failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 184,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 37
+    },
+    "targetName": "testObj19",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 184,
+        "startCol": 13,
+        "endRow": 184,
+        "endCol": 37
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 45
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testObj19",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      },
+      {
+        "type": "string",
+        "value": "A person object"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 186,
+      "startCol": 0,
+      "endRow": 187,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testObj19",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 187,
+      "startCol": 0,
+      "endRow": 187,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A person object"
+      },
+      {
+        "type": "string",
+        "value": "getMeta for object description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 190,
+      "startCol": 0,
+      "endRow": 190,
+      "endCol": 55
+    },
+    "comments": [
+      {
+        "text": "Test 20: Multiple metadata operations in sequence",
+        "codePos": {
+          "startRow": 189,
+          "startCol": 0,
+          "endRow": 189,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 20: Multiple metadata operations in sequence"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 191,
+      "startCol": 0,
+      "endRow": 191,
+      "endCol": 15
+    },
+    "targetName": "testVar20",
+    "targetPath": [],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 192,
+      "startCol": 0,
+      "endRow": 192,
+      "endCol": 29
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key1"
+      },
+      {
+        "type": "string",
+        "value": "value1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 193,
+      "startCol": 0,
+      "endRow": 193,
+      "endCol": 29
+    },
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key2"
+      },
+      {
+        "type": "string",
+        "value": "value2"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 194,
+      "startCol": 0,
+      "endRow": 194,
+      "endCol": 29
+    },
+    "trailingBlankLines": 1,
+    "name": "meta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key3"
+      },
+      {
+        "type": "string",
+        "value": "value3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 196,
+      "startCol": 0,
+      "endRow": 197,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 197,
+      "startCol": 0,
+      "endRow": 197,
+      "endCol": 61
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "value1"
+      },
+      {
+        "type": "string",
+        "value": "Sequential metadata key1 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 198,
+      "startCol": 0,
+      "endRow": 199,
+      "endCol": 3
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key2"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 199,
+      "startCol": 0,
+      "endRow": 199,
+      "endCol": 61
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "value2"
+      },
+      {
+        "type": "string",
+        "value": "Sequential metadata key2 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 200,
+      "startCol": 0,
+      "endRow": 201,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "key3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 201,
+      "startCol": 0,
+      "endRow": 201,
+      "endCol": 61
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "value3"
+      },
+      {
+        "type": "string",
+        "value": "Sequential metadata key3 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 203,
+      "startCol": 0,
+      "endRow": 203,
+      "endCol": 48
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== GetMeta and SetMeta Tests Complete ==="
+      }
+    ]
+  }
+]

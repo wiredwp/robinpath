@@ -29,7 +29,11 @@ export function printArg(arg: any, _ctx: PrintContext): string | null {
             // Handle binary expressions like $value > 5
             const left = printArg(arg.left, _ctx) || '';
             const right = printArg(arg.right, _ctx) || '';
-            return `${left} ${arg.operator} ${right}`;
+            // Use original operator text if available (e.g., && instead of and)
+            const op = arg.operatorText || arg.operator;
+            const expr = `${left} ${op} ${right}`;
+            // Wrap in parentheses if originally parenthesized
+            return arg.parenthesized ? `(${expr})` : expr;
         }
         case 'unary': {
             // Handle unary expressions like not $value

@@ -1,0 +1,3455 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Into Syntax Tests\nTests for the \"into\" syntax sugar for assignment",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 49
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 31
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Into Syntax Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 6,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 37
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic command with into",
+        "codePos": {
+          "startRow": 5,
+          "startCol": 0,
+          "endRow": 5,
+          "endCol": 32
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic command with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 21
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ],
+    "into": {
+      "targetName": "result1",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 64
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result1",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "into syntax - basic command failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 2: Command with into should not affect last value",
+        "codePos": {
+          "startRow": 10,
+          "startCol": 0,
+          "endRow": 10,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Into preserves last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 14
+    },
+    "targetName": "beforeInto",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 21
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "into": {
+      "targetName": "result2",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 15,
+      "startCol": 0,
+      "endRow": 15,
+      "endCol": 86
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "beforeInto",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "into syntax - should preserve last value before into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "into syntax - basic command result failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 3: Module function with into",
+        "codePos": {
+          "startRow": 18,
+          "startCol": 0,
+          "endRow": 18,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Module function with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 28
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "number",
+        "value": 25
+      }
+    ],
+    "into": {
+      "targetName": "result3",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result3",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 40
+      },
+      {
+        "type": "string",
+        "value": "into syntax - module function failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 32
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 6
+      },
+      {
+        "type": "number",
+        "value": 7
+      }
+    ],
+    "into": {
+      "targetName": "result3b",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result3b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "into syntax - module function multiply failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 4: String function with into",
+        "codePos": {
+          "startRow": 26,
+          "startCol": 0,
+          "endRow": 26,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: String function with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 28,
+      "endCol": 47
+    },
+    "name": "string.concat",
+    "module": "string",
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": " "
+      },
+      {
+        "type": "string",
+        "value": "world"
+      }
+    ],
+    "into": {
+      "targetName": "result4",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result4",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "hello world"
+      },
+      {
+        "type": "string",
+        "value": "into syntax - string function failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 5: Array function with into",
+        "codePos": {
+          "startRow": 31,
+          "startCol": 0,
+          "endRow": 31,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Array function with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 32
+    },
+    "name": "array.create",
+    "module": "array",
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ],
+    "into": {
+      "targetName": "result5",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 39,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 36,
+          "startCol": 2,
+          "endRow": 36,
+          "endCol": 33
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 5: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 37,
+          "startCol": 2,
+          "endRow": 37,
+          "endCol": 23
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "result5",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 38,
+          "startCol": 2,
+          "endRow": 38,
+          "endCol": 67
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 3
+          },
+          {
+            "type": "string",
+            "value": "into syntax - array function length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 83
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result5",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "into syntax - array function element access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 6: Do block with into",
+        "codePos": {
+          "startRow": 42,
+          "startCol": 0,
+          "endRow": 42,
+          "endCol": 27
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Do block with into"
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 48,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 45,
+          "startCol": 2,
+          "endRow": 45,
+          "endCol": 33
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 6: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 46,
+          "startCol": 2,
+          "endRow": 46,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 20
+          },
+          {
+            "type": "number",
+            "value": 30
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 47,
+          "startCol": 2,
+          "endRow": 47,
+          "endCol": 19
+        },
+        "name": "math.multiply",
+        "module": "math",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 2
+          }
+        ]
+      }
+    ],
+    "into": {
+      "targetName": "result6",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 61
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result6",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "into syntax - do block failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 53,
+      "startCol": 0,
+      "endRow": 53,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 7: Do block with into should not affect last value",
+        "codePos": {
+          "startRow": 52,
+          "startCol": 0,
+          "endRow": 52,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Do block with into preserves last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 12
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 55,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 16
+    },
+    "targetName": "beforeDoInto",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 59,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 57,
+          "startCol": 2,
+          "endRow": 57,
+          "endCol": 33
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 7: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 58,
+          "startCol": 2,
+          "endRow": 58,
+          "endCol": 14
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 5
+          },
+          {
+            "type": "number",
+            "value": 5
+          }
+        ]
+      }
+    ],
+    "into": {
+      "targetName": "result7",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 84
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "beforeDoInto",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "into syntax - do block should preserve last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result7",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "into syntax - do block result failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 64,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 8: Do block with parameters and into",
+        "codePos": {
+          "startRow": 63,
+          "startCol": 0,
+          "endRow": 63,
+          "endCol": 42
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Do block with parameters and into"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 15
+    },
+    "targetName": "outerVar8",
+    "targetPath": [],
+    "literalValue": 300,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 1
+    },
+    "trailingBlankLines": 2,
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 4
+    },
+    "paramNames": [
+      "a",
+      "b"
+    ],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 70,
+          "startCol": 0,
+          "endRow": 72,
+          "endCol": 109
+        },
+        "name": "_literal",
+        "module": null,
+        "args": []
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 72,
+          "startCol": 9,
+          "endRow": 72,
+          "endCol": 109
+        },
+        "name": "_literal",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "\n  # Should not be able to access $outerVar8 (isolated scope)\n    test.assertEqual $outerVar8 null "
+          }
+        ]
+      },
+      {
+        "type": "do",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 73,
+          "startCol": 6,
+          "endRow": 74,
+          "endCol": 12
+        },
+        "body": []
+      }
+    ],
+    "into": {
+      "targetName": "result8",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 76,
+      "startCol": 2,
+      "endRow": 76,
+      "endCol": 87
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "do with params and into - first param should be accessible"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 2,
+      "endRow": 77,
+      "endCol": 88
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "b",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "do with params and into - second param should be accessible"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 2,
+      "endRow": 79,
+      "endCol": 10
+    },
+    "comments": [
+      {
+        "text": "Set values and compute result",
+        "codePos": {
+          "startRow": 78,
+          "startCol": 2,
+          "endRow": 78,
+          "endCol": 32
+        },
+        "inline": false
+      }
+    ],
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "a",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 2,
+      "endRow": 80,
+      "endCol": 10
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 2,
+      "endRow": 81,
+      "endCol": 16
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "a",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "b",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 3
+    },
+    "name": "enddo",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 95
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "outerVar8",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 300
+      },
+      {
+        "type": "string",
+        "value": "do with params and into - parent variable should be unchanged"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 0,
+      "endRow": 84,
+      "endCol": 85
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result8",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 8
+      },
+      {
+        "type": "string",
+        "value": "do with params and into - should return computed result"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 9: Parenthesized function call with into (single line)",
+        "codePos": {
+          "startRow": 86,
+          "startCol": 0,
+          "endRow": 86,
+          "endCol": 60
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Parenthesized call with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 88,
+      "endCol": 29
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ],
+    "syntaxType": "parentheses",
+    "into": {
+      "targetName": "result9",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 82
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result9",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "into syntax - parenthesized call single line failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 92,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 10: Parenthesized function call with into (multiline)",
+        "codePos": {
+          "startRow": 91,
+          "startCol": 0,
+          "endRow": 91,
+          "endCol": 59
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Multiline parenthesized call with into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 16
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "number",
+        "value": 25
+      }
+    ],
+    "syntaxType": "multiline-parentheses",
+    "into": {
+      "targetName": "result10",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 97,
+      "startCol": 0,
+      "endRow": 97,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result10",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 40
+      },
+      {
+        "type": "string",
+        "value": "into syntax - parenthesized call multiline failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 100,
+      "startCol": 0,
+      "endRow": 100,
+      "endCol": 58
+    },
+    "comments": [
+      {
+        "text": "Test 11: Parenthesized function call with named arguments and into",
+        "codePos": {
+          "startRow": 99,
+          "startCol": 0,
+          "endRow": 99,
+          "endCol": 67
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Parenthesized call with named args and into"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 101,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testIntoFn",
+    "paramNames": [
+      "a",
+      "b"
+    ],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 102,
+          "startCol": 2,
+          "endRow": 102,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "a",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "b",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 105,
+      "endCol": 38
+    },
+    "name": "testIntoFn",
+    "module": null,
+    "args": [
+      {
+        "type": "namedArgs",
+        "args": {
+          "a": {
+            "type": "number",
+            "value": 10
+          },
+          "b": {
+            "type": "number",
+            "value": 20
+          }
+        }
+      }
+    ],
+    "syntaxType": "named-parentheses",
+    "into": {
+      "targetName": "result11",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 87
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result11",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "into syntax - parenthesized call with named args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 109,
+      "endCol": 68
+    },
+    "comments": [
+      {
+        "text": "Test 12: Multiline parenthesized call with named arguments and into",
+        "codePos": {
+          "startRow": 108,
+          "startCol": 0,
+          "endRow": 108,
+          "endCol": 68
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 12: Multiline parenthesized call with named args and into"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 110,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 16
+    },
+    "name": "testIntoFn",
+    "module": null,
+    "args": [
+      {
+        "type": "namedArgs",
+        "args": {
+          "a": {
+            "type": "number",
+            "value": 5
+          },
+          "b": {
+            "type": "number",
+            "value": 15
+          }
+        }
+      }
+    ],
+    "syntaxType": "multiline-parentheses",
+    "into": {
+      "targetName": "result12",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 97
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result12",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "into syntax - multiline parenthesized call with named args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 13: Into with attribute path assignment",
+        "codePos": {
+          "startRow": 116,
+          "startCol": 0,
+          "endRow": 116,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 13: Into with attribute path assignment"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 25
+    },
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"value\": 0}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 9
+    },
+    "targetName": "obj13",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 0,
+      "endRow": 120,
+      "endCol": 33
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ],
+    "into": {
+      "targetName": "obj13",
+      "targetPath": [
+        {
+          "type": "property",
+          "name": "result"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 121,
+      "startCol": 0,
+      "endRow": 121,
+      "endCol": 82
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj13",
+        "path": [
+          {
+            "type": "property",
+            "name": "result"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "into syntax - attribute path assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 95
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj13",
+        "path": [
+          {
+            "type": "property",
+            "name": "value"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "into syntax - attribute path should preserve other properties"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 14: Into should work with user-defined functions",
+        "codePos": {
+          "startRow": 124,
+          "startCol": 0,
+          "endRow": 124,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 14: Into with user-defined functions"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 0,
+      "endRow": 128,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "addTen",
+    "paramNames": [
+      "x"
+    ],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 127,
+          "startCol": 2,
+          "endRow": 127,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "x",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 25
+    },
+    "name": "addTen",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 15
+      }
+    ],
+    "syntaxType": "parentheses",
+    "into": {
+      "targetName": "result14",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 131,
+      "endCol": 74
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result14",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "into syntax - user-defined function failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 134,
+      "startCol": 0,
+      "endRow": 134,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 15: Into with array indexing",
+        "codePos": {
+          "startRow": 133,
+          "startCol": 0,
+          "endRow": 133,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 15: Into with array indexing"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 135,
+      "startCol": 0,
+      "endRow": 135,
+      "endCol": 9
+    },
+    "name": "range",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 136,
+      "startCol": 0,
+      "endRow": 136,
+      "endCol": 9
+    },
+    "targetName": "arr15",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 137,
+      "endCol": 39
+    },
+    "name": "array.length",
+    "module": "array",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr15",
+        "path": []
+      }
+    ],
+    "syntaxType": "parentheses",
+    "into": {
+      "targetName": "arr15",
+      "targetPath": [
+        {
+          "type": "property",
+          "name": "length"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 138,
+      "startCol": 0,
+      "endRow": 138,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr15",
+        "path": [
+          {
+            "type": "property",
+            "name": "length"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "into syntax - array indexing assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 141,
+      "startCol": 0,
+      "endRow": 141,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 16: Multiple into statements in sequence",
+        "codePos": {
+          "startRow": 140,
+          "startCol": 0,
+          "endRow": 140,
+          "endCol": 46
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 16: Multiple into statements"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 142,
+      "startCol": 0,
+      "endRow": 142,
+      "endCol": 22
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ],
+    "into": {
+      "targetName": "a16",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 22
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ],
+    "into": {
+      "targetName": "b16",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 144,
+      "startCol": 0,
+      "endRow": 144,
+      "endCol": 22
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ],
+    "into": {
+      "targetName": "c16",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 145,
+      "startCol": 0,
+      "endRow": 145,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "a16",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "into syntax - multiple statements first failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 146,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "b16",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 4
+      },
+      {
+        "type": "string",
+        "value": "into syntax - multiple statements second failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 147,
+      "startCol": 0,
+      "endRow": 147,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "c16",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 6
+      },
+      {
+        "type": "string",
+        "value": "into syntax - multiple statements third failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 150,
+      "startCol": 0,
+      "endRow": 150,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 17: Into with empty do block",
+        "codePos": {
+          "startRow": 149,
+          "startCol": 0,
+          "endRow": 149,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 17: Into with empty do block"
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 151,
+      "startCol": 0,
+      "endRow": 153,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 152,
+          "startCol": 2,
+          "endRow": 152,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 17: this do is run"
+          }
+        ]
+      }
+    ],
+    "into": {
+      "targetName": "result17",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 86
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result17",
+        "path": []
+      },
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "into syntax - empty do block should have the last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 157,
+      "startCol": 0,
+      "endRow": 157,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 18: Into with do block that has parameters",
+        "codePos": {
+          "startRow": 156,
+          "startCol": 0,
+          "endRow": 156,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 18: Into with do block parameters"
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 0,
+      "endRow": 161,
+      "endCol": 4
+    },
+    "paramNames": [
+      "x",
+      "y"
+    ],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 159,
+          "startCol": 2,
+          "endRow": 159,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 18: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 160,
+          "startCol": 2,
+          "endRow": 160,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "x",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "y",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 162,
+      "startCol": 0,
+      "endRow": 162,
+      "endCol": 95
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result18",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "into syntax - do block with parameters (no args) should return 0"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 165,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 43
+    },
+    "comments": [
+      {
+        "text": "Test 19: Return statement in do block with into",
+        "codePos": {
+          "startRow": 164,
+          "startCol": 0,
+          "endRow": 164,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 19: Return in do block with into"
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 166,
+      "startCol": 0,
+      "endRow": 171,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 167,
+          "startCol": 2,
+          "endRow": 167,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 19: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 168,
+          "startCol": 2,
+          "endRow": 168,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 10
+          },
+          {
+            "type": "number",
+            "value": 20
+          }
+        ]
+      },
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 169,
+          "startCol": 2,
+          "endRow": 169,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 100
+        }
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 170,
+          "startCol": 2,
+          "endRow": 170,
+          "endCol": 40
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 1
+          },
+          {
+            "type": "number",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "into": {
+      "targetName": "result19",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 0,
+      "endRow": 172,
+      "endCol": 83
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result19",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "return in do block - should return specified value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 175,
+      "startCol": 0,
+      "endRow": 175,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 20: Return statement in do block without value (returns null)",
+        "codePos": {
+          "startRow": 174,
+          "startCol": 0,
+          "endRow": 174,
+          "endCol": 67
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 20: Return in do block without value"
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 176,
+      "startCol": 0,
+      "endRow": 180,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 177,
+          "startCol": 2,
+          "endRow": 177,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 20: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 178,
+          "startCol": 2,
+          "endRow": 178,
+          "endCol": 14
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 5
+          },
+          {
+            "type": "number",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 179,
+          "startCol": 2,
+          "endRow": 179,
+          "endCol": 7
+        },
+        "value": {
+          "type": "literal",
+          "value": null
+        }
+      }
+    ],
+    "into": {
+      "targetName": "result20",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 181,
+      "startCol": 0,
+      "endRow": 181,
+      "endCol": 97
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result20",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "return in do block - should return null when no value specified"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 184,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 37
+    },
+    "comments": [
+      {
+        "text": "Test 21: Return stops execution of remaining code",
+        "codePos": {
+          "startRow": 183,
+          "startCol": 0,
+          "endRow": 183,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 21: Return stops execution"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 13
+    },
+    "targetName": "testVar21",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 186,
+      "startCol": 0,
+      "endRow": 191,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 187,
+          "startCol": 2,
+          "endRow": 187,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 21: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 188,
+          "startCol": 2,
+          "endRow": 188,
+          "endCol": 18
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar21",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 189,
+          "startCol": 2,
+          "endRow": 189,
+          "endCol": 11
+        },
+        "value": {
+          "type": "number",
+          "value": 42
+        }
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 190,
+          "startCol": 2,
+          "endRow": 190,
+          "endCol": 45
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar21",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 2
+          }
+        ]
+      }
+    ],
+    "into": {
+      "targetName": "result21",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 192,
+      "startCol": 0,
+      "endRow": 192,
+      "endCol": 80
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result21",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "return in do block - should return correct value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 193,
+      "startCol": 0,
+      "endRow": 193,
+      "endCol": 102
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar21",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "return in do block - should stop execution before remaining statements"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 196,
+      "startCol": 0,
+      "endRow": 196,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 22: Into preserves last value after assignment",
+        "codePos": {
+          "startRow": 195,
+          "startCol": 0,
+          "endRow": 195,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 22: Into preserves last value after assignment"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 197,
+      "startCol": 0,
+      "endRow": 197,
+      "endCol": 16
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "number",
+        "value": 200
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 198,
+      "startCol": 0,
+      "endRow": 198,
+      "endCol": 16
+    },
+    "targetName": "beforeInto22",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 199,
+      "startCol": 0,
+      "endRow": 199,
+      "endCol": 27
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "into": {
+      "targetName": "result22",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 200,
+      "startCol": 0,
+      "endRow": 200,
+      "endCol": 77
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "beforeInto22",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 300
+      },
+      {
+        "type": "string",
+        "value": "into syntax - should preserve last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 201,
+      "startCol": 0,
+      "endRow": 201,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result22",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "into syntax - should assign result correctly"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 204,
+      "startCol": 0,
+      "endRow": 204,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 23: Into with object literal",
+        "codePos": {
+          "startRow": 203,
+          "startCol": 0,
+          "endRow": 203,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 23: Into with object literal"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 205,
+      "startCol": 0,
+      "endRow": 205,
+      "endCol": 43
+    },
+    "name": "obj",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "{name: \"Test\", value: 42}"
+      }
+    ],
+    "into": {
+      "targetName": "obj23",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 206,
+      "startCol": 0,
+      "endRow": 206,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj23",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Test"
+      },
+      {
+        "type": "string",
+        "value": "into syntax - object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 207,
+      "startCol": 0,
+      "endRow": 207,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj23",
+        "path": [
+          {
+            "type": "property",
+            "name": "value"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "into syntax - object literal value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 210,
+      "startCol": 0,
+      "endRow": 210,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 24: Into with array literal",
+        "codePos": {
+          "startRow": 209,
+          "startCol": 0,
+          "endRow": 209,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 24: Into with array literal"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 211,
+      "startCol": 0,
+      "endRow": 211,
+      "endCol": 28
+    },
+    "name": "array",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "number",
+        "value": 4
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "syntaxType": "parentheses",
+    "into": {
+      "targetName": "arr24",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 212,
+      "startCol": 0,
+      "endRow": 213,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 213,
+      "startCol": 0,
+      "endRow": 217,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 214,
+          "startCol": 2,
+          "endRow": 214,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "-> Test 24: this do is run"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 215,
+          "startCol": 2,
+          "endRow": 215,
+          "endCol": 21
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "arr24",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 216,
+          "startCol": 2,
+          "endRow": 216,
+          "endCol": 66
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 5
+          },
+          {
+            "type": "string",
+            "value": "into syntax - array literal length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 218,
+      "startCol": 0,
+      "endRow": 218,
+      "endCol": 80
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr24",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "into syntax - array literal element access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 220,
+      "startCol": 0,
+      "endRow": 220,
+      "endCol": 40
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Into Syntax Tests Complete ==="
+      }
+    ]
+  }
+]

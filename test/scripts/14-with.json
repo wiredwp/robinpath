@@ -1,0 +1,1976 @@
+[
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 4,
+      "endRow": 0,
+      "endCol": 16
+    },
+    "name": "chunk",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 14
+      }
+    ]
+  },
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "with callback function Tests\nTests \"with\" using repeat function",
+        "codePos": {
+          "startRow": 1,
+          "startCol": 0,
+          "endRow": 2,
+          "endCol": 35
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 1
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 35
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Repeat Function Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 29
+    },
+    "comments": [
+      {
+        "text": "Test 2: repeat function with callback",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 38
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: repeat function"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 10,
+            "startCol": 2,
+            "endRow": 10,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2a: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 11,
+            "startCol": 2,
+            "endRow": 13,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 11,
+                "startCol": 5,
+                "endRow": 11,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 11,
+                "startCol": 11,
+                "endRow": 11,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 11,
+              "startCol": 5,
+              "endRow": 11,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 12,
+                "startCol": 4,
+                "endRow": 12,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 1
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 14,
+            "startCol": 2,
+            "endRow": 14,
+            "endCol": 10
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 97
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "repeat should iterate 5 times and add 1 each time with explicit null check"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 3
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 20,
+            "startCol": 2,
+            "endRow": 20,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2b: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 21,
+            "startCol": 2,
+            "endRow": 23,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 21,
+                "startCol": 5,
+                "endRow": 21,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 21,
+                "startCol": 11,
+                "endRow": 21,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 21,
+              "startCol": 5,
+              "endRow": 21,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 22,
+                "startCol": 4,
+                "endRow": 22,
+                "endCol": 13
+              },
+              "value": {
+                "type": "number",
+                "value": 10
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 24,
+            "startCol": 2,
+            "endRow": 24,
+            "endCol": 10
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 25,
+            "startCol": 2,
+            "endRow": 25,
+            "endCol": 10
+          },
+          "value": {
+            "type": "lastValue"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 92
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "repeat with explicit return should accumulate correctly (10 + 5 + 5)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 30,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 30,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 4
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 31,
+            "startCol": 2,
+            "endRow": 31,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2c: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 32,
+            "startCol": 2,
+            "endRow": 34,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 32,
+                "startCol": 5,
+                "endRow": 32,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 32,
+                "startCol": 11,
+                "endRow": 32,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 32,
+              "startCol": 5,
+              "endRow": 32,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 33,
+                "startCol": 4,
+                "endRow": 33,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 35,
+            "startCol": 2,
+            "endRow": 35,
+            "endCol": 20
+          },
+          "name": "math.multiply",
+          "module": "math",
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "into": {
+        "targetName": "result2",
+        "targetPath": []
+      }
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 91
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 16
+      },
+      {
+        "type": "string",
+        "value": "repeat with into assignment should work (2 * 2 * 2 * 2 = 16)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 39,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 0
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 41,
+            "startCol": 2,
+            "endRow": 41,
+            "endCol": 54
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2d: with block is run (should not run)"
+            }
+          ]
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 42,
+            "startCol": 2,
+            "endRow": 42,
+            "endCol": 12
+          },
+          "value": {
+            "type": "number",
+            "value": 100
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "repeat with 0 iterations should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 46,
+      "startCol": 0,
+      "endRow": 47,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 47,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 48,
+            "startCol": 2,
+            "endRow": 48,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2e: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 49,
+            "startCol": 2,
+            "endRow": 51,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 49,
+                "startCol": 5,
+                "endRow": 49,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 49,
+                "startCol": 11,
+                "endRow": 49,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 49,
+              "startCol": 5,
+              "endRow": 49,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 50,
+                "startCol": 4,
+                "endRow": 50,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 52,
+            "startCol": 2,
+            "endRow": 52,
+            "endCol": 11
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "var",
+              "name": "1",
+              "path": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "repeat should accumulate index values (0+1+2+3+4 = 10)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 49
+    },
+    "comments": [
+      {
+        "text": "Test 21: Repeat with subexpression using $1",
+        "codePos": {
+          "startRow": 56,
+          "startCol": 0,
+          "endRow": 56,
+          "endCol": 44
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 21: Repeat with subexpression using $1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 59,
+      "endCol": 3
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 59,
+      "startCol": 0,
+      "endRow": 59,
+      "endCol": 7
+    },
+    "targetName": "sum",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 61,
+            "startCol": 2,
+            "endRow": 61,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 21: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 63,
+            "startCol": 2,
+            "endRow": 63,
+            "endCol": 23
+          },
+          "targetName": "sum",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 63,
+              "startCol": 9,
+              "endRow": 63,
+              "endCol": 23
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 63,
+                      "startCol": 11,
+                      "endRow": 63,
+                      "endCol": 22
+                    },
+                    "name": "add",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "sum",
+                        "path": []
+                      },
+                      {
+                        "type": "var",
+                        "name": "1",
+                        "path": []
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 63,
+                  "startCol": 9,
+                  "endRow": 63,
+                  "endCol": 23
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 96
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "sum",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "repeat with subexpression should access $1 correctly (0+1+2+3+4 = 10)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 22: Repeat with $1 used directly and in subexpression",
+        "codePos": {
+          "startRow": 67,
+          "startCol": 0,
+          "endRow": 67,
+          "endCol": 59
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 22: Repeat with $1 in subexpression"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 70,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 70,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 54
+    },
+    "comments": [
+      {
+        "text": "Last value should be 6 (from last iteration: add 4 2)",
+        "codePos": {
+          "startRow": 75,
+          "startCol": 0,
+          "endRow": 75,
+          "endCol": 54
+        },
+        "inline": true
+      }
+    ],
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 71,
+            "startCol": 2,
+            "endRow": 71,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 22: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 72,
+            "startCol": 2,
+            "endRow": 72,
+            "endCol": 12
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": ">"
+            },
+            {
+              "type": "var",
+              "name": "1",
+              "path": []
+            }
+          ]
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 73,
+            "startCol": 2,
+            "endRow": 73,
+            "endCol": 20
+          },
+          "value": {
+            "type": "subexpression",
+            "body": [
+              {
+                "type": "command",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 73,
+                  "startCol": 11,
+                  "endRow": 73,
+                  "endCol": 19
+                },
+                "name": "add",
+                "module": null,
+                "args": [
+                  {
+                    "type": "var",
+                    "name": "1",
+                    "path": []
+                  },
+                  {
+                    "type": "number",
+                    "value": 2
+                  }
+                ]
+              }
+            ],
+            "codePos": {
+              "startRow": 73,
+              "startCol": 9,
+              "endRow": 73,
+              "endCol": 20
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 76,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 6
+      },
+      {
+        "type": "string",
+        "value": "repeat with $1 in subexpression should work correctly"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 23: Repeat with $1 and $2 in subexpression",
+        "codePos": {
+          "startRow": 78,
+          "startCol": 0,
+          "endRow": 78,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 23: Repeat with $1 and $2 in subexpression"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 81,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 3
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 82,
+            "startCol": 2,
+            "endRow": 82,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 23: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 83,
+            "startCol": 2,
+            "endRow": 85,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 83,
+                "startCol": 5,
+                "endRow": 83,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 83,
+                "startCol": 11,
+                "endRow": 83,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 83,
+              "startCol": 5,
+              "endRow": 83,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 84,
+                "startCol": 4,
+                "endRow": 84,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 86,
+            "startCol": 2,
+            "endRow": 86,
+            "endCol": 24
+          },
+          "targetName": "result",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 86,
+              "startCol": 12,
+              "endRow": 86,
+              "endCol": 24
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 86,
+                      "startCol": 14,
+                      "endRow": 86,
+                      "endCol": 23
+                    },
+                    "name": "add",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "1",
+                        "path": []
+                      },
+                      {
+                        "type": "var",
+                        "name": "2",
+                        "path": []
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 86,
+                  "startCol": 12,
+                  "endRow": 86,
+                  "endCol": 24
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 87,
+            "startCol": 2,
+            "endRow": 87,
+            "endCol": 16
+          },
+          "value": {
+            "type": "var",
+            "name": "result",
+            "path": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 105
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "repeat with $1 and $2 in subexpression failed (iterations: 0+null=0, 1+0=1, 2+1=3)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 92,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 24: Repeat with nested subexpressions using $1",
+        "codePos": {
+          "startRow": 91,
+          "startCol": 0,
+          "endRow": 91,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 24: Repeat with nested subexpressions using $1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 7
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 11
+    },
+    "targetName": "product",
+    "targetPath": [],
+    "literalValue": 1,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 95,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 4
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 96,
+            "startCol": 2,
+            "endRow": 96,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 24: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 97,
+            "startCol": 2,
+            "endRow": 99,
+            "endCol": 6
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 97,
+                "startCol": 5,
+                "endRow": 97,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 97,
+                "startCol": 11,
+                "endRow": 97,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 97,
+              "startCol": 5,
+              "endRow": 97,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 98,
+                "startCol": 4,
+                "endRow": 98,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 1
+              }
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 100,
+            "startCol": 2,
+            "endRow": 100,
+            "endCol": 50
+          },
+          "targetName": "product",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 100,
+              "startCol": 13,
+              "endRow": 100,
+              "endCol": 50
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 100,
+                      "startCol": 15,
+                      "endRow": 100,
+                      "endCol": 49
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "product",
+                        "path": []
+                      },
+                      {
+                        "type": "subexpression",
+                        "body": [
+                          {
+                            "type": "command",
+                            "lastValue": null,
+                            "codePos": {
+                              "startRow": 100,
+                              "startCol": 40,
+                              "endRow": 100,
+                              "endCol": 48
+                            },
+                            "name": "add",
+                            "module": null,
+                            "args": [
+                              {
+                                "type": "var",
+                                "name": "1",
+                                "path": []
+                              },
+                              {
+                                "type": "number",
+                                "value": 1
+                              }
+                            ]
+                          }
+                        ],
+                        "codePos": {
+                          "startRow": 100,
+                          "startCol": 38,
+                          "endRow": 100,
+                          "endCol": 49
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 100,
+                  "startCol": 13,
+                  "endRow": 100,
+                  "endCol": 50
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 101,
+            "startCol": 2,
+            "endRow": 101,
+            "endCol": 17
+          },
+          "value": {
+            "type": "var",
+            "name": "product",
+            "path": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 103
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "product",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 24
+      },
+      {
+        "type": "string",
+        "value": "repeat with nested subexpressions using $1 failed (should be 1*2*3*4=24)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 60
+    },
+    "comments": [
+      {
+        "text": "Test 25: Repeat with multi-line subexpression using $1",
+        "codePos": {
+          "startRow": 105,
+          "startCol": 0,
+          "endRow": 105,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 25: Repeat with multi-line subexpression using $1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 107,
+      "startCol": 0,
+      "endRow": 108,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 116,
+      "endCol": 3
+    },
+    "trailingBlankLines": 1,
+    "name": "repeat",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 3
+      }
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 109,
+            "startCol": 2,
+            "endRow": 109,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 25: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 110,
+            "startCol": 2,
+            "endRow": 113,
+            "endCol": 3
+          },
+          "targetName": "result",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 110,
+              "startCol": 12,
+              "endRow": 113,
+              "endCol": 3
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 111,
+                      "startCol": 4,
+                      "endRow": 111,
+                      "endCol": 12
+                    },
+                    "name": "add",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "1",
+                        "path": []
+                      },
+                      {
+                        "type": "number",
+                        "value": 5
+                      }
+                    ]
+                  },
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 112,
+                      "startCol": 4,
+                      "endRow": 112,
+                      "endCol": 21
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "lastValue"
+                      },
+                      {
+                        "type": "number",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 110,
+                  "startCol": 12,
+                  "endRow": 113,
+                  "endCol": 3
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 114,
+            "startCol": 2,
+            "endRow": 114,
+            "endCol": 16
+          },
+          "value": {
+            "type": "var",
+            "name": "result",
+            "path": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 116,
+      "startCol": 0,
+      "endRow": 116,
+      "endCol": 105
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 14
+      },
+      {
+        "type": "string",
+        "value": "repeat with multi-line subexpression using $1 failed (last iteration: (2+5)*2=14)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 44
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Repeat Function Tests Complete ==="
+      }
+    ]
+  }
+]

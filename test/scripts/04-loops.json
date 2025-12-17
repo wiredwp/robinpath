@@ -1,0 +1,4216 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Loop Tests\nTests for for loops, break statements, and continue statements",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 63
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 24
+    },
+    "trailingBlankLines": 2,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Loop Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 28
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic for loop",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 23
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic for loop"
+      }
+    ]
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 5
+    },
+    "trailingBlankLines": 2,
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 8,
+            "startCol": 16,
+            "endRow": 8,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 5,
+          "codePos": {
+            "startRow": 8,
+            "startCol": 18,
+            "endRow": 8,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 8,
+        "startCol": 10,
+        "endRow": 8,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 9,
+          "startCol": 2,
+          "endRow": 9,
+          "endCol": 35
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 1 - Loop iteration:"
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 29
+    },
+    "comments": [
+      {
+        "text": "Test 2: Nested for loop",
+        "codePos": {
+          "startRow": 13,
+          "startCol": 0,
+          "endRow": 13,
+          "endCol": 24
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Nested for loop"
+      }
+    ]
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 15,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 5
+    },
+    "trailingBlankLines": 2,
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 15,
+            "startCol": 16,
+            "endRow": 15,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 3,
+          "codePos": {
+            "startRow": 15,
+            "startCol": 18,
+            "endRow": 15,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 15,
+        "startCol": 10,
+        "endRow": 15,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 16,
+          "startCol": 2,
+          "endRow": 18,
+          "endCol": 7
+        },
+        "varName": "j",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 16,
+                "startCol": 18,
+                "endRow": 16,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "number",
+              "value": 2,
+              "codePos": {
+                "startRow": 16,
+                "startCol": 20,
+                "endRow": 16,
+                "endCol": 20
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 16,
+            "startCol": 12,
+            "endRow": 16,
+            "endCol": 20
+          }
+        },
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 17,
+              "startCol": 4,
+              "endRow": 17,
+              "endCol": 37
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 2 - Nested loop:"
+              },
+              {
+                "type": "var",
+                "name": "i",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "j",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 3: For loop with array",
+        "codePos": {
+          "startRow": 22,
+          "startCol": 0,
+          "endRow": 22,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: For loop with array"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 22
+    },
+    "targetName": "numbers",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 24,
+        "startCol": 11,
+        "endRow": 24,
+        "endCol": 22
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 10
+        },
+        {
+          "type": "number",
+          "value": 12
+        }
+      ]
+    }
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 5
+    },
+    "trailingBlankLines": 2,
+    "varName": "num",
+    "iterable": {
+      "type": "var",
+      "name": "numbers",
+      "path": [],
+      "codePos": {
+        "startRow": 25,
+        "startCol": 12,
+        "endRow": 25,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 26,
+          "startCol": 2,
+          "endRow": 26,
+          "endCol": 29
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 3 - Number:"
+          },
+          {
+            "type": "var",
+            "name": "num",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 4: For loop inside if",
+        "codePos": {
+          "startRow": 30,
+          "startCol": 0,
+          "endRow": 30,
+          "endCol": 27
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: For loop inside if"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 9
+    },
+    "targetName": "count",
+    "targetPath": [],
+    "literalValue": 3,
+    "literalValueType": "number"
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "count",
+        "path": [],
+        "codePos": {
+          "startRow": 33,
+          "startCol": 3,
+          "endRow": 33,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 0,
+        "codePos": {
+          "startRow": 33,
+          "startCol": 12,
+          "endRow": 33,
+          "endCol": 12
+        }
+      },
+      "codePos": {
+        "startRow": 33,
+        "startCol": 3,
+        "endRow": 33,
+        "endCol": 10
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 34,
+          "startCol": 2,
+          "endRow": 36,
+          "endCol": 7
+        },
+        "varName": "i",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 34,
+                "startCol": 18,
+                "endRow": 34,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "var",
+              "name": "count",
+              "path": [],
+              "codePos": {
+                "startRow": 34,
+                "startCol": 20,
+                "endRow": 34,
+                "endCol": 25
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 34,
+            "startCol": 12,
+            "endRow": 34,
+            "endCol": 25
+          }
+        },
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 35,
+              "startCol": 4,
+              "endRow": 35,
+              "endCol": 39
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 4 - Conditional loop:"
+              },
+              {
+                "type": "var",
+                "name": "i",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 5: If inside for loop",
+        "codePos": {
+          "startRow": 40,
+          "startCol": 0,
+          "endRow": 40,
+          "endCol": 27
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: If inside for loop"
+      }
+    ]
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 5
+    },
+    "trailingBlankLines": 2,
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 42,
+            "startCol": 16,
+            "endRow": 42,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 5,
+          "codePos": {
+            "startRow": 42,
+            "startCol": 18,
+            "endRow": 42,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 42,
+        "startCol": 10,
+        "endRow": 42,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 43,
+          "startCol": 2,
+          "endRow": 45,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": ">",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 43,
+              "startCol": 5,
+              "endRow": 43,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 43,
+              "startCol": 10,
+              "endRow": 43,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 43,
+            "startCol": 5,
+            "endRow": 43,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 44,
+              "startCol": 4,
+              "endRow": 44,
+              "endCol": 37
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 5 - Greater than 3:"
+              },
+              {
+                "type": "var",
+                "name": "i",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 29
+    },
+    "comments": [
+      {
+        "text": "Test 6: Break statement in for loops",
+        "codePos": {
+          "startRow": 49,
+          "startCol": 0,
+          "endRow": 49,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Break statement"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 13
+    },
+    "targetName": "breakTest",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 52,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 52,
+            "startCol": 16,
+            "endRow": 52,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 52,
+            "startCol": 18,
+            "endRow": 52,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 52,
+        "startCol": 10,
+        "endRow": 52,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 53,
+          "startCol": 2,
+          "endRow": 55,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 53,
+              "startCol": 5,
+              "endRow": 53,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 5,
+            "codePos": {
+              "startRow": 53,
+              "startCol": 11,
+              "endRow": 53,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 53,
+            "startCol": 5,
+            "endRow": 53,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "break",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 54,
+              "startCol": 4,
+              "endRow": 54,
+              "endCol": 8
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 56,
+          "startCol": 2,
+          "endRow": 56,
+          "endCol": 19
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "breakTest",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 60
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "breakTest",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 4
+      },
+      {
+        "type": "string",
+        "value": "Basic break statement failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 7: Break in nested loops (should only break inner loop)",
+        "codePos": {
+          "startRow": 61,
+          "startCol": 0,
+          "endRow": 61,
+          "endCol": 61
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Break in nested loops"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 14
+    },
+    "targetName": "outerCount",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 64,
+      "endCol": 14
+    },
+    "targetName": "innerCount",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 73,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 65,
+            "startCol": 16,
+            "endRow": 65,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 3,
+          "codePos": {
+            "startRow": 65,
+            "startCol": 18,
+            "endRow": 65,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 65,
+        "startCol": 10,
+        "endRow": 65,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 66,
+          "startCol": 2,
+          "endRow": 66,
+          "endCol": 20
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "outerCount",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 67,
+          "startCol": 2,
+          "endRow": 72,
+          "endCol": 7
+        },
+        "varName": "j",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 67,
+                "startCol": 18,
+                "endRow": 67,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "number",
+              "value": 5,
+              "codePos": {
+                "startRow": 67,
+                "startCol": 20,
+                "endRow": 67,
+                "endCol": 20
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 67,
+            "startCol": 12,
+            "endRow": 67,
+            "endCol": 20
+          }
+        },
+        "body": [
+          {
+            "type": "ifBlock",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 68,
+              "startCol": 4,
+              "endRow": 70,
+              "endCol": 8
+            },
+            "condition": {
+              "type": "binary",
+              "operator": "==",
+              "left": {
+                "type": "var",
+                "name": "j",
+                "path": [],
+                "codePos": {
+                  "startRow": 68,
+                  "startCol": 7,
+                  "endRow": 68,
+                  "endCol": 8
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 3,
+                "codePos": {
+                  "startRow": 68,
+                  "startCol": 13,
+                  "endRow": 68,
+                  "endCol": 13
+                }
+              },
+              "codePos": {
+                "startRow": 68,
+                "startCol": 7,
+                "endRow": 68,
+                "endCol": 11
+              }
+            },
+            "thenBranch": [
+              {
+                "type": "break",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 69,
+                  "startCol": 6,
+                  "endRow": 69,
+                  "endCol": 10
+                }
+              }
+            ]
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 71,
+              "startCol": 4,
+              "endRow": 71,
+              "endCol": 22
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "innerCount",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "j",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 0,
+      "endRow": 74,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "outerCount",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Break in nested loop - outer loop failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 75,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 73
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "innerCount",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "Break in nested loop - inner loop failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 34
+    },
+    "comments": [
+      {
+        "text": "Test 8: Break with condition",
+        "codePos": {
+          "startRow": 78,
+          "startCol": 0,
+          "endRow": 78,
+          "endCol": 29
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Break with condition"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 80,
+      "endCol": 13
+    },
+    "targetName": "found",
+    "targetPath": [],
+    "literalValue": false,
+    "literalValueType": "boolean"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 86,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 81,
+            "startCol": 16,
+            "endRow": 81,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 81,
+            "startCol": 18,
+            "endRow": 81,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 81,
+        "startCol": 10,
+        "endRow": 81,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 82,
+          "startCol": 2,
+          "endRow": 85,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 82,
+              "startCol": 5,
+              "endRow": 82,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 7,
+            "codePos": {
+              "startRow": 82,
+              "startCol": 11,
+              "endRow": 82,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 82,
+            "startCol": 5,
+            "endRow": 82,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 83,
+              "startCol": 4,
+              "endRow": 83,
+              "endCol": 19
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "found",
+                "path": []
+              },
+              {
+                "type": "literal",
+                "value": true
+              }
+            ]
+          },
+          {
+            "type": "break",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 84,
+              "startCol": 4,
+              "endRow": 84,
+              "endCol": 8
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 58
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "found",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": true
+      },
+      {
+        "type": "string",
+        "value": "Break with condition failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 9: Break early in loop",
+        "codePos": {
+          "startRow": 90,
+          "startCol": 0,
+          "endRow": 90,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Break early in loop"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 92,
+      "endCol": 14
+    },
+    "targetName": "earlyBreak",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 93,
+            "startCol": 16,
+            "endRow": 93,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 93,
+            "startCol": 18,
+            "endRow": 93,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 93,
+        "startCol": 10,
+        "endRow": 93,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 94,
+          "startCol": 2,
+          "endRow": 96,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 94,
+              "startCol": 5,
+              "endRow": 94,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 1,
+            "codePos": {
+              "startRow": 94,
+              "startCol": 11,
+              "endRow": 94,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 94,
+            "startCol": 5,
+            "endRow": 94,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "break",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 95,
+              "startCol": 4,
+              "endRow": 95,
+              "endCol": 8
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 97,
+          "startCol": 2,
+          "endRow": 97,
+          "endCol": 20
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "earlyBreak",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 99,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 51
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "earlyBreak",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "Early break failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 41
+    },
+    "comments": [
+      {
+        "text": "Test 10: Break preserves last value",
+        "codePos": {
+          "startRow": 102,
+          "startCol": 0,
+          "endRow": 102,
+          "endCol": 36
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Break preserves last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 104,
+      "startCol": 0,
+      "endRow": 105,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 112,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "body": [
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 106,
+          "startCol": 2,
+          "endRow": 110,
+          "endCol": 7
+        },
+        "varName": "i",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 106,
+                "startCol": 18,
+                "endRow": 106,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "number",
+              "value": 5,
+              "codePos": {
+                "startRow": 106,
+                "startCol": 20,
+                "endRow": 106,
+                "endCol": 20
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 106,
+            "startCol": 12,
+            "endRow": 106,
+            "endCol": 20
+          }
+        },
+        "body": [
+          {
+            "type": "ifBlock",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 107,
+              "startCol": 4,
+              "endRow": 109,
+              "endCol": 8
+            },
+            "condition": {
+              "type": "binary",
+              "operator": "==",
+              "left": {
+                "type": "var",
+                "name": "i",
+                "path": [],
+                "codePos": {
+                  "startRow": 107,
+                  "startCol": 7,
+                  "endRow": 107,
+                  "endCol": 8
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 3,
+                "codePos": {
+                  "startRow": 107,
+                  "startCol": 13,
+                  "endRow": 107,
+                  "endCol": 13
+                }
+              },
+              "codePos": {
+                "startRow": 107,
+                "startCol": 7,
+                "endRow": 107,
+                "endCol": 11
+              }
+            },
+            "thenBranch": [
+              {
+                "type": "break",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 108,
+                  "startCol": 6,
+                  "endRow": 108,
+                  "endCol": 10
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 111,
+          "startCol": 2,
+          "endRow": 111,
+          "endCol": 58
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 3
+          },
+          {
+            "type": "string",
+            "value": "Break preserves last value failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 116,
+      "startCol": 0,
+      "endRow": 116,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 11: Continue statement in for loops",
+        "codePos": {
+          "startRow": 115,
+          "startCol": 0,
+          "endRow": 115,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Continue statement"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 16
+    },
+    "targetName": "continueTest",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 123,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 118,
+            "startCol": 16,
+            "endRow": 118,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 118,
+            "startCol": 18,
+            "endRow": 118,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 118,
+        "startCol": 10,
+        "endRow": 118,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 119,
+          "startCol": 2,
+          "endRow": 121,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 119,
+              "startCol": 5,
+              "endRow": 119,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 5,
+            "codePos": {
+              "startRow": 119,
+              "startCol": 11,
+              "endRow": 119,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 119,
+            "startCol": 5,
+            "endRow": 119,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 120,
+              "startCol": 4,
+              "endRow": 121,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 122,
+          "startCol": 2,
+          "endRow": 122,
+          "endCol": 22
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "continueTest",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 124,
+      "startCol": 0,
+      "endRow": 124,
+      "endCol": 67
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "continueTest",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Basic continue statement failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 128,
+      "startCol": 0,
+      "endRow": 128,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 12: Continue with condition",
+        "codePos": {
+          "startRow": 127,
+          "startCol": 0,
+          "endRow": 127,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 12: Continue with condition"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 15
+    },
+    "targetName": "continueSum",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 136,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 130,
+            "startCol": 16,
+            "endRow": 130,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 130,
+            "startCol": 18,
+            "endRow": 130,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 130,
+        "startCol": 10,
+        "endRow": 130,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 131,
+          "startCol": 2,
+          "endRow": 133,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "binary",
+            "operator": "%",
+            "left": {
+              "type": "var",
+              "name": "i",
+              "path": [],
+              "codePos": {
+                "startRow": 131,
+                "startCol": 5,
+                "endRow": 131,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "number",
+              "value": 2,
+              "codePos": {
+                "startRow": 131,
+                "startCol": 10,
+                "endRow": 131,
+                "endCol": 10
+              }
+            },
+            "codePos": {
+              "startRow": 131,
+              "startCol": 5,
+              "endRow": 131,
+              "endCol": 8
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 0,
+            "codePos": {
+              "startRow": 131,
+              "startCol": 15,
+              "endRow": 131,
+              "endCol": 15
+            }
+          },
+          "codePos": {
+            "startRow": 131,
+            "startCol": 5,
+            "endRow": 131,
+            "endCol": 13
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 132,
+              "startCol": 4,
+              "endRow": 133,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 134,
+          "startCol": 2,
+          "endRow": 134,
+          "endCol": 26
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "continueSum",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "assignment",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 135,
+          "startCol": 2,
+          "endRow": 135,
+          "endCol": 17
+        },
+        "targetName": "continueSum",
+        "targetPath": [],
+        "literalValue": null,
+        "literalValueType": "null",
+        "isLastValue": true
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 137,
+      "endCol": 103
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "continueSum",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "Continue with condition failed (should sum odd numbers 1+3+5+7+9=25)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 141,
+      "startCol": 0,
+      "endRow": 141,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 13: Continue in nested loops (should only continue inner loop)",
+        "codePos": {
+          "startRow": 140,
+          "startCol": 0,
+          "endRow": 140,
+          "endCol": 68
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 13: Continue in nested loops"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 142,
+      "startCol": 0,
+      "endRow": 142,
+      "endCol": 17
+    },
+    "targetName": "outerContinue",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 17
+    },
+    "targetName": "innerContinue",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 144,
+      "startCol": 0,
+      "endRow": 152,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 144,
+            "startCol": 16,
+            "endRow": 144,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 3,
+          "codePos": {
+            "startRow": 144,
+            "startCol": 18,
+            "endRow": 144,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 144,
+        "startCol": 10,
+        "endRow": 144,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 145,
+          "startCol": 2,
+          "endRow": 145,
+          "endCol": 23
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "outerContinue",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 146,
+          "startCol": 2,
+          "endRow": 151,
+          "endCol": 7
+        },
+        "varName": "j",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 146,
+                "startCol": 18,
+                "endRow": 146,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "number",
+              "value": 5,
+              "codePos": {
+                "startRow": 146,
+                "startCol": 20,
+                "endRow": 146,
+                "endCol": 20
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 146,
+            "startCol": 12,
+            "endRow": 146,
+            "endCol": 20
+          }
+        },
+        "body": [
+          {
+            "type": "ifBlock",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 147,
+              "startCol": 4,
+              "endRow": 149,
+              "endCol": 8
+            },
+            "condition": {
+              "type": "binary",
+              "operator": "==",
+              "left": {
+                "type": "var",
+                "name": "j",
+                "path": [],
+                "codePos": {
+                  "startRow": 147,
+                  "startCol": 7,
+                  "endRow": 147,
+                  "endCol": 8
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 3,
+                "codePos": {
+                  "startRow": 147,
+                  "startCol": 13,
+                  "endRow": 147,
+                  "endCol": 13
+                }
+              },
+              "codePos": {
+                "startRow": 147,
+                "startCol": 7,
+                "endRow": 147,
+                "endCol": 11
+              }
+            },
+            "thenBranch": [
+              {
+                "type": "continue",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 148,
+                  "startCol": 6,
+                  "endRow": 149,
+                  "endCol": 8
+                }
+              }
+            ]
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 150,
+              "startCol": 4,
+              "endRow": 150,
+              "endCol": 25
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "innerContinue",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "j",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 153,
+      "startCol": 0,
+      "endRow": 153,
+      "endCol": 79
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "outerContinue",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Continue in nested loop - outer loop failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 79
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "innerContinue",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Continue in nested loop - inner loop failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 0,
+      "endRow": 158,
+      "endCol": 37
+    },
+    "comments": [
+      {
+        "text": "Test 14: Continue early in loop",
+        "codePos": {
+          "startRow": 157,
+          "startCol": 0,
+          "endRow": 157,
+          "endCol": 32
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 14: Continue early in loop"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 159,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 17
+    },
+    "targetName": "earlyContinue",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 160,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 160,
+            "startCol": 16,
+            "endRow": 160,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 160,
+            "startCol": 18,
+            "endRow": 160,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 160,
+        "startCol": 10,
+        "endRow": 160,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 161,
+          "startCol": 2,
+          "endRow": 163,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "<=",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 161,
+              "startCol": 5,
+              "endRow": 161,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 161,
+              "startCol": 11,
+              "endRow": 161,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 161,
+            "startCol": 5,
+            "endRow": 161,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 162,
+              "startCol": 4,
+              "endRow": 163,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 164,
+          "startCol": 2,
+          "endRow": 164,
+          "endCol": 23
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "earlyContinue",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 166,
+      "startCol": 0,
+      "endRow": 166,
+      "endCol": 58
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "earlyContinue",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Early continue failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 170,
+      "startCol": 0,
+      "endRow": 170,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 15: Continue preserves last value",
+        "codePos": {
+          "startRow": 169,
+          "startCol": 0,
+          "endRow": 169,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 15: Continue preserves last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 171,
+      "startCol": 0,
+      "endRow": 172,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 0,
+      "endRow": 180,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "body": [
+      {
+        "type": "forLoop",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 173,
+          "startCol": 2,
+          "endRow": 178,
+          "endCol": 7
+        },
+        "varName": "i",
+        "iterable": {
+          "type": "call",
+          "callee": "range",
+          "args": [
+            {
+              "type": "number",
+              "value": 1,
+              "codePos": {
+                "startRow": 173,
+                "startCol": 18,
+                "endRow": 173,
+                "endCol": 18
+              }
+            },
+            {
+              "type": "number",
+              "value": 5,
+              "codePos": {
+                "startRow": 173,
+                "startCol": 20,
+                "endRow": 173,
+                "endCol": 20
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 173,
+            "startCol": 12,
+            "endRow": 173,
+            "endCol": 20
+          }
+        },
+        "body": [
+          {
+            "type": "ifBlock",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 174,
+              "startCol": 4,
+              "endRow": 176,
+              "endCol": 8
+            },
+            "condition": {
+              "type": "binary",
+              "operator": "==",
+              "left": {
+                "type": "var",
+                "name": "i",
+                "path": [],
+                "codePos": {
+                  "startRow": 174,
+                  "startCol": 7,
+                  "endRow": 174,
+                  "endCol": 8
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 5,
+                "codePos": {
+                  "startRow": 174,
+                  "startCol": 13,
+                  "endRow": 174,
+                  "endCol": 13
+                }
+              },
+              "codePos": {
+                "startRow": 174,
+                "startCol": 7,
+                "endRow": 174,
+                "endCol": 11
+              }
+            },
+            "thenBranch": [
+              {
+                "type": "continue",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 175,
+                  "startCol": 6,
+                  "endRow": 176,
+                  "endCol": 8
+                }
+              }
+            ]
+          },
+          {
+            "type": "assignment",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 177,
+              "startCol": 4,
+              "endRow": 177,
+              "endCol": 13
+            },
+            "targetName": "temp",
+            "targetPath": [],
+            "command": {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 177,
+                "startCol": 12,
+                "endRow": 177,
+                "endCol": 13
+              },
+              "name": "_var",
+              "module": null,
+              "args": [
+                {
+                  "type": "var",
+                  "name": "i",
+                  "path": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 179,
+          "startCol": 2,
+          "endRow": 179,
+          "endCol": 65
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "var",
+            "name": "temp",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 4
+          },
+          {
+            "type": "string",
+            "value": "Continue preserves last value failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 184,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 16: Continue skips remaining statements",
+        "codePos": {
+          "startRow": 183,
+          "startCol": 0,
+          "endRow": 183,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 16: Continue skips remaining statements"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 12
+    },
+    "targetName": "skipTest",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 186,
+      "startCol": 0,
+      "endRow": 186,
+      "endCol": 17
+    },
+    "targetName": "shouldSkip",
+    "targetPath": [],
+    "literalValue": true,
+    "literalValueType": "boolean"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 187,
+      "startCol": 0,
+      "endRow": 195,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 187,
+            "startCol": 16,
+            "endRow": 187,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 5,
+          "codePos": {
+            "startRow": 187,
+            "startCol": 18,
+            "endRow": 187,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 187,
+        "startCol": 10,
+        "endRow": 187,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 188,
+          "startCol": 2,
+          "endRow": 191,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 188,
+              "startCol": 5,
+              "endRow": 188,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 188,
+              "startCol": 11,
+              "endRow": 188,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 188,
+            "startCol": 5,
+            "endRow": 188,
+            "endCol": 9
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 189,
+              "startCol": 4,
+              "endRow": 189,
+              "endCol": 25
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "shouldSkip",
+                "path": []
+              },
+              {
+                "type": "literal",
+                "value": false
+              }
+            ]
+          },
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 190,
+              "startCol": 4,
+              "endRow": 191,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 192,
+          "startCol": 2,
+          "endRow": 194,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "unary",
+          "operator": "not",
+          "argument": {
+            "type": "var",
+            "name": "shouldSkip",
+            "path": [],
+            "codePos": {
+              "startRow": 192,
+              "startCol": 9,
+              "endRow": 192,
+              "endCol": 19
+            }
+          },
+          "codePos": {
+            "startRow": 192,
+            "startCol": 5,
+            "endRow": 192,
+            "endCol": 19
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 193,
+              "startCol": 4,
+              "endRow": 193,
+              "endCol": 20
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "skipTest",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "i",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 197,
+      "startCol": 0,
+      "endRow": 197,
+      "endCol": 79
+    },
+    "comments": [
+      {
+        "text": "After loop: $skipTest should be 5 (from iterations 4 and 5, since iteration 3's continue skipped the check)",
+        "codePos": {
+          "startRow": 196,
+          "startCol": 0,
+          "endRow": 196,
+          "endCol": 108
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "skipTest",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Continue should skip remaining statements failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 201,
+      "startCol": 0,
+      "endRow": 201,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 17: Continue with multiple conditions",
+        "codePos": {
+          "startRow": 200,
+          "startCol": 0,
+          "endRow": 200,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 17: Continue with multiple conditions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 202,
+      "startCol": 0,
+      "endRow": 202,
+      "endCol": 9
+    },
+    "targetName": "count",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 203,
+      "startCol": 0,
+      "endRow": 203,
+      "endCol": 14
+    },
+    "targetName": "firstValue",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 204,
+      "startCol": 0,
+      "endRow": 204,
+      "endCol": 13
+    },
+    "targetName": "lastValue",
+    "targetPath": [],
+    "literalValue": 0,
+    "literalValueType": "number"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 205,
+      "startCol": 0,
+      "endRow": 218,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 205,
+            "startCol": 16,
+            "endRow": 205,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 205,
+            "startCol": 18,
+            "endRow": 205,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 205,
+        "startCol": 10,
+        "endRow": 205,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 206,
+          "startCol": 2,
+          "endRow": 208,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 206,
+              "startCol": 5,
+              "endRow": 206,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 206,
+              "startCol": 10,
+              "endRow": 206,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 206,
+            "startCol": 5,
+            "endRow": 206,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 207,
+              "startCol": 4,
+              "endRow": 208,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 209,
+          "startCol": 2,
+          "endRow": 211,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": ">",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 209,
+              "startCol": 5,
+              "endRow": 209,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 7,
+            "codePos": {
+              "startRow": 209,
+              "startCol": 10,
+              "endRow": 209,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 209,
+            "startCol": 5,
+            "endRow": 209,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 210,
+              "startCol": 4,
+              "endRow": 211,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 212,
+          "startCol": 2,
+          "endRow": 214,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "count",
+            "path": [],
+            "codePos": {
+              "startRow": 212,
+              "startCol": 5,
+              "endRow": 212,
+              "endCol": 10
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 0,
+            "codePos": {
+              "startRow": 212,
+              "startCol": 15,
+              "endRow": 212,
+              "endCol": 15
+            }
+          },
+          "codePos": {
+            "startRow": 212,
+            "startCol": 5,
+            "endRow": 212,
+            "endCol": 13
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 213,
+              "startCol": 4,
+              "endRow": 213,
+              "endCol": 22
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "firstValue",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "i",
+                "path": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 215,
+          "startCol": 2,
+          "endRow": 215,
+          "endCol": 19
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "lastValue",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 216,
+          "startCol": 2,
+          "endRow": 216,
+          "endCol": 19
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "count",
+            "path": []
+          },
+          {
+            "type": "number",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 217,
+          "startCol": 2,
+          "endRow": 217,
+          "endCol": 14
+        },
+        "name": "set",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "count",
+            "path": []
+          },
+          {
+            "type": "lastValue"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 219,
+      "startCol": 0,
+      "endRow": 219,
+      "endCol": 87
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "firstValue",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Continue with multiple conditions - first value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 220,
+      "startCol": 0,
+      "endRow": 220,
+      "endCol": 85
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "lastValue",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 7
+      },
+      {
+        "type": "string",
+        "value": "Continue with multiple conditions - last value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 221,
+      "startCol": 0,
+      "endRow": 221,
+      "endCol": 76
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "count",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Continue with multiple conditions - count failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 225,
+      "startCol": 0,
+      "endRow": 225,
+      "endCol": 40
+    },
+    "comments": [
+      {
+        "text": "Test 18: Range with step parameter",
+        "codePos": {
+          "startRow": 224,
+          "startCol": 0,
+          "endRow": 224,
+          "endCol": 35
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Range with step parameter"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 226,
+      "startCol": 0,
+      "endRow": 226,
+      "endCol": 11
+    },
+    "name": "range",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 227,
+      "startCol": 0,
+      "endRow": 227,
+      "endCol": 10
+    },
+    "targetName": "range1",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 228,
+      "startCol": 0,
+      "endRow": 228,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range1",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "Range with step 1 - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 229,
+      "startCol": 0,
+      "endRow": 229,
+      "endCol": 71
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range1",
+        "path": [
+          {
+            "type": "index",
+            "index": 5
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Range with step 1 - last element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 230,
+      "startCol": 0,
+      "endRow": 231,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 231,
+      "startCol": 0,
+      "endRow": 234,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 232,
+          "startCol": 2,
+          "endRow": 232,
+          "endCol": 22
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "range1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 233,
+          "startCol": 2,
+          "endRow": 233,
+          "endCol": 58
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 6
+          },
+          {
+            "type": "string",
+            "value": "Range with step 1 - length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 236,
+      "startCol": 0,
+      "endRow": 236,
+      "endCol": 12
+    },
+    "name": "range",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 237,
+      "startCol": 0,
+      "endRow": 237,
+      "endCol": 10
+    },
+    "targetName": "range2",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 238,
+      "startCol": 0,
+      "endRow": 238,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range2",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "Range with step 2 - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 239,
+      "startCol": 0,
+      "endRow": 239,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range2",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "Range with step 2 - second element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 240,
+      "startCol": 0,
+      "endRow": 240,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range2",
+        "path": [
+          {
+            "type": "index",
+            "index": 5
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Range with step 2 - last element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 241,
+      "startCol": 0,
+      "endRow": 242,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 242,
+      "startCol": 0,
+      "endRow": 245,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 243,
+          "startCol": 2,
+          "endRow": 243,
+          "endCol": 22
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "range2",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 244,
+          "startCol": 2,
+          "endRow": 244,
+          "endCol": 58
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 6
+          },
+          {
+            "type": "string",
+            "value": "Range with step 2 - length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 247,
+      "startCol": 0,
+      "endRow": 247,
+      "endCol": 12
+    },
+    "name": "range",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "number",
+        "value": -1
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 248,
+      "startCol": 0,
+      "endRow": 248,
+      "endCol": 10
+    },
+    "targetName": "range3",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 249,
+      "startCol": 0,
+      "endRow": 249,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range3",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Range with step -1 - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 250,
+      "startCol": 0,
+      "endRow": 250,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "range3",
+        "path": [
+          {
+            "type": "index",
+            "index": 5
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 0
+      },
+      {
+        "type": "string",
+        "value": "Range with step -1 - last element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 251,
+      "startCol": 0,
+      "endRow": 252,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 252,
+      "startCol": 0,
+      "endRow": 255,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 253,
+          "startCol": 2,
+          "endRow": 253,
+          "endCol": 22
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "range3",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 254,
+          "startCol": 2,
+          "endRow": 254,
+          "endCol": 59
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 6
+          },
+          {
+            "type": "string",
+            "value": "Range with step -1 - length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 257,
+      "startCol": 0,
+      "endRow": 257,
+      "endCol": 33
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Loop Tests Complete ==="
+      }
+    ]
+  }
+]

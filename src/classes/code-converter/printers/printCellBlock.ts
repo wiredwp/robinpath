@@ -46,19 +46,15 @@ export function printCellBlock(node: any, writer: Writer, ctx: PrintContext): vo
                 writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
             }
         }
-    } else if (node.rawBody !== undefined) {
+    } else if (node.rawBody !== undefined && node.rawBody.length > 0) {
         // Print raw body verbatim
-        if (node.rawBody.length > 0) {
-            writer.push(node.rawBody);
-            // Ensure body ends with newline if it doesn't already
-            if (!node.rawBody.endsWith('\n')) {
-                writer.newline();
-            }
-        } else {
-            // Empty body - still add a newline
+        writer.push(node.rawBody);
+        // Ensure body ends with newline if it doesn't already
+        if (!node.rawBody.endsWith('\n')) {
             writer.newline();
         }
     }
+    // Empty body - no content between header and ---end---
     
     // Print closing fence
     writer.pushLine('---end---');

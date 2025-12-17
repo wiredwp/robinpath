@@ -1,0 +1,945 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Expression Tests\nTests for basic math operations and expressions",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 30
+    },
+    "trailingBlankLines": 2,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Expression Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic math operations",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic math operations"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 10
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 45
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Math.add failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 23
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "result",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 45
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 150
+      },
+      {
+        "type": "string",
+        "value": "Math.multiply failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 2: Using last value ($) in chained operations",
+        "codePos": {
+          "startRow": 16,
+          "startCol": 0,
+          "endRow": 16,
+          "endCol": 51
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Chained operations with last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 12
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 7
+      },
+      {
+        "type": "number",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 17
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 56
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Chained operations result failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 3: Complex expressions",
+        "codePos": {
+          "startRow": 23,
+          "startCol": 0,
+          "endRow": 23,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Complex expressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 25,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 18,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 15
+    },
+    "targetName": "citizen",
+    "targetPath": [],
+    "literalValue": "yes",
+    "literalValueType": "string"
+  },
+  {
+    "type": "inlineIf",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 83
+    },
+    "trailingBlankLines": 2,
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "and",
+      "left": {
+        "type": "binary",
+        "operator": ">=",
+        "left": {
+          "type": "var",
+          "name": "age",
+          "path": [],
+          "codePos": {
+            "startRow": 27,
+            "startCol": 4,
+            "endRow": 27,
+            "endCol": 7
+          }
+        },
+        "right": {
+          "type": "number",
+          "value": 18,
+          "codePos": {
+            "startRow": 27,
+            "startCol": 12,
+            "endRow": 27,
+            "endCol": 13
+          }
+        },
+        "codePos": {
+          "startRow": 27,
+          "startCol": 3,
+          "endRow": 27,
+          "endCol": 10
+        },
+        "parenthesized": true
+      },
+      "right": {
+        "type": "binary",
+        "operator": "==",
+        "left": {
+          "type": "var",
+          "name": "citizen",
+          "path": [],
+          "codePos": {
+            "startRow": 27,
+            "startCol": 20,
+            "endRow": 27,
+            "endCol": 27
+          }
+        },
+        "right": {
+          "type": "string",
+          "value": "yes",
+          "codePos": {
+            "startRow": 27,
+            "startCol": 32,
+            "endRow": 27,
+            "endCol": 36
+          }
+        },
+        "codePos": {
+          "startRow": 27,
+          "startCol": 3,
+          "endRow": 27,
+          "endCol": 30
+        },
+        "parenthesized": true
+      },
+      "codePos": {
+        "startRow": 27,
+        "startCol": 3,
+        "endRow": 27,
+        "endCol": 17
+      },
+      "operatorText": "&&"
+    },
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 27,
+        "startCol": 44,
+        "endRow": 27,
+        "endCol": 83
+      },
+      "name": "log",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "Test 3 - Complex expression works"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 4: Math operations with multiple arguments",
+        "codePos": {
+          "startRow": 30,
+          "startCol": 0,
+          "endRow": 30,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Math operations with multiple arguments"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 16
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "number",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 53
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Math.add multiple args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 19
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "number",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 58
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 24
+      },
+      {
+        "type": "string",
+        "value": "Math.multiply multiple args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 5: Math operations in expressions",
+        "codePos": {
+          "startRow": 39,
+          "startCol": 0,
+          "endRow": 39,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Math operations in expressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 10
+    },
+    "targetName": "value",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 4
+    },
+    "trailingBlankLines": 2,
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "value",
+        "path": [],
+        "codePos": {
+          "startRow": 42,
+          "startCol": 3,
+          "endRow": 42,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 0,
+        "codePos": {
+          "startRow": 42,
+          "startCol": 12,
+          "endRow": 42,
+          "endCol": 12
+        }
+      },
+      "codePos": {
+        "startRow": 42,
+        "startCol": 3,
+        "endRow": 42,
+        "endCol": 10
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 43,
+          "startCol": 2,
+          "endRow": 47,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "value",
+            "path": [],
+            "codePos": {
+              "startRow": 43,
+              "startCol": 5,
+              "endRow": 43,
+              "endCol": 10
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 50,
+            "codePos": {
+              "startRow": 43,
+              "startCol": 14,
+              "endRow": 43,
+              "endCol": 15
+            }
+          },
+          "codePos": {
+            "startRow": 43,
+            "startCol": 5,
+            "endRow": 43,
+            "endCol": 12
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 44,
+              "startCol": 4,
+              "endRow": 44,
+              "endCol": 44
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 5 - Value is between 0 and 50"
+              }
+            ]
+          }
+        ],
+        "elseBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 46,
+              "startCol": 4,
+              "endRow": 46,
+              "endCol": 41
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 5 - Value is 50 or greater"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 49,
+          "startCol": 2,
+          "endRow": 49,
+          "endCol": 42
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 5 - Value is negative or zero"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 6: Math operations with variables",
+        "codePos": {
+          "startRow": 53,
+          "startCol": 0,
+          "endRow": 53,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Math operations with variables"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 55,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 9
+    },
+    "targetName": "num1",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 56,
+      "endCol": 9
+    },
+    "targetName": "num2",
+    "targetPath": [],
+    "literalValue": 20,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 20
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "num1",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "num2",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 61
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Math operations with variables failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 21
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "num1",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Math operations with variable and literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 39
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Expression Tests Complete ==="
+      }
+    ]
+  }
+]

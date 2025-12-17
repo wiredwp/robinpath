@@ -1,0 +1,3232 @@
+[
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 4,
+      "endRow": 0,
+      "endCol": 16
+    },
+    "name": "chunk",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 18
+      }
+    ]
+  },
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Template String Tests\nTests for backtick template strings with variable interpolation and subexpressions",
+        "codePos": {
+          "startRow": 1,
+          "startCol": 0,
+          "endRow": 2,
+          "endCol": 83
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 1
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 35
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Template String Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic variable interpolation",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic variable interpolation"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 19
+    },
+    "targetName": "result1",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000a is $a",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result1",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "a is 5"
+      },
+      {
+        "type": "string",
+        "value": "Basic variable interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 14
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "Alice",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 25
+    },
+    "targetName": "result2",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000Hello, $name!",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 83
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result2",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Hello, Alice!"
+      },
+      {
+        "type": "string",
+        "value": "Variable interpolation with text failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 2: Last value ($) interpolation",
+        "codePos": {
+          "startRow": 16,
+          "startCol": 0,
+          "endRow": 16,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Last value interpolation"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 3
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 23
+    },
+    "targetName": "result3",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000result is $",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 74
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result3",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "result is 30"
+      },
+      {
+        "type": "string",
+        "value": "Last value interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 5
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 29
+    },
+    "name": "string.concat",
+    "module": "string",
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "world"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 25,
+      "endCol": 27
+    },
+    "targetName": "result4",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000concatenated: $",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 84
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result4",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "concatenated: helloworld"
+      },
+      {
+        "type": "string",
+        "value": "Last value with string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 41
+    },
+    "comments": [
+      {
+        "text": "Test 3: Subexpression interpolation $(...)",
+        "codePos": {
+          "startRow": 28,
+          "startCol": 0,
+          "endRow": 28,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Subexpression interpolation"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 30,
+      "startCol": 0,
+      "endRow": 30,
+      "endCol": 32
+    },
+    "targetName": "result5",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000a is $(math.add 3 3)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 71
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result5",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "a is 6"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 37
+    },
+    "targetName": "result6",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000sum: $(math.add 10 20 30)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result6",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "sum: 60"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with multiple args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 37
+    },
+    "comments": [
+      {
+        "text": "Test 4: Multiple interpolations in one string",
+        "codePos": {
+          "startRow": 36,
+          "startCol": 0,
+          "endRow": 36,
+          "endCol": 46
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Multiple interpolations"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 38,
+      "startCol": 0,
+      "endRow": 38,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 39,
+      "startCol": 0,
+      "endRow": 39,
+      "endCol": 6
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 39
+    },
+    "targetName": "result7",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000$a + $b = $(math.add $a $b)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result7",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "5 + 10 = 15"
+      },
+      {
+        "type": "string",
+        "value": "Multiple interpolations failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 12
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "Bob",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 25,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 35
+    },
+    "targetName": "result8",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000$name is $age years old",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 46,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result8",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Bob is 25 years old"
+      },
+      {
+        "type": "string",
+        "value": "Multiple variable interpolations failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 5: Nested subexpressions",
+        "codePos": {
+          "startRow": 48,
+          "startCol": 0,
+          "endRow": 48,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Nested subexpressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 54
+    },
+    "targetName": "result9",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000result: $(math.multiply $(math.add 2 3) 4)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 69
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result9",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "result: 20"
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 53,
+      "startCol": 0,
+      "endRow": 53,
+      "endCol": 69
+    },
+    "targetName": "result10",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000nested: $(math.add $(math.multiply 2 3) $(math.add 1 1))",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result10",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "nested: 8"
+      },
+      {
+        "type": "string",
+        "value": "Complex nested subexpressions failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 6: Template strings with object properties",
+        "codePos": {
+          "startRow": 56,
+          "startCol": 0,
+          "endRow": 56,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Template strings with object properties"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 0
+    },
+    "targetName": "obj",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 58,
+        "startCol": 7,
+        "endRow": 61,
+        "endCol": 0
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 47
+    },
+    "targetName": "result11",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000name: $obj.name, value: $obj.value",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 90
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result11",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "name: Test, value: 100"
+      },
+      {
+        "type": "string",
+        "value": "Object property interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 66,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 7: Template strings with array access",
+        "codePos": {
+          "startRow": 65,
+          "startCol": 0,
+          "endRow": 65,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Template strings with array access"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 18
+    },
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 67,
+        "startCol": 7,
+        "endRow": 67,
+        "endCol": 18
+      },
+      "name": "_array",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 44
+    },
+    "targetName": "result12",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000first: $arr[0], second: $arr[1]",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 69,
+      "endCol": 86
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result12",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "first: 10, second: 20"
+      },
+      {
+        "type": "string",
+        "value": "Array access interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 72,
+      "startCol": 0,
+      "endRow": 72,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 8: Template strings with positional parameters",
+        "codePos": {
+          "startRow": 71,
+          "startCol": 0,
+          "endRow": 71,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Template strings with positional parameters"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 73,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "test_template",
+    "paramNames": [
+      "x",
+      "y"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 74,
+          "startCol": 2,
+          "endRow": 74,
+          "endCol": 20
+        },
+        "value": {
+          "type": "string",
+          "value": "\u0000TEMPLATE\u0000$x and $y"
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 0,
+      "endRow": 77,
+      "endCol": 42
+    },
+    "targetName": "result13",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 77,
+        "startCol": 12,
+        "endRow": 77,
+        "endCol": 42
+      },
+      "name": "test_template",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "hello"
+        },
+        {
+          "type": "string",
+          "value": "world"
+        }
+      ],
+      "syntaxType": "parentheses"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 78,
+      "endCol": 92
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result13",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "hello and world"
+      },
+      {
+        "type": "string",
+        "value": "Template string with positional params failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 81,
+      "endCol": 30
+    },
+    "comments": [
+      {
+        "text": "Test 9: Escape sequences in template strings",
+        "codePos": {
+          "startRow": 80,
+          "startCol": 0,
+          "endRow": 80,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Escape sequences"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 50
+    },
+    "targetName": "result14",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000dollar: \\$5, backtick: `, newline: \\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 91
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result14",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "dollar: $5, backtick: `, newline: \n"
+      },
+      {
+        "type": "string",
+        "value": "Escape sequences failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 85,
+      "startCol": 0,
+      "endRow": 85,
+      "endCol": 44
+    },
+    "targetName": "result15",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000escaped paren: \\(not evaluated)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 86,
+      "startCol": 0,
+      "endRow": 86,
+      "endCol": 90
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result15",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "escaped paren: (not evaluated)"
+      },
+      {
+        "type": "string",
+        "value": "Escaped subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 10: Complex combinations",
+        "codePos": {
+          "startRow": 88,
+          "startCol": 0,
+          "endRow": 88,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Complex combinations"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 90,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 6
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 92,
+      "endCol": 74
+    },
+    "targetName": "result16",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000$a + $b = $(math.add $a $b), product = $(math.multiply $a $b)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 93,
+      "endCol": 83
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result16",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "5 + 10 = 15, product = 50"
+      },
+      {
+        "type": "string",
+        "value": "Complex combination failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 96,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 43
+    },
+    "comments": [
+      {
+        "text": "Test 11: Template string with last value and subexpression",
+        "codePos": {
+          "startRow": 95,
+          "startCol": 0,
+          "endRow": 95,
+          "endCol": 59
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Last value and subexpression"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 97,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 3
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 12
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 99,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 52
+    },
+    "targetName": "result17",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000previous: $, next: $(math.multiply 2 3)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 100,
+      "startCol": 0,
+      "endRow": 100,
+      "endCol": 88
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result17",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "previous: 10, next: 6"
+      },
+      {
+        "type": "string",
+        "value": "Last value and subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 52
+    },
+    "comments": [
+      {
+        "text": "Test 12: Template string in function arguments",
+        "codePos": {
+          "startRow": 102,
+          "startCol": 0,
+          "endRow": 102,
+          "endCol": 47
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 12: Template string in function arguments"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 104,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "greet",
+    "paramNames": [
+      "name"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 105,
+          "startCol": 2,
+          "endRow": 105,
+          "endCol": 24
+        },
+        "value": {
+          "type": "string",
+          "value": "\u0000TEMPLATE\u0000Hello, $name!"
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 108,
+      "endCol": 26
+    },
+    "targetName": "result18",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 108,
+        "startCol": 12,
+        "endRow": 108,
+        "endCol": 26
+      },
+      "name": "greet",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "World"
+        }
+      ],
+      "syntaxType": "parentheses"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 109,
+      "endCol": 86
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result18",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Hello, World!"
+      },
+      {
+        "type": "string",
+        "value": "Template string in function return failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 112,
+      "startCol": 0,
+      "endRow": 112,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 13: Template string with conditional subexpression",
+        "codePos": {
+          "startRow": 111,
+          "startCol": 0,
+          "endRow": 111,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 13: Template string with conditional"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 6
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 69
+    },
+    "targetName": "result19",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000value is $(if $a > 5 \n  \"high\" \nelse \n  \"low\"\nendeif  \n)",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 0,
+      "endRow": 120,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result19",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "value is high"
+      },
+      {
+        "type": "string",
+        "value": "Conditional subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 54
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 14: Template string with inline conditional"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 123,
+      "startCol": 0,
+      "endRow": 123,
+      "endCol": 6
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 124,
+      "startCol": 0,
+      "endRow": 124,
+      "endCol": 57
+    },
+    "targetName": "result19",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000value is $(if $a > 5 then \"high\" else \"low\")",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 84
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result19",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "value is high"
+      },
+      {
+        "type": "string",
+        "value": "Inline conditional subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 128,
+      "startCol": 0,
+      "endRow": 128,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test 15: Empty template string",
+        "codePos": {
+          "startRow": 127,
+          "startCol": 0,
+          "endRow": 127,
+          "endCol": 31
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 15: Empty template string"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 13
+    },
+    "targetName": "result21",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 60
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result21",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": ""
+      },
+      {
+        "type": "string",
+        "value": "Empty template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 133,
+      "startCol": 0,
+      "endRow": 133,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 16: Template string with only literal text",
+        "codePos": {
+          "startRow": 132,
+          "startCol": 0,
+          "endRow": 132,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 16: Template string with only literal text"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 134,
+      "startCol": 0,
+      "endRow": 134,
+      "endCol": 22
+    },
+    "targetName": "result22",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000just text",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 135,
+      "startCol": 0,
+      "endRow": 135,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result22",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "just text"
+      },
+      {
+        "type": "string",
+        "value": "Literal-only template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 138,
+      "startCol": 0,
+      "endRow": 138,
+      "endCol": 54
+    },
+    "comments": [
+      {
+        "text": "Test 17: Template string with variable that doesn't exist",
+        "codePos": {
+          "startRow": 137,
+          "startCol": 0,
+          "endRow": 137,
+          "endCol": 58
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 17: Template string with undefined variable"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 139,
+      "startCol": 0,
+      "endRow": 139,
+      "endCol": 33
+    },
+    "targetName": "result23",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000value: $undefinedVar",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 140,
+      "startCol": 0,
+      "endRow": 140,
+      "endCol": 82
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result23",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "value: null"
+      },
+      {
+        "type": "string",
+        "value": "Undefined variable interpolation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 35
+    },
+    "comments": [
+      {
+        "text": "Test 18: Template string with nested object access",
+        "codePos": {
+          "startRow": 142,
+          "startCol": 0,
+          "endRow": 142,
+          "endCol": 51
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 18: Nested object access"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 144,
+      "startCol": 0,
+      "endRow": 149,
+      "endCol": 0
+    },
+    "targetName": "nested",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 144,
+        "startCol": 10,
+        "endRow": 149,
+        "endCol": 0
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 150,
+      "startCol": 0,
+      "endRow": 150,
+      "endCol": 59
+    },
+    "targetName": "result24",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000User: $nested.user.name, Age: $nested.user.age",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 151,
+      "startCol": 0,
+      "endRow": 151,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result24",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "User: Alice, Age: 30"
+      },
+      {
+        "type": "string",
+        "value": "Nested object access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 52
+    },
+    "comments": [
+      {
+        "text": "Test 19: Template string with array length",
+        "codePos": {
+          "startRow": 153,
+          "startCol": 0,
+          "endRow": 153,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 19: Template string with array operations"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 155,
+      "startCol": 0,
+      "endRow": 155,
+      "endCol": 21
+    },
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 155,
+        "startCol": 7,
+        "endRow": 155,
+        "endCol": 21
+      },
+      "name": "_array",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 156,
+      "startCol": 0,
+      "endRow": 156,
+      "endCol": 52
+    },
+    "targetName": "result25",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000array has $(array.length $arr) elements",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 157,
+      "startCol": 0,
+      "endRow": 157,
+      "endCol": 91
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result25",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "array has 5 elements"
+      },
+      {
+        "type": "string",
+        "value": "Array operation in subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 160,
+      "startCol": 0,
+      "endRow": 160,
+      "endCol": 38
+    },
+    "comments": [
+      {
+        "text": "Test 20: Template string with multiple subexpressions",
+        "codePos": {
+          "startRow": 159,
+          "startCol": 0,
+          "endRow": 159,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 20: Multiple subexpressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 161,
+      "startCol": 0,
+      "endRow": 161,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 2,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 162,
+      "startCol": 0,
+      "endRow": 162,
+      "endCol": 5
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "literalValue": 3,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 163,
+      "startCol": 0,
+      "endRow": 163,
+      "endCol": 110
+    },
+    "targetName": "result26",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000$(math.add $a $b) + $(math.multiply $a $b) = $(math.add $(math.add $a $b) $(math.multiply $a $b))",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 164,
+      "startCol": 0,
+      "endRow": 164,
+      "endCol": 84
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result26",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "5 + 6 = 11"
+      },
+      {
+        "type": "string",
+        "value": "Multiple subexpressions calculation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 167,
+      "startCol": 0,
+      "endRow": 167,
+      "endCol": 49
+    },
+    "comments": [
+      {
+        "text": "Test 21: Multi-line template string (basic)",
+        "codePos": {
+          "startRow": 166,
+          "startCol": 0,
+          "endRow": 166,
+          "endCol": 44
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 21: Multi-line template string (basic)"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 168,
+      "startCol": 0,
+      "endRow": 168,
+      "endCol": 14
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "Alice",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 169,
+      "startCol": 0,
+      "endRow": 173,
+      "endCol": 66
+    },
+    "targetName": "result27",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nHello, $name!\nThis is a multi-line\ntemplate string.\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 174,
+      "startCol": 0,
+      "endRow": 174,
+      "endCol": 122
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result27",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nHello, Alice!\nThis is a multi-line\ntemplate string.\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 177,
+      "startCol": 0,
+      "endRow": 177,
+      "endCol": 56
+    },
+    "comments": [
+      {
+        "text": "Test 22: Multi-line template string with variables",
+        "codePos": {
+          "startRow": 176,
+          "startCol": 0,
+          "endRow": 176,
+          "endCol": 51
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 22: Multi-line template string with variables"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 178,
+      "startCol": 0,
+      "endRow": 178,
+      "endCol": 6
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 179,
+      "startCol": 0,
+      "endRow": 179,
+      "endCol": 6
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "literalValue": 20,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 180,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 70
+    },
+    "targetName": "result28",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nFirst value: $a\nSecond value: $b\nSum: $(math.add $a $b)\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 110
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result28",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nFirst value: 10\nSecond value: 20\nSum: 30\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with variables failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 188,
+      "startCol": 0,
+      "endRow": 188,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 23: Multi-line template string with last value",
+        "codePos": {
+          "startRow": 187,
+          "startCol": 0,
+          "endRow": 187,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 23: Multi-line template string with last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 189,
+      "startCol": 0,
+      "endRow": 190,
+      "endCol": 3
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 190,
+      "startCol": 0,
+      "endRow": 190,
+      "endCol": 17
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 191,
+      "startCol": 0,
+      "endRow": 194,
+      "endCol": 68
+    },
+    "targetName": "result29",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nPrevious calculation result: $\nThis is on a new line.\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 195,
+      "startCol": 0,
+      "endRow": 195,
+      "endCol": 124
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result29",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nPrevious calculation result: 30\nThis is on a new line.\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with last value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 198,
+      "startCol": 0,
+      "endRow": 198,
+      "endCol": 61
+    },
+    "comments": [
+      {
+        "text": "Test 24: Multi-line template string with subexpressions",
+        "codePos": {
+          "startRow": 197,
+          "startCol": 0,
+          "endRow": 197,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 24: Multi-line template string with subexpressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 199,
+      "startCol": 0,
+      "endRow": 199,
+      "endCol": 5
+    },
+    "targetName": "x",
+    "targetPath": [],
+    "literalValue": 3,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 200,
+      "startCol": 0,
+      "endRow": 200,
+      "endCol": 5
+    },
+    "targetName": "y",
+    "targetPath": [],
+    "literalValue": 4,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 201,
+      "startCol": 0,
+      "endRow": 207,
+      "endCol": 106
+    },
+    "targetName": "result30",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nCalculation:\n  x = $x\n  y = $y\n  product = $(math.multiply $x $y)\n  sum = $(math.add $x $y)\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 208,
+      "startCol": 0,
+      "endRow": 208,
+      "endCol": 130
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result30",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nCalculation:\n  x = 3\n  y = 4\n  product = 12\n  sum = 7\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with subexpressions failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 211,
+      "startCol": 0,
+      "endRow": 211,
+      "endCol": 64
+    },
+    "comments": [
+      {
+        "text": "Test 25: Multi-line template string with object properties",
+        "codePos": {
+          "startRow": 210,
+          "startCol": 0,
+          "endRow": 210,
+          "endCol": 59
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 25: Multi-line template string with object properties"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 212,
+      "startCol": 0,
+      "endRow": 216,
+      "endCol": 0
+    },
+    "targetName": "user",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 212,
+        "startCol": 8,
+        "endRow": 216,
+        "endCol": 0
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        null
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 217,
+      "startCol": 0,
+      "endRow": 222,
+      "endCol": 87
+    },
+    "targetName": "result31",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nUser Information:\n  Name: $user.name\n  Age: $user.age\n  City: $user.city\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 223,
+      "startCol": 0,
+      "endRow": 223,
+      "endCol": 135
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result31",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nUser Information:\n  Name: Bob\n  Age: 25\n  City: New York\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with object properties failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 226,
+      "startCol": 0,
+      "endRow": 226,
+      "endCol": 60
+    },
+    "comments": [
+      {
+        "text": "Test 26: Multi-line template string with mixed content",
+        "codePos": {
+          "startRow": 225,
+          "startCol": 0,
+          "endRow": 225,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 26: Multi-line template string with mixed content"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 227,
+      "startCol": 0,
+      "endRow": 227,
+      "endCol": 16
+    },
+    "targetName": "title",
+    "targetPath": [],
+    "literalValue": "Report",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 228,
+      "startCol": 0,
+      "endRow": 228,
+      "endCol": 9
+    },
+    "targetName": "count",
+    "targetPath": [],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 229,
+      "startCol": 0,
+      "endRow": 230,
+      "endCol": 3
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 230,
+      "startCol": 0,
+      "endRow": 230,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 231,
+      "startCol": 0,
+      "endRow": 237,
+      "endCol": 110
+    },
+    "targetName": "result32",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nTitle: $title\nItems: $count\nLast value: $\nCalculation: $(math.multiply $count 2)\nEnd of report.\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 238,
+      "startCol": 0,
+      "endRow": 238,
+      "endCol": 144
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result32",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nTitle: Report\nItems: 5\nLast value: 30\nCalculation: 10\nEnd of report.\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with mixed content failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 241,
+      "startCol": 0,
+      "endRow": 241,
+      "endCol": 68
+    },
+    "comments": [
+      {
+        "text": "Test 27: Multi-line template string with nested subexpressions",
+        "codePos": {
+          "startRow": 240,
+          "startCol": 0,
+          "endRow": 240,
+          "endCol": 63
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 27: Multi-line template string with nested subexpressions"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 242,
+      "startCol": 0,
+      "endRow": 242,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 2,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 243,
+      "startCol": 0,
+      "endRow": 243,
+      "endCol": 5
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "literalValue": 3,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 244,
+      "startCol": 0,
+      "endRow": 249,
+      "endCol": 174
+    },
+    "targetName": "result33",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nNested calculations:\n  First: $(math.add $a $b)\n  Second: $(math.multiply $(math.add $a $b) 2)\n  Third: $(math.add $(math.multiply $a 2) $(math.multiply $b 2))\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 250,
+      "startCol": 0,
+      "endRow": 250,
+      "endCol": 139
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result33",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nNested calculations:\n  First: 5\n  Second: 10\n  Third: 10\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with nested subexpressions failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 253,
+      "startCol": 0,
+      "endRow": 253,
+      "endCol": 58
+    },
+    "comments": [
+      {
+        "text": "Test 28: Multi-line template string with empty lines",
+        "codePos": {
+          "startRow": 252,
+          "startCol": 0,
+          "endRow": 252,
+          "endCol": 53
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 28: Multi-line template string with empty lines"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 254,
+      "startCol": 0,
+      "endRow": 260,
+      "endCol": 37
+    },
+    "targetName": "result34",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nLine 1\n\nLine 3\n\nLine 5\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 261,
+      "startCol": 0,
+      "endRow": 261,
+      "endCol": 96
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result34",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nLine 1\n\nLine 3\n\nLine 5\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with empty lines failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 264,
+      "startCol": 0,
+      "endRow": 264,
+      "endCol": 63
+    },
+    "comments": [
+      {
+        "text": "Test 29: Multi-line template string with escape sequences",
+        "codePos": {
+          "startRow": 263,
+          "startCol": 0,
+          "endRow": 263,
+          "endCol": 58
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 29: Multi-line template string with escape sequences"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 265,
+      "startCol": 0,
+      "endRow": 270,
+      "endCol": 56
+    },
+    "targetName": "result35",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000\nDollar: \\$5\nBacktick: `\nNewline: \n\nTab: \t\n",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 271,
+      "startCol": 0,
+      "endRow": 271,
+      "endCol": 120
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result35",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nDollar: $5\nBacktick: `\nNewline: \n\nTab: \t\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line with escape sequences failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 274,
+      "startCol": 0,
+      "endRow": 274,
+      "endCol": 60
+    },
+    "comments": [
+      {
+        "text": "Test 30: Multi-line template string in function return",
+        "codePos": {
+          "startRow": 273,
+          "startCol": 0,
+          "endRow": 273,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 30: Multi-line template string in function return"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 275,
+      "startCol": 0,
+      "endRow": 281,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "format_report",
+    "paramNames": [
+      "name",
+      "value"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 276,
+          "startCol": 2,
+          "endRow": 280,
+          "endCol": 1
+        },
+        "value": {
+          "type": "string",
+          "value": "\u0000TEMPLATE\u0000\nReport for: $name\nValue: $value\nStatus: $(if $value > 10 then \"High\" else \"Low\")\n"
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 283,
+      "startCol": 0,
+      "endRow": 283,
+      "endCol": 36
+    },
+    "targetName": "result36",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 283,
+        "startCol": 12,
+        "endRow": 283,
+        "endCol": 36
+      },
+      "name": "format_report",
+      "module": null,
+      "args": [
+        {
+          "type": "string",
+          "value": "Test"
+        },
+        {
+          "type": "number",
+          "value": 15
+        }
+      ],
+      "syntaxType": "parentheses"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 284,
+      "startCol": 0,
+      "endRow": 284,
+      "endCol": 129
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result36",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "\nReport for: Test\nValue: 15\nStatus: High\n"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line template string in function return failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 286,
+      "startCol": 0,
+      "endRow": 286,
+      "endCol": 44
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Template String Tests Complete ==="
+      }
+    ]
+  }
+]

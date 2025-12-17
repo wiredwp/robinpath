@@ -26,8 +26,9 @@ export function parseChunkMarker(
     const startToken = stream.current();
     if (!startToken) return null;
 
-    // Quick check: if first token isn't '---', this can't be a chunk marker
-    if (startToken.text !== '---') {
+    // Quick check: if first token isn't '-' (the start of '---'), this can't be a chunk marker
+    // The lexer tokenizes '---' as three separate MINUS tokens
+    if (startToken.text !== '-') {
         return null;
     }
 

@@ -8,7 +8,8 @@ import { emitLeadingComments } from './printComment';
 
 export function printOnBlock(node: any, writer: Writer, ctx: PrintContext): void {
     const eventName = node.eventName || node.event || '';
-    writer.pushLine(`on ${eventName}`.trimEnd());
+    // Event name needs to be quoted
+    writer.pushLine(`on "${eventName}"`.trimEnd());
 
     if (node.body && Array.isArray(node.body)) {
         for (const stmt of node.body) {

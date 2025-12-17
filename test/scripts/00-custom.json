@@ -1,187 +1,35 @@
 [
   {
-    "type": "define",
+    "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 1,
+      "startRow": 0,
       "startCol": 0,
-      "endRow": 13,
-      "endCol": 5
+      "endRow": 0,
+      "endCol": 8
     },
-    "comments": [
-      {
-        "text": "Test 8: Complex function with all comment types",
-        "codePos": {
-          "startRow": 0,
-          "startCol": 0,
-          "endRow": 0,
-          "endCol": 48
-        },
-        "inline": false
-      }
-    ],
     "trailingBlankLines": 1,
-    "name": "complex_function",
-    "paramNames": [
-      "param1",
-      "param2"
-    ],
-    "body": [
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": "hi",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 21
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
       {
-        "type": "ifBlock",
-        "lastValue": null,
-        "codePos": {
-          "startRow": 6,
-          "startCol": 2,
-          "endRow": 9,
-          "endCol": 6
-        },
-        "comments": [
-          {
-            "text": "Function documentation comment",
-            "codePos": {
-              "startRow": 2,
-              "startCol": 2,
-              "endRow": 2,
-              "endCol": 33
-            },
-            "inline": false
-          },
-          {
-            "text": "This function does something complex",
-            "codePos": {
-              "startRow": 3,
-              "startCol": 2,
-              "endRow": 3,
-              "endCol": 39
-            },
-            "inline": false
-          },
-          {
-            "text": "Validate parameters",
-            "codePos": {
-              "startRow": 5,
-              "startCol": 2,
-              "endRow": 5,
-              "endCol": 22
-            },
-            "inline": false
-          }
-        ],
-        "conditionExpr": {
-          "type": "binary",
-          "operator": "==",
-          "left": {
-            "type": "var",
-            "name": "param1",
-            "path": [],
-            "codePos": {
-              "startRow": 6,
-              "startCol": 5,
-              "endRow": 6,
-              "endCol": 11
-            }
-          },
-          "right": {
-            "type": "literal",
-            "value": null,
-            "codePos": {
-              "startRow": 6,
-              "startCol": 16,
-              "endRow": 6,
-              "endCol": 19
-            }
-          },
-          "codePos": {
-            "startRow": 6,
-            "startCol": 5,
-            "endRow": 6,
-            "endCol": 14
-          }
-        },
-        "thenBranch": [
-          {
-            "type": "command",
-            "lastValue": null,
-            "codePos": {
-              "startRow": 7,
-              "startCol": 4,
-              "endRow": 7,
-              "endCol": 42
-            },
-            "comments": [
-              {
-                "text": "warning comment",
-                "codePos": {
-                  "startRow": 7,
-                  "startCol": 26,
-                  "endRow": 7,
-                  "endCol": 42
-                },
-                "inline": true
-              }
-            ],
-            "name": "log",
-            "module": null,
-            "args": [
-              {
-                "type": "string",
-                "value": "param1 is null"
-              }
-            ]
-          },
-          {
-            "type": "return",
-            "lastValue": null,
-            "codePos": {
-              "startRow": 8,
-              "startCol": 4,
-              "endRow": 8,
-              "endCol": 16
-            },
-            "value": {
-              "type": "literal",
-              "value": false
-            }
-          }
-        ]
-      },
-      {
-        "type": "return",
-        "lastValue": null,
-        "codePos": {
-          "startRow": 12,
-          "startCol": 2,
-          "endRow": 12,
-          "endCol": 33
-        },
-        "comments": [
-          {
-            "text": "Return result",
-            "codePos": {
-              "startRow": 11,
-              "startCol": 2,
-              "endRow": 11,
-              "endCol": 16
-            },
-            "inline": false
-          },
-          {
-            "text": "return comment",
-            "codePos": {
-              "startRow": 12,
-              "startCol": 18,
-              "endRow": 12,
-              "endCol": 33
-            },
-            "inline": true
-          }
-        ],
-        "value": {
-          "type": "var",
-          "name": "result",
-          "path": []
-        }
+        "type": "string",
+        "value": "hello!oppooppp!"
       }
     ]
   },
@@ -189,115 +37,29 @@
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 16,
+      "startRow": 6,
       "startCol": 0,
-      "endRow": 24,
-      "endCol": 5
+      "endRow": 8,
+      "endCol": 7
     },
-    "comments": [
-      {
-        "text": "Test 9: Nested comments (comments in if blocks within def)",
-        "codePos": {
-          "startRow": 15,
-          "startCol": 0,
-          "endRow": 15,
-          "endCol": 59
-        },
-        "inline": false
-      }
-    ],
-    "name": "test_nested_comments",
+    "name": "test",
     "paramNames": [],
     "body": [
-      {
-        "type": "ifBlock",
-        "lastValue": null,
-        "codePos": {
-          "startRow": 17,
-          "startCol": 2,
-          "endRow": 20,
-          "endCol": 6
-        },
-        "conditionExpr": {
-          "type": "literal",
-          "value": true,
-          "codePos": {
-            "startRow": 17,
-            "startCol": 5,
-            "endRow": 17,
-            "endCol": 8
-          }
-        },
-        "thenBranch": [
-          {
-            "type": "command",
-            "lastValue": null,
-            "codePos": {
-              "startRow": 19,
-              "startCol": 4,
-              "endRow": 19,
-              "endCol": 34
-            },
-            "comments": [
-              {
-                "text": "Comment inside if block",
-                "codePos": {
-                  "startRow": 18,
-                  "startCol": 4,
-                  "endRow": 18,
-                  "endCol": 28
-                },
-                "inline": false
-              },
-              {
-                "text": "inline in if",
-                "codePos": {
-                  "startRow": 19,
-                  "startCol": 21,
-                  "endRow": 19,
-                  "endCol": 34
-                },
-                "inline": true
-              }
-            ],
-            "name": "log",
-            "module": null,
-            "args": [
-              {
-                "type": "string",
-                "value": "inside if"
-              }
-            ]
-          }
-        ]
-      },
       {
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 23,
-          "startCol": 2,
-          "endRow": 23,
-          "endCol": 16
+          "startRow": 7,
+          "startCol": 0,
+          "endRow": 7,
+          "endCol": 12
         },
-        "comments": [
-          {
-            "text": "Comment after if",
-            "codePos": {
-              "startRow": 22,
-              "startCol": 2,
-              "endRow": 22,
-              "endCol": 19
-            },
-            "inline": false
-          }
-        ],
         "name": "log",
         "module": null,
         "args": [
           {
             "type": "string",
-            "value": "after if"
+            "value": "Hello!"
           }
         ]
       }

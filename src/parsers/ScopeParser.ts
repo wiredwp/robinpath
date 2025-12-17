@@ -52,7 +52,7 @@ export class ScopeParser {
     static parse(
         stream: TokenStream,
         parseStatement: (stream: TokenStream) => Statement | null,
-        parseComment: (stream: TokenStream) => Statement | null,
+        _parseComment: (stream: TokenStream) => Statement | null,
         decorators?: DecoratorCall[]
     ): ScopeBlock {
         const doToken = stream.current();
@@ -147,6 +147,7 @@ export class ScopeParser {
             let bodyIteration = 0;
             let lastBodyPosition = -1;
             let bodyStuckCount = 0;
+            let pendingComments: CommentWithPosition[] = []; // Comments to attach to next statement
 
             while (!stream.isAtEnd()) {
                 bodyIteration++;
@@ -212,27 +213,18 @@ export class ScopeParser {
                 }
 
                 if (t.kind === TokenKind.COMMENT) {
-                    // Parse comment statement
+                    // Collect comment to attach to next statement (like main parser does)
                     if (ScopeParser.debug) {
                         const timestamp = new Date().toISOString();
-                        console.log(`[ScopeParser.parse] [${timestamp}] Parsing comment in do block body at position ${currentPos}`);
+                        console.log(`[ScopeParser.parse] [${timestamp}] Collecting comment in do block body at position ${currentPos}`);
                     }
-                    const commentBeforeParse = stream.getPosition();
-                    const comment = parseComment(stream);
-                    const commentAfterParse = stream.getPosition();
-                    
-                    // Ensure stream position advanced (parseComment should consume the comment token)
-                    if (commentAfterParse === commentBeforeParse) {
-                        if (ScopeParser.debug) {
-                            const timestamp = new Date().toISOString();
-                            console.log(`[ScopeParser.parse] [${timestamp}] WARNING: parseComment did not advance stream, manually advancing`);
-                        }
-                        stream.next(); // Manually advance if parseComment didn't
-                    }
-                    
-                    if (comment) {
-                        body.push(comment);
-                    }
+                    const commentText = t.value !== undefined ? String(t.value) : t.text.replace(/^#\s*/, '');
+                    pendingComments.push({
+                        text: commentText,
+                        inline: false,
+                        codePos: createCodePosition(t, t)
+                    });
+                    stream.next(); // consume the comment token
                     continue;
                 }
 
@@ -243,6 +235,15 @@ export class ScopeParser {
                 }
                 const stmt = parseStatement(stream);
                 if (stmt) {
+                    // Attach pending comments to this statement
+                    if (pendingComments.length > 0) {
+                        if (!stmt.comments) {
+                            stmt.comments = [];
+                        }
+                        // Prepend pending comments (they come before any existing comments)
+                        stmt.comments = [...pendingComments, ...stmt.comments];
+                        pendingComments = [];
+                    }
                     if (ScopeParser.debug) {
                         const timestamp = new Date().toISOString();
                         console.log(`[ScopeParser.parse] [${timestamp}] Parsed statement type: ${stmt.type} in do block body`);

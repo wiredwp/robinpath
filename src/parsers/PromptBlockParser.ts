@@ -58,22 +58,16 @@ export function parsePromptBlock(
     }
     
     // Collect body lines until we find closing ---
+    // Use line-based iteration instead of token-based to preserve empty lines
     const bodyLines: string[] = [];
     let bodyStartRow = -1;
     let bodyEndRow = -1;
     let closeLineFound = false;
     let closeLineIndex = -1;
     
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        const currentLineIndex = token.line - 1;
-        if (currentLineIndex < 0 || currentLineIndex >= lines.length) {
-            break;
-        }
-        
-        const currentLine = lines[currentLineIndex];
+    // Start scanning from the line after the opening fence
+    for (let scanLineIndex = lineIndex + 1; scanLineIndex < lines.length; scanLineIndex++) {
+        const currentLine = lines[scanLineIndex];
         const fenceClass = classifyFenceLine(currentLine);
         
         // Check if this is a closing prompt fence (bare ---)
@@ -81,13 +75,12 @@ export function parsePromptBlock(
         if (fenceClass && fenceClass.kind === 'prompt_fence') {
             // Found the closing fence
             closeLineFound = true;
-            closeLineIndex = currentLineIndex;
+            closeLineIndex = scanLineIndex;
             
-            // Consume the close fence line tokens
-            const closeLine = token.line;
+            // Consume tokens up to and including the close fence line
             while (!stream.isAtEnd()) {
-                const closeToken = stream.current();
-                if (!closeToken || closeToken.line > closeLine) {
+                const token = stream.current();
+                if (!token || token.line - 1 > closeLineIndex) {
                     break;
                 }
                 stream.next();
@@ -95,22 +88,12 @@ export function parsePromptBlock(
             break;
         }
         
-        // Add this line to body
+        // Add this line to body (including empty lines)
         if (bodyStartRow === -1) {
-            bodyStartRow = currentLineIndex;
+            bodyStartRow = scanLineIndex;
         }
-        bodyEndRow = currentLineIndex;
+        bodyEndRow = scanLineIndex;
         bodyLines.push(currentLine);
-        
-        // Consume this line's tokens
-        const lineNum = token.line;
-        while (!stream.isAtEnd()) {
-            const lineToken = stream.current();
-            if (!lineToken || lineToken.line > lineNum) {
-                break;
-            }
-            stream.next();
-        }
     }
     
     if (!closeLineFound) {

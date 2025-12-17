@@ -174,6 +174,11 @@ export class Parser {
                                     (s) => this.parseStatementFromStream(s)
                                 );
                                 if (cellBlock) {
+                                    // Attach pending comments to the cell block
+                                    if (this.pendingComments.length > 0) {
+                                        CommentParser.attachComments(cellBlock, this.pendingComments);
+                                        this.pendingComments = [];
+                                    }
                                     statements.push(cellBlock);
                                     continue;
                                 }
@@ -193,6 +198,11 @@ export class Parser {
                                 }
                                 const chunkMarker = parseChunkMarker(this.stream, this.source);
                                 if (chunkMarker) {
+                                    // Attach pending comments to the chunk marker
+                                    if (this.pendingComments.length > 0) {
+                                        CommentParser.attachComments(chunkMarker, this.pendingComments);
+                                        this.pendingComments = [];
+                                    }
                                     statements.push(chunkMarker);
                                     continue;
                                 }
@@ -205,6 +215,11 @@ export class Parser {
                                 }
                                 const promptBlock = parsePromptBlock(this.stream, this.source);
                                 if (promptBlock) {
+                                    // Attach pending comments to the prompt block
+                                    if (this.pendingComments.length > 0) {
+                                        CommentParser.attachComments(promptBlock, this.pendingComments);
+                                        this.pendingComments = [];
+                                    }
                                     statements.push(promptBlock);
                                     continue;
                                 }
@@ -323,45 +338,45 @@ export class Parser {
                     if (!skippedToken) break;
                 }
             }
-
-            // Check for orphaned decorators at end of file
-            if (this.decoratorBuffer.length > 0) {
-                throw new Error(
-                    `Orphaned decorators found at end of file. ` +
-                    `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
-                    `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
-                );
-            }
-
-            // Handle any pending comments at end of file (make them orphaned)
-            if (this.pendingComments.length > 0) {
-                const groupedText = this.pendingComments.map(c => c.text).join('\n');
-                const groupedCodePos: CodePosition = {
-                    startRow: this.pendingComments[0].codePos.startRow,
-                    startCol: this.pendingComments[0].codePos.startCol,
-                    endRow: this.pendingComments[this.pendingComments.length - 1].codePos.endRow,
-                    endCol: this.pendingComments[this.pendingComments.length - 1].codePos.endCol
-                };
-
-                statements.push({
-                    type: 'comment',
-                    comments: [{
-                        text: groupedText,
-                        codePos: groupedCodePos,
-                        inline: false
-                    }],
-                    lineNumber: this.pendingComments[0].codePos.startRow
-                });
-                this.pendingComments = [];
-            }
-
-            if (Parser.debug) {
-                const timestamp = new Date().toISOString();
-                console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
-            }
-
-            return statements;
         }
+
+        // Check for orphaned decorators at end of file
+        if (this.decoratorBuffer.length > 0) {
+            throw new Error(
+                `Orphaned decorators found at end of file. ` +
+                `Decorators must be immediately followed by a statement (def, var, const, or command). ` +
+                `Found ${this.decoratorBuffer.length} unclaimed decorator(s).`
+            );
+        }
+
+        // Handle any pending comments at end of file (make them orphaned)
+        if (this.pendingComments.length > 0) {
+            const groupedText = this.pendingComments.map(c => c.text).join('\n');
+            const groupedCodePos: CodePosition = {
+                startRow: this.pendingComments[0].codePos.startRow,
+                startCol: this.pendingComments[0].codePos.startCol,
+                endRow: this.pendingComments[this.pendingComments.length - 1].codePos.endRow,
+                endCol: this.pendingComments[this.pendingComments.length - 1].codePos.endCol
+            };
+
+            statements.push({
+                type: 'comment',
+                comments: [{
+                    text: groupedText,
+                    codePos: groupedCodePos,
+                    inline: false
+                }],
+                lineNumber: this.pendingComments[0].codePos.startRow
+            });
+            this.pendingComments = [];
+        }
+
+        if (Parser.debug) {
+            const timestamp = new Date().toISOString();
+            console.log(`[Parser.parse] [${timestamp}] Parse complete. Total iterations: ${parseIteration}, statements: ${statements.length}`);
+        }
+
+        return statements;
     }
 
     /**

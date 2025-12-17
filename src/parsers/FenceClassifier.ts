@@ -46,7 +46,8 @@ export function classifyFenceLine(line: string): FenceClassification {
     }
     
     // Priority 3: Check for chunk marker: --- chunk:<id> <meta...> ---
-    const chunkRegex = /^\s*---\s*chunk:([A-Za-z_][A-Za-z0-9_-]*)\b(.*?)---\s*$/;
+    // Allow IDs that start with letters, digits, or underscores
+    const chunkRegex = /^\s*---\s*chunk:([A-Za-z0-9_][A-Za-z0-9_-]*)\b(.*?)---\s*$/;
     const chunkMatch = line.match(chunkRegex);
     if (chunkMatch) {
         const id = chunkMatch[1];

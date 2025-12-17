@@ -77,13 +77,20 @@ function parseBinaryExpression(
         const leftStartToken = expressionStartToken || token;
         const rightEndToken = token;
         
-        left = {
+        const binaryExpr: any = {
             type: 'binary',
             operator: opInfo.operator,
             left,
             right,
             codePos: createCodePosition(leftStartToken, rightEndToken)
         };
+        
+        // Store original operator text if different from canonical form
+        if (opInfo.originalText && opInfo.originalText !== opInfo.operator) {
+            binaryExpr.operatorText = opInfo.originalText;
+        }
+        
+        left = binaryExpr;
     }
 
     return left;
@@ -165,6 +172,9 @@ function parsePrimaryExpression(
             throw new Error(`Expected ')' after expression at line ${startToken.line}, column ${startToken.column}`);
         }
         stream.next(); // consume )
+        
+        // Mark the expression as parenthesized for code generation
+        (expr as any).parenthesized = true;
         
         return expr;
     }
@@ -402,14 +412,18 @@ function parsePrimaryExpression(
 /**
  * Get binary operator info from token
  */
-function getBinaryOperator(token: Token): { operator: BinaryOperator; precedence: number } | null {
+function getBinaryOperator(token: Token): { operator: BinaryOperator; precedence: number; originalText?: string } | null {
     // Logical operators (precedence 0)
     // && is tokenized as TokenKind.AND, || is tokenized as TokenKind.OR
     if (token.kind === TokenKind.AND || (token.kind === TokenKind.KEYWORD && token.text === 'and')) {
-        return { operator: 'and', precedence: 0 };
+        // Track original syntax: && vs and
+        const originalText = token.kind === TokenKind.AND ? '&&' : 'and';
+        return { operator: 'and', precedence: 0, originalText };
     }
     if (token.kind === TokenKind.OR || (token.kind === TokenKind.KEYWORD && token.text === 'or')) {
-        return { operator: 'or', precedence: 0 };
+        // Track original syntax: || vs or
+        const originalText = token.kind === TokenKind.OR ? '||' : 'or';
+        return { operator: 'or', precedence: 0, originalText };
     }
 
     // Comparison operators (precedence 1)

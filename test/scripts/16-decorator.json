@@ -1,0 +1,2168 @@
+[
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 0,
+      "endRow": 0,
+      "endCol": 41
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Prerequisite Tests Complete ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 1,
+      "startCol": 0,
+      "endRow": 1,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 1: Built-in decorator functionality for functions",
+        "codePos": {
+          "startRow": 3,
+          "startCol": 0,
+          "endRow": 3,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Built-in decorators for functions"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 5,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testDescFn",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 6,
+          "startCol": 2,
+          "endRow": 6,
+          "endCol": 48
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 1.1 - Function with @desc decorator"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 6
+    },
+    "name": "testDescFn",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 29
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testDescFn"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 106
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test function with description"
+      },
+      {
+        "type": "string",
+        "value": "@desc decorator failed to add description metadata"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 15,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testDescriptionFn",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 14,
+          "startCol": 2,
+          "endRow": 14,
+          "endCol": 55
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 1.2 - Function with @description decorator"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 6
+    },
+    "name": "testDescriptionFn",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 36
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testDescriptionFn"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 102
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Another test function"
+      },
+      {
+        "type": "string",
+        "value": "@description decorator failed to add description metadata"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testTitleFn",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 22,
+          "startCol": 2,
+          "endRow": 22,
+          "endCol": 49
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 1.3 - Function with @title decorator"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 6
+    },
+    "name": "testTitleFn",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 24
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testTitleFn"
+      },
+      {
+        "type": "literal",
+        "value": "title"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 88
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Test Function Title"
+      },
+      {
+        "type": "string",
+        "value": "@title decorator failed to add title metadata"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "multiDecoratorFn",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 30,
+          "startCol": 2,
+          "endRow": 30,
+          "endCol": 52
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 1.4 - Function with multiple decorators"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 6
+    },
+    "name": "multiDecoratorFn",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 35
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "multiDecoratorFn"
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 104
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Function with both description and title"
+      },
+      {
+        "type": "string",
+        "value": "Multiple decorators - description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 29
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "multiDecoratorFn"
+      },
+      {
+        "type": "literal",
+        "value": "title"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 82
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Multi Decorator Function"
+      },
+      {
+        "type": "string",
+        "value": "Multiple decorators - title failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 2: Decorators for var and const",
+        "codePos": {
+          "startRow": 39,
+          "startCol": 0,
+          "endRow": 39,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Decorators for var and const"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 42,
+      "endCol": 22
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "decoratedVar2a",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 64
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "decoratedVar2a",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "decorated var value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 34
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "decoratedVar2a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 87
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test variable with description"
+      },
+      {
+        "type": "string",
+        "value": "@desc decorator with var failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 48,
+      "startCol": 0,
+      "endRow": 48,
+      "endCol": 20
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "titledVar2b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 59
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "titledVar2b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "titled var value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 25
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "titledVar2b",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "title"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 75
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Test Variable Title"
+      },
+      {
+        "type": "string",
+        "value": "@title decorator with var failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 29
+    },
+    "name": "const",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "DECORATED_CONST_2c",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 300
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 55,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 71
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "DECORATED_CONST_2c",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 300
+      },
+      {
+        "type": "string",
+        "value": "decorated const value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 56,
+      "endCol": 38
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "DECORATED_CONST_2c",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": "description"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "A test constant with description"
+      },
+      {
+        "type": "string",
+        "value": "@desc decorator with const failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 30
+    },
+    "comments": [
+      {
+        "text": "Test 3: @param decorator",
+        "codePos": {
+          "startRow": 59,
+          "startCol": 0,
+          "endRow": 59,
+          "endCol": 25
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: @param decorator"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "greetUser",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 62,
+          "startCol": 2,
+          "endRow": 62,
+          "endCol": 16
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Hello"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 17
+    },
+    "name": "greetUser",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Alice"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 66,
+      "endCol": 27
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "greetUser"
+      },
+      {
+        "type": "literal",
+        "value": "parameters"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 12
+    },
+    "targetName": "params3a",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 74
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3a",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "array"
+      },
+      {
+        "type": "string",
+        "value": "getMeta parameters should return array"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 69,
+      "endCol": 84
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3a",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "name"
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - parameter name failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 70,
+      "startCol": 0,
+      "endRow": 70,
+      "endCol": 84
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3a",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "dataType"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "string"
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - dataType failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 0,
+      "endRow": 71,
+      "endCol": 95
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3a",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "description"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "User's name"
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - description failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 72,
+      "startCol": 0,
+      "endRow": 72,
+      "endCol": 98
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3a",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "required"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - required should be true when no default"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "setAge",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 75,
+          "startCol": 2,
+          "endRow": 75,
+          "endCol": 15
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Age:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 78,
+      "endCol": 9
+    },
+    "name": "setAge",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 30
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 24
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "setAge"
+      },
+      {
+        "type": "literal",
+        "value": "parameters"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 80,
+      "endCol": 12
+    },
+    "targetName": "params3b",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 81,
+      "endCol": 96
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3b",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "age"
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - parameter name with default failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 97
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3b",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "dataType"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "number"
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - dataType with default failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 86
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3b",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "defaultValue"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - defaultValue failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 0,
+      "endRow": 84,
+      "endCol": 106
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertFalse",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params3b",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "required"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "@param decorator - required should be false when default provided"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 28
+    },
+    "comments": [
+      {
+        "text": "Test 4: @arg decorator",
+        "codePos": {
+          "startRow": 86,
+          "startCol": 0,
+          "endRow": 86,
+          "endCol": 23
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: @arg decorator"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "addNumbers",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 89,
+          "startCol": 2,
+          "endRow": 89,
+          "endCol": 19
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "2",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "3",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 92,
+      "endCol": 16
+    },
+    "name": "addNumbers",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 93,
+      "endCol": 28
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "addNumbers"
+      },
+      {
+        "type": "literal",
+        "value": "parameters"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 11
+    },
+    "targetName": "params4",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 95,
+      "startCol": 0,
+      "endRow": 95,
+      "endCol": 73
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params4",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "array"
+      },
+      {
+        "type": "string",
+        "value": "getMeta parameters should return array"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 97,
+      "startCol": 0,
+      "endRow": 97,
+      "endCol": 17
+    },
+    "comments": [
+      {
+        "text": "Find args parameter",
+        "codePos": {
+          "startRow": 96,
+          "startCol": 0,
+          "endRow": 96,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "argsParam4",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null"
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 5
+    },
+    "varName": "p",
+    "iterable": {
+      "type": "var",
+      "name": "params4",
+      "path": [],
+      "codePos": {
+        "startRow": 98,
+        "startCol": 10,
+        "endRow": 98,
+        "endCol": 17
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 99,
+          "startCol": 2,
+          "endRow": 102,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "==",
+          "left": {
+            "type": "var",
+            "name": "p",
+            "path": [
+              {
+                "type": "property",
+                "name": "name"
+              }
+            ],
+            "codePos": {
+              "startRow": 99,
+              "startCol": 5,
+              "endRow": 99,
+              "endCol": 11
+            }
+          },
+          "right": {
+            "type": "string",
+            "value": "args",
+            "codePos": {
+              "startRow": 99,
+              "startCol": 16,
+              "endRow": 99,
+              "endCol": 21
+            }
+          },
+          "codePos": {
+            "startRow": 99,
+            "startCol": 5,
+            "endRow": 99,
+            "endCol": 14
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 100,
+              "startCol": 4,
+              "endRow": 100,
+              "endCol": 22
+            },
+            "name": "set",
+            "module": null,
+            "args": [
+              {
+                "type": "var",
+                "name": "argsParam4",
+                "path": []
+              },
+              {
+                "type": "var",
+                "name": "p",
+                "path": []
+              }
+            ]
+          },
+          {
+            "type": "break",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 101,
+              "startCol": 4,
+              "endRow": 101,
+              "endCol": 8
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 104,
+      "startCol": 0,
+      "endRow": 104,
+      "endCol": 77
+    },
+    "name": "test.assertNotNull",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "argsParam4",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "@arg decorator - args parameter should exist"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 105,
+      "endCol": 86
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "argsParam4",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "args"
+      },
+      {
+        "type": "string",
+        "value": "@arg decorator - args parameter name failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 95
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "argsParam4",
+        "path": [
+          {
+            "type": "property",
+            "name": "dataType"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "array"
+      },
+      {
+        "type": "string",
+        "value": "@arg decorator - args parameter dataType failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 109,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 5: @required decorator",
+        "codePos": {
+          "startRow": 108,
+          "startCol": 0,
+          "endRow": 108,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: @required decorator"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 110,
+      "startCol": 0,
+      "endRow": 112,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "greetRequired",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 111,
+          "startCol": 2,
+          "endRow": 111,
+          "endCol": 16
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Hello"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 21
+    },
+    "name": "greetRequired",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Alice"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 115,
+      "startCol": 0,
+      "endRow": 115,
+      "endCol": 31
+    },
+    "name": "getMeta",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "greetRequired"
+      },
+      {
+        "type": "literal",
+        "value": "parameters"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 116,
+      "startCol": 0,
+      "endRow": 116,
+      "endCol": 11
+    },
+    "targetName": "params5",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 73
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params5",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "array"
+      },
+      {
+        "type": "string",
+        "value": "getMeta parameters should return array"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 86
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params5",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "name"
+      },
+      {
+        "type": "string",
+        "value": "@required decorator - parameter name failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "params5",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "required"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "@required decorator - parameter should be required"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 6: Decorators for if, do, for, on statements",
+        "codePos": {
+          "startRow": 121,
+          "startCol": 0,
+          "endRow": 121,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Decorators for other statements"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 127,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "condition": {
+      "type": "literal",
+      "value": true,
+      "codePos": {
+        "startRow": 125,
+        "startCol": 3,
+        "endRow": 125,
+        "endCol": 6
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 126,
+          "startCol": 2,
+          "endRow": 126,
+          "endCol": 43
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 6.1 - If block with decorators"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 133,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 132,
+          "startCol": 2,
+          "endRow": 132,
+          "endCol": 43
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 6.2 - Do block with decorators"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 139,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 137,
+            "startCol": 16,
+            "endRow": 137,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 3,
+          "codePos": {
+            "startRow": 137,
+            "startCol": 18,
+            "endRow": 137,
+            "endCol": 18
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 137,
+        "startCol": 10,
+        "endRow": 137,
+        "endCol": 18
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 138,
+          "startCol": 2,
+          "endRow": 138,
+          "endCol": 58
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 6.3 - For loop with decorators, iteration:"
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 145,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "eventName": "testEvent",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 144,
+          "startCol": 2,
+          "endRow": 144,
+          "endCol": 43
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Test 6.4 - On block with decorators"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 147,
+      "startCol": 0,
+      "endRow": 147,
+      "endCol": 38
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Decorator Tests Complete ==="
+      }
+    ]
+  }
+]

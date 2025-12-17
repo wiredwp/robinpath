@@ -582,6 +582,37 @@ export class RobinPathThread {
                     comments: stmt.comments || [],
                     lineNumber: stmt.lineNumber
                 };
+            case 'chunk_marker':
+                const chunkMarkerStmt = stmt as any;
+                return {
+                    ...base,
+                    id: chunkMarkerStmt.id,
+                    meta: chunkMarkerStmt.meta,
+                    raw: chunkMarkerStmt.raw
+                };
+            case 'cell':
+                const cellBlockStmt = stmt as any;
+                const serializedCell: any = {
+                    ...base,
+                    cellType: cellBlockStmt.cellType,
+                    meta: cellBlockStmt.meta || {}
+                };
+                // Always include rawBody if present (needed for printing non-code cells)
+                if (cellBlockStmt.rawBody !== undefined && cellBlockStmt.rawBody !== null) {
+                    serializedCell.rawBody = cellBlockStmt.rawBody;
+                }
+                // Include body if present (for code cells)
+                if (cellBlockStmt.body && Array.isArray(cellBlockStmt.body) && cellBlockStmt.body.length > 0) {
+                    serializedCell.body = cellBlockStmt.body.map((s: Statement) => this.serializeStatement(s, undefined, currentModuleContext));
+                }
+                return serializedCell;
+            case 'prompt_block':
+                const promptBlockStmt = stmt as any;
+                return {
+                    ...base,
+                    rawText: promptBlockStmt.rawText,
+                    fence: promptBlockStmt.fence
+                };
         }
     }
 

@@ -66,14 +66,14 @@ export function parseIf(
             // Block if with 'then': if condition then ... endif
             stream.next(); // consume 'then'
             stream.skipWhitespaceAndComments();
-            return parseIfBlock(stream, ifToken, condition, context, decorators);
+            return parseIfBlock(stream, ifToken, condition, context, decorators, true); // hasThen = true
         } else {
             // Inline if: if condition then command [else command]
         return parseInlineIf(stream, ifToken, condition, context);
         }
     } else {
         // If block: if condition ... endif
-        return parseIfBlock(stream, ifToken, condition, context, decorators);
+        return parseIfBlock(stream, ifToken, condition, context, decorators, false); // hasThen = false
     }
 }
 
@@ -96,6 +96,9 @@ function parseConditionExpression(
 
 /**
  * Parse inline if: if condition then command [else command]
+ * 
+ * Important: Inline if statements MUST be on a single line.
+ * We stop parsing at the first NEWLINE to avoid consuming subsequent lines.
  */
 function parseInlineIf(
     stream: TokenStream,
@@ -108,25 +111,72 @@ function parseInlineIf(
     if (!thenToken || thenToken.text !== 'then') {
         throw new Error(`Expected 'then' after if condition at line ${ifToken.line}`);
     }
+    const inlineIfLine = thenToken.line; // The line this inline if is on
     stream.next();
-    stream.skipWhitespaceAndComments();
+    
+    // Skip whitespace but NOT newlines - inline if must be on one line
+    while (!stream.isAtEnd() && stream.current()?.kind === TokenKind.COMMENT) {
+        const commentToken = stream.current();
+        // Only skip comments on the same line
+        if (commentToken && commentToken.line !== inlineIfLine) break;
+        stream.next();
+    }
 
-    // Parse the command statement
+    // Check if we've hit a newline before the command - that's an error
+    if (stream.current()?.kind === TokenKind.NEWLINE) {
+        throw new Error(`Expected command after 'then' on the same line at line ${thenToken.line}`);
+    }
+
+    // Parse the command statement - but we need to be careful not to go past this line
+    // Save the position to track how far the statement parsing goes
     const command = context.parseStatement(stream);
     if (!command) {
         throw new Error(`Expected command after 'then' at line ${thenToken.line}`);
     }
 
-    // Check for optional 'else' clause
-    stream.skipWhitespaceAndComments();
+    // Verify the parsed command didn't extend past this line
+    // If it did, that's a parser bug in the underlying statement parser
+    // For now, we'll track the end position properly
+    let endToken = stream.current() || thenToken;
+    
+    // Check for optional 'else' clause - but only on the same line
+    // First, skip any tokens until we hit newline or 'else'
+    while (!stream.isAtEnd()) {
+        const currentToken = stream.current();
+        if (!currentToken) break;
+        
+        // Stop at newline - inline if ends here
+        if (currentToken.kind === TokenKind.NEWLINE) {
+            break;
+        }
+        
+        // Found 'else' on the same line
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'else') {
+            break;
+        }
+        
+        // Skip other tokens (like trailing whitespace or comments on the same line)
+        if (currentToken.kind === TokenKind.COMMENT && currentToken.line === inlineIfLine) {
+            stream.next();
+            continue;
+        }
+        
+        break;
+    }
+    
     const nextToken = stream.current();
     let elseCommand: Statement | undefined;
-    let endToken = stream.current() || thenToken;
 
-    if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'else') {
+    if (nextToken && nextToken.kind === TokenKind.KEYWORD && nextToken.text === 'else' && nextToken.line === inlineIfLine) {
         // Consume 'else' keyword
         stream.next();
-        stream.skipWhitespaceAndComments();
+        
+        // Skip whitespace but NOT newlines
+        while (!stream.isAtEnd() && stream.current()?.kind === TokenKind.COMMENT) {
+            const commentToken = stream.current();
+            if (commentToken && commentToken.line !== inlineIfLine) break;
+            stream.next();
+        }
 
         // Parse the else command statement
         const parsedElseCommand = context.parseStatement(stream);
@@ -135,6 +185,12 @@ function parseInlineIf(
         }
         elseCommand = parsedElseCommand;
         endToken = stream.current() || nextToken;
+    }
+
+    // Consume the newline at the end of the inline if (if present)
+    if (stream.current()?.kind === TokenKind.NEWLINE) {
+        endToken = stream.current()!;
+        stream.next();
     }
 
     return {
@@ -154,12 +210,14 @@ function parseIfBlock(
     ifToken: Token,
     condition: Expression,
     context: IfBlockParserContext,
-    decorators?: DecoratorCall[]
+    decorators?: DecoratorCall[],
+    hasThen?: boolean
 ): IfBlock {
     const thenBranch: Statement[] = [];
     const elseifBranches: Array<{ condition: Expression; body: Statement[] }> = [];
     let elseBranch: Statement[] | undefined;
     let endToken = ifToken;
+    const usedThenKeyword = hasThen === true;
 
     // Parse then branch (body after condition until elseif/else/endif)
     // Don't skip comments here - we want to parse them and attach to statements
@@ -476,6 +534,11 @@ function parseIfBlock(
     // Attach decorators if provided
     if (decorators && decorators.length > 0) {
         result.decorators = decorators;
+    }
+
+    // Track if 'then' keyword was used (for code generation)
+    if (usedThenKeyword) {
+        (result as any).hasThen = true;
     }
 
     return result;

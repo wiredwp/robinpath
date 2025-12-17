@@ -1,0 +1,2790 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Builtin Commands Tests\nTests for set, get, empty, fallback, clear, forget, var, const, etc.",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 69
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 36
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Builtin Commands Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 6,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Test 1: set command",
+        "codePos": {
+          "startRow": 5,
+          "startCol": 0,
+          "endRow": 5,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: set command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 20
+    },
+    "targetName": "testVar",
+    "targetPath": [],
+    "literalValue": "original",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 64
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "original"
+      },
+      {
+        "type": "string",
+        "value": "Initial assignment failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 23
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "assigned"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 57
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "assigned"
+      },
+      {
+        "type": "string",
+        "value": "set command failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 15
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 61
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "set command with number failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 17
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": true
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 14,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 64
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": true
+      },
+      {
+        "type": "string",
+        "value": "set command with boolean failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 15,
+      "startCol": 0,
+      "endRow": 15,
+      "endCol": 26
+    },
+    "targetName": "sourceVar",
+    "targetPath": [],
+    "literalValue": "source value",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 23
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "sourceVar",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 75
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "source value"
+      },
+      {
+        "type": "string",
+        "value": "set command with variable failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 19,
+      "startCol": 0,
+      "endRow": 19,
+      "endCol": 14
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "lastValue"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 65
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "set command with last value failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 15
+    },
+    "comments": [
+      {
+        "text": "Test set with fallback (3rd parameter)",
+        "codePos": {
+          "startRow": 22,
+          "startCol": 0,
+          "endRow": 22,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "emptyVar",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 39
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "emptyVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "fallback value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 25,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "fallback value"
+      },
+      {
+        "type": "string",
+        "value": "set with fallback for null failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 13
+    },
+    "targetName": "emptyVar",
+    "targetPath": [],
+    "literalValue": "",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 28,
+      "endCol": 40
+    },
+    "name": "set",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "emptyVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "fallback string"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 87
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "fallback string"
+      },
+      {
+        "type": "string",
+        "value": "set with fallback for empty string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Test 2: get command",
+        "codePos": {
+          "startRow": 31,
+          "startCol": 0,
+          "endRow": 31,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: get command"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 82
+    },
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"name\": \"John\", \"age\": 30, \"address\": {\"city\": \"NYC\", \"zip\": 10001}}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 8
+    },
+    "targetName": "user",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 39,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 37,
+          "startCol": 2,
+          "endRow": 37,
+          "endCol": 18
+        },
+        "name": "get",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "user",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "name"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 38,
+          "startCol": 2,
+          "endRow": 38,
+          "endCol": 65
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "John"
+          },
+          {
+            "type": "string",
+            "value": "get command - basic property failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 42,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 43,
+          "startCol": 2,
+          "endRow": 43,
+          "endCol": 17
+        },
+        "name": "get",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "user",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "age"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 44,
+          "startCol": 2,
+          "endRow": 44,
+          "endCol": 62
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 30
+          },
+          {
+            "type": "string",
+            "value": "get command - number property failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 47,
+      "startCol": 0,
+      "endRow": 48,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 48,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 49,
+          "startCol": 2,
+          "endRow": 49,
+          "endCol": 26
+        },
+        "name": "get",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "user",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "address.city"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 50,
+          "startCol": 2,
+          "endRow": 50,
+          "endCol": 61
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "NYC"
+          },
+          {
+            "type": "string",
+            "value": "get command - nested path failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 53,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 55,
+          "startCol": 2,
+          "endRow": 55,
+          "endCol": 25
+        },
+        "name": "get",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "user",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "nonexistent"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 56,
+          "startCol": 2,
+          "endRow": 56,
+          "endCol": 78
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "literal",
+            "value": null
+          },
+          {
+            "type": "string",
+            "value": "get command - non-existent path should return null"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 27
+    },
+    "comments": [
+      {
+        "text": "Test 3: empty command",
+        "codePos": {
+          "startRow": 59,
+          "startCol": 0,
+          "endRow": 59,
+          "endCol": 22
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: empty command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 21
+    },
+    "targetName": "toEmpty",
+    "targetPath": [],
+    "literalValue": "not empty",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 68
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "not empty"
+      },
+      {
+        "type": "string",
+        "value": "Variable before empty failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 14
+    },
+    "name": "empty",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 64,
+      "endCol": 53
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "empty command failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 12
+    },
+    "targetName": "toEmpty",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 66,
+      "endCol": 71
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Variable reassignment after empty failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 14
+    },
+    "name": "empty",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 65
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "toEmpty",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "empty command second time failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 0,
+      "endRow": 71,
+      "endCol": 30
+    },
+    "comments": [
+      {
+        "text": "Test 4: fallback command",
+        "codePos": {
+          "startRow": 70,
+          "startCol": 0,
+          "endRow": 70,
+          "endCol": 25
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: fallback command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 72,
+      "startCol": 0,
+      "endRow": 72,
+      "endCol": 17
+    },
+    "targetName": "maybeEmpty",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 73,
+      "startCol": 0,
+      "endRow": 74,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 0,
+      "endRow": 77,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 75,
+          "startCol": 2,
+          "endRow": 75,
+          "endCol": 38
+        },
+        "name": "fallback",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "maybeEmpty",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "default value"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 76,
+          "startCol": 2,
+          "endRow": 76,
+          "endCol": 64
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "default value"
+          },
+          {
+            "type": "string",
+            "value": "fallback with null failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 15
+    },
+    "targetName": "maybeEmpty",
+    "targetPath": [],
+    "literalValue": "",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 81,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 84,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 82,
+          "startCol": 2,
+          "endRow": 82,
+          "endCol": 39
+        },
+        "name": "fallback",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "maybeEmpty",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "default string"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 83,
+          "startCol": 2,
+          "endRow": 83,
+          "endCol": 73
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "default string"
+          },
+          {
+            "type": "string",
+            "value": "fallback with empty string failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 86,
+      "startCol": 0,
+      "endRow": 86,
+      "endCol": 24
+    },
+    "targetName": "maybeEmpty",
+    "targetPath": [],
+    "literalValue": "not empty",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 88,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 89,
+          "startCol": 2,
+          "endRow": 89,
+          "endCol": 33
+        },
+        "name": "fallback",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "maybeEmpty",
+            "path": []
+          },
+          {
+            "type": "string",
+            "value": "fallback"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 90,
+          "startCol": 2,
+          "endRow": 90,
+          "endCol": 91
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "not empty"
+          },
+          {
+            "type": "string",
+            "value": "fallback should not use fallback when value is not empty"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 27
+    },
+    "comments": [
+      {
+        "text": "Test 5: clear command",
+        "codePos": {
+          "startRow": 93,
+          "startCol": 0,
+          "endRow": 93,
+          "endCol": 22
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: clear command"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 95,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 96,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 97,
+          "startCol": 2,
+          "endRow": 97,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "number",
+            "value": 10
+          },
+          {
+            "type": "number",
+            "value": 20
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 98,
+          "startCol": 2,
+          "endRow": 98,
+          "endCol": 56
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 30
+          },
+          {
+            "type": "string",
+            "value": "Last value before clear failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 100,
+      "startCol": 0,
+      "endRow": 101,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 101,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 102,
+          "startCol": 2,
+          "endRow": 102,
+          "endCol": 68
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "literal",
+            "value": null
+          },
+          {
+            "type": "string",
+            "value": "clear command failed to clear last value"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 28
+    },
+    "comments": [
+      {
+        "text": "Test 6: forget command",
+        "codePos": {
+          "startRow": 105,
+          "startCol": 0,
+          "endRow": 105,
+          "endCol": 23
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: forget command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 107,
+      "startCol": 0,
+      "endRow": 107,
+      "endCol": 13
+    },
+    "targetName": "testVar",
+    "targetPath": [],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 109,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 110,
+          "startCol": 2,
+          "endRow": 110,
+          "endCol": 17
+        },
+        "name": "forget",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 111,
+          "startCol": 2,
+          "endRow": 111,
+          "endCol": 61
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "literal",
+            "value": null
+          },
+          {
+            "type": "string",
+            "value": "forget command should return null"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 112,
+          "startCol": 2,
+          "endRow": 112,
+          "endCol": 72
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "var",
+            "name": "testVar",
+            "path": []
+          },
+          {
+            "type": "literal",
+            "value": null
+          },
+          {
+            "type": "string",
+            "value": "forgotten variable should return null"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 115,
+      "startCol": 0,
+      "endRow": 115,
+      "endCol": 85
+    },
+    "comments": [
+      {
+        "text": "Variable should be accessible again after do ends",
+        "codePos": {
+          "startRow": 114,
+          "startCol": 0,
+          "endRow": 114,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "forgotten variable should be accessible after do ends"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test 7: var and const commands",
+        "codePos": {
+          "startRow": 117,
+          "startCol": 0,
+          "endRow": 117,
+          "endCol": 31
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: var and const commands"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 14
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar7a",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 0,
+      "endRow": 120,
+      "endCol": 75
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar7a",
+        "path": []
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "var command without default value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 17
+    },
+    "name": "var",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar7b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 123,
+      "startCol": 0,
+      "endRow": 123,
+      "endCol": 70
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar7b",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "var command with default value failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 24
+    },
+    "name": "const",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "TEST_CONST_7c",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 0,
+      "endRow": 126,
+      "endCol": 58
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "TEST_CONST_7c",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "const command failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Test 8: has command",
+        "codePos": {
+          "startRow": 128,
+          "startCol": 0,
+          "endRow": 128,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: has command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 13
+    },
+    "targetName": "testVar8",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 131,
+      "endCol": 13
+    },
+    "name": "has",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "testVar8",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 132,
+      "startCol": 0,
+      "endRow": 132,
+      "endCol": 56
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "has command - variable exists failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 134,
+      "startCol": 0,
+      "endRow": 134,
+      "endCol": 19
+    },
+    "name": "has",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "nonexistentVar",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 135,
+      "startCol": 0,
+      "endRow": 135,
+      "endCol": 75
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertFalse",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "has command - nonexistent variable should return false"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 139,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "testHasFunc",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 138,
+          "startCol": 2,
+          "endRow": 138,
+          "endCol": 12
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "test"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 141,
+      "startCol": 0,
+      "endRow": 142,
+      "endCol": 3
+    },
+    "trailingBlankLines": 2,
+    "name": "has",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "testHasFunc"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 142,
+      "startCol": 0,
+      "endRow": 142,
+      "endCol": 69
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "has command - user-defined function exists failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 145,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 3
+    },
+    "trailingBlankLines": 2,
+    "name": "has",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "log"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 146,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 64
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "has command - builtin function exists failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 149,
+      "startCol": 0,
+      "endRow": 149,
+      "endCol": 12
+    },
+    "name": "has",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": "math.add"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 150,
+      "startCol": 0,
+      "endRow": 150,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertTrue",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "has command - module function exists failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 153,
+      "startCol": 0,
+      "endRow": 153,
+      "endCol": 29
+    },
+    "comments": [
+      {
+        "text": "Test 9: getType command",
+        "codePos": {
+          "startRow": 152,
+          "startCol": 0,
+          "endRow": 152,
+          "endCol": 24
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: getType command"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 16
+    },
+    "targetName": "strVar",
+    "targetPath": [],
+    "literalValue": "hello",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 155,
+      "startCol": 0,
+      "endRow": 156,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 156,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 157,
+          "startCol": 2,
+          "endRow": 157,
+          "endCol": 17
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "strVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 158,
+          "startCol": 2,
+          "endRow": 158,
+          "endCol": 57
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "string"
+          },
+          {
+            "type": "string",
+            "value": "getType for string failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 161,
+      "startCol": 0,
+      "endRow": 161,
+      "endCol": 11
+    },
+    "targetName": "numVar",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 162,
+      "startCol": 0,
+      "endRow": 163,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 163,
+      "startCol": 0,
+      "endRow": 166,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 164,
+          "startCol": 2,
+          "endRow": 164,
+          "endCol": 17
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "numVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 165,
+          "startCol": 2,
+          "endRow": 165,
+          "endCol": 57
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "number"
+          },
+          {
+            "type": "string",
+            "value": "getType for number failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 168,
+      "startCol": 0,
+      "endRow": 168,
+      "endCol": 14
+    },
+    "targetName": "boolVar",
+    "targetPath": [],
+    "literalValue": true,
+    "literalValueType": "boolean"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 169,
+      "startCol": 0,
+      "endRow": 170,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 170,
+      "startCol": 0,
+      "endRow": 173,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 171,
+          "startCol": 2,
+          "endRow": 171,
+          "endCol": 18
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "boolVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 172,
+          "startCol": 2,
+          "endRow": 172,
+          "endCol": 59
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "boolean"
+          },
+          {
+            "type": "string",
+            "value": "getType for boolean failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 175,
+      "startCol": 0,
+      "endRow": 175,
+      "endCol": 14
+    },
+    "targetName": "nullVar",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 176,
+      "startCol": 0,
+      "endRow": 177,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 177,
+      "startCol": 0,
+      "endRow": 180,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 178,
+          "startCol": 2,
+          "endRow": 178,
+          "endCol": 18
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "nullVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 179,
+          "startCol": 2,
+          "endRow": 179,
+          "endCol": 53
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "null"
+          },
+          {
+            "type": "string",
+            "value": "getType for null failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 182,
+      "startCol": 0,
+      "endRow": 182,
+      "endCol": 19
+    },
+    "targetName": "arrVar",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 182,
+        "startCol": 10,
+        "endRow": 182,
+        "endCol": 19
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 1
+        },
+        {
+          "type": "number",
+          "value": 5
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 183,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 184,
+      "startCol": 0,
+      "endRow": 187,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 185,
+          "startCol": 2,
+          "endRow": 185,
+          "endCol": 17
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "arrVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 186,
+          "startCol": 2,
+          "endRow": 186,
+          "endCol": 55
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "array"
+          },
+          {
+            "type": "string",
+            "value": "getType for array failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 189,
+      "startCol": 0,
+      "endRow": 189,
+      "endCol": 20
+    },
+    "name": "obj",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "{name: \"John\"}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 190,
+      "startCol": 0,
+      "endRow": 190,
+      "endCol": 10
+    },
+    "targetName": "objVar",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 191,
+      "startCol": 0,
+      "endRow": 192,
+      "endCol": 1
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 192,
+      "startCol": 0,
+      "endRow": 195,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 193,
+          "startCol": 2,
+          "endRow": 193,
+          "endCol": 17
+        },
+        "name": "getType",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "objVar",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 194,
+          "startCol": 2,
+          "endRow": 194,
+          "endCol": 57
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "string",
+            "value": "object"
+          },
+          {
+            "type": "string",
+            "value": "getType for object failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 197,
+      "startCol": 0,
+      "endRow": 197,
+      "endCol": 45
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Builtin Commands Tests Complete ==="
+      }
+    ]
+  }
+]

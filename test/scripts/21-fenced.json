@@ -1,0 +1,193 @@
+[
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 0,
+      "endRow": 0,
+      "endCol": 16
+    },
+    "targetName": "part2",
+    "targetPath": [],
+    "literalValue": "second",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 1,
+      "startCol": 0,
+      "endRow": 1,
+      "endCol": 21
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "part1",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": " "
+      },
+      {
+        "type": "var",
+        "name": "part2",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "cell",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 8
+    },
+    "comments": [
+      {
+        "text": "Test 9: Cell with metadata (id first, then sorted)",
+        "codePos": {
+          "startRow": 3,
+          "startCol": 0,
+          "endRow": 3,
+          "endCol": 51
+        },
+        "inline": false
+      }
+    ],
+    "cellType": "code",
+    "meta": {
+      "id": "main",
+      "priority": "high",
+      "tags": "test"
+    },
+    "rawBody": "$test = true",
+    "body": [
+      {
+        "type": "assignment",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 0,
+          "endCol": 11
+        },
+        "targetName": "test",
+        "targetPath": [],
+        "literalValue": true,
+        "literalValueType": "boolean"
+      }
+    ]
+  },
+  {
+    "type": "cell",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 8
+    },
+    "comments": [
+      {
+        "text": "Test 10: Empty cell",
+        "codePos": {
+          "startRow": 8,
+          "startCol": 0,
+          "endRow": 8,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "cellType": "code",
+    "meta": {
+      "id": "empty"
+    },
+    "rawBody": ""
+  },
+  {
+    "type": "prompt_block",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 14,
+      "endCol": 2
+    },
+    "comments": [
+      {
+        "text": "Test 11: Empty prompt block",
+        "codePos": {
+          "startRow": 12,
+          "startCol": 0,
+          "endRow": 12,
+          "endCol": 28
+        },
+        "inline": false
+      }
+    ],
+    "rawText": "",
+    "fence": "---"
+  },
+  {
+    "type": "prompt_block",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 2
+    },
+    "comments": [
+      {
+        "text": "Test 12: Prompt block with blank lines",
+        "codePos": {
+          "startRow": 16,
+          "startCol": 0,
+          "endRow": 16,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "rawText": "Line 1\n\nLine 3",
+    "fence": "---"
+  },
+  {
+    "type": "cell",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 8
+    },
+    "comments": [
+      {
+        "text": "Test 13: Schema cell",
+        "codePos": {
+          "startRow": 23,
+          "startCol": 0,
+          "endRow": 23,
+          "endCol": 21
+        },
+        "inline": false
+      }
+    ],
+    "cellType": "schema",
+    "meta": {
+      "id": "Invoice",
+      "format": "json"
+    },
+    "rawBody": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"amount\": { \"type\": \"number\" }\n  }\n}"
+  }
+]

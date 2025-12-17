@@ -1,25 +1,11 @@
-# Test 8: Complex function with all comment types
-def complex_function $param1 $param2
-  # Function documentation comment
-  # This function does something complex
-  
-  # Validate parameters
-  if $param1 == null
-    log "param1 is null"  # warning comment
-    return false
-  endif
-  
-  # Return result
-  return $result  # return comment
-enddef
+$a = "hi"
 
-# Test 9: Nested comments (comments in if blocks within def)
-def test_nested_comments
-  if true
-    # Comment inside if block
-    log "inside if"  # inline in if
-  endif
-  
-  # Comment after if
-  log "after if"
+# 2nd comment
+
+log "hello!oppooppp!"
+
+def test
+
+  log "Hello!"
+
 enddef

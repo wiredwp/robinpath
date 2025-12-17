@@ -82,12 +82,13 @@ export class CommandParser {
         }
 
         let name = startToken.text;
+        let lastToken = startToken; // Track the last token that's part of the command name
         stream.next();
 
-        // Check for module.function syntax
-        stream.skipWhitespaceAndComments();
-        const dotToken = stream.current();
-        if (dotToken && dotToken.kind === TokenKind.DOT) {
+        // Check for module.function syntax (don't skip newlines - that would move to next line)
+        // Only skip if current token is on the same line
+        const afterNameToken = stream.current();
+        if (afterNameToken && afterNameToken.kind === TokenKind.DOT && afterNameToken.line === startToken.line) {
             stream.next(); // Consume '.'
             stream.skipWhitespaceAndComments();
             
@@ -97,6 +98,7 @@ export class CommandParser {
             }
             
             name = `${name}.${funcToken.text}`;
+            lastToken = funcToken;
             stream.next();
         }
 
@@ -114,7 +116,7 @@ export class CommandParser {
             throw new Error(`Expected command name, got last value reference: ${name}`);
         }
 
-        return { name, endToken: stream.current() || startToken };
+        return { name, endToken: lastToken };
     }
 
     /**
@@ -255,6 +257,7 @@ export class CommandParser {
             const args: Arg[] = [];
             const namedArgs: Record<string, Arg> = {};
             const startLineNum = startToken.line;
+            let lastCommandToken: Token = startToken; // Track the last token that was part of the command
 
         // Special handling for "set" command with optional "as" keyword
         // Syntax: set $var [as] value [fallback]
@@ -330,6 +333,11 @@ export class CommandParser {
             let lastIndex = -1;
             let loopCount = 0;
             let justFinishedMultilineConstruct = false;
+            // Only update lastCommandToken if we're still on the same line as the command
+            const currentBeforeArgs = stream.current();
+            if (currentBeforeArgs && currentBeforeArgs.line === startLineNum) {
+                lastCommandToken = currentBeforeArgs;
+            }
             while (!stream.isAtEnd()) {
                 const currentIndex = stream.getPosition();
                 if (currentIndex === lastIndex) {
@@ -465,6 +473,9 @@ export class CommandParser {
                     break;
                 }
 
+                // Remember token before parsing
+                const tokenBeforeArg = stream.current();
+                
                 // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
@@ -472,6 +483,10 @@ export class CommandParser {
                         namedArgs[argResult.key!] = argResult.arg;
                     } else {
                         args.push(argResult.arg);
+                    }
+                    // Update lastCommandToken if the arg was on the same line as the command start
+                    if (tokenBeforeArg && tokenBeforeArg.line === startLineNum) {
+                        lastCommandToken = tokenBeforeArg;
                     }
                     // Check if we just finished a multi-line construct
                     justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
@@ -499,7 +514,14 @@ export class CommandParser {
         // but for the command itself, 'into' comes before the callback
         const intoInfo = this.parseInto(stream);
 
-            const endToken = stream.current() || startToken;
+            // Use the last command token to get accurate endRow
+            // This ensures codePos.endRow correctly reflects the command's last line
+            let endToken = lastCommandToken;
+            // If current token is on the same line as the start, use it for more accurate end position
+            const currentToken = stream.current();
+            if (currentToken && currentToken.line === startToken.line) {
+                endToken = currentToken;
+            }
             const codePos = context?.createCodePosition 
                 ? context.createCodePosition(startToken, endToken)
                 : createCodePosition(startToken, endToken);

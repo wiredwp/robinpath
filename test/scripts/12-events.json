@@ -1,0 +1,1858 @@
+[
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 4,
+      "endRow": 0,
+      "endCol": 16
+    },
+    "name": "chunk",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 12
+      }
+    ]
+  },
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Event System Tests\nTests for event handlers (on/endon) and trigger command",
+        "codePos": {
+          "startRow": 1,
+          "startCol": 0,
+          "endRow": 2,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 1
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 4,
+      "startCol": 0,
+      "endRow": 4,
+      "endCol": 32
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Event System Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Test 1: Basic event handler with arguments",
+        "codePos": {
+          "startRow": 6,
+          "startCol": 0,
+          "endRow": 6,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Basic event handler"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 4
+    },
+    "eventName": "test1",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 9,
+          "startCol": 2,
+          "endRow": 9,
+          "endCol": 46
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 1 - Received args:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "2",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "3",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 36
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test1"
+      },
+      {
+        "type": "string",
+        "value": "arg1"
+      },
+      {
+        "type": "string",
+        "value": "arg2"
+      },
+      {
+        "type": "string",
+        "value": "arg3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 15,
+      "startCol": 0,
+      "endRow": 15,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 2: Multiple handlers for the same event",
+        "codePos": {
+          "startRow": 14,
+          "startCol": 0,
+          "endRow": 14,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Multiple handlers for same event"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "eventName": "test2",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 17,
+          "startCol": 2,
+          "endRow": 17,
+          "endCol": 37
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 2a - Handler 1:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 22,
+      "endCol": 4
+    },
+    "eventName": "test2",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 21,
+          "startCol": 2,
+          "endRow": 21,
+          "endCol": 37
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 2b - Handler 2:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 26
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test2"
+      },
+      {
+        "type": "string",
+        "value": "multiple"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 3: Event handler with calculations",
+        "codePos": {
+          "startRow": 26,
+          "startCol": 0,
+          "endRow": 26,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Event handler with calculations"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 4
+    },
+    "eventName": "test3",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 29,
+          "startCol": 2,
+          "endRow": 29,
+          "endCol": 16
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "2",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 30,
+          "startCol": 2,
+          "endRow": 30,
+          "endCol": 29
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 3 - Sum:"
+          },
+          {
+            "type": "lastValue"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 21
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test3"
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "number",
+        "value": 25
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 4: Event handler with conditional logic",
+        "codePos": {
+          "startRow": 35,
+          "startCol": 0,
+          "endRow": 35,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Event handler with conditionals"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 4
+    },
+    "eventName": "test4",
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 38,
+          "startCol": 2,
+          "endRow": 42,
+          "endCol": 6
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": ">",
+          "left": {
+            "type": "var",
+            "name": "1",
+            "path": [],
+            "codePos": {
+              "startRow": 38,
+              "startCol": 5,
+              "endRow": 38,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 10,
+            "codePos": {
+              "startRow": 38,
+              "startCol": 10,
+              "endRow": 38,
+              "endCol": 11
+            }
+          },
+          "codePos": {
+            "startRow": 38,
+            "startCol": 5,
+            "endRow": 38,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 39,
+              "startCol": 4,
+              "endRow": 39,
+              "endCol": 53
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Event Test 4 - Value is greater than 10:"
+              },
+              {
+                "type": "var",
+                "name": "1",
+                "path": []
+              }
+            ]
+          }
+        ],
+        "elseBranch": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 41,
+              "startCol": 4,
+              "endRow": 41,
+              "endCol": 48
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Event Test 4 - Value is 10 or less:"
+              },
+              {
+                "type": "var",
+                "name": "1",
+                "path": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 18
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test4"
+      },
+      {
+        "type": "number",
+        "value": 15
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 17
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test4"
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 46,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 5: Event handler with string operations",
+        "codePos": {
+          "startRow": 48,
+          "startCol": 0,
+          "endRow": 48,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Event handler with string operations"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 53,
+      "endCol": 4
+    },
+    "eventName": "test5",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 51,
+          "startCol": 2,
+          "endRow": 51,
+          "endCol": 28
+        },
+        "name": "string.concat",
+        "module": "string",
+        "args": [
+          {
+            "type": "string",
+            "value": "Hello, "
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 52,
+          "startCol": 2,
+          "endRow": 52,
+          "endCol": 34
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 5 - Greeting:"
+          },
+          {
+            "type": "lastValue"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 23
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test5"
+      },
+      {
+        "type": "string",
+        "value": "World"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 55,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 6: Event handler with object argument",
+        "codePos": {
+          "startRow": 57,
+          "startCol": 0,
+          "endRow": 57,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Event handler with object argument"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 59,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 4
+    },
+    "eventName": "test6",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 60,
+          "startCol": 2,
+          "endRow": 60,
+          "endCol": 42
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 6 - Received object:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 61,
+          "startCol": 2,
+          "endRow": 61,
+          "endCol": 52
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 6 - Object property name:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": [
+              {
+                "type": "property",
+                "name": "name"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 62,
+          "startCol": 2,
+          "endRow": 62,
+          "endCol": 50
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 6 - Object property age:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": [
+              {
+                "type": "property",
+                "name": "age"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 64,
+      "endCol": 30
+    },
+    "name": "obj",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "{name: \"Alice\", age: 30}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 65,
+      "startCol": 0,
+      "endRow": 65,
+      "endCol": 11
+    },
+    "targetName": "testObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 66,
+      "endCol": 24
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test6"
+      },
+      {
+        "type": "var",
+        "name": "testObj",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 70,
+      "startCol": 0,
+      "endRow": 70,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 7: Event handler with array argument",
+        "codePos": {
+          "startRow": 69,
+          "startCol": 0,
+          "endRow": 69,
+          "endCol": 42
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Event handler with array argument"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 4
+    },
+    "eventName": "test7",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 72,
+          "startCol": 2,
+          "endRow": 72,
+          "endCol": 41
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 7 - Received array:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 73,
+          "startCol": 2,
+          "endRow": 73,
+          "endCol": 46
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 7 - Array length:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": [
+              {
+                "type": "property",
+                "name": "length"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 74,
+          "startCol": 2,
+          "endRow": 74,
+          "endCol": 43
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 7 - First element:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": [
+              {
+                "type": "index",
+                "index": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 75,
+          "startCol": 2,
+          "endRow": 75,
+          "endCol": 44
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 7 - Second element:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": [
+              {
+                "type": "index",
+                "index": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 0,
+      "endRow": 77,
+      "endCol": 24
+    },
+    "targetName": "testArray",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 77,
+        "startCol": 13,
+        "endRow": 77,
+        "endCol": 24
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 10
+        },
+        {
+          "type": "number",
+          "value": 12
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 78,
+      "endCol": 26
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test7"
+      },
+      {
+        "type": "var",
+        "name": "testArray",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 29
+    },
+    "comments": [
+      {
+        "text": "Test 8: Trigger command tests",
+        "codePos": {
+          "startRow": 81,
+          "startCol": 0,
+          "endRow": 81,
+          "endCol": 30
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Trigger command"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 0,
+      "endRow": 86,
+      "endCol": 4
+    },
+    "comments": [
+      {
+        "text": "Handler defined BEFORE trigger command",
+        "codePos": {
+          "startRow": 83,
+          "startCol": 0,
+          "endRow": 83,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "eventName": "test10",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 85,
+          "startCol": 2,
+          "endRow": 85,
+          "endCol": 44
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 10 - Handler executed:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Trigger handler defined before (should work)",
+        "codePos": {
+          "startRow": 88,
+          "startCol": 0,
+          "endRow": 88,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test10"
+      },
+      {
+        "type": "string",
+        "value": "before"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 92,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 4
+    },
+    "comments": [
+      {
+        "text": "Handler defined AFTER trigger command (should work because handlers are collected first)",
+        "codePos": {
+          "startRow": 91,
+          "startCol": 0,
+          "endRow": 91,
+          "endCol": 89
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "eventName": "test9",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 93,
+          "startCol": 2,
+          "endRow": 93,
+          "endCol": 46
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 9 - Handler executed:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "2",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 97,
+      "startCol": 0,
+      "endRow": 97,
+      "endCol": 31
+    },
+    "comments": [
+      {
+        "text": "Trigger handler defined after (should work because handlers are collected first)",
+        "codePos": {
+          "startRow": 96,
+          "startCol": 0,
+          "endRow": 96,
+          "endCol": 81
+        },
+        "inline": false
+      }
+    ],
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test9"
+      },
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "world"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 101,
+      "startCol": 0,
+      "endRow": 101,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 10: Trigger before handler definition (events collected first)",
+        "codePos": {
+          "startRow": 100,
+          "startCol": 0,
+          "endRow": 100,
+          "endCol": 68
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Trigger before handler definition"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 33
+    },
+    "comments": [
+      {
+        "text": "Trigger appears BEFORE handler (should work because events are collected first)",
+        "codePos": {
+          "startRow": 102,
+          "startCol": 0,
+          "endRow": 102,
+          "endCol": 80
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test11"
+      },
+      {
+        "type": "string",
+        "value": "I'm triggered!"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 107,
+      "endCol": 4
+    },
+    "eventName": "test11",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 106,
+          "startCol": 2,
+          "endRow": 106,
+          "endCol": 41
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event Test 11 - I'm triggered!"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 108,
+      "endCol": 6
+    },
+    "trailingBlankLines": 2,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 112,
+      "startCol": 0,
+      "endRow": 112,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Trigger orphaned handlers (these don't have explicit endon)",
+        "codePos": {
+          "startRow": 111,
+          "startCol": 0,
+          "endRow": 111,
+          "endCol": 60
+        },
+        "inline": false
+      }
+    ],
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "orphan1"
+      },
+      {
+        "type": "string",
+        "value": "test1"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 25
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "orphan2"
+      },
+      {
+        "type": "string",
+        "value": "test2"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 25
+    },
+    "name": "trigger",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "orphan3"
+      },
+      {
+        "type": "string",
+        "value": "test3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 115,
+      "startCol": 0,
+      "endRow": 115,
+      "endCol": 6
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 32
+    },
+    "comments": [
+      {
+        "text": "Test 9: Orphaned on blocks (auto-closing)",
+        "codePos": {
+          "startRow": 117,
+          "startCol": 0,
+          "endRow": 117,
+          "endCol": 42
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Orphaned on blocks"
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 0
+    },
+    "eventName": "orphan1",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 120,
+          "startCol": 2,
+          "endRow": 120,
+          "endCol": 53
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan1 - Handler executed successfully"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 121,
+          "startCol": 2,
+          "endRow": 121,
+          "endCol": 36
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan1 - Received:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 123,
+      "startCol": 0,
+      "endRow": 126,
+      "endCol": 0
+    },
+    "eventName": "orphan2",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 124,
+          "startCol": 2,
+          "endRow": 124,
+          "endCol": 53
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan2 - Handler executed successfully"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 125,
+          "startCol": 2,
+          "endRow": 125,
+          "endCol": 36
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan2 - Received:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "onBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 127,
+      "startCol": 0,
+      "endRow": 127,
+      "endCol": 1
+    },
+    "eventName": "orphan3",
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 128,
+          "startCol": 2,
+          "endRow": 128,
+          "endCol": 53
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan3 - Handler executed successfully"
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 129,
+          "startCol": 2,
+          "endRow": 129,
+          "endCol": 36
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "Event orphan3 - Received:"
+          },
+          {
+            "type": "var",
+            "name": "1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 132,
+          "startCol": 0,
+          "endRow": 132,
+          "endCol": 41
+        },
+        "name": "log",
+        "module": null,
+        "args": [
+          {
+            "type": "string",
+            "value": "=== Event System Tests Complete ==="
+          }
+        ]
+      }
+    ]
+  }
+]

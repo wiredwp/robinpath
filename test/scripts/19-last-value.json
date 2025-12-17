@@ -1,0 +1,5563 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Last Value ($) Tests\nTests for the last value functionality where literals and commands update $",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 76
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 30
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Last Value Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 6,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 1: String literal sets last value",
+        "codePos": {
+          "startRow": 5,
+          "startCol": 0,
+          "endRow": 5,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: String literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 7,
+      "startCol": 0,
+      "endRow": 7,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "String literal should set $ to the string value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 2: Number literal sets last value",
+        "codePos": {
+          "startRow": 10,
+          "startCol": 0,
+          "endRow": 10,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Number literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 12,
+      "endCol": 0
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 13,
+      "startCol": 0,
+      "endRow": 13,
+      "endCol": 70
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Number literal should set $ to the number value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 16,
+      "startCol": 0,
+      "endRow": 16,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 3: Boolean literal sets last value",
+        "codePos": {
+          "startRow": 15,
+          "startCol": 0,
+          "endRow": 15,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Boolean literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 17,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 3
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": true
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 18,
+      "startCol": 0,
+      "endRow": 18,
+      "endCol": 59
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": true
+      },
+      {
+        "type": "string",
+        "value": "Boolean true should set $ to true"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 4
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": false
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 62
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": false
+      },
+      {
+        "type": "string",
+        "value": "Boolean false should set $ to false"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 24,
+      "startCol": 0,
+      "endRow": 24,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 4: Null literal sets last value",
+        "codePos": {
+          "startRow": 23,
+          "startCol": 0,
+          "endRow": 23,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Null literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 0,
+      "endRow": 25,
+      "endCol": 3
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "literal",
+        "value": null
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 59
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "Null literal should set $ to null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 43
+    },
+    "comments": [
+      {
+        "text": "Test 5: Array literal sets last value",
+        "codePos": {
+          "startRow": 28,
+          "startCol": 0,
+          "endRow": 28,
+          "endCol": 38
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: Array literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 30,
+      "startCol": 0,
+      "endRow": 30,
+      "endCol": 8
+    },
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "1,2,3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 0,
+      "endRow": 31,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "array",
+        "code": "1,2,3"
+      },
+      {
+        "type": "string",
+        "value": "Array literal should set $ to the array value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 6: Object literal sets last value",
+        "codePos": {
+          "startRow": 33,
+          "startCol": 0,
+          "endRow": 33,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Object literal sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 15
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "hello:'world'"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 85
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "object",
+        "code": "hello:'world'"
+      },
+      {
+        "type": "string",
+        "value": "Object literal should set $ to the object value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 39,
+      "startCol": 0,
+      "endRow": 39,
+      "endCol": 43
+    },
+    "comments": [
+      {
+        "text": "Test 7: Multiple literals in sequence",
+        "codePos": {
+          "startRow": 38,
+          "startCol": 0,
+          "endRow": 38,
+          "endCol": 38
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Multiple literals in sequence"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "first"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 55
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "first"
+      },
+      {
+        "type": "string",
+        "value": "First literal should set $"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 43,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 42
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 54
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Second literal should update $"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 46,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 8
+    },
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "1,2,3"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 47,
+      "startCol": 0,
+      "endRow": 47,
+      "endCol": 60
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "array",
+        "code": "1,2,3"
+      },
+      {
+        "type": "string",
+        "value": "Third literal should update $"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 59
+    },
+    "comments": [
+      {
+        "text": "Test 8: say command returns value and sets last value",
+        "codePos": {
+          "startRow": 49,
+          "startCol": 0,
+          "endRow": 49,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: say command returns value and sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 11
+    },
+    "name": "say",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 52,
+      "startCol": 0,
+      "endRow": 52,
+      "endCol": 80
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "say command should set $ to the concatenated output"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 54,
+      "startCol": 0,
+      "endRow": 54,
+      "endCol": 21
+    },
+    "name": "say",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test"
+      },
+      {
+        "type": "string",
+        "value": "multiple"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 55,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 94
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "testmultiple"
+      },
+      {
+        "type": "string",
+        "value": "say with multiple args should set $ to concatenated string"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 59
+    },
+    "comments": [
+      {
+        "text": "Test 9: Commands that return values update last value",
+        "codePos": {
+          "startRow": 57,
+          "startCol": 0,
+          "endRow": 57,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Commands that return values update last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 59,
+      "startCol": 0,
+      "endRow": 59,
+      "endCol": 14
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "number",
+        "value": 20
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 60,
+      "startCol": 0,
+      "endRow": 60,
+      "endCol": 59
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "math.add should set $ to the result"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 29
+    },
+    "name": "string.concat",
+    "module": "string",
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "world"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 74
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "helloworld"
+      },
+      {
+        "type": "string",
+        "value": "string.concat should set $ to the result"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 66,
+      "startCol": 0,
+      "endRow": 66,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 10: Using last value in expressions",
+        "codePos": {
+          "startRow": 65,
+          "startCol": 0,
+          "endRow": 65,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Using last value in expressions"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 17
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 69,
+      "endCol": 60
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Using $ in math.multiply should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 0,
+      "endRow": 71,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "hello"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 72,
+      "startCol": 0,
+      "endRow": 72,
+      "endCol": 24
+    },
+    "name": "string.concat",
+    "module": "string",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": " world"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 73,
+      "startCol": 0,
+      "endRow": 73,
+      "endCol": 71
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "hello world"
+      },
+      {
+        "type": "string",
+        "value": "Using $ in string.concat should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 76,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 11: Last value with into assignment",
+        "codePos": {
+          "startRow": 75,
+          "startCol": 0,
+          "endRow": 75,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 11: Last value with into assignment"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 0,
+      "endRow": 77,
+      "endCol": 25
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ],
+    "into": {
+      "targetName": "result",
+      "targetPath": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 78,
+      "endCol": 73
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "into assignment should work with last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 0,
+      "endRow": 81,
+      "endCol": 43
+    },
+    "comments": [
+      {
+        "text": "Test 12: Last value in subexpressions",
+        "codePos": {
+          "startRow": 80,
+          "startCol": 0,
+          "endRow": 80,
+          "endCol": 38
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 12: Last value in subexpressions"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 20
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 83,
+              "startCol": 2,
+              "endRow": 83,
+              "endCol": 19
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "lastValue"
+              },
+              {
+                "type": "number",
+                "value": 3
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 83,
+          "startCol": 0,
+          "endRow": 83,
+          "endCol": 20
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 0,
+      "endRow": 84,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Last value in subexpression should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 13: Last value in template strings",
+        "codePos": {
+          "startRow": 86,
+          "startCol": 0,
+          "endRow": 86,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 13: Last value in template strings"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 88,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "world"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 22
+    },
+    "targetName": "template",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000Hello, $!",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 90,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 86
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "template",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Hello, world!"
+      },
+      {
+        "type": "string",
+        "value": "Last value in template string should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 93,
+      "startCol": 0,
+      "endRow": 93,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 14: Last value with function calls",
+        "codePos": {
+          "startRow": 92,
+          "startCol": 0,
+          "endRow": 92,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 14: Last value with function calls"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "get_value",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 95,
+          "startCol": 2,
+          "endRow": 95,
+          "endCol": 11
+        },
+        "value": {
+          "type": "number",
+          "value": 42
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 3
+    },
+    "trailingBlankLines": 2,
+    "name": "get_value",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 99,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 52
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Function return should set $"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 54
+    },
+    "comments": [
+      {
+        "text": "Test 15: Last value with object/array operations",
+        "codePos": {
+          "startRow": 102,
+          "startCol": 0,
+          "endRow": 102,
+          "endCol": 49
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 15: Last value with object/array operations"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 104,
+      "startCol": 0,
+      "endRow": 104,
+      "endCol": 23
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "name:\"Alice\",age:30"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 105,
+      "endCol": 12
+    },
+    "name": "get",
+    "module": null,
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "name"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Alice"
+      },
+      {
+        "type": "string",
+        "value": "get should set $ to the property value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 0,
+      "endRow": 108,
+      "endCol": 14
+    },
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "1,2,3,4,5"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 109,
+      "startCol": 0,
+      "endRow": 109,
+      "endCol": 14
+    },
+    "name": "array.length",
+    "module": "array",
+    "args": [
+      {
+        "type": "lastValue"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 110,
+      "startCol": 0,
+      "endRow": 110,
+      "endCol": 62
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "array.length should set $ to the length"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 31
+    },
+    "comments": [
+      {
+        "text": "Test 16: Last value chain",
+        "codePos": {
+          "startRow": 112,
+          "startCol": 0,
+          "endRow": 112,
+          "endCol": 26
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 16: Last value chain"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 115,
+      "startCol": 0,
+      "endRow": 115,
+      "endCol": 12
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 116,
+      "startCol": 0,
+      "endRow": 116,
+      "endCol": 17
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 17
+    },
+    "name": "math.subtract",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 92
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 27
+      },
+      {
+        "type": "string",
+        "value": "Last value chain should work (10 + 5 = 15, 15 * 2 = 30, 30 - 3 = 27)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 121,
+      "startCol": 0,
+      "endRow": 121,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 17: Last value with conditional",
+        "codePos": {
+          "startRow": 120,
+          "startCol": 0,
+          "endRow": 120,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 17: Last value with conditional"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 123,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 4
+    },
+    "condition": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "lastValue",
+        "codePos": {
+          "startRow": 123,
+          "startCol": 3,
+          "endRow": 123,
+          "endCol": 3
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 123,
+          "startCol": 7,
+          "endRow": 123,
+          "endCol": 7
+        }
+      },
+      "codePos": {
+        "startRow": 123,
+        "startCol": 3,
+        "endRow": 123,
+        "endCol": 5
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 124,
+          "startCol": 2,
+          "endRow": 124,
+          "endCol": 19
+        },
+        "name": "math.multiply",
+        "module": "math",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 2
+          }
+        ]
+      }
+    ],
+    "hasThen": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 0,
+      "endRow": 126,
+      "endCol": 61
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Last value in conditional should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 0,
+      "endRow": 129,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test 18: Last value with loops",
+        "codePos": {
+          "startRow": 128,
+          "startCol": 0,
+          "endRow": 128,
+          "endCol": 31
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 18: Last value with loops"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 0
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 133,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 131,
+            "startCol": 16,
+            "endRow": 131,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 5,
+          "codePos": {
+            "startRow": 131,
+            "startCol": 19,
+            "endRow": 131,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 131,
+        "startCol": 10,
+        "endRow": 131,
+        "endCol": 20
+      }
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 132,
+          "startCol": 2,
+          "endRow": 132,
+          "endCol": 15
+        },
+        "name": "math.add",
+        "module": "math",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 134,
+      "startCol": 0,
+      "endRow": 134,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Last value in loop should accumulate (0+1+2+3+4 = 10)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 137,
+      "endCol": 40
+    },
+    "comments": [
+      {
+        "text": "Test 19: Last value with do blocks",
+        "codePos": {
+          "startRow": 136,
+          "startCol": 0,
+          "endRow": 136,
+          "endCol": 35
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 19: Last value with do blocks"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 138,
+      "startCol": 0,
+      "endRow": 138,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 139,
+      "startCol": 0,
+      "endRow": 141,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 140,
+          "startCol": 2,
+          "endRow": 140,
+          "endCol": 19
+        },
+        "name": "math.multiply",
+        "module": "math",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 142,
+      "startCol": 0,
+      "endRow": 142,
+      "endCol": 58
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Last value in do block should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 145,
+      "startCol": 0,
+      "endRow": 145,
+      "endCol": 55
+    },
+    "comments": [
+      {
+        "text": "Test 20: Last value preservation with assignments",
+        "codePos": {
+          "startRow": 144,
+          "startCol": 0,
+          "endRow": 144,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 20: Last value preservation with assignments"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 146,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 9
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "original"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 147,
+      "startCol": 0,
+      "endRow": 147,
+      "endCol": 14
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": "assigned",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 148,
+      "startCol": 0,
+      "endRow": 148,
+      "endCol": 82
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "original"
+      },
+      {
+        "type": "string",
+        "value": "Assignment should not change $ (into preserves it)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 151,
+      "startCol": 0,
+      "endRow": 151,
+      "endCol": 31
+    },
+    "comments": [
+      {
+        "text": "Test 21: Empty last value",
+        "codePos": {
+          "startRow": 150,
+          "startCol": 0,
+          "endRow": 150,
+          "endCol": 26
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 21: Empty last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 152,
+      "startCol": 0,
+      "endRow": 153,
+      "endCol": 3
+    },
+    "trailingBlankLines": 2,
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 153,
+      "startCol": 0,
+      "endRow": 153,
+      "endCol": 54
+    },
+    "trailingBlankLines": 2,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "clear should reset $ to null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 157,
+      "startCol": 0,
+      "endRow": 157,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 22: Last value with nested operations",
+        "codePos": {
+          "startRow": 156,
+          "startCol": 0,
+          "endRow": 156,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 22: Last value with nested operations"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 0,
+      "endRow": 158,
+      "endCol": 0
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 159,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 9
+    },
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 159,
+              "startCol": 13,
+              "endRow": 159,
+              "endCol": 30
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "lastValue"
+              },
+              {
+                "type": "number",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 159,
+          "startCol": 11,
+          "endRow": 159,
+          "endCol": 31
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 160,
+      "startCol": 0,
+      "endRow": 160,
+      "endCol": 83
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions with $ should work (5 + (5 * 2) = 15)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 163,
+      "startCol": 0,
+      "endRow": 163,
+      "endCol": 42
+    },
+    "comments": [
+      {
+        "text": "Test 23: Last value with say and log",
+        "codePos": {
+          "startRow": 162,
+          "startCol": 0,
+          "endRow": 162,
+          "endCol": 37
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 23: Last value with say and log"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 164,
+      "startCol": 0,
+      "endRow": 164,
+      "endCol": 10
+    },
+    "name": "say",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "test"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 165,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Should log \"test\"",
+        "codePos": {
+          "startRow": 165,
+          "startCol": 7,
+          "endRow": 165,
+          "endCol": 25
+        },
+        "inline": true
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "lastValue"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 166,
+      "startCol": 0,
+      "endRow": 166,
+      "endCol": 73
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "test"
+      },
+      {
+        "type": "string",
+        "value": "say should set $ and log should not change it"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 169,
+      "startCol": 0,
+      "endRow": 169,
+      "endCol": 57
+    },
+    "comments": [
+      {
+        "text": "Test 24: Last value with template string evaluation",
+        "codePos": {
+          "startRow": 168,
+          "startCol": 0,
+          "endRow": 168,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 24: Last value with template string evaluation"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 170,
+      "startCol": 0,
+      "endRow": 170,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Alice"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 171,
+      "startCol": 0,
+      "endRow": 171,
+      "endCol": 22
+    },
+    "targetName": "greeting",
+    "targetPath": [],
+    "literalValue": "\u0000TEMPLATE\u0000Hello, $!",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 0,
+      "endRow": 172,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "greeting",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "Hello, Alice!"
+      },
+      {
+        "type": "string",
+        "value": "Template string with $ should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 175,
+      "startCol": 0,
+      "endRow": 175,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 25: Last value with complex object",
+        "codePos": {
+          "startRow": 174,
+          "startCol": 0,
+          "endRow": 174,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 25: Last value with complex object"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 176,
+      "startCol": 0,
+      "endRow": 182,
+      "endCol": 0
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nuser:{\nname:\"Bob\",\nage:25,\ntags:[\"developer\",\"coder\"]\n}\n"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 183,
+      "startCol": 0,
+      "endRow": 183,
+      "endCol": 12
+    },
+    "name": "get",
+    "module": null,
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "user"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 184,
+      "startCol": 0,
+      "endRow": 184,
+      "endCol": 12
+    },
+    "name": "get",
+    "module": null,
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "name"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 66
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "Bob"
+      },
+      {
+        "type": "string",
+        "value": "Nested object access with $ should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 188,
+      "startCol": 0,
+      "endRow": 188,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 26: Basic subexpression sets last value",
+        "codePos": {
+          "startRow": 187,
+          "startCol": 0,
+          "endRow": 187,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 26: Basic subexpression sets last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 189,
+      "startCol": 0,
+      "endRow": 189,
+      "endCol": 15
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 189,
+              "startCol": 2,
+              "endRow": 189,
+              "endCol": 14
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "number",
+                "value": 5
+              },
+              {
+                "type": "number",
+                "value": 3
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 189,
+          "startCol": 0,
+          "endRow": 189,
+          "endCol": 15
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 190,
+      "startCol": 0,
+      "endRow": 190,
+      "endCol": 63
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 8
+      },
+      {
+        "type": "string",
+        "value": "Subexpression should set $ to its result"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 193,
+      "startCol": 0,
+      "endRow": 193,
+      "endCol": 51
+    },
+    "comments": [
+      {
+        "text": "Test 27: Subexpression with string operations",
+        "codePos": {
+          "startRow": 192,
+          "startCol": 0,
+          "endRow": 192,
+          "endCol": 46
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 27: Subexpression with string operations"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 194,
+      "startCol": 0,
+      "endRow": 194,
+      "endCol": 32
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 194,
+              "startCol": 2,
+              "endRow": 194,
+              "endCol": 31
+            },
+            "name": "string.concat",
+            "module": "string",
+            "args": [
+              {
+                "type": "string",
+                "value": "hello"
+              },
+              {
+                "type": "string",
+                "value": "world"
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 194,
+          "startCol": 0,
+          "endRow": 194,
+          "endCol": 32
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 195,
+      "startCol": 0,
+      "endRow": 195,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "helloworld"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with string.concat should set $"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 198,
+      "startCol": 0,
+      "endRow": 198,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 28: Subexpression with multiple statements",
+        "codePos": {
+          "startRow": 197,
+          "startCol": 0,
+          "endRow": 197,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 28: Subexpression with multiple statements"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 199,
+      "startCol": 0,
+      "endRow": 202,
+      "endCol": 1
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 200,
+              "startCol": 2,
+              "endRow": 200,
+              "endCol": 15
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "number",
+                "value": 10
+              },
+              {
+                "type": "number",
+                "value": 5
+              }
+            ]
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 201,
+              "startCol": 2,
+              "endRow": 201,
+              "endCol": 19
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "lastValue"
+              },
+              {
+                "type": "number",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 199,
+          "startCol": 0,
+          "endRow": 202,
+          "endCol": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 203,
+      "startCol": 0,
+      "endRow": 203,
+      "endCol": 109
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with multiple statements should set $ to last result (10+5=15, 15*2=30)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 206,
+      "startCol": 0,
+      "endRow": 206,
+      "endCol": 46
+    },
+    "comments": [
+      {
+        "text": "Test 29: Nested subexpression (2 levels)",
+        "codePos": {
+          "startRow": 205,
+          "startCol": 0,
+          "endRow": 205,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 29: Nested subexpression (2 levels)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 207,
+      "startCol": 0,
+      "endRow": 207,
+      "endCol": 34
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 207,
+              "startCol": 2,
+              "endRow": 207,
+              "endCol": 33
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 207,
+                      "startCol": 13,
+                      "endRow": 207,
+                      "endCol": 30
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 3
+                      },
+                      {
+                        "type": "number",
+                        "value": 4
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 207,
+                  "startCol": 11,
+                  "endRow": 207,
+                  "endCol": 32
+                }
+              },
+              {
+                "type": "number",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 207,
+          "startCol": 0,
+          "endRow": 207,
+          "endCol": 34
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 208,
+      "startCol": 0,
+      "endRow": 208,
+      "endCol": 74
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 17
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression should work (3*4=12, 12+5=17)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 211,
+      "startCol": 0,
+      "endRow": 211,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 30: Deeply nested subexpression (3 levels)",
+        "codePos": {
+          "startRow": 210,
+          "startCol": 0,
+          "endRow": 210,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 30: Deeply nested subexpression (3 levels)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 212,
+      "startCol": 0,
+      "endRow": 212,
+      "endCol": 49
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 212,
+              "startCol": 2,
+              "endRow": 212,
+              "endCol": 48
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 212,
+                      "startCol": 13,
+                      "endRow": 212,
+                      "endCol": 44
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "subexpression",
+                        "body": [
+                          {
+                            "type": "command",
+                            "lastValue": null,
+                            "codePos": {
+                              "startRow": 212,
+                              "startCol": 29,
+                              "endRow": 212,
+                              "endCol": 41
+                            },
+                            "name": "math.add",
+                            "module": "math",
+                            "args": [
+                              {
+                                "type": "number",
+                                "value": 2
+                              },
+                              {
+                                "type": "number",
+                                "value": 3
+                              }
+                            ]
+                          }
+                        ],
+                        "codePos": {
+                          "startRow": 212,
+                          "startCol": 27,
+                          "endRow": 212,
+                          "endCol": 43
+                        }
+                      },
+                      {
+                        "type": "number",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 212,
+                  "startCol": 11,
+                  "endRow": 212,
+                  "endCol": 47
+                }
+              },
+              {
+                "type": "number",
+                "value": 10
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 212,
+          "startCol": 0,
+          "endRow": 212,
+          "endCol": 49
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 213,
+      "startCol": 0,
+      "endRow": 213,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Deeply nested subexpression should work (2+3=5, 5*2=10, 10+10=20)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 216,
+      "startCol": 0,
+      "endRow": 216,
+      "endCol": 68
+    },
+    "comments": [
+      {
+        "text": "Test 31: Nested subexpression with last value from outer scope",
+        "codePos": {
+          "startRow": 215,
+          "startCol": 0,
+          "endRow": 215,
+          "endCol": 63
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 31: Nested subexpression with last value from outer scope"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 217,
+      "startCol": 0,
+      "endRow": 217,
+      "endCol": 1
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 218,
+      "startCol": 0,
+      "endRow": 218,
+      "endCol": 34
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 218,
+              "startCol": 2,
+              "endRow": 218,
+              "endCol": 33
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 218,
+                      "startCol": 18,
+                      "endRow": 218,
+                      "endCol": 30
+                    },
+                    "name": "math.add",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "lastValue"
+                      },
+                      {
+                        "type": "number",
+                        "value": 5
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 218,
+                  "startCol": 16,
+                  "endRow": 218,
+                  "endCol": 32
+                }
+              },
+              {
+                "type": "number",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 218,
+          "startCol": 0,
+          "endRow": 218,
+          "endCol": 34
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 219,
+      "startCol": 0,
+      "endRow": 219,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression using outer $ should work (10+5=15, 15*2=30)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 222,
+      "startCol": 0,
+      "endRow": 222,
+      "endCol": 34
+    },
+    "comments": [
+      {
+        "text": "Test 32: Subexpression chain",
+        "codePos": {
+          "startRow": 221,
+          "startCol": 0,
+          "endRow": 221,
+          "endCol": 29
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 32: Subexpression chain"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 223,
+      "startCol": 0,
+      "endRow": 223,
+      "endCol": 15
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 223,
+              "startCol": 2,
+              "endRow": 223,
+              "endCol": 14
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "number",
+                "value": 5
+              },
+              {
+                "type": "number",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 223,
+          "startCol": 0,
+          "endRow": 223,
+          "endCol": 15
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 224,
+      "startCol": 0,
+      "endRow": 224,
+      "endCol": 20
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 224,
+              "startCol": 2,
+              "endRow": 224,
+              "endCol": 19
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "lastValue"
+              },
+              {
+                "type": "number",
+                "value": 3
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 224,
+          "startCol": 0,
+          "endRow": 224,
+          "endCol": 20
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 225,
+      "startCol": 0,
+      "endRow": 225,
+      "endCol": 73
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Subexpression chain should work (5+5=10, 10*3=30)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 228,
+      "startCol": 0,
+      "endRow": 228,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 33: Subexpression returning string",
+        "codePos": {
+          "startRow": 227,
+          "startCol": 0,
+          "endRow": 227,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 33: Subexpression returning string"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 229,
+      "startCol": 0,
+      "endRow": 229,
+      "endCol": 31
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 229,
+              "startCol": 2,
+              "endRow": 229,
+              "endCol": 30
+            },
+            "name": "string.concat",
+            "module": "string",
+            "args": [
+              {
+                "type": "string",
+                "value": "test"
+              },
+              {
+                "type": "string",
+                "value": "value"
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 229,
+          "startCol": 0,
+          "endRow": 229,
+          "endCol": 31
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 230,
+      "startCol": 0,
+      "endRow": 230,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "testvalue"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression should return and set string value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 233,
+      "startCol": 0,
+      "endRow": 233,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 34: Subexpression returning array",
+        "codePos": {
+          "startRow": 232,
+          "startCol": 0,
+          "endRow": 232,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 34: Subexpression returning array"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 234,
+      "startCol": 0,
+      "endRow": 234,
+      "endCol": 28
+    },
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 234,
+        "startCol": 7,
+        "endRow": 234,
+        "endCol": 28
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 234,
+                "startCol": 9,
+                "endRow": 234,
+                "endCol": 27
+              },
+              "name": "array.create",
+              "module": "array",
+              "args": [
+                {
+                  "type": "number",
+                  "value": 1
+                },
+                {
+                  "type": "number",
+                  "value": 2
+                },
+                {
+                  "type": "number",
+                  "value": 3
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 234,
+            "startCol": 7,
+            "endRow": 234,
+            "endCol": 28
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 235,
+      "startCol": 0,
+      "endRow": 235,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": []
+      },
+      {
+        "type": "array",
+        "code": "1,2,3"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression should return and set array value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 238,
+      "startCol": 0,
+      "endRow": 238,
+      "endCol": 45
+    },
+    "comments": [
+      {
+        "text": "Test 35: Subexpression returning object",
+        "codePos": {
+          "startRow": 237,
+          "startCol": 0,
+          "endRow": 237,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 35: Subexpression returning object"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 239,
+      "startCol": 0,
+      "endRow": 241,
+      "endCol": 1
+    },
+    "targetName": "obj",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 239,
+        "startCol": 7,
+        "endRow": 241,
+        "endCol": 1
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 240,
+                "startCol": 2,
+                "endRow": 240,
+                "endCol": 26
+              },
+              "name": "_object",
+              "module": null,
+              "args": [
+                {
+                  "type": "object",
+                  "code": "name:\"test\",value:42"
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 239,
+            "startCol": 7,
+            "endRow": 241,
+            "endCol": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 242,
+      "startCol": 0,
+      "endRow": 242,
+      "endCol": 98
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj",
+        "path": []
+      },
+      {
+        "type": "object",
+        "code": "name:\"test\",value:42"
+      },
+      {
+        "type": "string",
+        "value": "Subexpression should return and set object value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 245,
+      "startCol": 0,
+      "endRow": 245,
+      "endCol": 61
+    },
+    "comments": [
+      {
+        "text": "Test 36: Nested subexpression with different operations",
+        "codePos": {
+          "startRow": 244,
+          "startCol": 0,
+          "endRow": 244,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 36: Nested subexpression with different operations"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 246,
+      "startCol": 0,
+      "endRow": 246,
+      "endCol": 41
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 246,
+              "startCol": 2,
+              "endRow": 246,
+              "endCol": 40
+            },
+            "name": "string.concat",
+            "module": "string",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 246,
+                      "startCol": 18,
+                      "endRow": 246,
+                      "endCol": 30
+                    },
+                    "name": "math.add",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 5
+                      },
+                      {
+                        "type": "number",
+                        "value": 3
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 246,
+                  "startCol": 16,
+                  "endRow": 246,
+                  "endCol": 39
+                }
+              },
+              {
+                "type": "string",
+                "value": "result"
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 246,
+          "startCol": 0,
+          "endRow": 246,
+          "endCol": 41
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 247,
+      "startCol": 0,
+      "endRow": 247,
+      "endCol": 84
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "string",
+        "value": "8result"
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression with math and string should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 250,
+      "startCol": 0,
+      "endRow": 250,
+      "endCol": 59
+    },
+    "comments": [
+      {
+        "text": "Test 37: Multiple nested subexpressions at same level",
+        "codePos": {
+          "startRow": 249,
+          "startCol": 0,
+          "endRow": 249,
+          "endCol": 54
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 37: Multiple nested subexpressions at same level"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 251,
+      "startCol": 0,
+      "endRow": 251,
+      "endCol": 48
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 251,
+              "startCol": 2,
+              "endRow": 251,
+              "endCol": 47
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 251,
+                      "startCol": 13,
+                      "endRow": 251,
+                      "endCol": 30
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 2
+                      },
+                      {
+                        "type": "number",
+                        "value": 3
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 251,
+                  "startCol": 11,
+                  "endRow": 251,
+                  "endCol": 33
+                }
+              },
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 251,
+                      "startCol": 34,
+                      "endRow": 251,
+                      "endCol": 46
+                    },
+                    "name": "math.add",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 4
+                      },
+                      {
+                        "type": "number",
+                        "value": 5
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 251,
+                  "startCol": 32,
+                  "endRow": 251,
+                  "endCol": 47
+                }
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 251,
+          "startCol": 0,
+          "endRow": 251,
+          "endCol": 48
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 252,
+      "startCol": 0,
+      "endRow": 252,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "Multiple nested subexpressions should work (2*3=6, 4+5=9, 6+9=15)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 255,
+      "startCol": 0,
+      "endRow": 255,
+      "endCol": 52
+    },
+    "comments": [
+      {
+        "text": "Test 38: Subexpression with conditional inside",
+        "codePos": {
+          "startRow": 254,
+          "startCol": 0,
+          "endRow": 254,
+          "endCol": 47
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 38: Subexpression with conditional inside"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 256,
+      "startCol": 0,
+      "endRow": 260,
+      "endCol": 6
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "ifBlock",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 256,
+              "startCol": 2,
+              "endRow": 260,
+              "endCol": 4
+            },
+            "condition": {
+              "type": "literal",
+              "value": true,
+              "codePos": {
+                "startRow": 256,
+                "startCol": 5,
+                "endRow": 256,
+                "endCol": 8
+              }
+            },
+            "thenBranch": [
+              {
+                "type": "command",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 257,
+                  "startCol": 2,
+                  "endRow": 257,
+                  "endCol": 16
+                },
+                "name": "math.add",
+                "module": "math",
+                "args": [
+                  {
+                    "type": "number",
+                    "value": 10
+                  },
+                  {
+                    "type": "number",
+                    "value": 20
+                  }
+                ]
+              }
+            ],
+            "elseBranch": [
+              {
+                "type": "command",
+                "lastValue": null,
+                "codePos": {
+                  "startRow": 259,
+                  "startCol": 2,
+                  "endRow": 259,
+                  "endCol": 14
+                },
+                "name": "math.add",
+                "module": "math",
+                "args": [
+                  {
+                    "type": "number",
+                    "value": 5
+                  },
+                  {
+                    "type": "number",
+                    "value": 5
+                  }
+                ]
+              }
+            ],
+            "hasThen": true
+          }
+        ],
+        "codePos": {
+          "startRow": 256,
+          "startCol": 0,
+          "endRow": 260,
+          "endCol": 6
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 261,
+      "startCol": 0,
+      "endRow": 261,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with conditional should set $ to result"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 264,
+      "startCol": 0,
+      "endRow": 264,
+      "endCol": 63
+    },
+    "comments": [
+      {
+        "text": "Test 39: Nested subexpression preserving outer last value",
+        "codePos": {
+          "startRow": 263,
+          "startCol": 0,
+          "endRow": 263,
+          "endCol": 58
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 39: Nested subexpression preserving outer last value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 265,
+      "startCol": 0,
+      "endRow": 265,
+      "endCol": 6
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "outer"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 266,
+      "startCol": 0,
+      "endRow": 266,
+      "endCol": 15
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 266,
+              "startCol": 2,
+              "endRow": 266,
+              "endCol": 14
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "number",
+                "value": 5
+              },
+              {
+                "type": "number",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 266,
+          "startCol": 0,
+          "endRow": 266,
+          "endCol": 15
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 267,
+      "startCol": 0,
+      "endRow": 267,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Subexpression should update $ even after outer value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 270,
+      "startCol": 0,
+      "endRow": 270,
+      "endCol": 53
+    },
+    "comments": [
+      {
+        "text": "Test 40: Deeply nested subexpression (4 levels)",
+        "codePos": {
+          "startRow": 269,
+          "startCol": 0,
+          "endRow": 269,
+          "endCol": 48
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 40: Deeply nested subexpression (4 levels)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 271,
+      "startCol": 0,
+      "endRow": 271,
+      "endCol": 67
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 271,
+              "startCol": 2,
+              "endRow": 271,
+              "endCol": 66
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 271,
+                      "startCol": 13,
+                      "endRow": 271,
+                      "endCol": 63
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "subexpression",
+                        "body": [
+                          {
+                            "type": "command",
+                            "lastValue": null,
+                            "codePos": {
+                              "startRow": 271,
+                              "startCol": 29,
+                              "endRow": 271,
+                              "endCol": 60
+                            },
+                            "name": "math.add",
+                            "module": "math",
+                            "args": [
+                              {
+                                "type": "subexpression",
+                                "body": [
+                                  {
+                                    "type": "command",
+                                    "lastValue": null,
+                                    "codePos": {
+                                      "startRow": 271,
+                                      "startCol": 40,
+                                      "endRow": 271,
+                                      "endCol": 57
+                                    },
+                                    "name": "math.multiply",
+                                    "module": "math",
+                                    "args": [
+                                      {
+                                        "type": "number",
+                                        "value": 2
+                                      },
+                                      {
+                                        "type": "number",
+                                        "value": 2
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "codePos": {
+                                  "startRow": 271,
+                                  "startCol": 38,
+                                  "endRow": 271,
+                                  "endCol": 59
+                                }
+                              },
+                              {
+                                "type": "number",
+                                "value": 1
+                              }
+                            ]
+                          }
+                        ],
+                        "codePos": {
+                          "startRow": 271,
+                          "startCol": 27,
+                          "endRow": 271,
+                          "endCol": 62
+                        }
+                      },
+                      {
+                        "type": "number",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 271,
+                  "startCol": 11,
+                  "endRow": 271,
+                  "endCol": 65
+                }
+              },
+              {
+                "type": "number",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 271,
+          "startCol": 0,
+          "endRow": 271,
+          "endCol": 67
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 272,
+      "startCol": 0,
+      "endRow": 272,
+      "endCol": 96
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "4-level nested subexpression should work (2*2=4, 4+1=5, 5*2=10, 10+5=15)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 275,
+      "startCol": 0,
+      "endRow": 275,
+      "endCol": 47
+    },
+    "comments": [
+      {
+        "text": "Test 41: Subexpression with function call",
+        "codePos": {
+          "startRow": 274,
+          "startCol": 0,
+          "endRow": 274,
+          "endCol": 42
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 41: Subexpression with function call"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 276,
+      "startCol": 0,
+      "endRow": 278,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "get_number",
+    "paramNames": [],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 277,
+          "startCol": 2,
+          "endRow": 277,
+          "endCol": 11
+        },
+        "value": {
+          "type": "number",
+          "value": 42
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 280,
+      "startCol": 0,
+      "endRow": 280,
+      "endCol": 13
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 280,
+              "startCol": 2,
+              "endRow": 280,
+              "endCol": 12
+            },
+            "name": "get_number",
+            "module": null,
+            "args": []
+          }
+        ],
+        "codePos": {
+          "startRow": 280,
+          "startCol": 0,
+          "endRow": 280,
+          "endCol": 13
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 281,
+      "startCol": 0,
+      "endRow": 281,
+      "endCol": 85
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with function call should set $ to return value"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 284,
+      "startCol": 0,
+      "endRow": 284,
+      "endCol": 55
+    },
+    "comments": [
+      {
+        "text": "Test 42: Nested subexpression with function calls",
+        "codePos": {
+          "startRow": 283,
+          "startCol": 0,
+          "endRow": 283,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 42: Nested subexpression with function calls"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 285,
+      "startCol": 0,
+      "endRow": 287,
+      "endCol": 5
+    },
+    "trailingBlankLines": 1,
+    "name": "double",
+    "paramNames": [
+      "x"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 286,
+          "startCol": 2,
+          "endRow": 286,
+          "endCol": 27
+        },
+        "value": {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 286,
+                "startCol": 9,
+                "endRow": 286,
+                "endCol": 27
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "x",
+                  "path": []
+                },
+                {
+                  "type": "number",
+                  "value": 2
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 286,
+            "startCol": 9,
+            "endRow": 286,
+            "endCol": 27
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 289,
+      "startCol": 0,
+      "endRow": 289,
+      "endCol": 35
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 289,
+              "startCol": 2,
+              "endRow": 289,
+              "endCol": 34
+            },
+            "name": "math.add",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 289,
+                      "startCol": 13,
+                      "endRow": 289,
+                      "endCol": 21
+                    },
+                    "name": "double",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 5
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 289,
+                  "startCol": 11,
+                  "endRow": 289,
+                  "endCol": 24
+                }
+              },
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 289,
+                      "startCol": 25,
+                      "endRow": 289,
+                      "endCol": 33
+                    },
+                    "name": "double",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "number",
+                        "value": 3
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 289,
+                  "startCol": 23,
+                  "endRow": 289,
+                  "endCol": 34
+                }
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 289,
+          "startCol": 0,
+          "endRow": 289,
+          "endCol": 35
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 290,
+      "startCol": 0,
+      "endRow": 290,
+      "endCol": 101
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 16
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression with function calls should work (5*2=10, 3*2=6, 10+6=16)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 293,
+      "startCol": 0,
+      "endRow": 293,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 43: Subexpression with array operations",
+        "codePos": {
+          "startRow": 292,
+          "startCol": 0,
+          "endRow": 292,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 43: Subexpression with array operations"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 294,
+      "startCol": 0,
+      "endRow": 294,
+      "endCol": 41
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 294,
+        "startCol": 10,
+        "endRow": 294,
+        "endCol": 41
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 294,
+                "startCol": 12,
+                "endRow": 294,
+                "endCol": 40
+              },
+              "name": "array.length",
+              "module": "array",
+              "args": [
+                {
+                  "type": "array",
+                  "code": "1,2,3,4,5"
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 294,
+            "startCol": 10,
+            "endRow": 294,
+            "endCol": 41
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 295,
+      "startCol": 0,
+      "endRow": 295,
+      "endCol": 72
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Subexpression with array.length should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 298,
+      "startCol": 0,
+      "endRow": 298,
+      "endCol": 54
+    },
+    "comments": [
+      {
+        "text": "Test 44: Nested subexpression with object access",
+        "codePos": {
+          "startRow": 297,
+          "startCol": 0,
+          "endRow": 297,
+          "endCol": 49
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 44: Nested subexpression with object access"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 299,
+      "startCol": 0,
+      "endRow": 299,
+      "endCol": 39
+    },
+    "targetName": "data",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 299,
+        "startCol": 8,
+        "endRow": 299,
+        "endCol": 39
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        {
+          "type": "object",
+          "code": "value:10,nested:{value:20}"
+        }
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 300,
+      "startCol": 0,
+      "endRow": 300,
+      "endCol": 46
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 300,
+        "startCol": 10,
+        "endRow": 300,
+        "endCol": 46
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 300,
+                "startCol": 12,
+                "endRow": 300,
+                "endCol": 45
+              },
+              "name": "get",
+              "module": null,
+              "args": [
+                {
+                  "type": "subexpression",
+                  "body": [
+                    {
+                      "type": "command",
+                      "lastValue": null,
+                      "codePos": {
+                        "startRow": 300,
+                        "startCol": 18,
+                        "endRow": 300,
+                        "endCol": 36
+                      },
+                      "name": "get",
+                      "module": null,
+                      "args": [
+                        {
+                          "type": "var",
+                          "name": "data",
+                          "path": []
+                        },
+                        {
+                          "type": "string",
+                          "value": "nested"
+                        }
+                      ]
+                    }
+                  ],
+                  "codePos": {
+                    "startRow": 300,
+                    "startCol": 16,
+                    "endRow": 300,
+                    "endCol": 44
+                  }
+                },
+                {
+                  "type": "string",
+                  "value": "value"
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 300,
+            "startCol": 10,
+            "endRow": 300,
+            "endCol": 46
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 301,
+      "startCol": 0,
+      "endRow": 301,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "result",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression with object access should work"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 304,
+      "startCol": 0,
+      "endRow": 304,
+      "endCol": 62
+    },
+    "comments": [
+      {
+        "text": "Test 45: Subexpression with last value in nested context",
+        "codePos": {
+          "startRow": 303,
+          "startCol": 0,
+          "endRow": 303,
+          "endCol": 57
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 45: Subexpression with last value in nested context"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 305,
+      "startCol": 0,
+      "endRow": 305,
+      "endCol": 0
+    },
+    "name": "_literal",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 306,
+      "startCol": 0,
+      "endRow": 306,
+      "endCol": 34
+    },
+    "name": "_subexpr",
+    "module": null,
+    "args": [
+      {
+        "type": "subexpression",
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 306,
+              "startCol": 2,
+              "endRow": 306,
+              "endCol": 33
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 306,
+                      "startCol": 18,
+                      "endRow": 306,
+                      "endCol": 30
+                    },
+                    "name": "math.add",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "lastValue"
+                      },
+                      {
+                        "type": "number",
+                        "value": 3
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 306,
+                  "startCol": 16,
+                  "endRow": 306,
+                  "endCol": 32
+                }
+              },
+              {
+                "type": "number",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "codePos": {
+          "startRow": 306,
+          "startCol": 0,
+          "endRow": 306,
+          "endCol": 34
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 307,
+      "startCol": 0,
+      "endRow": 307,
+      "endCol": 86
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "lastValue"
+      },
+      {
+        "type": "number",
+        "value": 16
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpression using outer $ should work (5+3=8, 8*2=16)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 309,
+      "startCol": 0,
+      "endRow": 309,
+      "endCol": 39
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Last Value Tests Complete ==="
+      }
+    ]
+  }
+]
