@@ -1,0 +1,580 @@
+# =============================================================================
+# s4-recursive-algorithms.rp
+# Classic recursive algorithms with memoization and optimization
+# Features: recursion, functions, objects, arrays, conditionals, subexpressions
+# =============================================================================
+
+# Memoization caches
+$memoCache = {
+  fibonacci: {},
+  factorial: {},
+  combinations: {}
+}
+
+# Algorithm statistics
+$stats = {
+  recursiveCalls: 0,
+  cacheHits: 0,
+  cacheMisses: 0
+}
+
+# -----------------------------------------------------------------------------
+# Fibonacci Sequence
+# -----------------------------------------------------------------------------
+
+@desc "Naive recursive Fibonacci (exponential complexity)"
+def fibNaive $n
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $n <= 1
+    return $n
+  endif
+
+  fibNaive $(math.subtract $n 1) into $prev1
+  fibNaive $(math.subtract $n 2) into $prev2
+  math.add $prev1 $prev2
+  return $
+enddef
+
+@desc "Memoized Fibonacci (linear complexity)"
+def fibMemo $n
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  # Check cache
+  $cacheKey = `$n`
+  if $memoCache.fibonacci[$cacheKey] != null
+    $stats.cacheHits = $(math.add $stats.cacheHits 1)
+    return $memoCache.fibonacci[$cacheKey]
+  endif
+
+  $stats.cacheMisses = $(math.add $stats.cacheMisses 1)
+
+  if $n <= 1
+    $memoCache.fibonacci[$cacheKey] = $n
+    return $n
+  endif
+
+  fibMemo $(math.subtract $n 1) into $prev1
+  fibMemo $(math.subtract $n 2) into $prev2
+  math.add $prev1 $prev2 into $result
+
+  $memoCache.fibonacci[$cacheKey] = $result
+  return $result
+enddef
+
+@desc "Iterative Fibonacci (for comparison)"
+def fibIterative $n
+  if $n <= 1
+    return $n
+  endif
+
+  $prev2 = 0
+  $prev1 = 1
+
+  for $i in range 2 $n
+    math.add $prev1 $prev2 into $current
+    $prev2 = $prev1
+    $prev1 = $current
+  endfor
+
+  return $prev1
+enddef
+
+# -----------------------------------------------------------------------------
+# Factorial
+# -----------------------------------------------------------------------------
+
+@desc "Recursive factorial with memoization"
+def factorial $n
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  $cacheKey = `$n`
+  if $memoCache.factorial[$cacheKey] != null
+    $stats.cacheHits = $(math.add $stats.cacheHits 1)
+    return $memoCache.factorial[$cacheKey]
+  endif
+
+  $stats.cacheMisses = $(math.add $stats.cacheMisses 1)
+
+  if $n <= 1
+    $memoCache.factorial[$cacheKey] = 1
+    return 1
+  endif
+
+  factorial $(math.subtract $n 1) into $prev
+  math.multiply $n $prev into $result
+
+  $memoCache.factorial[$cacheKey] = $result
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Binary Search (Recursive)
+# -----------------------------------------------------------------------------
+
+@desc "Recursive binary search"
+def binarySearch $arr $target $low $high
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $low > $high
+    return -1
+  endif
+
+  math.add $low $high into $sum
+  math.floor $(math.divide $sum 2) into $mid
+
+  array.get $arr $mid into $midVal
+
+  if $midVal == $target
+    return $mid
+  elseif $midVal > $target
+    binarySearch $arr $target $low $(math.subtract $mid 1)
+    return $
+  else
+    binarySearch $arr $target $(math.add $mid 1) $high
+    return $
+  endif
+enddef
+
+@desc "Binary search wrapper"
+def search $arr $target
+  binarySearch $arr $target 0 $(math.subtract $(array.length $arr) 1)
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Merge Sort (Recursive)
+# -----------------------------------------------------------------------------
+
+@desc "Merge two sorted arrays"
+def merge $left $right
+  $result = []
+  $leftIdx = 0
+  $rightIdx = 0
+  $leftLen = $(array.length $left)
+  $rightLen = $(array.length $right)
+
+  # Merge while both have elements
+  $continue = true
+  for $i in range 0 $(math.add $leftLen $rightLen)
+    if $continue != true
+      break
+    endif
+
+    if $leftIdx >= $leftLen
+      # Add remaining right elements
+      for $j in range $rightIdx $(math.subtract $rightLen 1)
+        array.get $right $j into $val
+        array.push $result $val
+        $result = $
+      endfor
+      $continue = false
+    elseif $rightIdx >= $rightLen
+      # Add remaining left elements
+      for $j in range $leftIdx $(math.subtract $leftLen 1)
+        array.get $left $j into $val
+        array.push $result $val
+        $result = $
+      endfor
+      $continue = false
+    else
+      array.get $left $leftIdx into $leftVal
+      array.get $right $rightIdx into $rightVal
+
+      if $leftVal <= $rightVal
+        array.push $result $leftVal
+        $result = $
+        $leftIdx = $(math.add $leftIdx 1)
+      else
+        array.push $result $rightVal
+        $result = $
+        $rightIdx = $(math.add $rightIdx 1)
+      endif
+    endif
+  endfor
+
+  return $result
+enddef
+
+@desc "Recursive merge sort"
+def mergeSort $arr
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  $len = $(array.length $arr)
+
+  if $len <= 1
+    return $arr
+  endif
+
+  math.floor $(math.divide $len 2) into $mid
+
+  # Split array
+  array.slice $arr 0 $mid into $left
+  array.slice $arr $mid $len into $right
+
+  # Recursive sort
+  mergeSort $left into $sortedLeft
+  mergeSort $right into $sortedRight
+
+  # Merge
+  merge $sortedLeft $sortedRight
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Quick Sort (Recursive)
+# -----------------------------------------------------------------------------
+
+@desc "Partition array around pivot"
+def partition $arr $low $high
+  array.get $arr $high into $pivot
+  $i = $(math.subtract $low 1)
+
+  for $j in range $low $(math.subtract $high 1)
+    array.get $arr $j into $current
+    if $current < $pivot
+      $i = $(math.add $i 1)
+      # Swap arr[i] and arr[j]
+      array.get $arr $i into $temp
+      set $arr[$i] as $current
+      set $arr[$j] as $temp
+    endif
+  endfor
+
+  # Swap arr[i+1] and arr[high]
+  $swapIdx = $(math.add $i 1)
+  array.get $arr $swapIdx into $temp
+  set $arr[$swapIdx] as $pivot
+  set $arr[$high] as $temp
+
+  return $swapIdx
+enddef
+
+@desc "Recursive quick sort"
+def quickSort $arr $low $high
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $low < $high
+    partition $arr $low $high into $pivotIdx
+    quickSort $arr $low $(math.subtract $pivotIdx 1)
+    quickSort $arr $(math.add $pivotIdx 1) $high
+  endif
+
+  return $arr
+enddef
+
+@desc "Quick sort wrapper"
+def qsort $arr
+  $copy = $(clone $arr)
+  quickSort $copy 0 $(math.subtract $(array.length $copy) 1)
+  return $copy
+enddef
+
+# -----------------------------------------------------------------------------
+# Greatest Common Divisor (Euclidean Algorithm)
+# -----------------------------------------------------------------------------
+
+@desc "Recursive GCD using Euclidean algorithm"
+def gcd $a $b
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $b == 0
+    return $a
+  endif
+
+  math.modulo $a $b into $remainder
+  gcd $b $remainder
+  return $
+enddef
+
+@desc "Calculate LCM using GCD"
+def lcm $a $b
+  gcd $a $b into $g
+  math.multiply $a $b into $product
+  math.divide $product $g into $result
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Power (Recursive with Optimization)
+# -----------------------------------------------------------------------------
+
+@desc "Fast exponentiation using recursion"
+def fastPow $base $exp
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $exp == 0
+    return 1
+  endif
+
+  if $exp == 1
+    return $base
+  endif
+
+  # Check if even
+  math.modulo $exp 2 into $isOdd
+
+  if $isOdd == 0
+    # Even: base^exp = (base^(exp/2))^2
+    math.divide $exp 2 into $halfExp
+    fastPow $base $halfExp into $half
+    math.multiply $half $half
+    return $
+  else
+    # Odd: base^exp = base * base^(exp-1)
+    math.subtract $exp 1 into $prevExp
+    fastPow $base $prevExp into $prev
+    math.multiply $base $prev
+    return $
+  endif
+enddef
+
+# -----------------------------------------------------------------------------
+# Sum of Digits (Recursive)
+# -----------------------------------------------------------------------------
+
+@desc "Recursively sum digits of a number"
+def sumDigits $n
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $n < 10
+    return $n
+  endif
+
+  math.modulo $n 10 into $lastDigit
+  math.floor $(math.divide $n 10) into $remaining
+  sumDigits $remaining into $restSum
+  math.add $lastDigit $restSum
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Tree Traversal (Simulated with Objects)
+# -----------------------------------------------------------------------------
+
+# Build a simple binary tree
+$tree = {
+  value: 10,
+  left: {
+    value: 5,
+    left: { value: 3, left: null, right: null },
+    right: { value: 7, left: null, right: null }
+  },
+  right: {
+    value: 15,
+    left: { value: 12, left: null, right: null },
+    right: { value: 20, left: null, right: null }
+  }
+}
+
+@desc "In-order traversal of binary tree"
+def inOrder $node $result
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $node == null
+    return $result
+  endif
+
+  # Visit left
+  if $node.left != null
+    inOrder $node.left $result into $result
+  endif
+
+  # Visit current
+  array.push $result $node.value
+  $result = $
+
+  # Visit right
+  if $node.right != null
+    inOrder $node.right $result into $result
+  endif
+
+  return $result
+enddef
+
+@desc "Pre-order traversal"
+def preOrder $node $result
+  $stats.recursiveCalls = $(math.add $stats.recursiveCalls 1)
+
+  if $node == null
+    return $result
+  endif
+
+  # Visit current first
+  array.push $result $node.value
+  $result = $
+
+  if $node.left != null
+    preOrder $node.left $result into $result
+  endif
+
+  if $node.right != null
+    preOrder $node.right $result into $result
+  endif
+
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Helper Functions
+# -----------------------------------------------------------------------------
+
+@desc "Reset statistics"
+def resetStats
+  $stats.recursiveCalls = 0
+  $stats.cacheHits = 0
+  $stats.cacheMisses = 0
+enddef
+
+@desc "Clear all caches"
+def clearCaches
+  $memoCache.fibonacci = {}
+  $memoCache.factorial = {}
+  $memoCache.combinations = {}
+enddef
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Recursive Algorithms Tests ==="
+log ""
+
+# Test Fibonacci
+log "--- Fibonacci Sequence ---"
+resetStats
+
+fibMemo 20 into $fib20
+log `Fibonacci(20) = $fib20`
+log `  Recursive calls: $stats.recursiveCalls`
+log `  Cache hits: $stats.cacheHits`
+
+# Calculate first 15 fibonacci numbers
+$fibSequence = []
+for $i in range 0 14
+  fibMemo $i into $val
+  array.push $fibSequence $val
+  $fibSequence = $
+endfor
+log `First 15 Fibonacci: $(array.join $fibSequence ", ")`
+
+# Test Factorial
+log ""
+log "--- Factorial ---"
+resetStats
+
+factorial 10 into $fact10
+log `10! = $fact10`
+log `  Recursive calls: $stats.recursiveCalls`
+
+factorial 12 into $fact12
+log `12! = $fact12`
+
+# Test Binary Search
+log ""
+log "--- Binary Search ---"
+resetStats
+
+$sortedArr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+search $sortedArr 23 into $found
+log `Search for 23 in sorted array: index = $found`
+log `  Recursive calls: $stats.recursiveCalls`
+
+resetStats
+search $sortedArr 100 into $notFound
+log `Search for 100 (not in array): index = $notFound`
+log `  Recursive calls: $stats.recursiveCalls`
+
+# Test Merge Sort
+log ""
+log "--- Merge Sort ---"
+resetStats
+
+$unsorted1 = [64, 34, 25, 12, 22, 11, 90]
+mergeSort $unsorted1 into $sorted1
+log `Original: $(array.join $unsorted1 ", ")`
+log `Sorted:   $(array.join $sorted1 ", ")`
+log `  Recursive calls: $stats.recursiveCalls`
+
+# Test Quick Sort
+log ""
+log "--- Quick Sort ---"
+resetStats
+
+$unsorted2 = [38, 27, 43, 3, 9, 82, 10]
+qsort $unsorted2 into $sorted2
+log `Original: $(array.join $unsorted2 ", ")`
+log `Sorted:   $(array.join $sorted2 ", ")`
+log `  Recursive calls: $stats.recursiveCalls`
+
+# Test GCD and LCM
+log ""
+log "--- GCD and LCM ---"
+resetStats
+
+gcd 48 18 into $gcdResult
+log `GCD(48, 18) = $gcdResult`
+
+lcm 12 15 into $lcmResult
+log `LCM(12, 15) = $lcmResult`
+
+gcd 252 105 into $gcdResult2
+log `GCD(252, 105) = $gcdResult2`
+
+# Test Fast Power
+log ""
+log "--- Fast Exponentiation ---"
+resetStats
+
+fastPow 2 10 into $pow1
+log `2^10 = $pow1 (calls: $stats.recursiveCalls)`
+
+resetStats
+fastPow 3 7 into $pow2
+log `3^7 = $pow2 (calls: $stats.recursiveCalls)`
+
+# Test Sum of Digits
+log ""
+log "--- Sum of Digits ---"
+resetStats
+
+sumDigits 12345 into $digitSum
+log `Sum of digits of 12345 = $digitSum`
+log `  Recursive calls: $stats.recursiveCalls`
+
+sumDigits 987654321 into $digitSum2
+log `Sum of digits of 987654321 = $digitSum2`
+
+# Test Tree Traversal
+log ""
+log "--- Binary Tree Traversal ---"
+resetStats
+
+inOrder $tree [] into $inOrderResult
+log `In-order traversal: $(array.join $inOrderResult ", ")`
+
+resetStats
+preOrder $tree [] into $preOrderResult
+log `Pre-order traversal: $(array.join $preOrderResult ", ")`
+
+# Performance comparison with parallel execution
+log ""
+log "--- Parallel Algorithm Execution ---"
+
+together
+  do into $r1
+    resetStats
+    fibMemo 25
+  enddo
+  do into $r2
+    factorial 8
+  enddo
+  do into $r3
+    gcd 144 60
+  enddo
+endtogether
+
+log `Parallel results: Fib(25)=$r1, 8!=$r2, GCD(144,60)=$r3`
+
+log ""
+log "=== All Recursive Algorithm Tests Passed ==="

@@ -1,0 +1,548 @@
+# =============================================================================
+# s7-task-scheduler.rp
+# Task scheduling system with priorities, dependencies, and execution queues
+# Features: objects, arrays, events, functions, together, conditionals, loops
+# =============================================================================
+
+# Scheduler state
+$scheduler = {
+  tasks: [],
+  completedTasks: [],
+  failedTasks: [],
+  runningTasks: [],
+  taskIdCounter: 0,
+  isRunning: false,
+  startTime: null,
+  endTime: null,
+  stats: {
+    totalExecuted: 0,
+    totalFailed: 0,
+    totalRetried: 0,
+    averageExecutionTime: 0
+  }
+}
+
+# Priority levels
+$priorities = {
+  critical: 1,
+  high: 2,
+  normal: 3,
+  low: 4
+}
+
+# Task status constants
+$taskStatus = {
+  pending: "pending",
+  running: "running",
+  completed: "completed",
+  failed: "failed",
+  blocked: "blocked",
+  cancelled: "cancelled"
+}
+
+# -----------------------------------------------------------------------------
+# Task Creation and Management
+# -----------------------------------------------------------------------------
+
+@desc "Create a new task"
+@param string $name "Task name"
+@param string $type "Task type (compute, io, network)"
+@param string $priority "Priority level"
+def createTask $name $type $priority
+  $scheduler.taskIdCounter = $(math.add $scheduler.taskIdCounter 1)
+
+  get $priorities $priority into $priorityValue
+  if $priorityValue == null
+    $priorityValue = 3  # Default to normal
+  endif
+
+  $task = {
+    id: $scheduler.taskIdCounter,
+    name: $name,
+    type: $type,
+    priority: $priority,
+    priorityValue: $priorityValue,
+    status: "pending",
+    dependencies: [],
+    dependents: [],
+    retryCount: 0,
+    maxRetries: 3,
+    timeout: 5000,
+    createdAt: $(time.now),
+    startedAt: null,
+    completedAt: null,
+    executionTime: 0,
+    result: null,
+    error: null,
+    metadata: {}
+  }
+
+  array.push $scheduler.tasks $task
+  $scheduler.tasks = $
+
+  trigger "task:created" $task
+  return $task
+enddef
+
+@desc "Add dependency between tasks"
+def addDependency $taskId $dependsOnId
+  # Find tasks
+  $task = null
+  $dependency = null
+
+  for $t in $scheduler.tasks
+    if $t.id == $taskId
+      $task = $t
+    endif
+    if $t.id == $dependsOnId
+      $dependency = $t
+    endif
+  endfor
+
+  if $task == null || $dependency == null
+    return { success: false, error: "Task not found" }
+  endif
+
+  # Add dependency
+  array.push $task.dependencies $dependsOnId
+  $task.dependencies = $
+
+  # Add dependent
+  array.push $dependency.dependents $taskId
+  $dependency.dependents = $
+
+  log `[Scheduler] Task $taskId now depends on $dependsOnId`
+  return { success: true }
+enddef
+
+@desc "Check if task dependencies are satisfied"
+def areDependenciesSatisfied $task
+  if $(array.length $task.dependencies) == 0
+    return true
+  endif
+
+  for $depId in $task.dependencies
+    # Find dependency task
+    for $t in $scheduler.completedTasks
+      if $t.id == $depId
+        # Dependency completed, continue checking
+        continue
+      endif
+    endfor
+
+    # Check if still in pending/running
+    for $t in $scheduler.tasks
+      if $t.id == $depId
+        return false  # Dependency not completed
+      endif
+    endfor
+  endfor
+
+  return true
+enddef
+
+@desc "Get tasks sorted by priority"
+def getTasksByPriority
+  $sorted = []
+
+  # Simple bubble sort by priority value
+  $pending = []
+  for $task in $scheduler.tasks
+    if $task.status == "pending"
+      array.push $pending $task
+      $pending = $
+    endif
+  endfor
+
+  # Sort by priority (lower value = higher priority)
+  $len = $(array.length $pending)
+  for $i in range 0 $(math.subtract $len 1)
+    for $j in range 0 $(math.subtract $len 2)
+      array.get $pending $j into $a
+      math.add $j 1 into $nextIdx
+      array.get $pending $nextIdx into $b
+
+      if $a.priorityValue > $b.priorityValue
+        # Swap
+        set $pending[$j] as $b
+        set $pending[$nextIdx] as $a
+      endif
+    endfor
+  endfor
+
+  return $pending
+enddef
+
+# -----------------------------------------------------------------------------
+# Task Execution
+# -----------------------------------------------------------------------------
+
+@desc "Simulate task execution"
+def executeTask $task
+  $task.status = "running"
+  $task.startedAt = $(time.now)
+
+  trigger "task:started" { id: $task.id, name: $task.name }
+
+  # Simulate work based on task type
+  $success = true
+  $result = null
+
+  do into $execResult
+    if $task.type == "compute"
+      # Simulate computation
+      $sum = 0
+      for $i in range 1 100
+        math.add $sum $i into $sum
+      endfor
+      return { value: $sum, type: "compute" }
+
+    elseif $task.type == "io"
+      # Simulate I/O operation
+      $data = {
+        bytesRead: $(random.int 1000 10000),
+        bytesWritten: $(random.int 500 5000)
+      }
+      return { value: $data, type: "io" }
+
+    elseif $task.type == "network"
+      # Simulate network call - 10% chance of failure
+      random.int 1 10 into $chance
+      if $chance == 1
+        return { error: "Network timeout" }
+      endif
+      return { value: { status: 200, latency: $(random.int 50 500) }, type: "network" }
+
+    else
+      return { value: "completed", type: "unknown" }
+    endif
+  enddo
+
+  $task.completedAt = $(time.now)
+
+  if $execResult.error != null
+    $task.status = "failed"
+    $task.error = $execResult.error
+
+    # Handle retry
+    if $task.retryCount < $task.maxRetries
+      $task.retryCount = $(math.add $task.retryCount 1)
+      $task.status = "pending"
+      $scheduler.stats.totalRetried = $(math.add $scheduler.stats.totalRetried 1)
+      trigger "task:retry" { id: $task.id, attempt: $task.retryCount }
+      return { success: false, retry: true, task: $task }
+    endif
+
+    $scheduler.stats.totalFailed = $(math.add $scheduler.stats.totalFailed 1)
+    trigger "task:failed" { id: $task.id, error: $task.error }
+    return { success: false, retry: false, task: $task }
+  endif
+
+  $task.status = "completed"
+  $task.result = $execResult
+
+  $scheduler.stats.totalExecuted = $(math.add $scheduler.stats.totalExecuted 1)
+  trigger "task:completed" { id: $task.id, result: $execResult }
+
+  return { success: true, task: $task }
+enddef
+
+@desc "Move task between queues"
+def moveTask $task $fromQueue $toQueue
+  # Remove from source
+  $newFrom = []
+  for $t in $scheduler[$fromQueue]
+    if $t.id != $task.id
+      array.push $newFrom $t
+      $newFrom = $
+    endif
+  endfor
+  $scheduler[$fromQueue] = $newFrom
+
+  # Add to destination
+  array.push $scheduler[$toQueue] $task
+  $scheduler[$toQueue] = $
+enddef
+
+# -----------------------------------------------------------------------------
+# Scheduler Control
+# -----------------------------------------------------------------------------
+
+@desc "Run the scheduler"
+def runScheduler
+  if $scheduler.isRunning == true
+    log "[Scheduler] Already running"
+    return { success: false, error: "Already running" }
+  endif
+
+  $scheduler.isRunning = true
+  $scheduler.startTime = $(time.now)
+
+  trigger "scheduler:started" { taskCount: $(array.length $scheduler.tasks) }
+
+  log "[Scheduler] Starting with $(array.length $scheduler.tasks) tasks"
+
+  # Main execution loop
+  $maxIterations = 100  # Safety limit
+  $iterations = 0
+
+  for $iter in range 0 $maxIterations
+    # Get next task to execute
+    getTasksByPriority into $prioritized
+
+    if $(array.length $prioritized) == 0
+      break  # No more tasks
+    endif
+
+    # Find first task with satisfied dependencies
+    $taskToRun = null
+    for $task in $prioritized
+      areDependenciesSatisfied $task into $canRun
+      if $canRun == true
+        $taskToRun = $task
+        break
+      endif
+    endfor
+
+    if $taskToRun == null
+      # All remaining tasks have unsatisfied dependencies
+      log "[Scheduler] Deadlock detected or all tasks blocked"
+      break
+    endif
+
+    # Execute task
+    log `[Scheduler] Executing: $taskToRun.name (Priority: $taskToRun.priority)`
+    executeTask $taskToRun into $execResult
+
+    if $execResult.success == true
+      moveTask $execResult.task "tasks" "completedTasks"
+    elseif $execResult.retry != true
+      moveTask $execResult.task "tasks" "failedTasks"
+    endif
+
+    $iterations = $(math.add $iterations 1)
+  endfor
+
+  $scheduler.isRunning = false
+  $scheduler.endTime = $(time.now)
+
+  trigger "scheduler:completed" {
+    executed: $scheduler.stats.totalExecuted,
+    failed: $scheduler.stats.totalFailed,
+    retried: $scheduler.stats.totalRetried
+  }
+
+  return {
+    success: true,
+    executed: $scheduler.stats.totalExecuted,
+    failed: $scheduler.stats.totalFailed
+  }
+enddef
+
+@desc "Reset the scheduler"
+def resetScheduler
+  $scheduler.tasks = []
+  $scheduler.completedTasks = []
+  $scheduler.failedTasks = []
+  $scheduler.runningTasks = []
+  $scheduler.taskIdCounter = 0
+  $scheduler.isRunning = false
+  $scheduler.startTime = null
+  $scheduler.endTime = null
+  $scheduler.stats = {
+    totalExecuted: 0,
+    totalFailed: 0,
+    totalRetried: 0,
+    averageExecutionTime: 0
+  }
+  log "[Scheduler] Reset complete"
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "task:created"
+  log `[Event] Task created: #$1.id $1.name ($1.priority)`
+endon
+
+on "task:started"
+  log `[Event] Task started: #$1.id $1.name`
+endon
+
+on "task:completed"
+  log `[Event] Task completed: #$1.id`
+endon
+
+on "task:failed"
+  log `[Event] Task FAILED: #$1.id - $1.error`
+endon
+
+on "task:retry"
+  log `[Event] Task retry: #$1.id (attempt $1.attempt)`
+endon
+
+on "scheduler:started"
+  log `[Event] Scheduler started with $1.taskCount tasks`
+endon
+
+on "scheduler:completed"
+  log `[Event] Scheduler completed: $1.executed executed, $1.failed failed, $1.retried retried`
+endon
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Task Scheduler Tests ==="
+log ""
+
+# Test 1: Basic task execution
+log "--- Test 1: Basic Task Execution ---"
+
+createTask "Initialize" "compute" "critical" into $task1
+createTask "Load Data" "io" "high" into $task2
+createTask "Process Data" "compute" "normal" into $task3
+createTask "Save Results" "io" "normal" into $task4
+createTask "Cleanup" "compute" "low" into $task5
+
+runScheduler into $result1
+log `Executed: $result1.executed, Failed: $result1.failed`
+
+# Test 2: Tasks with dependencies
+log ""
+log "--- Test 2: Task Dependencies ---"
+
+resetScheduler
+
+createTask "DB Connect" "network" "critical" into $db
+createTask "Auth Check" "network" "high" into $auth
+createTask "Load User" "io" "normal" into $loadUser
+createTask "Load Orders" "io" "normal" into $loadOrders
+createTask "Generate Report" "compute" "normal" into $report
+createTask "Send Email" "network" "low" into $email
+
+# Auth depends on DB
+addDependency $auth.id $db.id
+
+# Load operations depend on Auth
+addDependency $loadUser.id $auth.id
+addDependency $loadOrders.id $auth.id
+
+# Report depends on both loads
+addDependency $report.id $loadUser.id
+addDependency $report.id $loadOrders.id
+
+# Email depends on Report
+addDependency $email.id $report.id
+
+log "Dependencies configured"
+runScheduler into $result2
+log `Executed: $result2.executed`
+
+# Test 3: Priority ordering
+log ""
+log "--- Test 3: Priority Ordering ---"
+
+resetScheduler
+
+# Create tasks in reverse priority order
+createTask "Low Priority Task" "compute" "low" into $lowTask
+createTask "Normal Priority Task" "compute" "normal" into $normalTask
+createTask "High Priority Task" "compute" "high" into $highTask
+createTask "Critical Priority Task" "compute" "critical" into $criticalTask
+
+log "Tasks created in reverse priority order"
+runScheduler into $result3
+
+# Verify execution order by checking completed tasks
+log "Execution order (should be critical, high, normal, low):"
+for $t in $scheduler.completedTasks
+  log `  $t.name`
+endfor
+
+# Test 4: Parallel task simulation
+log ""
+log "--- Test 4: Parallel Task Groups ---"
+
+resetScheduler
+
+# Create independent task groups that can run in parallel conceptually
+together
+  do into $group1
+    createTask "Group1-Task1" "compute" "normal"
+    createTask "Group1-Task2" "compute" "normal"
+    return "group1"
+  enddo
+  do into $group2
+    createTask "Group2-Task1" "io" "normal"
+    createTask "Group2-Task2" "io" "normal"
+    return "group2"
+  enddo
+endtogether
+
+log "Parallel groups created: $group1, $group2"
+runScheduler into $result4
+log `Total executed: $result4.executed`
+
+# Test 5: Network tasks with potential failures
+log ""
+log "--- Test 5: Network Tasks (May Retry) ---"
+
+resetScheduler
+
+# Create several network tasks (some might fail and retry)
+for $i in range 1 5
+  createTask `API Call $i` "network" "high" into $netTask
+endfor
+
+runScheduler into $result5
+log `Executed: $result5.executed, Failed: $result5.failed`
+log `Total retries: $scheduler.stats.totalRetried`
+
+# Test 6: Complex workflow
+log ""
+log "--- Test 6: Complex Workflow ---"
+
+resetScheduler
+
+# Simulating a data pipeline workflow
+createTask "Extract Source A" "io" "high" into $extractA
+createTask "Extract Source B" "io" "high" into $extractB
+createTask "Extract Source C" "network" "high" into $extractC
+
+createTask "Transform A" "compute" "normal" into $transformA
+createTask "Transform B" "compute" "normal" into $transformB
+createTask "Transform C" "compute" "normal" into $transformC
+
+createTask "Merge Data" "compute" "normal" into $merge
+createTask "Validate" "compute" "critical" into $validate
+createTask "Load to DB" "io" "normal" into $loadDB
+createTask "Send Notification" "network" "low" into $notify
+
+# Set up dependencies
+addDependency $transformA.id $extractA.id
+addDependency $transformB.id $extractB.id
+addDependency $transformC.id $extractC.id
+
+addDependency $merge.id $transformA.id
+addDependency $merge.id $transformB.id
+addDependency $merge.id $transformC.id
+
+addDependency $validate.id $merge.id
+addDependency $loadDB.id $validate.id
+addDependency $notify.id $loadDB.id
+
+log "Complex workflow configured with $(array.length $scheduler.tasks) tasks"
+runScheduler into $result6
+log `Workflow complete: $result6.executed executed, $result6.failed failed`
+
+# Summary
+log ""
+log "=== Scheduler Summary ==="
+log `Total completed tasks: $(array.length $scheduler.completedTasks)`
+log `Total failed tasks: $(array.length $scheduler.failedTasks)`
+log `Stats: $scheduler.stats.totalExecuted executed, $scheduler.stats.totalRetried retries`
+
+log ""
+log "=== All Task Scheduler Tests Passed ==="

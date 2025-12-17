@@ -1,0 +1,418 @@
+# =============================================================================
+# s2-data-pipeline.rp
+# Data transformation pipeline with filtering, mapping, and aggregation
+# Features: loops, functions, arrays, objects, subexpressions, into syntax
+# =============================================================================
+
+# Sample dataset
+$dataset = [
+  { id: 1, name: "Alice", department: "Engineering", salary: 85000, yearsExp: 5, active: true },
+  { id: 2, name: "Bob", department: "Sales", salary: 62000, yearsExp: 3, active: true },
+  { id: 3, name: "Charlie", department: "Engineering", salary: 95000, yearsExp: 8, active: true },
+  { id: 4, name: "Diana", department: "Marketing", salary: 70000, yearsExp: 4, active: false },
+  { id: 5, name: "Eve", department: "Engineering", salary: 78000, yearsExp: 2, active: true },
+  { id: 6, name: "Frank", department: "Sales", salary: 55000, yearsExp: 1, active: true },
+  { id: 7, name: "Grace", department: "Engineering", salary: 110000, yearsExp: 12, active: true },
+  { id: 8, name: "Henry", department: "Marketing", salary: 65000, yearsExp: 3, active: true }
+]
+
+# Pipeline configuration
+$pipelineConfig = {
+  name: "Employee Analysis Pipeline",
+  version: "2.0",
+  stages: ["filter", "transform", "aggregate", "report"]
+}
+
+# -----------------------------------------------------------------------------
+# Pipeline Stage: Filter
+# -----------------------------------------------------------------------------
+
+@desc "Filter records based on predicate"
+def pipeFilter $data $field $operator $value
+  $filtered = []
+
+  for $record in $data
+    $shouldInclude = false
+    get $record $field into $fieldValue
+
+    if $operator == "eq"
+      if $fieldValue == $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "neq"
+      if $fieldValue != $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "gt"
+      if $fieldValue > $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "gte"
+      if $fieldValue >= $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "lt"
+      if $fieldValue < $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "lte"
+      if $fieldValue <= $value
+        $shouldInclude = true
+      endif
+    elseif $operator == "contains"
+      string.contains $fieldValue $value into $shouldInclude
+    endif
+
+    if $shouldInclude == true
+      array.push $filtered $record
+      $filtered = $
+    endif
+  endfor
+
+  return $filtered
+enddef
+
+@desc "Filter by multiple conditions (AND)"
+def pipeFilterMulti $data $conditions
+  $result = $data
+
+  for $cond in $conditions
+    pipeFilter $result $cond.field $cond.operator $cond.value into $result
+  endfor
+
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Pipeline Stage: Transform
+# -----------------------------------------------------------------------------
+
+@desc "Map transformation over records"
+def pipeMap $data $transformSpec
+  $mapped = []
+
+  for $record in $data
+    $newRecord = {}
+
+    for $spec in $transformSpec
+      get $record $spec.from into $sourceValue
+
+      if $spec.transform == "uppercase"
+        string.toUpperCase $sourceValue into $newRecord[$spec.to]
+      elseif $spec.transform == "lowercase"
+        string.toLowerCase $sourceValue into $newRecord[$spec.to]
+      elseif $spec.transform == "multiply"
+        math.multiply $sourceValue $spec.factor into $newRecord[$spec.to]
+      elseif $spec.transform == "add"
+        math.add $sourceValue $spec.amount into $newRecord[$spec.to]
+      elseif $spec.transform == "format"
+        set $newRecord[$spec.to] as `$spec.prefix$sourceValue$spec.suffix`
+      elseif $spec.transform == "copy"
+        set $newRecord[$spec.to] as $sourceValue
+      elseif $spec.transform == "boolean"
+        if $sourceValue == true
+          set $newRecord[$spec.to] as $spec.trueVal
+        else
+          set $newRecord[$spec.to] as $spec.falseVal
+        endif
+      endif
+    endfor
+
+    array.push $mapped $newRecord
+    $mapped = $
+  endfor
+
+  return $mapped
+enddef
+
+@desc "Add computed fields to records"
+def pipeEnrich $data $computations
+  $enriched = []
+
+  for $record in $data
+    $newRecord = $(clone $record)
+
+    for $comp in $computations
+      if $comp.type == "salaryPerYear"
+        math.divide $record.salary $record.yearsExp into $newRecord[$comp.field]
+        math.round $newRecord[$comp.field] into $newRecord[$comp.field]
+      elseif $comp.type == "seniorityLevel"
+        if $record.yearsExp >= 10
+          set $newRecord[$comp.field] as "Senior"
+        elseif $record.yearsExp >= 5
+          set $newRecord[$comp.field] as "Mid-Level"
+        else
+          set $newRecord[$comp.field] as "Junior"
+        endif
+      elseif $comp.type == "bonusEligible"
+        if $record.yearsExp >= 2 && $record.active == true
+          set $newRecord[$comp.field] as true
+        else
+          set $newRecord[$comp.field] as false
+        endif
+      endif
+    endfor
+
+    array.push $enriched $newRecord
+    $enriched = $
+  endfor
+
+  return $enriched
+enddef
+
+# -----------------------------------------------------------------------------
+# Pipeline Stage: Aggregate
+# -----------------------------------------------------------------------------
+
+@desc "Group records by field"
+def pipeGroupBy $data $field
+  $groups = {}
+
+  for $record in $data
+    get $record $field into $key
+
+    if $groups[$key] == null
+      $groups[$key] = []
+    endif
+
+    array.push $groups[$key] $record
+    $groups[$key] = $
+  endfor
+
+  return $groups
+enddef
+
+@desc "Aggregate numeric field"
+def pipeAggregate $data $field $operation
+  if $(array.length $data) == 0
+    return null
+  endif
+
+  if $operation == "sum"
+    $result = 0
+    for $record in $data
+      get $record $field into $val
+      math.add $result $val into $result
+    endfor
+    return $result
+
+  elseif $operation == "avg"
+    $sum = 0
+    for $record in $data
+      get $record $field into $val
+      math.add $sum $val into $sum
+    endfor
+    math.divide $sum $(array.length $data) into $avg
+    math.round $avg into $avg
+    return $avg
+
+  elseif $operation == "min"
+    get $(array.get $data 0) $field into $min
+    for $record in $data
+      get $record $field into $val
+      if $val < $min
+        $min = $val
+      endif
+    endfor
+    return $min
+
+  elseif $operation == "max"
+    get $(array.get $data 0) $field into $max
+    for $record in $data
+      get $record $field into $val
+      if $val > $max
+        $max = $val
+      endif
+    endfor
+    return $max
+
+  elseif $operation == "count"
+    return $(array.length $data)
+  endif
+
+  return null
+enddef
+
+# -----------------------------------------------------------------------------
+# Pipeline Stage: Report
+# -----------------------------------------------------------------------------
+
+@desc "Generate summary report"
+def generateReport $data $title
+  log ""
+  log `==================== $title ====================`
+
+  array.length $data into $count
+  log `Total Records: $count`
+
+  if $count > 0
+    for $record in $data
+      do into $line
+        $parts = []
+        keys $record into $recordKeys
+
+        for $key in $recordKeys
+          get $record $key into $val
+          array.push $parts `$key: $val`
+          $parts = $
+        endfor
+
+        array.join $parts " | "
+      enddo
+      log `  $`
+    endfor
+  endif
+
+  log `================================================`
+enddef
+
+# -----------------------------------------------------------------------------
+# Pipeline Executor
+# -----------------------------------------------------------------------------
+
+@desc "Execute a data pipeline with stages"
+def executePipeline $data $stages
+  $current = $data
+  $pipelineLog = []
+
+  log `[Pipeline] Starting: $pipelineConfig.name v$pipelineConfig.version`
+
+  for $stage in $stages
+    log `[Pipeline] Executing stage: $stage.name`
+
+    do into $stageResult
+      if $stage.type == "filter"
+        pipeFilter $current $stage.field $stage.operator $stage.value
+      elseif $stage.type == "filterMulti"
+        pipeFilterMulti $current $stage.conditions
+      elseif $stage.type == "map"
+        pipeMap $current $stage.spec
+      elseif $stage.type == "enrich"
+        pipeEnrich $current $stage.computations
+      elseif $stage.type == "groupBy"
+        pipeGroupBy $current $stage.field
+      elseif $stage.type == "aggregate"
+        pipeAggregate $current $stage.field $stage.operation
+      else
+        return $current
+      endif
+    enddo
+
+    $current = $stageResult
+
+    array.push $pipelineLog {
+      stage: $stage.name,
+      recordCount: $(array.length $current)
+    }
+    $pipelineLog = $
+
+    log `[Pipeline] Stage complete. Records: $(array.length $current)`
+  endfor
+
+  return { data: $current, log: $pipelineLog }
+enddef
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Data Pipeline System ==="
+log ""
+
+# Pipeline 1: Filter active engineering employees
+log "--- Pipeline 1: Active Engineers ---"
+
+$pipeline1 = [
+  { type: "filterMulti", name: "filter-active-engineers", conditions: [
+    { field: "active", operator: "eq", value: true },
+    { field: "department", operator: "eq", value: "Engineering" }
+  ]},
+  { type: "enrich", name: "add-computations", computations: [
+    { type: "seniorityLevel", field: "level" },
+    { type: "salaryPerYear", field: "salaryPerYearExp" }
+  ]}
+]
+
+executePipeline $dataset $pipeline1 into $result1
+generateReport $result1.data "Active Engineers with Seniority"
+
+# Pipeline 2: Salary analysis by department
+log ""
+log "--- Pipeline 2: Department Salary Stats ---"
+
+pipeFilter $dataset "active" "eq" true into $activeOnly
+pipeGroupBy $activeOnly "department" into $byDept
+
+keys $byDept into $departments
+for $dept in $departments
+  get $byDept $dept into $deptRecords
+
+  pipeAggregate $deptRecords "salary" "avg" into $avgSalary
+  pipeAggregate $deptRecords "salary" "min" into $minSalary
+  pipeAggregate $deptRecords "salary" "max" into $maxSalary
+  pipeAggregate $deptRecords "salary" "count" into $count
+
+  log `$dept: Count=$count, Avg=\$$avgSalary, Min=\$$minSalary, Max=\$$maxSalary`
+endfor
+
+# Pipeline 3: Transform for export
+log ""
+log "--- Pipeline 3: Export Transform ---"
+
+$transformSpec = [
+  { from: "name", to: "employeeName", transform: "uppercase" },
+  { from: "salary", to: "annualSalary", transform: "format", prefix: "$", suffix: "/year" },
+  { from: "department", to: "dept", transform: "copy" },
+  { from: "active", to: "status", transform: "boolean", trueVal: "ACTIVE", falseVal: "INACTIVE" }
+]
+
+pipeFilter $dataset "department" "eq" "Sales" into $salesTeam
+pipeMap $salesTeam $transformSpec into $exportData
+
+generateReport $exportData "Sales Team Export Format"
+
+# Pipeline 4: Complex aggregation with parallel processing
+log ""
+log "--- Pipeline 4: Parallel Aggregations ---"
+
+pipeFilter $dataset "active" "eq" true into $activeEmployees
+
+together
+  do into $totalSalary
+    pipeAggregate $activeEmployees "salary" "sum"
+  enddo
+  do into $avgExperience
+    pipeAggregate $activeEmployees "yearsExp" "avg"
+  enddo
+  do into $headcount
+    pipeAggregate $activeEmployees "id" "count"
+  enddo
+endtogether
+
+log `Active Employees Summary:`
+log `  Total Payroll: \$$totalSalary`
+log `  Avg Experience: $avgExperience years`
+log `  Headcount: $headcount`
+
+# Pipeline 5: Find top performers
+log ""
+log "--- Pipeline 5: Top Performers (Experience >= 5) ---"
+
+$pipeline5 = [
+  { type: "filterMulti", name: "filter-experienced", conditions: [
+    { field: "active", operator: "eq", value: true },
+    { field: "yearsExp", operator: "gte", value: 5 }
+  ]},
+  { type: "enrich", name: "add-bonus-flag", computations: [
+    { type: "bonusEligible", field: "bonusEligible" }
+  ]}
+]
+
+executePipeline $dataset $pipeline5 into $result5
+
+for $emp in $result5.data
+  log `  $emp.name ($emp.department): $emp.yearsExp years, Bonus: $emp.bonusEligible`
+endfor
+
+log ""
+log "=== All Pipeline Tests Passed ==="

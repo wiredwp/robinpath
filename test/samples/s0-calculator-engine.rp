@@ -1,0 +1,328 @@
+# =============================================================================
+# s0-calculator-engine.rp
+# A sophisticated calculator engine with memory, history, and multiple modes
+# Features: functions, decorators, objects, arrays, events, metadata, subexpressions
+# =============================================================================
+
+# Calculator state object
+$calculator = {
+  memory: 0,
+  history: [],
+  mode: "standard",
+  precision: 2,
+  lastResult: null
+}
+
+# -----------------------------------------------------------------------------
+# Core Calculator Functions with Decorators
+# -----------------------------------------------------------------------------
+
+@desc "Add multiple numbers together"
+@param number $nums "Variadic numbers to add"
+def calcAdd
+  $sum = 0
+  for $num in $1
+    math.add $sum $num
+    $sum = $
+  endfor
+  return $sum
+enddef
+
+@desc "Subtract second number from first"
+@param number $a "First number"
+@param number $b "Second number to subtract"
+def calcSubtract $a $b
+  math.subtract $a $b
+  return $
+enddef
+
+@desc "Multiply multiple numbers"
+def calcMultiply
+  $product = 1
+  for $num in $1
+    math.multiply $product $num
+    $product = $
+  endfor
+  return $product
+enddef
+
+@desc "Divide with zero-check"
+@param number $a "Dividend"
+@param number $b "Divisor"
+def calcDivide $a $b
+  if $b == 0
+    return { error: true, message: "Division by zero" }
+  endif
+  math.divide $a $b
+  return { error: false, result: $ }
+enddef
+
+# Advanced math operations
+@desc "Calculate power with validation"
+def calcPower $base $exp
+  if $exp < 0 && $base == 0
+    return { error: true, message: "Cannot raise 0 to negative power" }
+  endif
+  math.power $base $exp
+  return { error: false, result: $ }
+enddef
+
+@desc "Calculate factorial recursively"
+def factorial $n
+  if $n <= 1
+    return 1
+  endif
+  math.subtract $n 1 into $prev
+  factorial $prev into $prevFact
+  math.multiply $n $prevFact
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Memory Operations
+# -----------------------------------------------------------------------------
+
+@desc "Store value in calculator memory"
+def memoryStore $value
+  $calculator.memory = $value
+  trigger "memoryChanged" $value
+  return $value
+enddef
+
+@desc "Recall value from memory"
+def memoryRecall
+  return $calculator.memory
+enddef
+
+@desc "Add to memory"
+def memoryAdd $value
+  math.add $calculator.memory $value
+  $calculator.memory = $
+  trigger "memoryChanged" $calculator.memory
+  return $calculator.memory
+enddef
+
+@desc "Clear memory"
+def memoryClear
+  $calculator.memory = 0
+  trigger "memoryChanged" 0
+  return 0
+enddef
+
+# -----------------------------------------------------------------------------
+# History Management
+# -----------------------------------------------------------------------------
+
+@desc "Add calculation to history"
+def addToHistory $operation $operands $result
+  $entry = {
+    operation: $operation,
+    operands: $operands,
+    result: $result,
+    timestamp: $(time.timestamp)
+  }
+  array.push $calculator.history $entry
+  $calculator.history = $
+  trigger "historyUpdated" $entry
+  return $entry
+enddef
+
+@desc "Get last N history entries"
+def getHistory $count
+  array.length $calculator.history into $len
+  if $count > $len
+    $count = $len
+  endif
+  math.subtract $len $count into $start
+  array.slice $calculator.history $start $len
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "memoryChanged"
+  log `[Memory] Updated to: $1`
+endon
+
+on "historyUpdated"
+  log `[History] New entry: $1.operation with result $1.result`
+endon
+
+on "modeChanged"
+  log `[Mode] Switched to: $1`
+  $calculator.mode = $1
+endon
+
+on "calculationComplete"
+  $calculator.lastResult = $1
+  log `[Result] $1`
+endon
+
+# -----------------------------------------------------------------------------
+# Mode-based Calculation
+# -----------------------------------------------------------------------------
+
+@desc "Perform calculation based on current mode"
+def calculate $op $args
+  $result = null
+
+  # Standard mode calculations
+  if $op == "add"
+    calcAdd $args into $result
+  elseif $op == "subtract"
+    if $(array.length $args) >= 2
+      calcSubtract $(array.get $args 0) $(array.get $args 1) into $result
+    endif
+  elseif $op == "multiply"
+    calcMultiply $args into $result
+  elseif $op == "divide"
+    if $(array.length $args) >= 2
+      calcDivide $(array.get $args 0) $(array.get $args 1) into $divResult
+      if $divResult.error == true
+        log `Error: $divResult.message`
+        return null
+      endif
+      $result = $divResult.result
+    endif
+  elseif $op == "power"
+    if $(array.length $args) >= 2
+      calcPower $(array.get $args 0) $(array.get $args 1) into $powResult
+      if $powResult.error == true
+        log `Error: $powResult.message`
+        return null
+      endif
+      $result = $powResult.result
+    endif
+  elseif $op == "factorial"
+    factorial $(array.get $args 0) into $result
+  elseif $op == "sqrt"
+    math.sqrt $(array.get $args 0) into $result
+  endif
+
+  # Round based on precision if in scientific mode
+  if $calculator.mode == "scientific" && $result != null
+    math.power 10 $calculator.precision into $factor
+    math.multiply $result $factor into $temp
+    math.round $temp into $rounded
+    math.divide $rounded $factor into $result
+  endif
+
+  # Add to history and trigger event
+  if $result != null
+    addToHistory $op $args $result
+    trigger "calculationComplete" $result
+  endif
+
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Calculator Engine Tests ==="
+log ""
+
+# Test basic operations
+log "--- Basic Operations ---"
+calculate "add" [1, 2, 3, 4, 5] into $sum
+log `Sum of 1-5: $sum`
+
+calculate "multiply" [2, 3, 4] into $prod
+log `Product of 2*3*4: $prod`
+
+calculate "subtract" [100, 37] into $diff
+log `100 - 37: $diff`
+
+calculate "divide" [144, 12] into $quot
+log `144 / 12: $quot`
+
+# Test advanced operations
+log ""
+log "--- Advanced Operations ---"
+
+calculate "power" [2, 10] into $power
+log `2^10: $power`
+
+calculate "factorial" [6] into $fact
+log `6!: $fact`
+
+calculate "sqrt" [256] into $sqrtVal
+log `sqrt(256): $sqrtVal`
+
+# Test memory operations
+log ""
+log "--- Memory Operations ---"
+
+memoryStore 100
+memoryAdd 50
+memoryRecall into $memVal
+log `Memory value: $memVal`
+
+memoryAdd -25
+memoryRecall into $memVal2
+log `After -25: $memVal2`
+
+# Test mode change
+log ""
+log "--- Mode Change ---"
+trigger "modeChanged" "scientific"
+$calculator.precision = 4
+
+calculate "divide" [22, 7] into $pi_approx
+log `22/7 (scientific mode): $pi_approx`
+
+# Test history
+log ""
+log "--- History ---"
+getHistory 3 into $recent
+log `Recent calculations: $(array.length $recent) entries`
+
+for $entry in $recent
+  log `  - $entry.operation: $entry.result`
+endfor
+
+# Parallel calculations using together
+log ""
+log "--- Parallel Calculations ---"
+
+together
+  do into $r1
+    calculate "add" [10, 20, 30]
+  enddo
+  do into $r2
+    calculate "multiply" [5, 6, 7]
+  enddo
+  do into $r3
+    calculate "power" [3, 4]
+  enddo
+endtogether
+
+log `Parallel results: $r1, $r2, $r3`
+
+# Complex nested calculation using subexpressions
+log ""
+log "--- Complex Expression ---"
+
+$complex = $(math.add \
+  $(calcMultiply [2, 3]) \
+  $(math.sqrt $(calcAdd [9, 16])) \
+)
+log `(2*3) + sqrt(9+16) = $complex`
+
+# Final summary using template string
+log ""
+log `
+=== Calculator Summary ===
+Mode: $calculator.mode
+Precision: $calculator.precision
+Memory: $calculator.memory
+History entries: $(array.length $calculator.history)
+Last result: $calculator.lastResult
+===========================
+`
+
+log ""
+log "=== All Calculator Tests Passed ==="

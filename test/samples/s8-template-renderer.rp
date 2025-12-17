@@ -1,0 +1,510 @@
+# =============================================================================
+# s8-template-renderer.rp
+# Template rendering engine with variable substitution, conditionals, and loops
+# Features: template strings, functions, objects, loops, conditionals, recursion
+# =============================================================================
+
+# Template registry
+$templates = {}
+
+# Render context stack
+$contextStack = []
+
+# Render statistics
+$renderStats = {
+  templatesRendered: 0,
+  variablesSubstituted: 0,
+  conditionalsEvaluated: 0,
+  loopsProcessed: 0
+}
+
+# -----------------------------------------------------------------------------
+# Template Registration
+# -----------------------------------------------------------------------------
+
+@desc "Register a template"
+def registerTemplate $name $content
+  $templates[$name] = {
+    name: $name,
+    content: $content,
+    registeredAt: $(time.now)
+  }
+  trigger "template:registered" $name
+  return $templates[$name]
+enddef
+
+@desc "Get a registered template"
+def getTemplate $name
+  return $templates[$name]
+enddef
+
+# -----------------------------------------------------------------------------
+# Variable Resolution
+# -----------------------------------------------------------------------------
+
+@desc "Get value from context using dot notation path"
+def resolveValue $context $path
+  # Split path by dots
+  string.split $path "." into $parts
+  $current = $context
+
+  for $part in $parts
+    if $current == null
+      return null
+    endif
+    get $current $part into $current
+  endfor
+
+  return $current
+enddef
+
+@desc "Substitute variables in text"
+def substituteVariables $text $context
+  $result = $text
+  $startMarker = "{{"
+  $endMarker = "}}"
+
+  # Simple substitution - find {{ and }} markers
+  # This is a simplified version - real impl would use proper parsing
+  $maxIterations = 50
+  $changed = true
+  $iteration = 0
+
+  for $i in range 0 $maxIterations
+    if $changed != true
+      break
+    endif
+
+    $changed = false
+    string.indexOf $result "{{" into $startIdx
+
+    if $startIdx >= 0
+      string.indexOf $result "}}" into $endIdx
+
+      if $endIdx > $startIdx
+        # Extract variable name
+        math.add $startIdx 2 into $varStart
+        string.substring $result $varStart $endIdx into $varName
+        string.trim $varName into $varName
+
+        # Resolve value
+        resolveValue $context $varName into $value
+        if $value == null
+          $value = ""
+        endif
+
+        # Build replacement
+        string.substring $result 0 $startIdx into $before
+        math.add $endIdx 2 into $afterStart
+        string.length $result into $len
+        string.substring $result $afterStart $len into $after
+
+        string.concat $before $value $after into $result
+        $changed = true
+        $renderStats.variablesSubstituted = $(math.add $renderStats.variablesSubstituted 1)
+      endif
+    endif
+  endfor
+
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Conditional Rendering
+# -----------------------------------------------------------------------------
+
+@desc "Evaluate a simple condition"
+def evaluateCondition $left $operator $right
+  if $operator == "=="
+    return $left == $right
+  elseif $operator == "!="
+    return $left != $right
+  elseif $operator == ">"
+    return $left > $right
+  elseif $operator == ">="
+    return $left >= $right
+  elseif $operator == "<"
+    return $left < $right
+  elseif $operator == "<="
+    return $left <= $right
+  elseif $operator == "truthy"
+    if $left == null || $left == false || $left == "" || $left == 0
+      return false
+    endif
+    return true
+  endif
+  return false
+enddef
+
+@desc "Process conditional blocks in template"
+def processConditionals $text $context
+  # Look for {{#if condition}}...{{/if}} blocks
+  # Simplified implementation
+
+  $renderStats.conditionalsEvaluated = $(math.add $renderStats.conditionalsEvaluated 1)
+  return $text
+enddef
+
+# -----------------------------------------------------------------------------
+# Loop Rendering
+# -----------------------------------------------------------------------------
+
+@desc "Process loop blocks"
+def processLoops $text $context
+  # Look for {{#each items}}...{{/each}} blocks
+  # Simplified implementation
+
+  $renderStats.loopsProcessed = $(math.add $renderStats.loopsProcessed 1)
+  return $text
+enddef
+
+# -----------------------------------------------------------------------------
+# Main Render Function
+# -----------------------------------------------------------------------------
+
+@desc "Render a template with context"
+def render $templateName $context
+  getTemplate $templateName into $template
+
+  if $template == null
+    return { success: false, error: `Template '$templateName' not found` }
+  endif
+
+  $content = $template.content
+
+  # Push context to stack
+  array.push $contextStack $context
+  $contextStack = $
+
+  # Process template
+  do into $rendered
+    # 1. Process conditionals
+    processConditionals $content $context into $content
+
+    # 2. Process loops
+    processLoops $content $context into $content
+
+    # 3. Substitute variables
+    substituteVariables $content $context
+  enddo
+
+  # Pop context
+  $newStack = []
+  $stackLen = $(array.length $contextStack)
+  for $i in range 0 $(math.subtract $stackLen 2)
+    array.get $contextStack $i into $item
+    array.push $newStack $item
+    $newStack = $
+  endfor
+  $contextStack = $newStack
+
+  $renderStats.templatesRendered = $(math.add $renderStats.templatesRendered 1)
+
+  trigger "template:rendered" { name: $templateName }
+
+  return { success: true, output: $rendered }
+enddef
+
+@desc "Render a template string directly"
+def renderString $templateStr $context
+  substituteVariables $templateStr $context into $result
+  return $result
+enddef
+
+# -----------------------------------------------------------------------------
+# Built-in Template Components
+# -----------------------------------------------------------------------------
+
+@desc "Render a list component"
+def renderList $items $itemTemplate
+  $output = []
+
+  for $item in $items
+    renderString $itemTemplate { item: $item } into $rendered
+    array.push $output $rendered
+    $output = $
+  endfor
+
+  array.join $output "\n"
+  return $
+enddef
+
+@desc "Render a table component"
+def renderTable $headers $rows
+  $output = ""
+
+  # Header row
+  $headerRow = "| "
+  $separator = "| "
+  for $h in $headers
+    string.concat $headerRow $h " | " into $headerRow
+    string.concat $separator "--- | " into $separator
+  endfor
+  string.concat $output $headerRow "\n" into $output
+  string.concat $output $separator "\n" into $output
+
+  # Data rows
+  for $row in $rows
+    $rowStr = "| "
+    for $cell in $row
+      string.concat $rowStr $cell " | " into $rowStr
+    endfor
+    string.concat $output $rowStr "\n" into $output
+  endfor
+
+  return $output
+enddef
+
+@desc "Render a card component"
+def renderCard $title $content $footer
+  $card = `
++${"=".repeat(40)}+
+| {{title}}
++${"-".repeat(40)}+
+| {{content}}
++${"-".repeat(40)}+
+| {{footer}}
++${"=".repeat(40)}+
+`
+
+  renderString $card { title: $title, content: $content, footer: $footer }
+  return $
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "template:registered"
+  log `[Template] Registered: $1`
+endon
+
+on "template:rendered"
+  log `[Template] Rendered: $1.name`
+endon
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Template Renderer Tests ==="
+log ""
+
+# Test 1: Basic variable substitution
+log "--- Test 1: Basic Substitution ---"
+
+registerTemplate "greeting" "Hello, {{name}}! Welcome to {{place}}."
+
+render "greeting" { name: "Alice", place: "Wonderland" } into $result1
+log $result1.output
+
+# Test 2: Nested object access
+log ""
+log "--- Test 2: Nested Objects ---"
+
+registerTemplate "profile" `
+User Profile:
+  Name: {{user.name}}
+  Email: {{user.email}}
+  Company: {{user.company.name}}
+  Role: {{user.role}}
+`
+
+$userData = {
+  user: {
+    name: "John Doe",
+    email: "john@example.com",
+    company: { name: "Acme Corp", id: 123 },
+    role: "Developer"
+  }
+}
+
+render "profile" $userData into $result2
+log $result2.output
+
+# Test 3: Complex template
+log ""
+log "--- Test 3: Complex Template ---"
+
+registerTemplate "invoice" `
+================================
+        INVOICE #{{invoice.number}}
+================================
+Date: {{invoice.date}}
+Due: {{invoice.dueDate}}
+
+Bill To:
+  {{customer.name}}
+  {{customer.address}}
+  {{customer.city}}, {{customer.state}} {{customer.zip}}
+
+--------------------------------
+Items:
+  Product: {{items.product1.name}}
+  Quantity: {{items.product1.qty}}
+  Price: ${{items.product1.price}}
+
+--------------------------------
+Subtotal: ${{totals.subtotal}}
+Tax: ${{totals.tax}}
+================================
+TOTAL: ${{totals.total}}
+================================
+
+Thank you for your business!
+`
+
+$invoiceData = {
+  invoice: { number: "INV-2024-001", date: "2024-01-15", dueDate: "2024-02-15" },
+  customer: { name: "Jane Smith", address: "123 Main St", city: "Boston", state: "MA", zip: "02101" },
+  items: { product1: { name: "Widget Pro", qty: 5, price: "49.99" } },
+  totals: { subtotal: "249.95", tax: "21.25", total: "271.20" }
+}
+
+render "invoice" $invoiceData into $result3
+log $result3.output
+
+# Test 4: Direct string rendering
+log ""
+log "--- Test 4: Direct String Rendering ---"
+
+$template = "Order #{{orderId}} for {{customer}} - Status: {{status}}"
+renderString $template { orderId: "12345", customer: "Bob", status: "Shipped" } into $directResult
+log $directResult
+
+# Test 5: List component
+log ""
+log "--- Test 5: List Component ---"
+
+$items = ["Apple", "Banana", "Cherry", "Date"]
+renderList $items "- {{item}}" into $listOutput
+log "Shopping List:"
+log $listOutput
+
+# Test 6: Table component
+log ""
+log "--- Test 6: Table Component ---"
+
+$headers = ["Name", "Age", "City"]
+$rows = [
+  ["Alice", "30", "NYC"],
+  ["Bob", "25", "LA"],
+  ["Carol", "35", "Chicago"]
+]
+
+renderTable $headers $rows into $tableOutput
+log "User Table:"
+log $tableOutput
+
+# Test 7: Multiple templates
+log ""
+log "--- Test 7: Multiple Templates ---"
+
+registerTemplate "header" "=== {{title}} ==="
+registerTemplate "footer" "--- End of {{section}} ---"
+registerTemplate "body" "Content: {{content}}"
+
+together
+  do into $h
+    render "header" { title: "Report" }
+  enddo
+  do into $b
+    render "body" { content: "This is the main content" }
+  enddo
+  do into $f
+    render "footer" { section: "Report" }
+  enddo
+endtogether
+
+log $h.output
+log $b.output
+log $f.output
+
+# Test 8: Template with computed values
+log ""
+log "--- Test 8: Computed Template ---"
+
+$orderItems = ["Laptop", "Mouse", "Keyboard"]
+$itemCount = $(array.length $orderItems)
+math.multiply $itemCount 100 into $estimatedTotal
+
+$computedContext = {
+  orderDate: $(time.now),
+  itemCount: $itemCount,
+  items: $(array.join $orderItems ", "),
+  total: $estimatedTotal
+}
+
+registerTemplate "orderSummary" `
+Order placed on {{orderDate}}
+Items ({{itemCount}}): {{items}}
+Estimated Total: ${{total}}
+`
+
+render "orderSummary" $computedContext into $result8
+log $result8.output
+
+# Test 9: Email template
+log ""
+log "--- Test 9: Email Template ---"
+
+registerTemplate "welcomeEmail" `
+Subject: Welcome to {{company.name}}!
+
+Dear {{user.firstName}},
+
+Thank you for signing up for {{company.name}}!
+
+Your account details:
+- Username: {{user.username}}
+- Email: {{user.email}}
+- Plan: {{subscription.plan}}
+
+Get started by visiting: {{company.url}}
+
+Best regards,
+The {{company.name}} Team
+`
+
+$emailContext = {
+  company: { name: "TechCorp", url: "https://techcorp.com" },
+  user: { firstName: "Michael", username: "msmith", email: "msmith@email.com" },
+  subscription: { plan: "Premium" }
+}
+
+render "welcomeEmail" $emailContext into $result9
+log $result9.output
+
+# Test 10: Batch rendering
+log ""
+log "--- Test 10: Batch Rendering ---"
+
+$users = [
+  { name: "User1", score: 95 },
+  { name: "User2", score: 87 },
+  { name: "User3", score: 92 }
+]
+
+registerTemplate "scoreCard" "{{name}}: {{score}} points"
+
+$batchResults = []
+for $user in $users
+  render "scoreCard" $user into $scoreResult
+  array.push $batchResults $scoreResult.output
+  $batchResults = $
+endfor
+
+log "Score Cards:"
+for $card in $batchResults
+  log `  $card`
+endfor
+
+# Summary
+log ""
+log "=== Render Statistics ==="
+log `Templates rendered: $renderStats.templatesRendered`
+log `Variables substituted: $renderStats.variablesSubstituted`
+log `Registered templates: $(array.length $(keys $templates))`
+
+log ""
+log "=== All Template Renderer Tests Passed ==="

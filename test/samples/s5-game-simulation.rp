@@ -1,0 +1,510 @@
+# =============================================================================
+# s5-game-simulation.rp
+# RPG-style game simulation with characters, combat, and inventory
+# Features: objects, arrays, events, functions, decorators, together, conditionals
+# =============================================================================
+
+# Game configuration
+$gameConfig = {
+  maxLevel: 20,
+  expMultiplier: 1.5,
+  criticalHitChance: 15,
+  criticalHitMultiplier: 2
+}
+
+# Character classes with base stats
+$characterClasses = {
+  warrior: { hp: 100, attack: 15, defense: 10, speed: 8, mana: 20 },
+  mage: { hp: 60, attack: 8, defense: 5, speed: 10, mana: 100 },
+  rogue: { hp: 70, attack: 12, defense: 6, speed: 15, mana: 40 },
+  paladin: { hp: 90, attack: 12, defense: 12, speed: 6, mana: 50 }
+}
+
+# Game state
+$gameState = {
+  turn: 0,
+  phase: "setup",
+  combatLog: [],
+  activeEffects: []
+}
+
+# -----------------------------------------------------------------------------
+# Character Creation and Management
+# -----------------------------------------------------------------------------
+
+@desc "Create a new character"
+@param string $name "Character name"
+@param string $class "Character class (warrior, mage, rogue, paladin)"
+def createCharacter $name $class
+  get $characterClasses $class into $baseStats
+
+  if $baseStats == null
+    log `[Error] Unknown class: $class`
+    return null
+  endif
+
+  $character = {
+    id: $(random.uuid),
+    name: $name,
+    class: $class,
+    level: 1,
+    experience: 0,
+    maxHp: $baseStats.hp,
+    currentHp: $baseStats.hp,
+    maxMana: $baseStats.mana,
+    currentMana: $baseStats.mana,
+    attack: $baseStats.attack,
+    defense: $baseStats.defense,
+    speed: $baseStats.speed,
+    isAlive: true,
+    skills: [],
+    inventory: [],
+    equipment: {
+      weapon: null,
+      armor: null,
+      accessory: null
+    },
+    statusEffects: [],
+    stats: {
+      damageDealt: 0,
+      damageReceived: 0,
+      healingDone: 0,
+      criticalHits: 0,
+      battles: 0,
+      victories: 0
+    }
+  }
+
+  # Add class-specific skills
+  if $class == "warrior"
+    $character.skills = [
+      { name: "Power Strike", damage: 25, manaCost: 10, type: "physical" },
+      { name: "Shield Bash", damage: 15, manaCost: 5, type: "physical", stun: true }
+    ]
+  elseif $class == "mage"
+    $character.skills = [
+      { name: "Fireball", damage: 35, manaCost: 20, type: "magical" },
+      { name: "Ice Shard", damage: 20, manaCost: 15, type: "magical", slow: true },
+      { name: "Heal", healing: 30, manaCost: 25, type: "healing" }
+    ]
+  elseif $class == "rogue"
+    $character.skills = [
+      { name: "Backstab", damage: 30, manaCost: 15, type: "physical", critBonus: 20 },
+      { name: "Poison Blade", damage: 15, manaCost: 10, type: "physical", poison: 5 }
+    ]
+  elseif $class == "paladin"
+    $character.skills = [
+      { name: "Holy Strike", damage: 20, manaCost: 15, type: "holy" },
+      { name: "Divine Heal", healing: 40, manaCost: 30, type: "healing" },
+      { name: "Smite", damage: 25, manaCost: 20, type: "holy" }
+    ]
+  endif
+
+  trigger "character:created" $character
+  return $character
+enddef
+
+@desc "Level up a character"
+def levelUp $character
+  if $character.level >= $gameConfig.maxLevel
+    log `[$character.name] Already at max level!`
+    return $character
+  endif
+
+  $character.level = $(math.add $character.level 1)
+
+  # Stat increases based on class
+  if $character.class == "warrior"
+    $character.maxHp = $(math.add $character.maxHp 15)
+    $character.attack = $(math.add $character.attack 3)
+    $character.defense = $(math.add $character.defense 2)
+  elseif $character.class == "mage"
+    $character.maxHp = $(math.add $character.maxHp 8)
+    $character.maxMana = $(math.add $character.maxMana 15)
+    $character.attack = $(math.add $character.attack 2)
+  elseif $character.class == "rogue"
+    $character.maxHp = $(math.add $character.maxHp 10)
+    $character.attack = $(math.add $character.attack 3)
+    $character.speed = $(math.add $character.speed 2)
+  elseif $character.class == "paladin"
+    $character.maxHp = $(math.add $character.maxHp 12)
+    $character.maxMana = $(math.add $character.maxMana 8)
+    $character.defense = $(math.add $character.defense 2)
+  endif
+
+  # Restore HP and mana on level up
+  $character.currentHp = $character.maxHp
+  $character.currentMana = $character.maxMana
+
+  trigger "character:levelUp" { character: $character.name, level: $character.level }
+  return $character
+enddef
+
+@desc "Add experience to character"
+def gainExperience $character $amount
+  math.add $character.experience $amount into $character.experience
+  $expNeeded = $(math.multiply $(math.power $character.level 2) 100)
+
+  log `[$character.name] Gained $amount XP (Total: $character.experience/$expNeeded)`
+
+  if $character.experience >= $expNeeded
+    math.subtract $character.experience $expNeeded into $character.experience
+    levelUp $character into $character
+  endif
+
+  return $character
+enddef
+
+# -----------------------------------------------------------------------------
+# Combat System
+# -----------------------------------------------------------------------------
+
+@desc "Calculate damage with modifiers"
+def calculateDamage $attacker $defender $baseDamage $damageType
+  $finalDamage = $baseDamage
+
+  # Add attacker's attack stat
+  math.add $finalDamage $attacker.attack into $finalDamage
+
+  # Reduce by defender's defense (only for physical)
+  if $damageType == "physical"
+    math.subtract $finalDamage $defender.defense into $finalDamage
+  endif
+
+  # Check for critical hit
+  random.int 1 100 into $critRoll
+  $isCritical = false
+
+  if $critRoll <= $gameConfig.criticalHitChance
+    math.multiply $finalDamage $gameConfig.criticalHitMultiplier into $finalDamage
+    $isCritical = true
+    $attacker.stats.criticalHits = $(math.add $attacker.stats.criticalHits 1)
+  endif
+
+  # Minimum damage is 1
+  if $finalDamage < 1
+    $finalDamage = 1
+  endif
+
+  math.round $finalDamage into $finalDamage
+
+  return { damage: $finalDamage, critical: $isCritical }
+enddef
+
+@desc "Apply damage to a character"
+def applyDamage $character $damage
+  math.subtract $character.currentHp $damage into $character.currentHp
+
+  if $character.currentHp <= 0
+    $character.currentHp = 0
+    $character.isAlive = false
+    trigger "character:defeated" $character.name
+  endif
+
+  $character.stats.damageReceived = $(math.add $character.stats.damageReceived $damage)
+  return $character
+enddef
+
+@desc "Heal a character"
+def healCharacter $character $amount
+  math.add $character.currentHp $amount into $newHp
+
+  if $newHp > $character.maxHp
+    $newHp = $character.maxHp
+  endif
+
+  $character.currentHp = $newHp
+  $character.stats.healingDone = $(math.add $character.stats.healingDone $amount)
+
+  trigger "character:healed" { name: $character.name, amount: $amount, hp: $character.currentHp }
+  return $character
+enddef
+
+@desc "Use a skill in combat"
+def useSkill $attacker $defender $skillName
+  # Find the skill
+  $skill = null
+  for $s in $attacker.skills
+    if $s.name == $skillName
+      $skill = $s
+      break
+    endif
+  endfor
+
+  if $skill == null
+    log `[$attacker.name] Skill not found: $skillName`
+    return { success: false, error: "Skill not found" }
+  endif
+
+  # Check mana
+  if $attacker.currentMana < $skill.manaCost
+    log `[$attacker.name] Not enough mana for $skillName`
+    return { success: false, error: "Not enough mana" }
+  endif
+
+  # Consume mana
+  math.subtract $attacker.currentMana $skill.manaCost into $attacker.currentMana
+
+  # Handle skill type
+  if $skill.type == "healing"
+    healCharacter $attacker $skill.healing into $attacker
+    $logEntry = `[$attacker.name] uses $skillName and heals for $skill.healing HP`
+  else
+    # Calculate and apply damage
+    calculateDamage $attacker $defender $skill.damage $skill.type into $result
+    applyDamage $defender $result.damage into $defender
+    $attacker.stats.damageDealt = $(math.add $attacker.stats.damageDealt $result.damage)
+
+    if $result.critical == true
+      $logEntry = `[$attacker.name] uses $skillName! CRITICAL HIT! $result.damage damage to $defender.name`
+    else
+      $logEntry = `[$attacker.name] uses $skillName for $result.damage damage to $defender.name`
+    endif
+  endif
+
+  log $logEntry
+  array.push $gameState.combatLog $logEntry
+  $gameState.combatLog = $
+
+  return { success: true, attacker: $attacker, defender: $defender }
+enddef
+
+@desc "Basic attack action"
+def basicAttack $attacker $defender
+  calculateDamage $attacker $defender 0 "physical" into $result
+  applyDamage $defender $result.damage into $defender
+  $attacker.stats.damageDealt = $(math.add $attacker.stats.damageDealt $result.damage)
+
+  if $result.critical == true
+    $logEntry = `[$attacker.name] attacks! CRITICAL! $result.damage damage to $defender.name`
+  else
+    $logEntry = `[$attacker.name] attacks for $result.damage damage to $defender.name`
+  endif
+
+  log $logEntry
+  array.push $gameState.combatLog $logEntry
+  $gameState.combatLog = $
+
+  return { attacker: $attacker, defender: $defender }
+enddef
+
+# -----------------------------------------------------------------------------
+# Battle Simulation
+# -----------------------------------------------------------------------------
+
+@desc "Simulate a battle between two characters"
+def simulateBattle $char1 $char2
+  log ""
+  log "==========================================="
+  log `BATTLE: $char1.name ($char1.class) vs $char2.name ($char2.class)`
+  log "==========================================="
+
+  $gameState.combatLog = []
+  $gameState.turn = 0
+
+  # Reset HP for battle
+  $char1.currentHp = $char1.maxHp
+  $char2.currentHp = $char2.maxHp
+  $char1.currentMana = $char1.maxMana
+  $char2.currentMana = $char2.maxMana
+  $char1.isAlive = true
+  $char2.isAlive = true
+
+  # Determine turn order by speed
+  if $char1.speed >= $char2.speed
+    $first = $char1
+    $second = $char2
+  else
+    $first = $char2
+    $second = $char1
+  endif
+
+  log `Turn order: $first.name (Speed: $first.speed) goes first`
+  log ""
+
+  # Battle loop (max 20 turns to prevent infinite loops)
+  for $round in range 1 20
+    $gameState.turn = $round
+    log `--- Round $round ---`
+
+    # First character's turn
+    if $first.isAlive == true && $second.isAlive == true
+      # AI: Use skill if has mana, otherwise basic attack
+      $usedSkill = false
+      if $first.currentMana >= 10
+        array.get $first.skills 0 into $skillToUse
+        if $skillToUse != null && $first.currentMana >= $skillToUse.manaCost
+          useSkill $first $second $skillToUse.name into $skillResult
+          $first = $skillResult.attacker
+          $second = $skillResult.defender
+          $usedSkill = true
+        endif
+      endif
+
+      if $usedSkill != true
+        basicAttack $first $second into $attackResult
+        $first = $attackResult.attacker
+        $second = $attackResult.defender
+      endif
+
+      log `  $second.name HP: $second.currentHp/$second.maxHp`
+    endif
+
+    # Second character's turn (if still alive)
+    if $second.isAlive == true && $first.isAlive == true
+      $usedSkill = false
+      if $second.currentMana >= 10
+        array.get $second.skills 0 into $skillToUse
+        if $skillToUse != null && $second.currentMana >= $skillToUse.manaCost
+          useSkill $second $first $skillToUse.name into $skillResult
+          $second = $skillResult.attacker
+          $first = $skillResult.defender
+          $usedSkill = true
+        endif
+      endif
+
+      if $usedSkill != true
+        basicAttack $second $first into $attackResult
+        $second = $attackResult.attacker
+        $first = $attackResult.defender
+      endif
+
+      log `  $first.name HP: $first.currentHp/$first.maxHp`
+    endif
+
+    # Check for battle end
+    if $first.isAlive != true || $second.isAlive != true
+      break
+    endif
+
+    log ""
+  endfor
+
+  # Determine winner
+  log ""
+  log "==========================================="
+
+  if $char1.isAlive == true
+    $winner = $char1
+    $loser = $char2
+  else
+    $winner = $char2
+    $loser = $char1
+  endif
+
+  log `WINNER: $winner.name!`
+  log "==========================================="
+
+  $winner.stats.battles = $(math.add $winner.stats.battles 1)
+  $winner.stats.victories = $(math.add $winner.stats.victories 1)
+  $loser.stats.battles = $(math.add $loser.stats.battles 1)
+
+  # Award experience
+  gainExperience $winner 100 into $winner
+
+  return {
+    winner: $winner,
+    loser: $loser,
+    turns: $gameState.turn,
+    log: $gameState.combatLog
+  }
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "character:created"
+  log `[Event] Character created: $1.name the $1.class`
+endon
+
+on "character:levelUp"
+  log `[Event] LEVEL UP! $1.character is now level $1.level!`
+endon
+
+on "character:defeated"
+  log `[Event] $1 has been defeated!`
+endon
+
+on "character:healed"
+  log `[Event] $1.name healed for $1.amount (HP: $1.hp)`
+endon
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== RPG Game Simulation ==="
+log ""
+
+# Create characters
+log "--- Creating Characters ---"
+
+createCharacter "Thorin" "warrior" into $warrior
+createCharacter "Gandalf" "mage" into $mage
+createCharacter "Legolas" "rogue" into $rogue
+createCharacter "Arthas" "paladin" into $paladin
+
+# Level up some characters
+log ""
+log "--- Leveling Characters ---"
+
+for $i in range 1 3
+  levelUp $warrior into $warrior
+endfor
+
+for $i in range 1 2
+  levelUp $mage into $mage
+endfor
+
+# Display character stats
+log ""
+log "--- Character Stats ---"
+
+$characters = [$warrior, $mage, $rogue, $paladin]
+for $char in $characters
+  log `$char.name (Lv.$char.level $char.class):`
+  log `  HP: $char.maxHp | Mana: $char.maxMana`
+  log `  ATK: $char.attack | DEF: $char.defense | SPD: $char.speed`
+  log `  Skills: $(array.length $char.skills)`
+endfor
+
+# Simulate battles
+log ""
+log "--- Battle 1: Warrior vs Mage ---"
+simulateBattle $warrior $mage into $battle1
+
+log ""
+log "--- Battle 2: Rogue vs Paladin ---"
+simulateBattle $rogue $paladin into $battle2
+
+# Parallel battle simulation
+log ""
+log "--- Parallel Battles ---"
+
+together
+  do into $pb1
+    createCharacter "Fighter1" "warrior" into $f1
+    createCharacter "Caster1" "mage" into $c1
+    simulateBattle $f1 $c1
+  enddo
+  do into $pb2
+    createCharacter "Fighter2" "rogue" into $f2
+    createCharacter "Tank2" "paladin" into $t2
+    simulateBattle $f2 $t2
+  enddo
+endtogether
+
+log ""
+log "Parallel battle winners: $pb1.winner.name, $pb2.winner.name"
+
+# Final stats
+log ""
+log "--- Final Character Stats ---"
+
+for $char in [$warrior, $mage, $rogue, $paladin]
+  log `$char.name: $char.stats.victories wins, $char.stats.damageDealt total damage, $char.stats.criticalHits crits`
+endfor
+
+log ""
+log "=== All Game Simulation Tests Passed ==="

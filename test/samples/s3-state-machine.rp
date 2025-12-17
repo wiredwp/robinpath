@@ -1,0 +1,494 @@
+# =============================================================================
+# s3-state-machine.rp
+# Finite state machine implementation with transitions, guards, and actions
+# Features: objects, events, functions, conditionals, metadata, decorators
+# =============================================================================
+
+# State Machine Definition
+$stateMachine = {
+  name: "OrderProcessing",
+  currentState: "created",
+  previousState: null,
+  context: {
+    orderId: null,
+    items: [],
+    total: 0,
+    paymentMethod: null,
+    shippingAddress: null,
+    trackingNumber: null
+  },
+  history: [],
+  transitions: 0
+}
+
+# State definitions with metadata
+$states = {
+  created: {
+    name: "created",
+    onEnter: "initOrder",
+    onExit: null,
+    allowedTransitions: ["pending_payment", "cancelled"]
+  },
+  pending_payment: {
+    name: "pending_payment",
+    onEnter: "requestPayment",
+    onExit: null,
+    allowedTransitions: ["paid", "payment_failed", "cancelled"]
+  },
+  paid: {
+    name: "paid",
+    onEnter: "confirmPayment",
+    onExit: null,
+    allowedTransitions: ["processing", "refund_requested"]
+  },
+  payment_failed: {
+    name: "payment_failed",
+    onEnter: "notifyPaymentFailure",
+    onExit: null,
+    allowedTransitions: ["pending_payment", "cancelled"]
+  },
+  processing: {
+    name: "processing",
+    onEnter: "startProcessing",
+    onExit: null,
+    allowedTransitions: ["shipped", "cancelled"]
+  },
+  shipped: {
+    name: "shipped",
+    onEnter: "shipOrder",
+    onExit: null,
+    allowedTransitions: ["delivered", "returned"]
+  },
+  delivered: {
+    name: "delivered",
+    onEnter: "confirmDelivery",
+    onExit: null,
+    allowedTransitions: ["completed", "returned"]
+  },
+  completed: {
+    name: "completed",
+    onEnter: "finalizeOrder",
+    onExit: null,
+    allowedTransitions: []
+  },
+  cancelled: {
+    name: "cancelled",
+    onEnter: "cancelOrder",
+    onExit: null,
+    allowedTransitions: []
+  },
+  refund_requested: {
+    name: "refund_requested",
+    onEnter: "processRefund",
+    onExit: null,
+    allowedTransitions: ["refunded", "paid"]
+  },
+  refunded: {
+    name: "refunded",
+    onEnter: "completeRefund",
+    onExit: null,
+    allowedTransitions: []
+  },
+  returned: {
+    name: "returned",
+    onEnter: "processReturn",
+    onExit: null,
+    allowedTransitions: ["refunded"]
+  }
+}
+
+# Transition guards
+$guards = {
+  canPay: null,
+  canShip: null,
+  canCancel: null
+}
+
+# -----------------------------------------------------------------------------
+# State Action Functions
+# -----------------------------------------------------------------------------
+
+@desc "Initialize a new order"
+def initOrder $context
+  log `[Action:initOrder] Initializing order $context.orderId`
+  $context.createdAt = $(time.now)
+  return $context
+enddef
+
+@desc "Request payment from customer"
+def requestPayment $context
+  log `[Action:requestPayment] Requesting payment of \$$context.total`
+  $context.paymentRequestedAt = $(time.now)
+  trigger "payment:requested" { orderId: $context.orderId, amount: $context.total }
+  return $context
+enddef
+
+@desc "Confirm successful payment"
+def confirmPayment $context
+  log `[Action:confirmPayment] Payment confirmed for order $context.orderId`
+  $context.paidAt = $(time.now)
+  trigger "payment:confirmed" { orderId: $context.orderId }
+  return $context
+enddef
+
+@desc "Handle payment failure"
+def notifyPaymentFailure $context
+  log `[Action:notifyPaymentFailure] Payment failed for order $context.orderId`
+  $context.paymentFailedAt = $(time.now)
+  $context.paymentAttempts = $(math.add ($context.paymentAttempts || 0) 1)
+  trigger "payment:failed" { orderId: $context.orderId, attempts: $context.paymentAttempts }
+  return $context
+enddef
+
+@desc "Start order processing"
+def startProcessing $context
+  log `[Action:startProcessing] Processing order $context.orderId`
+  $context.processingStartedAt = $(time.now)
+  trigger "order:processing" { orderId: $context.orderId }
+  return $context
+enddef
+
+@desc "Ship the order"
+def shipOrder $context
+  $context.trackingNumber = `TRK-$(random.int 100000 999999)`
+  $context.shippedAt = $(time.now)
+  log `[Action:shipOrder] Order shipped with tracking: $context.trackingNumber`
+  trigger "order:shipped" { orderId: $context.orderId, tracking: $context.trackingNumber }
+  return $context
+enddef
+
+@desc "Confirm delivery"
+def confirmDelivery $context
+  log `[Action:confirmDelivery] Order $context.orderId delivered`
+  $context.deliveredAt = $(time.now)
+  trigger "order:delivered" { orderId: $context.orderId }
+  return $context
+enddef
+
+@desc "Finalize completed order"
+def finalizeOrder $context
+  log `[Action:finalizeOrder] Order $context.orderId completed successfully`
+  $context.completedAt = $(time.now)
+  trigger "order:completed" { orderId: $context.orderId }
+  return $context
+enddef
+
+@desc "Cancel the order"
+def cancelOrder $context
+  log `[Action:cancelOrder] Order $context.orderId cancelled`
+  $context.cancelledAt = $(time.now)
+  trigger "order:cancelled" { orderId: $context.orderId }
+  return $context
+enddef
+
+@desc "Process refund request"
+def processRefund $context
+  log `[Action:processRefund] Processing refund for order $context.orderId`
+  $context.refundRequestedAt = $(time.now)
+  trigger "refund:requested" { orderId: $context.orderId, amount: $context.total }
+  return $context
+enddef
+
+@desc "Complete refund"
+def completeRefund $context
+  log `[Action:completeRefund] Refund completed for order $context.orderId`
+  $context.refundedAt = $(time.now)
+  $context.refundedAmount = $context.total
+  trigger "refund:completed" { orderId: $context.orderId, amount: $context.total }
+  return $context
+enddef
+
+@desc "Process product return"
+def processReturn $context
+  log `[Action:processReturn] Processing return for order $context.orderId`
+  $context.returnedAt = $(time.now)
+  trigger "order:returned" { orderId: $context.orderId }
+  return $context
+enddef
+
+# -----------------------------------------------------------------------------
+# State Machine Core Functions
+# -----------------------------------------------------------------------------
+
+@desc "Execute action by name"
+def executeAction $actionName $context
+  if $actionName == "initOrder"
+    initOrder $context
+  elseif $actionName == "requestPayment"
+    requestPayment $context
+  elseif $actionName == "confirmPayment"
+    confirmPayment $context
+  elseif $actionName == "notifyPaymentFailure"
+    notifyPaymentFailure $context
+  elseif $actionName == "startProcessing"
+    startProcessing $context
+  elseif $actionName == "shipOrder"
+    shipOrder $context
+  elseif $actionName == "confirmDelivery"
+    confirmDelivery $context
+  elseif $actionName == "finalizeOrder"
+    finalizeOrder $context
+  elseif $actionName == "cancelOrder"
+    cancelOrder $context
+  elseif $actionName == "processRefund"
+    processRefund $context
+  elseif $actionName == "completeRefund"
+    completeRefund $context
+  elseif $actionName == "processReturn"
+    processReturn $context
+  else
+    return $context
+  endif
+  return $
+enddef
+
+@desc "Check if transition is allowed"
+def canTransition $fromState $toState
+  get $states $fromState into $stateConfig
+
+  if $stateConfig == null
+    log `[Error] Unknown state: $fromState`
+    return false
+  endif
+
+  $allowed = $stateConfig.allowedTransitions
+  for $transition in $allowed
+    if $transition == $toState
+      return true
+    endif
+  endfor
+
+  return false
+enddef
+
+@desc "Perform state transition"
+def transition $toState
+  $fromState = $stateMachine.currentState
+
+  # Check if transition is allowed
+  canTransition $fromState $toState into $isAllowed
+  if $isAllowed != true
+    log `[Error] Transition not allowed: $fromState -> $toState`
+    return { success: false, error: "Transition not allowed" }
+  endif
+
+  log `[FSM] Transitioning: $fromState -> $toState`
+
+  # Execute onExit action for current state
+  get $states $fromState into $currentStateConfig
+  if $currentStateConfig.onExit != null
+    executeAction $currentStateConfig.onExit $stateMachine.context into $stateMachine.context
+  endif
+
+  # Update state
+  $stateMachine.previousState = $fromState
+  $stateMachine.currentState = $toState
+  $stateMachine.transitions = $(math.add $stateMachine.transitions 1)
+
+  # Record in history
+  $historyEntry = {
+    from: $fromState,
+    to: $toState,
+    timestamp: $(time.now),
+    transitionNumber: $stateMachine.transitions
+  }
+  array.push $stateMachine.history $historyEntry
+  $stateMachine.history = $
+
+  # Execute onEnter action for new state
+  get $states $toState into $newStateConfig
+  if $newStateConfig.onEnter != null
+    executeAction $newStateConfig.onEnter $stateMachine.context into $stateMachine.context
+  endif
+
+  trigger "state:changed" { from: $fromState, to: $toState }
+
+  return { success: true, state: $toState }
+enddef
+
+@desc "Get current state info"
+def getCurrentState
+  return {
+    state: $stateMachine.currentState,
+    previous: $stateMachine.previousState,
+    transitions: $stateMachine.transitions,
+    context: $stateMachine.context
+  }
+enddef
+
+@desc "Get transition history"
+def getHistory
+  return $stateMachine.history
+enddef
+
+@desc "Reset state machine"
+def resetStateMachine
+  $stateMachine.currentState = "created"
+  $stateMachine.previousState = null
+  $stateMachine.transitions = 0
+  $stateMachine.history = []
+  $stateMachine.context = {
+    orderId: null,
+    items: [],
+    total: 0,
+    paymentMethod: null,
+    shippingAddress: null,
+    trackingNumber: null
+  }
+  log "[FSM] State machine reset"
+  return $stateMachine
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers for Logging
+# -----------------------------------------------------------------------------
+
+on "state:changed"
+  log `[Event:state:changed] $1.from -> $1.to`
+endon
+
+on "payment:requested"
+  log `[Event:payment:requested] Order $1.orderId, Amount: \$$1.amount`
+endon
+
+on "payment:confirmed"
+  log `[Event:payment:confirmed] Order $1.orderId`
+endon
+
+on "order:completed"
+  log `[Event:order:completed] Order $1.orderId finished successfully`
+endon
+
+# -----------------------------------------------------------------------------
+# Test Scenarios
+# -----------------------------------------------------------------------------
+
+log "=== State Machine Tests ==="
+log ""
+
+# Scenario 1: Happy path - Order to Completion
+log "--- Scenario 1: Happy Path ---"
+
+# Initialize order
+$stateMachine.context.orderId = "ORD-001"
+$stateMachine.context.items = ["Widget A", "Widget B"]
+$stateMachine.context.total = 150
+$stateMachine.context.paymentMethod = "credit_card"
+$stateMachine.context.shippingAddress = "123 Main St"
+
+executeAction "initOrder" $stateMachine.context into $stateMachine.context
+
+# Execute transitions
+transition "pending_payment"
+transition "paid"
+transition "processing"
+transition "shipped"
+transition "delivered"
+transition "completed"
+
+getCurrentState into $finalState1
+log `Final state: $finalState1.state`
+log `Total transitions: $finalState1.transitions`
+log ""
+
+# Scenario 2: Payment failure and retry
+log "--- Scenario 2: Payment Failure & Retry ---"
+
+resetStateMachine
+$stateMachine.context.orderId = "ORD-002"
+$stateMachine.context.total = 250
+
+executeAction "initOrder" $stateMachine.context into $stateMachine.context
+
+transition "pending_payment"
+transition "payment_failed"
+log `Payment attempts: $stateMachine.context.paymentAttempts`
+transition "pending_payment"
+transition "payment_failed"
+log `Payment attempts: $stateMachine.context.paymentAttempts`
+transition "pending_payment"
+transition "paid"
+
+getCurrentState into $state2
+log `Current state after retry: $state2.state`
+log ""
+
+# Scenario 3: Cancellation
+log "--- Scenario 3: Order Cancellation ---"
+
+resetStateMachine
+$stateMachine.context.orderId = "ORD-003"
+$stateMachine.context.total = 75
+
+executeAction "initOrder" $stateMachine.context into $stateMachine.context
+
+transition "pending_payment"
+transition "cancelled"
+
+getCurrentState into $state3
+log `Cancelled order state: $state3.state`
+log ""
+
+# Scenario 4: Refund flow
+log "--- Scenario 4: Refund Flow ---"
+
+resetStateMachine
+$stateMachine.context.orderId = "ORD-004"
+$stateMachine.context.total = 500
+
+executeAction "initOrder" $stateMachine.context into $stateMachine.context
+
+transition "pending_payment"
+transition "paid"
+transition "refund_requested"
+transition "refunded"
+
+getCurrentState into $state4
+log `Refund state: $state4.state`
+log `Refunded amount: \$$state4.context.refundedAmount`
+log ""
+
+# Scenario 5: Invalid transition attempt
+log "--- Scenario 5: Invalid Transition ---"
+
+resetStateMachine
+$stateMachine.context.orderId = "ORD-005"
+
+transition "shipped" into $invalidResult
+log `Invalid transition result: success=$invalidResult.success`
+if $invalidResult.error != null
+  log `Error: $invalidResult.error`
+endif
+log ""
+
+# Scenario 6: Return flow
+log "--- Scenario 6: Return Flow ---"
+
+resetStateMachine
+$stateMachine.context.orderId = "ORD-006"
+$stateMachine.context.total = 300
+
+executeAction "initOrder" $stateMachine.context into $stateMachine.context
+
+# Go through full flow
+transition "pending_payment"
+transition "paid"
+transition "processing"
+transition "shipped"
+transition "delivered"
+transition "returned"
+transition "refunded"
+
+getCurrentState into $state6
+log `Final state after return: $state6.state`
+log ""
+
+# History summary
+log "--- Transition History (Last Order) ---"
+getHistory into $history
+for $entry in $history
+  log `  [$entry.transitionNumber] $entry.from -> $entry.to`
+endfor
+
+log ""
+log "=== All State Machine Tests Passed ==="

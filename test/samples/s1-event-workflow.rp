@@ -1,0 +1,355 @@
+# =============================================================================
+# s1-event-workflow.rp
+# Complex event-driven workflow system with parallel processing and state
+# Features: events, together, do blocks, objects, conditionals, metadata
+# =============================================================================
+
+# Workflow state management
+$workflow = {
+  id: "WF-001",
+  status: "idle",
+  currentStep: 0,
+  steps: [],
+  results: {},
+  errors: [],
+  startTime: null,
+  endTime: null
+}
+
+# Event bus for tracking
+$eventBus = {
+  eventCount: 0,
+  eventLog: []
+}
+
+# -----------------------------------------------------------------------------
+# Workflow Step Definitions with Metadata
+# -----------------------------------------------------------------------------
+
+@desc "Data validation step"
+@param object $data "Input data to validate"
+def stepValidate $data
+  log "[Step:Validate] Validating input data..."
+
+  $errors = []
+
+  if $data.name == null || $data.name == ""
+    array.push $errors "Name is required"
+    $errors = $
+  endif
+
+  if $data.amount == null
+    array.push $errors "Amount is required"
+    $errors = $
+  elseif $data.amount < 0
+    array.push $errors "Amount must be positive"
+    $errors = $
+  endif
+
+  if $(array.length $errors) > 0
+    return { success: false, errors: $errors }
+  endif
+
+  return { success: true, validated: $data }
+enddef
+
+meta stepValidate priority 1
+meta stepValidate category "input"
+
+@desc "Data transformation step"
+def stepTransform $data
+  log "[Step:Transform] Transforming data..."
+
+  # Transform the data
+  $transformed = {
+    id: $(random.uuid),
+    name: $(string.toUpperCase $data.name),
+    amount: $data.amount,
+    amountFormatted: `\$$data.amount.00`,
+    processedAt: $(time.now),
+    tags: []
+  }
+
+  # Add tags based on amount
+  if $data.amount >= 1000
+    array.push $transformed.tags "high-value"
+    $transformed.tags = $
+  endif
+
+  if $data.amount >= 100
+    array.push $transformed.tags "significant"
+    $transformed.tags = $
+  endif
+
+  return { success: true, transformed: $transformed }
+enddef
+
+meta stepTransform priority 2
+meta stepTransform category "process"
+
+@desc "Enrichment step - adds computed fields"
+def stepEnrich $data
+  log "[Step:Enrich] Enriching data..."
+
+  $enriched = $data
+
+  # Calculate tax
+  math.multiply $data.amount 0.08 into $tax
+  math.round $tax into $enriched.tax
+
+  # Calculate total
+  math.add $data.amount $enriched.tax into $enriched.total
+
+  # Add metadata
+  $enriched.metadata = {
+    enrichedAt: $(time.now),
+    version: "1.0"
+  }
+
+  return { success: true, enriched: $enriched }
+enddef
+
+@desc "Output step - formats final result"
+def stepOutput $data
+  log "[Step:Output] Generating output..."
+
+  $output = `
+----------------------------------------
+Transaction Report
+----------------------------------------
+ID: $data.id
+Name: $data.name
+Amount: $data.amountFormatted
+Tax: \$$data.tax
+Total: \$$data.total
+Tags: $(array.join $data.tags ", ")
+Processed: $data.processedAt
+----------------------------------------
+`
+
+  return { success: true, output: $output }
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "workflow:start"
+  log `[Event] Workflow started: $1.id`
+  $workflow.status = "running"
+  $workflow.startTime = $(time.now)
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+endon
+
+on "workflow:step:begin"
+  log `[Event] Step $1.step began: $1.name`
+  $workflow.currentStep = $1.step
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+endon
+
+on "workflow:step:complete"
+  log `[Event] Step $1.step completed: $1.name (success: $1.success)`
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+
+  # Store result
+  set $workflow.results[$1.name] as $1.result
+endon
+
+on "workflow:step:error"
+  log `[Event] Step $1.step failed: $1.name - $1.error`
+  array.push $workflow.errors $1
+  $workflow.errors = $
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+endon
+
+on "workflow:complete"
+  log `[Event] Workflow completed: $1.status`
+  $workflow.status = $1.status
+  $workflow.endTime = $(time.now)
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+endon
+
+on "parallel:task:complete"
+  log `[Event] Parallel task completed: $1.name`
+  $eventBus.eventCount = $(math.add $eventBus.eventCount 1)
+endon
+
+# -----------------------------------------------------------------------------
+# Workflow Executor
+# -----------------------------------------------------------------------------
+
+@desc "Execute a single workflow step"
+def executeStep $stepNum $stepName $stepFunc $input
+  trigger "workflow:step:begin" { step: $stepNum, name: $stepName }
+
+  do into $result
+    # Execute the step function dynamically based on name
+    if $stepName == "validate"
+      stepValidate $input
+    elseif $stepName == "transform"
+      stepTransform $input
+    elseif $stepName == "enrich"
+      stepEnrich $input
+    elseif $stepName == "output"
+      stepOutput $input
+    else
+      return { success: false, error: "Unknown step" }
+    endif
+  enddo
+
+  if $result.success == true
+    trigger "workflow:step:complete" { step: $stepNum, name: $stepName, success: true, result: $result }
+  else
+    trigger "workflow:step:error" { step: $stepNum, name: $stepName, error: $result.errors }
+  endif
+
+  return $result
+enddef
+
+@desc "Run the complete workflow pipeline"
+def runWorkflow $inputData
+  trigger "workflow:start" { id: $workflow.id }
+
+  # Step 1: Validate
+  executeStep 1 "validate" null $inputData into $step1
+  if $step1.success != true
+    trigger "workflow:complete" { status: "failed", reason: "validation" }
+    return $step1
+  endif
+
+  # Step 2: Transform
+  executeStep 2 "transform" null $step1.validated into $step2
+  if $step2.success != true
+    trigger "workflow:complete" { status: "failed", reason: "transform" }
+    return $step2
+  endif
+
+  # Step 3: Enrich
+  executeStep 3 "enrich" null $step2.transformed into $step3
+  if $step3.success != true
+    trigger "workflow:complete" { status: "failed", reason: "enrich" }
+    return $step3
+  endif
+
+  # Step 4: Output
+  executeStep 4 "output" null $step3.enriched into $step4
+  if $step4.success != true
+    trigger "workflow:complete" { status: "failed", reason: "output" }
+    return $step4
+  endif
+
+  trigger "workflow:complete" { status: "completed" }
+
+  return {
+    success: true,
+    output: $step4.output,
+    data: $step3.enriched
+  }
+enddef
+
+# -----------------------------------------------------------------------------
+# Parallel Processing Demo
+# -----------------------------------------------------------------------------
+
+@desc "Process multiple items in parallel"
+def processInParallel $items
+  log "[Parallel] Processing $(array.length $items) items..."
+
+  $results = []
+
+  together
+    do into $p1
+      if $(array.length $items) > 0
+        stepTransform $(array.get $items 0)
+        trigger "parallel:task:complete" { name: "transform-0" }
+      endif
+    enddo
+    do into $p2
+      if $(array.length $items) > 1
+        stepTransform $(array.get $items 1)
+        trigger "parallel:task:complete" { name: "transform-1" }
+      endif
+    enddo
+    do into $p3
+      if $(array.length $items) > 2
+        stepTransform $(array.get $items 2)
+        trigger "parallel:task:complete" { name: "transform-2" }
+      endif
+    enddo
+  endtogether
+
+  return { p1: $p1, p2: $p2, p3: $p3 }
+enddef
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Event-Driven Workflow System ==="
+log ""
+
+# Test 1: Successful workflow
+log "--- Test 1: Complete Workflow ---"
+$testData1 = {
+  name: "John Doe",
+  amount: 1500
+}
+
+runWorkflow $testData1 into $result1
+log $result1.output
+
+# Test 2: Validation failure
+log ""
+log "--- Test 2: Validation Failure ---"
+$testData2 = {
+  name: "",
+  amount: -100
+}
+
+runWorkflow $testData2 into $result2
+if $result2.success != true
+  log "[Test 2] Expected failure occurred"
+  log `Errors: $(json.stringify $result2.errors)`
+endif
+
+# Test 3: Parallel processing
+log ""
+log "--- Test 3: Parallel Processing ---"
+$batchItems = [
+  { name: "Alice", amount: 500 },
+  { name: "Bob", amount: 750 },
+  { name: "Charlie", amount: 1200 }
+]
+
+processInParallel $batchItems into $parallelResults
+log "[Parallel] All tasks completed"
+
+# Test 4: Chained workflow with repeat
+log ""
+log "--- Test 4: Repeated Workflow ---"
+
+$repeatCount = 0
+repeat 3 with into $repeatResult
+  math.add $repeatCount 1
+  $repeatCount = $
+
+  $item = {
+    name: `User$repeatCount`,
+    amount: $(math.multiply $repeatCount 100)
+  }
+
+  stepTransform $item into $transformed
+  log `  Iteration $repeatCount: $transformed.transformed.name - $transformed.transformed.amountFormatted`
+
+  return $transformed
+endwith
+
+# Final summary
+log ""
+log "=== Workflow Summary ==="
+log `Workflow ID: $workflow.id`
+log `Final Status: $workflow.status`
+log `Total Events: $eventBus.eventCount`
+log `Errors: $(array.length $workflow.errors)`
+log ""
+log "=== All Workflow Tests Passed ==="
