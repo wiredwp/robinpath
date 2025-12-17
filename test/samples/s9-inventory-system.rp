@@ -1,0 +1,645 @@
+# =============================================================================
+# s9-inventory-system.rp
+# Inventory management system with transactions, stock tracking, and reporting
+# Features: objects, arrays, events, functions, together, metadata, decorators
+# =============================================================================
+
+# Inventory database
+$inventory = {
+  products: {},
+  categories: {},
+  warehouses: {},
+  transactions: [],
+  alerts: []
+}
+
+# System configuration
+$config = {
+  lowStockThreshold: 10,
+  criticalStockThreshold: 5,
+  maxTransactionHistory: 1000,
+  enableAlerts: true
+}
+
+# Transaction types
+$transactionTypes = {
+  inbound: "INBOUND",
+  outbound: "OUTBOUND",
+  transfer: "TRANSFER",
+  adjustment: "ADJUSTMENT",
+  return: "RETURN"
+}
+
+# -----------------------------------------------------------------------------
+# Product Management
+# -----------------------------------------------------------------------------
+
+@desc "Add a new product to inventory"
+@param string $sku "Product SKU"
+@param string $name "Product name"
+@param number $price "Unit price"
+@param string $category "Product category"
+def addProduct $sku $name $price $category
+  if $inventory.products[$sku] != null
+    return { success: false, error: "Product already exists" }
+  endif
+
+  $product = {
+    sku: $sku,
+    name: $name,
+    price: $price,
+    category: $category,
+    totalStock: 0,
+    reservedStock: 0,
+    availableStock: 0,
+    stockByWarehouse: {},
+    createdAt: $(time.now),
+    updatedAt: $(time.now),
+    metadata: {}
+  }
+
+  $inventory.products[$sku] = $product
+
+  # Add to category
+  if $inventory.categories[$category] == null
+    $inventory.categories[$category] = []
+  endif
+  array.push $inventory.categories[$category] $sku
+  $inventory.categories[$category] = $
+
+  trigger "product:added" $product
+  return { success: true, product: $product }
+enddef
+
+meta addProduct module "inventory"
+meta addProduct operation "create"
+
+@desc "Update product information"
+def updateProduct $sku $updates
+  if $inventory.products[$sku] == null
+    return { success: false, error: "Product not found" }
+  endif
+
+  $product = $inventory.products[$sku]
+
+  keys $updates into $updateKeys
+  for $key in $updateKeys
+    get $updates $key into $value
+    if $key != "sku" && $key != "totalStock" && $key != "stockByWarehouse"
+      set $product[$key] as $value
+    endif
+  endfor
+
+  $product.updatedAt = $(time.now)
+
+  trigger "product:updated" { sku: $sku, updates: $updates }
+  return { success: true, product: $product }
+enddef
+
+@desc "Get product by SKU"
+def getProduct $sku
+  return $inventory.products[$sku]
+enddef
+
+# -----------------------------------------------------------------------------
+# Warehouse Management
+# -----------------------------------------------------------------------------
+
+@desc "Register a warehouse"
+def addWarehouse $code $name $location
+  if $inventory.warehouses[$code] != null
+    return { success: false, error: "Warehouse already exists" }
+  endif
+
+  $warehouse = {
+    code: $code,
+    name: $name,
+    location: $location,
+    capacity: 10000,
+    currentStock: 0,
+    isActive: true,
+    createdAt: $(time.now)
+  }
+
+  $inventory.warehouses[$code] = $warehouse
+  trigger "warehouse:added" $warehouse
+  return { success: true, warehouse: $warehouse }
+enddef
+
+@desc "Get warehouse info"
+def getWarehouse $code
+  return $inventory.warehouses[$code]
+enddef
+
+# -----------------------------------------------------------------------------
+# Stock Operations
+# -----------------------------------------------------------------------------
+
+@desc "Record stock inbound"
+def stockInbound $sku $warehouseCode $quantity $reference
+  $product = $inventory.products[$sku]
+  $warehouse = $inventory.warehouses[$warehouseCode]
+
+  if $product == null
+    return { success: false, error: "Product not found" }
+  endif
+
+  if $warehouse == null
+    return { success: false, error: "Warehouse not found" }
+  endif
+
+  if $quantity <= 0
+    return { success: false, error: "Quantity must be positive" }
+  endif
+
+  # Update product stock
+  math.add $product.totalStock $quantity into $product.totalStock
+  math.add $product.availableStock $quantity into $product.availableStock
+
+  # Update warehouse stock
+  if $product.stockByWarehouse[$warehouseCode] == null
+    $product.stockByWarehouse[$warehouseCode] = 0
+  endif
+  math.add $product.stockByWarehouse[$warehouseCode] $quantity into $product.stockByWarehouse[$warehouseCode]
+
+  # Update warehouse total
+  math.add $warehouse.currentStock $quantity into $warehouse.currentStock
+
+  $product.updatedAt = $(time.now)
+
+  # Record transaction
+  $txn = {
+    id: $(random.uuid),
+    type: "INBOUND",
+    sku: $sku,
+    warehouse: $warehouseCode,
+    quantity: $quantity,
+    reference: $reference,
+    timestamp: $(time.now),
+    balanceAfter: $product.totalStock
+  }
+
+  array.push $inventory.transactions $txn
+  $inventory.transactions = $
+
+  trigger "stock:inbound" $txn
+  return { success: true, transaction: $txn, newStock: $product.totalStock }
+enddef
+
+@desc "Record stock outbound"
+def stockOutbound $sku $warehouseCode $quantity $reference
+  $product = $inventory.products[$sku]
+  $warehouse = $inventory.warehouses[$warehouseCode]
+
+  if $product == null
+    return { success: false, error: "Product not found" }
+  endif
+
+  if $warehouse == null
+    return { success: false, error: "Warehouse not found" }
+  endif
+
+  # Check available stock
+  if $product.stockByWarehouse[$warehouseCode] == null
+    $product.stockByWarehouse[$warehouseCode] = 0
+  endif
+
+  if $product.stockByWarehouse[$warehouseCode] < $quantity
+    return { success: false, error: "Insufficient stock in warehouse" }
+  endif
+
+  # Update product stock
+  math.subtract $product.totalStock $quantity into $product.totalStock
+  math.subtract $product.availableStock $quantity into $product.availableStock
+  math.subtract $product.stockByWarehouse[$warehouseCode] $quantity into $product.stockByWarehouse[$warehouseCode]
+
+  # Update warehouse total
+  math.subtract $warehouse.currentStock $quantity into $warehouse.currentStock
+
+  $product.updatedAt = $(time.now)
+
+  # Record transaction
+  $txn = {
+    id: $(random.uuid),
+    type: "OUTBOUND",
+    sku: $sku,
+    warehouse: $warehouseCode,
+    quantity: $quantity,
+    reference: $reference,
+    timestamp: $(time.now),
+    balanceAfter: $product.totalStock
+  }
+
+  array.push $inventory.transactions $txn
+  $inventory.transactions = $
+
+  trigger "stock:outbound" $txn
+
+  # Check for low stock alert
+  if $config.enableAlerts == true
+    if $product.totalStock <= $config.criticalStockThreshold
+      trigger "alert:critical" { sku: $sku, stock: $product.totalStock }
+    elseif $product.totalStock <= $config.lowStockThreshold
+      trigger "alert:lowStock" { sku: $sku, stock: $product.totalStock }
+    endif
+  endif
+
+  return { success: true, transaction: $txn, newStock: $product.totalStock }
+enddef
+
+@desc "Transfer stock between warehouses"
+def stockTransfer $sku $fromWarehouse $toWarehouse $quantity $reference
+  $product = $inventory.products[$sku]
+  $srcWarehouse = $inventory.warehouses[$fromWarehouse]
+  $dstWarehouse = $inventory.warehouses[$toWarehouse]
+
+  if $product == null || $srcWarehouse == null || $dstWarehouse == null
+    return { success: false, error: "Invalid product or warehouse" }
+  endif
+
+  # Check source stock
+  if $product.stockByWarehouse[$fromWarehouse] == null
+    $product.stockByWarehouse[$fromWarehouse] = 0
+  endif
+
+  if $product.stockByWarehouse[$fromWarehouse] < $quantity
+    return { success: false, error: "Insufficient stock in source warehouse" }
+  endif
+
+  # Perform transfer
+  math.subtract $product.stockByWarehouse[$fromWarehouse] $quantity into $product.stockByWarehouse[$fromWarehouse]
+
+  if $product.stockByWarehouse[$toWarehouse] == null
+    $product.stockByWarehouse[$toWarehouse] = 0
+  endif
+  math.add $product.stockByWarehouse[$toWarehouse] $quantity into $product.stockByWarehouse[$toWarehouse]
+
+  # Update warehouse totals
+  math.subtract $srcWarehouse.currentStock $quantity into $srcWarehouse.currentStock
+  math.add $dstWarehouse.currentStock $quantity into $dstWarehouse.currentStock
+
+  $product.updatedAt = $(time.now)
+
+  # Record transaction
+  $txn = {
+    id: $(random.uuid),
+    type: "TRANSFER",
+    sku: $sku,
+    fromWarehouse: $fromWarehouse,
+    toWarehouse: $toWarehouse,
+    quantity: $quantity,
+    reference: $reference,
+    timestamp: $(time.now)
+  }
+
+  array.push $inventory.transactions $txn
+  $inventory.transactions = $
+
+  trigger "stock:transfer" $txn
+  return { success: true, transaction: $txn }
+enddef
+
+@desc "Reserve stock for order"
+def reserveStock $sku $quantity $orderId
+  $product = $inventory.products[$sku]
+
+  if $product == null
+    return { success: false, error: "Product not found" }
+  endif
+
+  if $product.availableStock < $quantity
+    return { success: false, error: "Insufficient available stock" }
+  endif
+
+  math.subtract $product.availableStock $quantity into $product.availableStock
+  math.add $product.reservedStock $quantity into $product.reservedStock
+
+  trigger "stock:reserved" { sku: $sku, quantity: $quantity, orderId: $orderId }
+  return { success: true, reserved: $quantity, availableStock: $product.availableStock }
+enddef
+
+@desc "Release reserved stock"
+def releaseReservation $sku $quantity $orderId
+  $product = $inventory.products[$sku]
+
+  if $product == null
+    return { success: false, error: "Product not found" }
+  endif
+
+  if $product.reservedStock < $quantity
+    $quantity = $product.reservedStock  # Release only what's reserved
+  endif
+
+  math.add $product.availableStock $quantity into $product.availableStock
+  math.subtract $product.reservedStock $quantity into $product.reservedStock
+
+  trigger "stock:released" { sku: $sku, quantity: $quantity, orderId: $orderId }
+  return { success: true, released: $quantity }
+enddef
+
+# -----------------------------------------------------------------------------
+# Reporting
+# -----------------------------------------------------------------------------
+
+@desc "Get stock levels for all products"
+def getStockReport
+  $report = []
+  keys $inventory.products into $skus
+
+  for $sku in $skus
+    get $inventory.products $sku into $product
+    array.push $report {
+      sku: $product.sku,
+      name: $product.name,
+      totalStock: $product.totalStock,
+      available: $product.availableStock,
+      reserved: $product.reservedStock,
+      status: $(if $product.totalStock <= $config.criticalStockThreshold then "CRITICAL" elseif $product.totalStock <= $config.lowStockThreshold then "LOW" else "OK" endif)
+    }
+    $report = $
+  endfor
+
+  return $report
+enddef
+
+@desc "Get warehouse stock summary"
+def getWarehouseReport $warehouseCode
+  $warehouse = $inventory.warehouses[$warehouseCode]
+
+  if $warehouse == null
+    return null
+  endif
+
+  $products = []
+  keys $inventory.products into $skus
+
+  for $sku in $skus
+    get $inventory.products $sku into $product
+    if $product.stockByWarehouse[$warehouseCode] != null && $product.stockByWarehouse[$warehouseCode] > 0
+      array.push $products {
+        sku: $sku,
+        name: $product.name,
+        quantity: $product.stockByWarehouse[$warehouseCode]
+      }
+      $products = $
+    endif
+  endfor
+
+  return {
+    warehouse: $warehouse,
+    products: $products,
+    productCount: $(array.length $products)
+  }
+enddef
+
+@desc "Get transaction history"
+def getTransactionHistory $limit
+  $len = $(array.length $inventory.transactions)
+
+  if $limit > $len
+    $limit = $len
+  endif
+
+  math.subtract $len $limit into $start
+  array.slice $inventory.transactions $start $len
+  return $
+enddef
+
+@desc "Calculate inventory value"
+def calculateInventoryValue
+  $totalValue = 0
+  keys $inventory.products into $skus
+
+  for $sku in $skus
+    get $inventory.products $sku into $product
+    math.multiply $product.price $product.totalStock into $productValue
+    math.add $totalValue $productValue into $totalValue
+  endfor
+
+  return $totalValue
+enddef
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+
+on "product:added"
+  log `[Inventory] Product added: $1.sku - $1.name`
+endon
+
+on "warehouse:added"
+  log `[Inventory] Warehouse added: $1.code - $1.name`
+endon
+
+on "stock:inbound"
+  log `[Stock] INBOUND: $1.quantity units of $1.sku to $1.warehouse`
+endon
+
+on "stock:outbound"
+  log `[Stock] OUTBOUND: $1.quantity units of $1.sku from $1.warehouse`
+endon
+
+on "stock:transfer"
+  log `[Stock] TRANSFER: $1.quantity units of $1.sku from $1.fromWarehouse to $1.toWarehouse`
+endon
+
+on "stock:reserved"
+  log `[Stock] RESERVED: $1.quantity units of $1.sku for order $1.orderId`
+endon
+
+on "stock:released"
+  log `[Stock] RELEASED: $1.quantity units of $1.sku from order $1.orderId`
+endon
+
+on "alert:lowStock"
+  log `[ALERT] LOW STOCK: $1.sku has only $1.stock units remaining`
+  array.push $inventory.alerts { type: "lowStock", sku: $1.sku, stock: $1.stock, time: $(time.now) }
+  $inventory.alerts = $
+endon
+
+on "alert:critical"
+  log `[ALERT] CRITICAL STOCK: $1.sku has only $1.stock units remaining!`
+  array.push $inventory.alerts { type: "critical", sku: $1.sku, stock: $1.stock, time: $(time.now) }
+  $inventory.alerts = $
+endon
+
+# -----------------------------------------------------------------------------
+# Test Execution
+# -----------------------------------------------------------------------------
+
+log "=== Inventory Management System Tests ==="
+log ""
+
+# Setup: Add warehouses
+log "--- Setting Up Warehouses ---"
+
+addWarehouse "WH-NYC" "New York Warehouse" "New York, NY"
+addWarehouse "WH-LAX" "Los Angeles Warehouse" "Los Angeles, CA"
+addWarehouse "WH-CHI" "Chicago Warehouse" "Chicago, IL"
+
+# Setup: Add products
+log ""
+log "--- Adding Products ---"
+
+addProduct "SKU001" "Laptop Pro 15" 1299.99 "Electronics"
+addProduct "SKU002" "Wireless Mouse" 49.99 "Electronics"
+addProduct "SKU003" "USB-C Hub" 79.99 "Electronics"
+addProduct "SKU004" "Mechanical Keyboard" 149.99 "Electronics"
+addProduct "SKU005" "Monitor Stand" 89.99 "Accessories"
+
+# Test 1: Stock inbound
+log ""
+log "--- Test 1: Stock Inbound ---"
+
+stockInbound "SKU001" "WH-NYC" 50 "PO-001"
+stockInbound "SKU001" "WH-LAX" 30 "PO-001"
+stockInbound "SKU002" "WH-NYC" 100 "PO-002"
+stockInbound "SKU002" "WH-CHI" 75 "PO-002"
+stockInbound "SKU003" "WH-LAX" 60 "PO-003"
+stockInbound "SKU004" "WH-NYC" 40 "PO-004"
+stockInbound "SKU005" "WH-CHI" 25 "PO-005"
+
+getProduct "SKU001" into $laptop
+log `SKU001 total stock: $laptop.totalStock`
+
+# Test 2: Stock outbound
+log ""
+log "--- Test 2: Stock Outbound ---"
+
+stockOutbound "SKU001" "WH-NYC" 5 "SO-001"
+stockOutbound "SKU002" "WH-NYC" 20 "SO-002"
+stockOutbound "SKU003" "WH-LAX" 15 "SO-003"
+
+getProduct "SKU001" into $laptopAfter
+log `SKU001 stock after outbound: $laptopAfter.totalStock`
+
+# Test 3: Stock transfer
+log ""
+log "--- Test 3: Stock Transfer ---"
+
+stockTransfer "SKU001" "WH-NYC" "WH-CHI" 10 "TR-001"
+stockTransfer "SKU002" "WH-CHI" "WH-LAX" 25 "TR-002"
+
+getProduct "SKU001" into $laptopTransfer
+log `SKU001 total stock (unchanged): $laptopTransfer.totalStock`
+log `SKU001 by warehouse: NYC=$laptopTransfer.stockByWarehouse.WH-NYC, LAX=$laptopTransfer.stockByWarehouse.WH-LAX, CHI=$laptopTransfer.stockByWarehouse.WH-CHI`
+
+# Test 4: Stock reservation
+log ""
+log "--- Test 4: Stock Reservation ---"
+
+reserveStock "SKU002" 30 "ORD-001" into $reserveResult
+getProduct "SKU002" into $mouseAfterReserve
+log `SKU002 after reservation: Available=$mouseAfterReserve.availableStock, Reserved=$mouseAfterReserve.reservedStock`
+
+releaseReservation "SKU002" 10 "ORD-001" into $releaseResult
+getProduct "SKU002" into $mouseAfterRelease
+log `SKU002 after partial release: Available=$mouseAfterRelease.availableStock, Reserved=$mouseAfterRelease.reservedStock`
+
+# Test 5: Low stock alerts
+log ""
+log "--- Test 5: Low Stock Alerts ---"
+
+# Reduce SKU005 to trigger alerts
+stockOutbound "SKU005" "WH-CHI" 18 "SO-004"
+
+getProduct "SKU005" into $standAfter
+log `SKU005 stock: $standAfter.totalStock (should trigger low stock alert)`
+
+# Test 6: Parallel operations
+log ""
+log "--- Test 6: Parallel Operations ---"
+
+together
+  do into $po1
+    stockInbound "SKU001" "WH-NYC" 20 "PO-PARALLEL-1"
+  enddo
+  do into $po2
+    stockInbound "SKU002" "WH-LAX" 30 "PO-PARALLEL-2"
+  enddo
+  do into $po3
+    stockInbound "SKU003" "WH-CHI" 40 "PO-PARALLEL-3"
+  enddo
+endtogether
+
+log `Parallel inbound results: SKU001=$po1.newStock, SKU002=$po2.newStock, SKU003=$po3.newStock`
+
+# Test 7: Reports
+log ""
+log "--- Test 7: Inventory Reports ---"
+
+log ""
+log "Stock Report:"
+getStockReport into $stockReport
+for $item in $stockReport
+  log `  $item.sku ($item.name): $item.totalStock units [$item.status]`
+endfor
+
+log ""
+log "NYC Warehouse Report:"
+getWarehouseReport "WH-NYC" into $nycReport
+log `  Products: $nycReport.productCount`
+log `  Total stock: $nycReport.warehouse.currentStock`
+
+log ""
+log "Inventory Value:"
+calculateInventoryValue into $totalValue
+log `  Total value: \$$totalValue`
+
+# Test 8: Transaction history
+log ""
+log "--- Test 8: Transaction History ---"
+
+getTransactionHistory 5 into $recentTxns
+log `Last 5 transactions:`
+for $txn in $recentTxns
+  log `  $txn.type: $txn.sku - $txn.quantity units`
+endfor
+
+# Test 9: Complex order fulfillment
+log ""
+log "--- Test 9: Order Fulfillment Flow ---"
+
+$orderItems = [
+  { sku: "SKU001", qty: 2 },
+  { sku: "SKU002", qty: 5 },
+  { sku: "SKU004", qty: 1 }
+]
+
+log "Processing order ORD-COMPLEX..."
+
+# Reserve all items
+$reservations = []
+for $item in $orderItems
+  reserveStock $item.sku $item.qty "ORD-COMPLEX" into $res
+  array.push $reservations { sku: $item.sku, success: $res.success }
+  $reservations = $
+endfor
+
+log "Reservations complete"
+
+# Ship items (outbound from NYC)
+for $item in $orderItems
+  stockOutbound $item.sku "WH-NYC" $item.qty "ORD-COMPLEX-SHIP"
+endfor
+
+# Release remaining reservations
+for $item in $orderItems
+  releaseReservation $item.sku $item.qty "ORD-COMPLEX"
+endfor
+
+log "Order fulfilled successfully"
+
+# Summary
+log ""
+log "=== Inventory System Summary ==="
+log `Products: $(array.length $(keys $inventory.products))`
+log `Warehouses: $(array.length $(keys $inventory.warehouses))`
+log `Transactions: $(array.length $inventory.transactions)`
+log `Alerts: $(array.length $inventory.alerts)`
+
+calculateInventoryValue into $finalValue
+log `Current inventory value: \$$finalValue`
+
+log ""
+log "=== All Inventory System Tests Passed ==="
