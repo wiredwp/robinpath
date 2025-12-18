@@ -1460,11 +1460,13 @@ export class RobinPath {
                 const ifBlockResult: any = {
                     ...base,
                     condition: stmt.condition,
+                    conditionExpr: stmt.condition,
                     thenBranch: stmt.thenBranch.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                 };
                 if (stmt.elseifBranches && stmt.elseifBranches.length > 0) {
                     ifBlockResult.elseifBranches = stmt.elseifBranches.map((branch: { condition: Expression; body: Statement[] }) => ({
                         condition: branch.condition,
+                        conditionExpr: branch.condition,
                         body: branch.body.map((s: Statement) => this.serializeStatement(s, currentModuleContext))
                     }));
                 }

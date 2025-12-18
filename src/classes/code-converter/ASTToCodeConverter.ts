@@ -1727,15 +1727,6 @@ export class PatchPlanner {
             }
         }
         
-        const nodeStartOffset = this.lineIndex.offsetAt(
-            extractStartRow,
-            extractStartCol,
-            false
-        );
-        const nodeEndOffset = this.lineIndex.lineEndOffset(node.codePos.endRow);
-        const originalCode = this.originalScript.substring(nodeStartOffset, nodeEndOffset);
-        const originalLines = originalCode.split('\n');
-        
         // Extract original indentation from the first line (which might be a decorator)
         const originalLine = this.lineIndex.getLine(extractStartRow);
         const originalIndent = originalLine.substring(0, extractStartCol);
@@ -1750,27 +1741,20 @@ export class PatchPlanner {
         
         // Apply original indentation and spacing patterns to the generated code
         const lines = newNodeCode.split('\n');
+        // Apply original indentation to all lines of the generated code
+        // We use originalIndent (from line 0) as the base, and prepend it to every line.
+        // Since Printer.printNode(node, { indentLevel: 0 }) already produced the internal
+        // indentation structure of the node, this correctly preserves both the base
+        // position and the internal indentation.
         const indentedLines: string[] = [];
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index];
-            if (index === 0) {
-                // First line: use original indentation
-                indentedLines.push(originalIndent + line.trimStart());
-            } else if (line.trim() === '') {
-                // Blank line: keep as is
+            if (line.trim() === '') {
+                // Blank line: keep as is (don't add indentation to empty lines)
                 indentedLines.push(line);
-            } else if (index < originalLines.length) {
-                // Use original indentation for this line if available
-                const originalLineContent = originalLines[index];
-                const originalLineIndent = originalLineContent.match(/^(\s*)/)?.[1] || '';
-                indentedLines.push(originalLineIndent + line.trimStart());
             } else {
-                // New line not in original - preserve relative indentation
-                // Use the same indentation as the previous line
-                const prevLine: string = indentedLines[index - 1] || '';
-                const prevIndent: string = prevLine.match(/^(\s*)/)?.[1] || '';
-                // Add standard indentation increment (2 spaces) for nested content
-                indentedLines.push(prevIndent + '  ' + line.trimStart());
+                // Prepend the base indentation from the original first line
+                indentedLines.push(originalIndent + line);
             }
         }
         

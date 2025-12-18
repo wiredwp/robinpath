@@ -27,7 +27,6 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
     // Print then branch with increased indentation
     if (node.thenBranch && Array.isArray(node.thenBranch)) {
         const bodyIndent = ctx.indentLevel + 1;
-        writer.indent(bodyIndent);
         
         for (const stmt of node.thenBranch) {
             emitLeadingComments(stmt, writer, ctx, bodyIndent);
@@ -35,20 +34,16 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
 
             const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
             if (stmtCode) {
-                // The stmtCode already has the content, just need to ensure proper line ending
-                const trimmed = stmtCode.trimEnd();
-                writer.pushLine(trimmed);
+                // Use writer.push instead of pushLine to avoid double indentation,
+                // as stmtCode already contains the required indentation.
+                writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
             }
 
             const trailingBlankLines = (stmt as any)?.trailingBlankLines;
             if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
-                for (let i = 0; i < trailingBlankLines; i++) {
-                    writer.pushBlankLine();
-                }
+                writer.push('\n'.repeat(trailingBlankLines));
             }
         }
-        
-        writer.indent(ctx.indentLevel);
     }
 
     // Print elseif branches
@@ -63,7 +58,6 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
             
             if (elseifBranch.body && Array.isArray(elseifBranch.body)) {
                 const bodyIndent = ctx.indentLevel + 1;
-                writer.indent(bodyIndent);
                 
                 for (const stmt of elseifBranch.body) {
                     emitLeadingComments(stmt, writer, ctx, bodyIndent);
@@ -71,19 +65,14 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
 
                     const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
                     if (stmtCode) {
-                        const trimmed = stmtCode.trimEnd();
-                        writer.pushLine(trimmed);
+                        writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
                     }
 
                     const trailingBlankLines = (stmt as any)?.trailingBlankLines;
                     if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
-                        for (let i = 0; i < trailingBlankLines; i++) {
-                            writer.pushBlankLine();
-                        }
+                        writer.push('\n'.repeat(trailingBlankLines));
                     }
                 }
-                
-                writer.indent(ctx.indentLevel);
             }
         }
     }
@@ -93,7 +82,6 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
         writer.pushLine('else');
         
         const bodyIndent = ctx.indentLevel + 1;
-        writer.indent(bodyIndent);
         
         for (const stmt of node.elseBranch) {
             emitLeadingComments(stmt, writer, ctx, bodyIndent);
@@ -101,19 +89,14 @@ export function printIfBlock(node: any, writer: Writer, ctx: PrintContext): void
 
             const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
             if (stmtCode) {
-                const trimmed = stmtCode.trimEnd();
-                writer.pushLine(trimmed);
+                writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
             }
 
             const trailingBlankLines = (stmt as any)?.trailingBlankLines;
             if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
-                for (let i = 0; i < trailingBlankLines; i++) {
-                    writer.pushBlankLine();
-                }
+                writer.push('\n'.repeat(trailingBlankLines));
             }
         }
-        
-        writer.indent(ctx.indentLevel);
     }
 
     writer.pushLine('endif');

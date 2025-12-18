@@ -46,7 +46,7 @@ export function printDefine(node: any, writer: Writer, ctx: PrintContext): void 
                     writer.pushBlankLine();
                 }
             } else {
-                emitBlankLineBetweenStatements(prevStmt, stmt, writer);
+            emitBlankLineBetweenStatements(prevStmt, stmt, writer);
             }
             
             // Emit leading comments
