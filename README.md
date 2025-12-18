@@ -652,16 +652,25 @@ endif
 
 **For loops:**
 ```robinpath
-for $i in range 1 5
+# Iterate over a range
+for $i from 1 to 5
   log "Iteration:" $i
 endfor
-```
 
-**For loop with array:**
-```robinpath
-$numbers = range 10 12
-for $num in $numbers
-  log "Number:" $num
+# Iterate with custom step and key (index)
+for $a from 0 to 10 step 2 key $index
+  log "value: " + $a + ", index: " + $index
+endfor
+
+# Range parameters can be in any order
+for $x by 5 to 100 from 0
+  log $x
+endfor
+
+# Iterate over an array
+$numbers = [10, 11, 12]
+for $num in $numbers key $i
+  log "Number " + $i + ": " + $num
 endfor
 ```
 

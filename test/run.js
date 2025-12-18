@@ -9,21 +9,28 @@
  *    - Run with: npm run test -- <test-number>
  *    - Example: npm run test -- 0  (runs 01-variable-assignment.rp)
  * 
- * 2. JavaScript Case Tests (test/cases/c*.js):
+ * 2. RobinPath Sample Tests (test/samples/s*.rp):
+ *    - These are RobinPath sample scripts that test complex scenarios
+ *    - Run with: npm run test -- s<sample-number>
+ *    - Example: npm run test -- s0  (runs s0-calculator-engine.rp)
+ * 
+ * 3. JavaScript Case Tests (test/cases/c*.js):
  *    - These are JavaScript tests that require calling RobinPath class methods
  *    - They test the JavaScript API (getAST, getEventAST, etc.)
  *    - Run with: npm run test -- c<case-number>
  *    - Example: npm run test -- c0  (runs c0-getAST.js)
  * 
  * Usage:
- *   - npm run test                           (runs all RP script tests, then all JavaScript case tests)
+ *   - npm run test                           (runs all script tests, samples, and case tests)
  *   - npm run test -- <test-number>          (runs a specific RP script test)
+ *   - npm run test -- s<sample-number>       (runs a specific RobinPath sample test)
  *   - npm run test -- <test-number> --repeat <count>  (runs a test multiple times and shows average runtime)
  *   - npm run test -- <test-number-1> <test-number-2> ...  (runs multiple specific tests)
  *   - npm run test -- <start>-<end>          (runs a range of tests, e.g., 0-7 runs tests 0 through 7)
+ *   - npm run test -- s<start>-s<end>        (runs a range of sample tests, e.g., s0-s5 runs samples 0 through 5)
  *   - npm run test -- c<case-number>         (runs a specific JavaScript case test)
  *   - npm run test -- c<start>-c<end>        (runs a range of case tests, e.g., c0-c5 runs case tests 0 through 5)
- *   - npm run test -- all                    (runs all RP script tests, then all JavaScript case tests)
+ *   - npm run test -- all                    (runs all script tests, samples, and case tests)
  *   - npm run test -- --file <file-path>     (runs a specific RP file directly)
  * 
  * Examples:
@@ -50,6 +57,7 @@ const __dirname = dirname(__filename);
 
 // Get the scripts directory (test scripts are in test/scripts/)
 const scriptsDir = join(__dirname, 'scripts');
+const samplesDir = join(__dirname, 'samples');
 
 // Define test files mapping (test number -> filename)
 // These are RP script tests that test the RobinPath language features
@@ -76,6 +84,21 @@ const testFiles = [
     '19-last-value.rp',
     '20-comments.rp',
     '21-fenced.rp',
+];
+
+// Define sample files mapping (sample number -> filename)
+// These are RobinPath sample scripts in test/samples/
+const sampleFiles = [
+    's0-calculator-engine.rp',
+    's1-event-workflow.rp',
+    's2-data-pipeline.rp',
+    's3-state-machine.rp',
+    's4-recursive-algorithms.rp',
+    's5-game-simulation.rp',
+    's6-validation-engine.rp',
+    's7-task-scheduler.rp',
+    's8-template-renderer.rp',
+    's9-inventory-system.rp',
 ];
 
 // Define test case files mapping (case number -> filename)
@@ -108,6 +131,7 @@ const astTestCases = [
 // Parse command-line arguments
 const args = process.argv.slice(2);
 let testNumbers = []; // Array of test numbers to run
+let sampleNumbers = []; // Array of sample numbers to run
 let testCase = null; // Single case test (for backward compatibility)
 let testCaseNumbers = []; // Array of case test numbers to run
 let testCaseIsAST = []; // Array of flags indicating if each test case is an AST test
@@ -207,6 +231,55 @@ for (let i = 0; i < filteredArgs.length; i++) {
         }
     }
     
+    // Check for sample range (e.g., "s0-s5")
+    if (arg.startsWith('s') && arg.includes('-')) {
+        const parts = arg.split('-');
+        if (parts.length === 2 && parts[0].startsWith('s') && parts[1].startsWith('s')) {
+            const start = parseInt(parts[0].substring(1), 10);
+            const end = parseInt(parts[1].substring(1), 10);
+            if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start && end < sampleFiles.length) {
+                for (let j = start; j <= end; j++) {
+                    sampleNumbers.push(j);
+                }
+                continue;
+            } else {
+                console.error('='.repeat(60));
+                console.error('Invalid sample test range:', arg);
+                console.error('='.repeat(60));
+                console.error();
+                console.error('Available RobinPath Samples:');
+                sampleFiles.forEach((file, index) => {
+                    console.error(`  s${index}: ${file}`);
+                });
+                console.error();
+                console.error('Usage: npm run test -- s<start>-s<end>');
+                console.error('Example: npm run test -- s0-s5  (runs samples 0 through 5)');
+                process.exit(1);
+            }
+        }
+    }
+    
+    // Check for sample (starts with 's')
+    if (arg.startsWith('s')) {
+        const sampleNumber = parseInt(arg.substring(1), 10);
+        if (isNaN(sampleNumber) || sampleNumber < 0 || sampleNumber >= sampleFiles.length) {
+            console.error('='.repeat(60));
+            console.error('Invalid sample number:', arg);
+            console.error('='.repeat(60));
+            console.error();
+            console.error('Available RobinPath Samples:');
+            sampleFiles.forEach((file, index) => {
+                console.error(`  s${index}: ${file}`);
+            });
+            console.error();
+            console.error('Usage: npm run test -- s<sample-number>');
+            console.error('Example: npm run test -- s0  (runs s0-calculator-engine.rp)');
+            process.exit(1);
+        }
+        sampleNumbers.push(sampleNumber);
+        continue;
+    }
+    
     // Check for AST test (starts with 'a')
     if (arg.startsWith('a')) {
         const astCaseNumber = parseInt(arg.substring(1), 10);
@@ -289,6 +362,7 @@ for (let i = 0; i < filteredArgs.length; i++) {
 
 // Remove duplicates and sort
 testNumbers = [...new Set(testNumbers)].sort((a, b) => a - b);
+sampleNumbers = [...new Set(sampleNumbers)].sort((a, b) => a - b);
 testCaseNumbers = [...new Set(testCaseNumbers)].sort((a, b) => a - b);
 
 // Validate --repeat usage: it only works with RP script tests, not case tests
@@ -314,13 +388,11 @@ if (filteredArgs.length === 0 && customFile === null) {
     runAll = true;
 }
 
-// If we have case tests, don't process test numbers
-// Also handle backward compatibility: if testCase is set but testCaseNumbers is empty, add it
+// Handle backward compatibility: if testCase is set but testCaseNumbers is empty, add it
 if (testCase !== null && testCaseNumbers.length === 0) {
     testCaseNumbers.push(testCase);
 }
 if (testCaseNumbers.length > 0) {
-    testNumbers = [];
     testCase = null; // Clear single testCase since we're using testCaseNumbers
 }
 
@@ -621,7 +693,7 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             process.exit(0);
         }
         
-        // If runAll is true, run all RP script tests first, then all JavaScript case tests
+        // If runAll is true, run all RP script tests, samples, then JavaScript case tests
         if (runAll) {
             console.log('='.repeat(60));
             console.log('Running All Tests');
@@ -676,17 +748,58 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             console.log('='.repeat(60));
             console.log();
             
-            if (failedRpTests > 0) {
-                console.log('Failed tests:');
-                rpTestResults.filter(r => !r.passed).forEach(r => {
-                    console.log(`  ${r.index}: ${r.file} - ${r.error || 'Unknown error'}`);
-                });
-                console.log();
+            // Phase 2: Running all RobinPath Sample Tests
+            console.log('='.repeat(60));
+            console.log('Phase 2: Running all RobinPath Sample Tests');
+            console.log('='.repeat(60));
+            console.log();
+            
+            let totalSampleTests = 0;
+            let passedSampleTests = 0;
+            let failedSampleTests = 0;
+            const sampleTestResults = [];
+            
+            for (let i = 0; i < sampleFiles.length; i++) {
+                const sampleFileName = sampleFiles[i];
+                const sampleFilePath = join(samplesDir, sampleFileName);
+                
+                if (!existsSync(sampleFilePath)) {
+                    console.error(`? Sample file not found: ${sampleFilePath}`);
+                    failedSampleTests++;
+                    sampleTestResults.push({ index: i, file: sampleFileName, passed: false, error: 'File not found' });
+                    continue;
+                }
+                
+                totalSampleTests++;
+                console.log(`[s${i}/${sampleFiles.length - 1}] Running: ${sampleFileName}`);
+                
+                const startTime = Date.now();
+                
+                try {
+                    await executeTestLogicWithTimeout(sampleFilePath, false, false, 30000);
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    passedSampleTests++;
+                    sampleTestResults.push({ index: i, file: sampleFileName, passed: true, time: executionTime });
+                    console.log(`  ? Passed (${executionTime}ms)`);
+                } catch (error) {
+                    failedSampleTests++;
+                    sampleTestResults.push({ index: i, file: sampleFileName, passed: false, error: error.message });
+                    console.error(`  ? Failed: ${error.message}`);
+                }
             }
             
-            // Now run all JavaScript case tests
+            console.log();
             console.log('='.repeat(60));
-            console.log('Phase 2: Running all JavaScript Case Tests');
+            console.log('RobinPath Sample Tests Summary');
+            console.log('='.repeat(60));
+            console.log(`Total: ${totalSampleTests} | Passed: ${passedSampleTests} | Failed: ${failedSampleTests}`);
+            console.log('='.repeat(60));
+            console.log();
+
+            // Phase 3: Running all JavaScript Case Tests
+            console.log('='.repeat(60));
+            console.log('Phase 3: Running all JavaScript Case Tests');
             console.log('='.repeat(60));
             console.log();
             
@@ -715,7 +828,6 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 const startTime = Date.now();
                 
                 try {
-                    console.log(`Running: ${caseFilePath}`);
                     // Use timeout wrapper to detect stuck tests
                     // Case tests should show their console output (suppressOutput = false)
                     await executeTestLogicWithTimeout(caseFilePath, true, false, 30000);
@@ -739,8 +851,14 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             console.log('='.repeat(60));
             console.log();
             
-            if (failedCaseTests > 0) {
+            if (failedRpTests > 0 || failedSampleTests > 0 || failedCaseTests > 0) {
                 console.log('Failed tests:');
+                rpTestResults.filter(r => !r.passed).forEach(r => {
+                    console.log(`  ${r.index}: ${r.file} - ${r.error || 'Unknown error'}`);
+                });
+                sampleTestResults.filter(r => !r.passed).forEach(r => {
+                    console.log(`  s${r.index}: ${r.file} - ${r.error || 'Unknown error'}`);
+                });
                 caseTestResults.filter(r => !r.passed).forEach(r => {
                     console.log(`  c${r.index}: ${r.file} - ${r.error || 'Unknown error'}`);
                 });
@@ -751,9 +869,9 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
             console.log('='.repeat(60));
             console.log('Final Summary');
             console.log('='.repeat(60));
-            const totalTests = totalRpTests + totalCaseTests;
-            const totalPassed = passedRpTests + passedCaseTests;
-            const totalFailed = failedRpTests + failedCaseTests;
+            const totalTests = totalRpTests + totalSampleTests + totalCaseTests;
+            const totalPassed = passedRpTests + passedSampleTests + passedCaseTests;
+            const totalFailed = failedRpTests + failedSampleTests + failedCaseTests;
             console.log(`Total Tests: ${totalTests}`);
             console.log(`Passed: ${totalPassed}`);
             console.log(`Failed: ${totalFailed}`);
@@ -848,7 +966,79 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                 }
             }
             
-            process.exit(totalFailed > 0 ? 1 : 0);
+            // If only case tests were run, exit
+            if (testNumbers.length === 0 && sampleNumbers.length === 0) {
+                process.exit(totalFailed > 0 ? 1 : 0);
+            }
+        }
+        
+        // If sample number(s) were provided, run them
+        if (sampleNumbers.length > 0) {
+            const results = [];
+            let totalPassed = 0;
+            let totalFailed = 0;
+            const overallStartTime = Date.now();
+            
+            for (const sampleNum of sampleNumbers) {
+                const sampleFileName = sampleFiles[sampleNum];
+                const sampleFilePath = join(samplesDir, sampleFileName);
+                
+                if (!existsSync(sampleFilePath)) {
+                    console.error(`? Sample file not found: ${sampleFilePath}`);
+                    results.push({ sampleNum, passed: false, error: 'File not found' });
+                    totalFailed++;
+                    continue;
+                }
+                
+                console.log('='.repeat(60));
+                console.log(`Running RobinPath Sample ${sampleNum}: ${sampleFileName}`);
+                console.log('='.repeat(60));
+                console.log();
+                
+                const startTime = Date.now();
+                
+                try {
+                    // Use timeout wrapper to detect stuck tests
+                    await executeTestLogicWithTimeout(sampleFilePath, false, false, 30000);
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    totalPassed++;
+                    results.push({ sampleNum, passed: true, time: executionTime });
+                    console.log(`  ? Passed (${executionTime}ms)`);
+                } catch (error) {
+                    totalFailed++;
+                    results.push({ sampleNum, passed: false, error: error.message });
+                    console.error(`  ? Failed: ${error.message}`);
+                }
+                console.log();
+            }
+            
+            // Summary if multiple samples
+            if (sampleNumbers.length > 1) {
+                const overallEndTime = Date.now();
+                const totalWallClockTime = overallEndTime - overallStartTime;
+                const totalRuntime = results.filter(r => r.passed).reduce((sum, r) => sum + (r.time || 0), 0);
+                
+                console.log('='.repeat(60));
+                console.log('Sample Test Summary');
+                console.log('='.repeat(60));
+                console.log(`Total: ${sampleNumbers.length} | Passed: ${totalPassed} | Failed: ${totalFailed}`);
+                console.log(`Total Runtime: ${totalRuntime.toFixed(2)}ms`);
+                console.log('='.repeat(60));
+                
+                if (totalFailed > 0) {
+                    console.log();
+                    console.log('Failed samples:');
+                    results.filter(r => !r.passed).forEach(r => {
+                        console.log(`  s${r.sampleNum}: ${sampleFiles[r.sampleNum]} - ${r.error || 'Unknown error'}`);
+                    });
+                }
+            }
+            
+            // If only samples were run, exit. 
+            if (testNumbers.length === 0) {
+                process.exit(totalFailed > 0 ? 1 : 0);
+            }
         }
         
         // If specific test numbers were provided, run them

@@ -51,57 +51,101 @@ export function parseForLoop(
     const varName = LexerUtils.parseVariablePath(varToken.text).name;
     stream.next(); // consume variable token
 
-    // Expect 'in' keyword
-    stream.skipWhitespaceAndComments();
-    const inToken = stream.current();
-    if (!inToken || inToken.kind !== TokenKind.KEYWORD || inToken.text !== 'in') {
-        throw new Error(`for loop requires 'in' keyword at line ${varToken.line}, column ${varToken.column}`);
-    }
-    stream.next(); // consume 'in' keyword
+    let iterable: Expression | undefined;
+    let from: Expression | undefined;
+    let to: Expression | undefined;
+    let step: Expression | undefined;
+    let keyVarName: string | undefined;
 
-    // Parse iterable expression (everything after 'in' until newline)
-    stream.skipWhitespaceAndComments();
-    const iterableStartToken = stream.current();
-    if (!iterableStartToken) {
-        throw new Error(`for loop requires an iterable expression after 'in' at line ${inToken.line}`);
-    }
-
-    // Collect tokens until newline for the iterable expression
-    const iterableTokens: Token[] = [];
     const headerComments: CommentWithPosition[] = [];
 
+    // Parse header components until newline or comment
     while (!stream.isAtEnd()) {
         const t = stream.current();
-        if (!t) break;
-        
-        if (t.kind === TokenKind.NEWLINE) {
-            stream.next(); // consume NEWLINE, move to first body token
-            break;
-        }
-        
+        if (!t || t.kind === TokenKind.NEWLINE) break;
+
         if (t.kind === TokenKind.COMMENT) {
-            // Capture inline comment on header line
             headerComments.push({
                 text: t.value ?? t.text.replace(/^#\s*/, ''),
                 inline: true,
                 codePos: context.createCodePosition(t, t)
             });
             stream.next();
-            continue;
+            break;
         }
-        
-        iterableTokens.push(t);
+
+        if (t.kind === TokenKind.KEYWORD) {
+            const keyword = t.text;
+            if (keyword === 'in' || keyword === 'from' || keyword === 'to' || keyword === 'by' || keyword === 'step' || keyword === 'key') {
+                stream.next(); // consume keyword
+
+                if (keyword === 'key') {
+                    const keyToken = stream.current();
+                    if (!keyToken || keyToken.kind !== TokenKind.VARIABLE) {
+                        throw new Error(`'key' keyword must be followed by a variable at line ${t.line}, column ${t.column}`);
+                    }
+                    keyVarName = LexerUtils.parseVariablePath(keyToken.text).name;
+                    stream.next();
+                    continue;
+                }
+
+                // Collect tokens for the expression until next keyword or end of line
+                const exprTokens: Token[] = [];
+                while (!stream.isAtEnd()) {
+                    const nextT = stream.current();
+                    if (!nextT || nextT.kind === TokenKind.NEWLINE || nextT.kind === TokenKind.COMMENT) break;
+                    
+                    if (nextT.kind === TokenKind.KEYWORD) {
+                        const nk = nextT.text;
+                        if (nk === 'in' || nk === 'from' || nk === 'to' || nk === 'by' || nk === 'step' || nk === 'key') {
+                            break;
+                        }
+                    }
+                    exprTokens.push(nextT);
+                    stream.next();
+                }
+
+                if (exprTokens.length === 0) {
+                    throw new Error(`'${keyword}' keyword requires an expression at line ${t.line}, column ${t.column}`);
+                }
+
+                const expr = parseExpression(new TokenStream(exprTokens), context.parseStatement, context.parseComment);
+                
+                if (keyword === 'in') {
+                    if (iterable) throw new Error(`Multiple 'in' keywords in for loop at line ${t.line}`);
+                    iterable = expr;
+                } else if (keyword === 'from') {
+                    if (from) throw new Error(`Multiple 'from' keywords in for loop at line ${t.line}`);
+                    from = expr;
+                } else if (keyword === 'to') {
+                    if (to) throw new Error(`Multiple 'to' keywords in for loop at line ${t.line}`);
+                    to = expr;
+                } else if (keyword === 'by' || keyword === 'step') {
+                    if (step) throw new Error(`Multiple step keywords ('by' or 'step') in for loop at line ${t.line}`);
+                    step = expr;
+                }
+                continue;
+            }
+        }
+
+        throw new Error(`Unexpected token '${t.text}' in for loop header at line ${t.line}, column ${t.column}`);
+    }
+
+    // Move to next line if we stopped at NEWLINE
+    if (stream.current()?.kind === TokenKind.NEWLINE) {
         stream.next();
     }
 
-    // Parse the iterable expression from the collected tokens
-    // Create a temporary stream for parsing the expression (starts at position 0)
-    const iterableStream = new TokenStream(iterableTokens);
-    const iterable: Expression = parseExpression(
-        iterableStream,
-        context.parseStatement,
-        context.parseComment
-    );
+    // Validation
+    if (iterable) {
+        if (from || to || step) {
+            throw new Error(`for loop cannot have both 'in' and range keywords (from, to, by, step) at line ${headerToken.line}`);
+        }
+    } else {
+        if (from && !to) throw new Error(`for loop with 'from' requires 'to' at line ${headerToken.line}`);
+        if (to && !from) throw new Error(`for loop with 'to' requires 'from' at line ${headerToken.line}`);
+        if (!from && !to) throw new Error(`for loop requires either 'in' or 'from'/'to' at line ${headerToken.line}`);
+    }
 
     // Parse body statements until matching 'endfor'
     const body: Statement[] = [];
@@ -186,9 +230,17 @@ export function parseForLoop(
         type: 'forLoop',
         varName,
         iterable,
+        from,
+        to,
+        step,
+        keyVarName,
         body,
         codePos
     };
+
+    if (headerComments.length > 0) {
+        result.comments = headerComments;
+    }
 
     if (headerComments.length > 0) {
         result.comments = headerComments;

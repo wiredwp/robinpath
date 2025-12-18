@@ -79,7 +79,7 @@ export const KEYWORDS = new Set([
     'on', 'endon',
     'return', 'break', 'continue',
     'together', 'endtogether',
-    'into',
+    'into', 'from', 'to', 'by', 'step', 'key',
     'var', 'const',
     'log',
     'true', 'false',

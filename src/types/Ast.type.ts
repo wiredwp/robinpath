@@ -390,7 +390,11 @@ export interface TogetherBlock {
 export interface ForLoop {
     type: 'forLoop';
     varName: string;
-    iterable: Expression;
+    iterable?: Expression; // for $var in $arr
+    from?: Expression; // for $var from 0 to 10
+    to?: Expression;
+    step?: Expression; // for $var from 0 to 10 by 2 or step 2
+    keyVarName?: string; // for $var from 0 to 10 key $index
     body: Statement[];
     decorators?: DecoratorCall[]; // Decorators attached to this for loop
     comments?: CommentWithPosition[]; // Comments attached to this for loop (above and inline)

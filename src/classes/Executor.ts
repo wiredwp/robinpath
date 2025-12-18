@@ -2150,49 +2150,96 @@ Examples:
     private async executeForLoop(forLoop: ForLoop, frameOverride?: Frame): Promise<void> {
         const frame = this.getCurrentFrame(frameOverride);
 
-        // Evaluate the iterable expression
-        const iterable = await this.evaluateExpression(forLoop.iterable, frameOverride);
+        // Evaluate the iterable or range parameters
+        let elements: any[] = [];
+        let isRange = false;
+        let fromVal = 0;
+        let toVal = 0;
+        let stepVal = 1;
 
-        if (!Array.isArray(iterable)) {
-            throw new Error(`for loop iterable must be an array, got ${typeof iterable}`);
+        if (forLoop.iterable) {
+            const iterable = await this.evaluateExpression(forLoop.iterable, frameOverride);
+            if (!Array.isArray(iterable)) {
+                throw new Error(`for loop iterable must be an array, got ${typeof iterable}`);
+            }
+            elements = iterable;
+        } else if (forLoop.from && forLoop.to) {
+            isRange = true;
+            fromVal = Number(await this.evaluateExpression(forLoop.from, frameOverride));
+            toVal = Number(await this.evaluateExpression(forLoop.to, frameOverride));
+            if (forLoop.step) {
+                stepVal = Number(await this.evaluateExpression(forLoop.step, frameOverride));
+            }
+            if (isNaN(fromVal) || isNaN(toVal) || isNaN(stepVal)) {
+                throw new Error(`for loop range parameters must be numbers (from: ${fromVal}, to: ${toVal}, step: ${stepVal})`);
+            }
+            if (stepVal === 0) {
+                throw new Error(`for loop step cannot be 0`);
+            }
         }
 
         // Store the original lastValue to restore after loop (if zero iterations)
         const originalLastValue = frame.lastValue;
 
-        // Iterate over the array
-        for (let i = 0; i < iterable.length; i++) {
-            const element = iterable[i];
-
+        // Iteration logic
+        const runLoop = async (element: any, key: any) => {
             // Set loop variable in current frame
             frame.locals.set(forLoop.varName, element);
+            if (forLoop.keyVarName) {
+                frame.locals.set(forLoop.keyVarName, key);
+            }
             frame.lastValue = element;
 
-            // Execute body - pass frame directly to avoid race conditions
-            try {
-                for (const stmt of forLoop.body) {
-                    await this.executeStatement(stmt, frameOverride);
+            // Execute body
+            for (const stmt of forLoop.body) {
+                await this.executeStatement(stmt, frameOverride);
+            }
+        };
+
+        let iterations = 0;
+        if (isRange) {
+            let key = 0;
+            if (stepVal > 0) {
+                for (let val = fromVal; val <= toVal; val += stepVal) {
+                    try {
+                        await runLoop(val, key++);
+                        iterations++;
+                    } catch (error) {
+                        if (error instanceof BreakException) break;
+                        if (error instanceof ContinueException) continue;
+                        throw error;
+                    }
                 }
-            } catch (error) {
-                if (error instanceof BreakException) {
-                    // Break statement encountered - exit the loop
-                    break;
+            } else {
+                for (let val = fromVal; val >= toVal; val += stepVal) {
+                    try {
+                        await runLoop(val, key++);
+                        iterations++;
+                    } catch (error) {
+                        if (error instanceof BreakException) break;
+                        if (error instanceof ContinueException) continue;
+                        throw error;
+                    }
                 }
-                if (error instanceof ContinueException) {
-                    // Continue statement encountered - skip to next iteration
-                    continue;
+            }
+        } else {
+            for (let i = 0; i < elements.length; i++) {
+                try {
+                    await runLoop(elements[i], i);
+                    iterations++;
+                } catch (error) {
+                    if (error instanceof BreakException) break;
+                    if (error instanceof ContinueException) continue;
+                    throw error;
                 }
-                // Re-throw other errors
-                throw error;
             }
         }
 
         // After loop, $ is the last body's $ from the last iteration
         // (or originalLastValue if zero iterations)
-        if (iterable.length === 0) {
+        if (iterations === 0) {
             frame.lastValue = originalLastValue;
         }
-        // Otherwise, frame.lastValue is already set from the last iteration
     }
 
 
