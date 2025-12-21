@@ -8,10 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Read the test scripts
-const testScriptPath = join(__dirname, 'test.rp');
+const testScriptPath = join(__dirname, 'test.robin');
 const testScript = readFileSync(testScriptPath, 'utf-8');
 
-const testNoCommentsScriptPath = join(__dirname, 'test-no-comments.rp');
+const testNoCommentsScriptPath = join(__dirname, 'test-no-comments.robin');
 const testNoCommentsScript = readFileSync(testNoCommentsScriptPath, 'utf-8');
 
 (async () => {
@@ -27,10 +27,10 @@ const testNoCommentsScript = readFileSync(testNoCommentsScriptPath, 'utf-8');
         const withCommentsTimes = [];
         const withoutCommentsTimes = [];
         
-        // Run test.rp (with comments) 100 times
+        // Run test.robin (with comments) 100 times
         // IMPORTANT: Each iteration creates a fresh RobinPath instance to ensure
         // no caches (like comment parsing caches) persist between runs
-        console.log(`Running test.rp (with comments) ${iterations} times...`);
+        console.log(`Running test.robin (with comments) ${iterations} times...`);
         for (let i = 0; i < iterations; i++) {
             // Create a completely fresh RobinPath instance for each run
             // This ensures all caches (Parser caches, comment caches, etc.) are reset
@@ -44,10 +44,10 @@ const testNoCommentsScript = readFileSync(testNoCommentsScriptPath, 'utf-8');
         }
         console.log();
         
-        // Run test-no-comments.rp (without comments) 100 times
+        // Run test-no-comments.robin (without comments) 100 times
         // IMPORTANT: Each iteration creates a fresh RobinPath instance to ensure
         // no caches (like comment parsing caches) persist between runs
-        console.log(`Running test-no-comments.rp (without comments) ${iterations} times...`);
+        console.log(`Running test-no-comments.robin (without comments) ${iterations} times...`);
         for (let i = 0; i < iterations; i++) {
             // Create a completely fresh RobinPath instance for each run
             // This ensures all caches (Parser caches, comment caches, etc.) are reset
@@ -75,12 +75,12 @@ const testNoCommentsScript = readFileSync(testNoCommentsScriptPath, 'utf-8');
         console.log('Performance Results:');
         console.log('='.repeat(60));
         console.log();
-        console.log(`test.rp (with comments):`);
+        console.log(`test.robin (with comments):`);
         console.log(`  Average: ${avgWithComments.toFixed(2)}ms (${(avgWithComments / 1000).toFixed(3)}s)`);
         console.log(`  Min: ${minWithComments}ms (${(minWithComments / 1000).toFixed(3)}s)`);
         console.log(`  Max: ${maxWithComments}ms (${(maxWithComments / 1000).toFixed(3)}s)`);
         console.log();
-        console.log(`test-no-comments.rp (without comments):`);
+        console.log(`test-no-comments.robin (without comments):`);
         console.log(`  Average: ${avgWithoutComments.toFixed(2)}ms (${(avgWithoutComments / 1000).toFixed(3)}s)`);
         console.log(`  Min: ${minWithoutComments}ms (${(minWithoutComments / 1000).toFixed(3)}s)`);
         console.log(`  Max: ${maxWithoutComments}ms (${(maxWithoutComments / 1000).toFixed(3)}s)`);

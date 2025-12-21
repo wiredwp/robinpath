@@ -1,6 +1,6 @@
 // Test Case a7: Into Syntax AST tests
 // Tests AST reading, code position checking, and AST updating (add/remove/modify)
-// This test file matches test/scripts/07-into-syntax.rp
+// This test file matches test/scripts/07-into-syntax.robin
 
 import { RobinPath } from '../../dist/index.js';
 

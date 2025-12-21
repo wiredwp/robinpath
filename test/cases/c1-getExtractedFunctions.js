@@ -14,14 +14,14 @@ export async function runTest() {
     console.log('='.repeat(60));
     
     // Read the main test script
-    const testScriptPath = join(__dirname, '..', 'scripts', '05-functions.rp');
+    const testScriptPath = join(__dirname, '..', 'scripts', '05-functions.robin');
     const testScript = readFileSync(testScriptPath, 'utf-8');
     
     const functionsRp = new RobinPath();
     const extractedFunctions = await functionsRp.getExtractedFunctions(testScript);
     
     if (extractedFunctions.length === 0) {
-        console.log('No functions defined in test.rp');
+        console.log('No functions defined in test.robin');
     } else {
         console.log(`Total: ${extractedFunctions.length} function(s)`);
         

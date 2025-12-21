@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-with open('test.rp', 'r') as f:
+with open('test.robin', 'r') as f:
     lines = f.readlines()
 
 result = []
@@ -34,7 +34,7 @@ for line in lines:
     else:
         result.append(line)
 
-with open('test-no-comments.rp', 'w') as f:
+with open('test-no-comments.robin', 'w') as f:
     f.writelines(result)
 
-print('Created test-no-comments.rp')
+print('Created test-no-comments.robin')

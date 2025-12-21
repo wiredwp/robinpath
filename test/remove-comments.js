@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const content = fs.readFileSync('test.rp', 'utf-8');
+const content = fs.readFileSync('test.robin', 'utf-8');
 const lines = content.split('\n');
 const result = [];
 
@@ -45,5 +45,5 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-fs.writeFileSync('test-no-comments.rp', result.join('\n'), 'utf-8');
-console.log('Created test-no-comments.rp');
+fs.writeFileSync('test-no-comments.robin', result.join('\n'), 'utf-8');
+console.log('Created test-no-comments.robin');

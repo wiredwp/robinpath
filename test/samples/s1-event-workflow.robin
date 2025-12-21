@@ -1,0 +1,4 @@
+
+def test
+  set $a as 5
+enddef

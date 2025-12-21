@@ -3,16 +3,16 @@
  * 
  * This test runner supports two types of tests:
  * 
- * 1. RP Script Tests (test/scripts/*.rp):
- *    - These are RobinPath language tests written in .rp files
+ * 1. RP Script Tests (test/scripts/*.robin):
+ *    - These are RobinPath language tests written in .robin files
  *    - They test the language features and syntax
  *    - Run with: npm run test -- <test-number>
- *    - Example: npm run test -- 0  (runs 01-variable-assignment.rp)
+ *    - Example: npm run test -- 0  (runs 01-variable-assignment.robin)
  * 
- * 2. RobinPath Sample Tests (test/samples/s*.rp):
+ * 2. RobinPath Sample Tests (test/samples/s*.robin):
  *    - These are RobinPath sample scripts that test complex scenarios
  *    - Run with: npm run test -- s<sample-number>
- *    - Example: npm run test -- s0  (runs s0-calculator-engine.rp)
+ *    - Example: npm run test -- s0  (runs s0-calculator-engine.robin)
  * 
  * 3. JavaScript Case Tests (test/cases/c*.js):
  *    - These are JavaScript tests that require calling RobinPath class methods
@@ -40,9 +40,9 @@
  *   - npm run test -- 5 --repeat 100         (runs test 5 one hundred times and shows average runtime)
  *   - npm run test -- c0-c5                  (runs case tests 0 through 5)
  *   - npm run test -- all                    (runs all tests)
- *   - npm run test -- --file test.rp         (runs test.rp from test/scripts/ or current directory)
- *   - npm run test -- --file test/scripts/test.rp  (runs test.rp with full path)
- *   - npm run test -- --file test.rp --repeat 10   (runs test.rp 10 times)
+ *   - npm run test -- --file test.robin      (runs test.robin from test/scripts/ or current directory)
+ *   - npm run test -- --file test/scripts/test.robin  (runs test.robin with full path)
+ *   - npm run test -- --file test.robin --repeat 10   (runs test.robin 10 times)
  */
 
 import { existsSync } from 'fs';
@@ -62,43 +62,43 @@ const samplesDir = join(__dirname, 'samples');
 // Define test files mapping (test number -> filename)
 // These are RP script tests that test the RobinPath language features
 const testFiles = [
-    '00-custom.rp',
-    '01-variable-assignment.rp',
-    '02-expressions.rp',
-    '03-conditionals.rp',
-    '04-loops.rp',
-    '05-functions.rp',
-    '06-do-blocks.rp',
-    '07-into-syntax.rp',
-    '08-subexpressions.rp',
-    '09-objects-arrays.rp',
-    '10-builtin-commands.rp',
-    '11-modules.rp',
-    '12-events.rp',
-    '13-together.rp',
-    '14-with.rp',
-    '15-meta.rp',
-    '16-decorator.rp',
-    '17-line-continuation.rp',
-    '18-template-strings.rp',
-    '19-last-value.rp',
-    '20-comments.rp',
-    '21-fenced.rp',
+    '00-custom.robin',
+    '01-variable-assignment.robin',
+    '02-expressions.robin',
+    '03-conditionals.robin',
+    '04-loops.robin',
+    '05-functions.robin',
+    '06-do-blocks.robin',
+    '07-into-syntax.robin',
+    '08-subexpressions.robin',
+    '09-objects-arrays.robin',
+    '10-builtin-commands.robin',
+    '11-modules.robin',
+    '12-events.robin',
+    '13-together.robin',
+    '14-with.robin',
+    '15-meta.robin',
+    '16-decorator.robin',
+    '17-line-continuation.robin',
+    '18-template-strings.robin',
+    '19-last-value.robin',
+    '20-comments.robin',
+    '21-fenced.robin',
 ];
 
 // Define sample files mapping (sample number -> filename)
 // These are RobinPath sample scripts in test/samples/
 const sampleFiles = [
-    's0-calculator-engine.rp',
-    's1-event-workflow.rp',
-    's2-data-pipeline.rp',
-    's3-state-machine.rp',
-    's4-recursive-algorithms.rp',
-    's5-game-simulation.rp',
-    's6-validation-engine.rp',
-    's7-task-scheduler.rp',
-    's8-template-renderer.rp',
-    's9-inventory-system.rp',
+    's0-calculator-engine.robin',
+    's1-event-workflow.robin',
+    's2-data-pipeline.robin',
+    's3-state-machine.robin',
+    's4-recursive-algorithms.robin',
+    's5-game-simulation.robin',
+    's6-validation-engine.robin',
+    's7-task-scheduler.robin',
+    's8-template-renderer.robin',
+    's9-inventory-system.robin',
 ];
 
 // Define test case files mapping (case number -> filename)
@@ -115,17 +115,17 @@ const testCases = [
 // Define AST test case files mapping (case number -> filename)
 // These are JavaScript tests for AST reading, updating, and code generation
 // Each AST test file should match a corresponding script file in test/scripts/
-// Example: a1-variable-assignment.js matches 01-variable-assignment.rp
+// Example: a1-variable-assignment.js matches 01-variable-assignment.robin
 const astTestCases = [
     'ast/a0.js', // to keep it as 0 NOTE: DO NOT REMOVE!
-    'ast/a1-variable-assignment.js', // a1 - matches 01-variable-assignment.rp
-    'ast/a2-expressions.js',         // a2 - matches 02-expressions.rp
-    'ast/a3-conditionals.js',         // a3 - matches 03-conditionals.rp
-    'ast/a4-loops.js',                 // a4 - matches 04-loops.rp
-    'ast/a5-functions.js',             // a5 - matches 05-functions.rp
-    'ast/a6-do-blocks.js',             // a6 - matches 06-do-blocks.rp
-    'ast/a7-into-syntax.js',           // a7 - matches 07-into-syntax.rp
-    'ast/a8-subexpressions.js',       // a8 - matches 08-subexpressions.rp
+    'ast/a1-variable-assignment.js', // a1 - matches 01-variable-assignment.robin
+    'ast/a2-expressions.js',         // a2 - matches 02-expressions.robin
+    'ast/a3-conditionals.js',         // a3 - matches 03-conditionals.robin
+    'ast/a4-loops.js',                 // a4 - matches 04-loops.robin
+    'ast/a5-functions.js',             // a5 - matches 05-functions.robin
+    'ast/a6-do-blocks.js',             // a6 - matches 06-do-blocks.robin
+    'ast/a7-into-syntax.js',           // a7 - matches 07-into-syntax.robin
+    'ast/a8-subexpressions.js',       // a8 - matches 08-subexpressions.robin
 ];
 
 // Parse command-line arguments
@@ -273,7 +273,8 @@ for (let i = 0; i < filteredArgs.length; i++) {
             });
             console.error();
             console.error('Usage: npm run test -- s<sample-number>');
-            console.error('Example: npm run test -- s0  (runs s0-calculator-engine.rp)');
+            console.error('Example: npm run test -- s0  (runs s0-calculator-engine.robin)');
+            console.error('Example: npm run test -- 0  (runs 01-variable-assignment.robin)');
             process.exit(1);
         }
         sampleNumbers.push(sampleNumber);
@@ -378,7 +379,7 @@ if (customFile !== null) {
     if (testNumbers.length > 0 || testCaseNumbers.length > 0 || runAll) {
         console.error('Error: --file cannot be used with other test selections (test numbers, case tests, or "all").');
         console.error('Usage: npm run test -- --file <file-path>');
-        console.error('Example: npm run test -- --file test.rp');
+        console.error('Example: npm run test -- --file test.robin');
         process.exit(1);
     }
 }
@@ -607,8 +608,8 @@ const executeTestLogic = async (testFilePath, isCaseTest, suppressOutput = false
                         console.error(`  2. ${cwdPath}`);
                         console.error();
                         console.error('Usage: npm run test -- --file <file-path>');
-                        console.error('Example: npm run test -- --file test.rp');
-                        console.error('Example: npm run test -- --file test/scripts/test.rp');
+                        console.error('Example: npm run test -- --file test.robin');
+                        console.error('Example: npm run test -- --file test/scripts/test.robin');
                         process.exit(1);
                     }
                 }

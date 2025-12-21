@@ -1,6 +1,6 @@
 // Test Case a3: Conditionals AST tests
 // Tests AST reading, code position checking, and AST updating (add/remove/modify)
-// This test file matches test/scripts/03-conditionals.rp
+// This test file matches test/scripts/03-conditionals.robin
 
 import { RobinPath } from '../../dist/index.js';
 

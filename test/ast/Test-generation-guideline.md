@@ -5,13 +5,13 @@ This document provides guidelines for creating AST (Abstract Syntax Tree) tests 
 ## File Naming Convention
 
 - **AST test files must match their corresponding script files in `test/scripts/`**
-- Test files should be named with the pattern: `a{N}-{feature-name}.js` to match `{NN}-{feature-name}.rp`
+- Test files should be named with the pattern: `a{N}-{feature-name}.js` to match `{NN}-{feature-name}.robin`
 - Examples:
-  - `a1-variable-assignment.js` - Matches `01-variable-assignment.rp`
-  - `a2-functions.js` - Would match `02-functions.rp` (if it existed)
-  - `a3-control-flow.js` - Would match `03-control-flow.rp` (if it existed)
+  - `a1-variable-assignment.js` - Matches `01-variable-assignment.robin`
+  - `a2-functions.js` - Would match `02-functions.robin` (if it existed)
+  - `a3-control-flow.js` - Would match `03-control-flow.robin` (if it existed)
   
-**Important**: All test cases for a given script file should be in a single AST test file. For example, all variable assignment tests (basic assignments, set commands, object/array assignments, shorthand, do blocks, etc.) should all be in `a1-variable-assignment.js` to match `01-variable-assignment.rp`.
+**Important**: All test cases for a given script file should be in a single AST test file. For example, all variable assignment tests (basic assignments, set commands, object/array assignments, shorthand, do blocks, etc.) should all be in `a1-variable-assignment.js` to match `01-variable-assignment.robin`.
 
 ## Test Structure
 

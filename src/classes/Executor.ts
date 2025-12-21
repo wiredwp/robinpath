@@ -116,6 +116,18 @@ export class Executor {
     }
 
     /**
+     * Creates a new Executor instance that shares the same environment and call stack,
+     * but has its own call stack array to allow parallel execution without stack corruption.
+     * The frames themselves (locals Maps) are shared.
+     */
+    spawnChild(): Executor {
+        const child = new Executor(this.environment, this.parentThread, this.sourceCode);
+        // Copy the current call stack array (frames are shared by reference)
+        child.callStack = [...this.callStack];
+        return child;
+    }
+
+    /**
      * Execute an event handler with the provided arguments
      * Arguments are available as $1, $2, $3, etc. in the handler body
      */
@@ -1246,7 +1258,6 @@ Examples:
             // Handle "into" assignment if present - use the actual result value
             if (cmd.into) {
                 const value = result !== undefined ? result : null;
-                // // console.log('====> Executor: user function with into, setting variable', cmd.into.targetName, 'to', value);
                 if (cmd.into.targetPath && cmd.into.targetPath.length > 0) {
                     this.setVariableAtPath(cmd.into.targetName, cmd.into.targetPath, value);
                 } else {
@@ -1567,7 +1578,10 @@ Examples:
         }
 
         // Set $args variable with named arguments
-        frame.locals.set('args', namedArgsObj);
+        // Only if it doesn't conflict with a parameter name
+        if (!func.paramNames.includes('args')) {
+            frame.locals.set('args', namedArgsObj);
+        }
 
         this.callStack.push(frame);
 
@@ -1805,6 +1819,12 @@ Examples:
     private registerEventHandler(onBlock: OnBlock): void {
         // Get existing handlers for this event name, or create new array
         const handlers = this.environment.eventHandlers.get(onBlock.eventName) || [];
+        
+        // Avoid duplicate registration of the same handler object
+        if (handlers.includes(onBlock)) {
+            return;
+        }
+        
         // Add the new handler to the array
         handlers.push(onBlock);
         // Store back in the map
@@ -1931,11 +1951,13 @@ Examples:
         // together doesn't have its own scope - variables set inside do blocks are in parent scope
 
         // Capture the parent frame before executing do blocks
-        // This is the frame that contains the together block (together has no scope)
         const parentFrame = this.getCurrentFrame();
 
         // Create promises for each do block
         const promises = together.blocks.map(async (doBlock) => {
+            // Create a new child executor for this parallel block to avoid stack corruption
+            const childExecutor = this.spawnChild();
+            
             const isIsolated = doBlock.paramNames && doBlock.paramNames.length > 0;
 
             // Track initial lastValue to detect if body produces a new value
@@ -1949,43 +1971,32 @@ Examples:
             };
 
             // If scope has parameters, initialize them with values from parent scope
-            // if variables with the same names exist, otherwise null
             if (doBlock.paramNames) {
                 for (const paramName of doBlock.paramNames) {
-                    // Try to get value from parent frame or globals
                     let paramValue: Value = null;
-
-                    // Check parent frame locals
                     if (parentFrame.locals.has(paramName)) {
                         paramValue = parentFrame.locals.get(paramName)!;
-                    } else {
-                        // Check globals
-                        if (this.environment.variables.has(paramName)) {
-                            paramValue = this.environment.variables.get(paramName)!;
-                        }
+                    } else if (this.environment.variables.has(paramName)) {
+                        paramValue = this.environment.variables.get(paramName)!;
                     }
-
                     frame.locals.set(paramName, paramValue);
                 }
             }
 
-            this.callStack.push(frame);
+            // Push frame to the CHILD executor's stack
+            childExecutor.callStack.push(frame);
 
             let scopeValue: Value = null;
             try {
-                // Execute scope body - pass frame directly to avoid race conditions
-                // This ensures each parallel block uses its own frame, not the shared callStack
+                // Execute scope body using the child executor
                 for (const stmt of doBlock.body) {
-                    await this.executeStatement(stmt, frame);
+                    await childExecutor.executeStatement(stmt, frame);
                 }
 
-                // Capture the scope's lastValue after executing all statements
-                // If body is empty, scopeValue should be null (not parent's last value)
-                // If body didn't produce a new value (lastValue unchanged), scopeValue should be null
+                // Capture the scope's lastValue
                 if (doBlock.body.length === 0) {
                     scopeValue = null;
                 } else if (frame.lastValue === initialLastValue) {
-                    // Body didn't produce a new value, return null
                     scopeValue = null;
                 } else {
                     scopeValue = frame.lastValue;
@@ -1993,40 +2004,24 @@ Examples:
             } catch (error) {
                 // Handle return statements inside do blocks
                 if (error instanceof ReturnException) {
-                    // Set frame.lastValue to the return value
                     frame.lastValue = error.value;
                     scopeValue = error.value;
-                    // Don't re-throw - exit normally so execution continues
                 } else {
-                    // Re-throw other errors
                     throw error;
                 }
             } finally {
-                // Pop the scope frame
-                this.callStack.pop();
+                // Pop from child stack
+                childExecutor.callStack.pop();
             }
 
-            // If this do block has "into", assign the last value to the target variable in parent scope
-            // Set the variable directly in the parent scope (together has no scope)
+            // If this do block has "into", assign the last value in parent scope
             if (doBlock.into) {
-                // Set variable in parent scope - check parent frame first, then globals
                 if (doBlock.into.targetPath && doBlock.into.targetPath.length > 0) {
-                    // Path assignment - need to handle base value and path traversal
                     this.setVariableAtPathInParentScope(parentFrame, doBlock.into.targetName, doBlock.into.targetPath, scopeValue);
                 } else {
-                    // Simple assignment - check parent frame locals, then globals
-                    if (parentFrame.locals.has(doBlock.into.targetName)) {
-                        parentFrame.locals.set(doBlock.into.targetName, scopeValue);
-                    } else if (this.environment.variables.has(doBlock.into.targetName)) {
-                        this.environment.variables.set(doBlock.into.targetName, scopeValue);
-                    } else {
-                        // Variable doesn't exist - create in parent scope or globals
-                        if (parentFrame.isFunctionFrame) {
-                            parentFrame.locals.set(doBlock.into.targetName, scopeValue);
-                        } else {
-                            this.environment.variables.set(doBlock.into.targetName, scopeValue);
-                        }
-                    }
+                    // Use this.setVariable which correctly handles parent scopes
+                    // Pass parentFrame to ensure it uses the right starting point
+                    this.setVariable(doBlock.into.targetName, scopeValue, parentFrame);
                 }
             }
         });

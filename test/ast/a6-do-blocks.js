@@ -1,6 +1,6 @@
 // Test Case a6: Do Blocks AST tests
 // Tests AST reading, code position checking, and AST updating (add/remove/modify)
-// This test file matches test/scripts/06-do-blocks.rp
+// This test file matches test/scripts/06-do-blocks.robin
 
 import { RobinPath } from '../../dist/index.js';
 

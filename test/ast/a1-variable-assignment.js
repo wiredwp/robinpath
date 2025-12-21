@@ -1,6 +1,6 @@
 // Test Case a1: Variable Assignment AST tests
 // Tests AST reading, code position checking, and AST updating (add/remove/modify)
-// This test file matches test/scripts/01-variable-assignment.rp
+// This test file matches test/scripts/01-variable-assignment.robin
 
 import { RobinPath } from '../../dist/index.js';
 

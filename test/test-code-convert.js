@@ -12,10 +12,10 @@
  * Handles multiple test blocks separated by "---"
  * 
  * Usage:
- *   npm run test-code-convert -- 0    (tests 00-custom.rp, default 3 cycles)
- *   npm run test-code-convert -- 1    (tests 01-variable-assignment.rp, default 3 cycles)
+ *   npm run test-code-convert -- 0    (tests 00-custom.robin, default 3 cycles)
+ *   npm run test-code-convert -- 1    (tests 01-variable-assignment.robin, default 3 cycles)
  *   npm run test-code-convert -- 0-5  (tests 0 through 5, default 3 cycles)
- *   npm run test-code-convert -- 0 --cycle 5  (tests 00-custom.rp with 5 cycles)
+ *   npm run test-code-convert -- 0 --cycle 5  (tests 00-custom.robin with 5 cycles)
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -32,28 +32,28 @@ const scriptsDir = join(__dirname, 'scripts');
 
 // Define test files mapping (test number -> filename)
 const testFiles = [
-    '00-custom.rp',
-    '01-variable-assignment.rp',
-    '02-expressions.rp',
-    '03-conditionals.rp',
-    '04-loops.rp',
-    '05-functions.rp',
-    '06-do-blocks.rp',
-    '07-into-syntax.rp',
-    '08-subexpressions.rp',
-    '09-objects-arrays.rp',
-    '10-builtin-commands.rp',
-    '11-modules.rp',
-    '12-events.rp',
-    '13-together.rp',
-    '14-with.rp',
-    '15-meta.rp',
-    '16-decorator.rp',
-    '17-line-continuation.rp',
-    '18-template-strings.rp',
-    '19-last-value.rp',
-    '20-comments.rp',
-    '21-fenced.rp',
+    '00-custom.robin',
+    '01-variable-assignment.robin',
+    '02-expressions.robin',
+    '03-conditionals.robin',
+    '04-loops.robin',
+    '05-functions.robin',
+    '06-do-blocks.robin',
+    '07-into-syntax.robin',
+    '08-subexpressions.robin',
+    '09-objects-arrays.robin',
+    '10-builtin-commands.robin',
+    '11-modules.robin',
+    '12-events.robin',
+    '13-together.robin',
+    '14-with.robin',
+    '15-meta.robin',
+    '16-decorator.robin',
+    '17-line-continuation.robin',
+    '18-template-strings.robin',
+    '19-last-value.robin',
+    '20-comments.robin',
+    '21-fenced.robin',
 ];
 
 /**
@@ -381,8 +381,8 @@ async function testFile(testNumber, numCycles = 3) {
     // Export AST to JSON file if there were discrepancies
     if (astToExport !== null && allErrors.length > 0) {
         try {
-            // Generate JSON filename: replace .rp with .json
-            const jsonFilename = filename.replace(/\.rp$/, '.json');
+            // Generate JSON filename: replace .robin with .json
+            const jsonFilename = filename.replace(/\.robin$/, '.json');
             const jsonFilePath = join(scriptsDir, jsonFilename);
             
             // Write AST as formatted JSON

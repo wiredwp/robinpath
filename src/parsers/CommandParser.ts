@@ -358,6 +358,18 @@ export class CommandParser {
                     break;
                 }
 
+                // Check for "into" keyword - stop parsing arguments if found
+                // This prevents "into" from being consumed as an argument
+                if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
+                    break;
+                }
+
+                // Check for "with" keyword - stop parsing arguments if found
+                // This prevents "with" from being consumed as an argument
+                if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
+                    break;
+                }
+
                 // Skip comments, but preserve inline comments (comments on the same line as the command)
                 if (token.kind === TokenKind.COMMENT) {
                     // If comment is on the same line as the command, it's an inline comment - don't consume it
@@ -458,18 +470,6 @@ export class CommandParser {
 
                 // Stop if we've moved to a different line and we're not in/after a multi-line construct
                 if (token.line !== startLineNum && !justFinishedMultilineConstruct) {
-                    break;
-                }
-
-                // Check for "into" keyword - stop parsing arguments if found
-                // This prevents "into" from being consumed as an argument
-                if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
-                    break;
-                }
-
-                // Check for "with" keyword - stop parsing arguments if found
-                // This prevents "with" from being consumed as an argument
-                if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
                     break;
                 }
 

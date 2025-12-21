@@ -1,6 +1,6 @@
 // Test Case a2: Expressions AST tests
 // Tests AST reading, code position checking, and AST updating (add/remove/modify)
-// This test file matches test/scripts/02-expressions.rp
+// This test file matches test/scripts/02-expressions.robin
 
 import { RobinPath } from '../../dist/index.js';
 
