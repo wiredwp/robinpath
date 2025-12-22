@@ -8,7 +8,8 @@ import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { SubexpressionParser } from './SubexpressionParser';
-import type { Expression, CodePosition, Statement, BinaryOperator } from '../types/Ast.type';
+import { createCodePosition } from './ParserUtils';
+import type { Expression, Statement, BinaryOperator } from '../types/Ast.type';
 
 /**
  * Parse an expression from TokenStream
@@ -601,14 +602,4 @@ function parseCallExpression(
 
 
 
-/**
- * Create a CodePosition from start and end tokens
- */
-function createCodePosition(startToken: Token, endToken: Token): CodePosition {
-    return {
-        startRow: startToken.line - 1,
-        startCol: startToken.column,
-        endRow: endToken.line - 1,
-        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
-    };
-}
+

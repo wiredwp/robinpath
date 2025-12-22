@@ -11,6 +11,7 @@ import { CommandParser } from './CommandParser';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
 import { SubexpressionParser } from './SubexpressionParser';
+import { createCodePosition } from './ParserUtils';
 import type { Assignment, CodePosition } from '../types/Ast.type';
 
 export interface AssignmentParserContext {
@@ -309,21 +310,4 @@ export class AssignmentParser {
             endToken: endToken
         };
     }
-}
-
-
-
-
-
-
-/**
- * Helper: Create CodePosition from start and end tokens
- */
-function createCodePosition(startToken: Token, endToken: Token): CodePosition {
-    return {
-        startRow: startToken.line - 1, // Convert to 0-based
-        startCol: startToken.column,
-        endRow: endToken.line - 1, // Convert to 0-based
-        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
-    };
 }

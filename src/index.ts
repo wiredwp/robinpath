@@ -19,7 +19,8 @@ export interface ModuleAdapter {
 import { 
     extractNamedArgs,
     type Value,
-    type AttributePathSegment
+    type AttributePathSegment,
+    getValueType
 } from './utils';
 
 // Import classes
@@ -1441,9 +1442,9 @@ export class RobinPath {
                     targetName: stmt.targetName,
                     targetPath: stmt.targetPath,
                     command: stmt.command ? this.serializeStatement(stmt.command, currentModuleContext) : undefined,
-                    literalValue: stmt.literalValue,
-                    literalValueType: stmt.literalValue !== undefined ? this.getValueType(stmt.literalValue) : undefined,
-                    isLastValue: stmt.isLastValue
+                        literalValue: stmt.literalValue,
+                        literalValueType: stmt.literalValue !== undefined ? getValueType(stmt.literalValue) : undefined,
+                        isLastValue: stmt.isLastValue,
                 };
             case 'shorthand':
                 return {
@@ -1576,33 +1577,6 @@ export class RobinPath {
                     bodyPos: promptBlockStmt.bodyPos
                 };
         }
-    }
-
-    /**
-     * Determine the type of a value
-     * @param value The value to check
-     * @returns The type string: 'string', 'number', 'boolean', 'null', 'object', or 'array'
-     */
-    private getValueType(value: Value): 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array' {
-        if (value === null) {
-            return 'null';
-        }
-        if (typeof value === 'string') {
-            return 'string';
-        }
-        if (typeof value === 'number') {
-            return 'number';
-        }
-        if (typeof value === 'boolean') {
-            return 'boolean';
-        }
-        if (Array.isArray(value)) {
-            return 'array';
-            }
-        if (typeof value === 'object') {
-            return 'object';
-            }
-        return 'string'; // Fallback
     }
 
     /**

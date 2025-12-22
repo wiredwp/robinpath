@@ -11,6 +11,7 @@ import { LexerUtils } from '../utils';
 import { ObjectLiteralParser } from './ObjectLiteralParser';
 import { ArrayLiteralParser } from './ArrayLiteralParser';
 import { SubexpressionParser } from './SubexpressionParser';
+import { createCodePosition } from './ParserUtils';
 import type { CommandCall, Arg, ScopeBlock, CodePosition, Expression } from '../types/Ast.type';
 import type { AttributePathSegment } from '../utils/types';
 
@@ -780,13 +781,4 @@ export class CommandParser {
         stream.restore(savedPos);
         return undefined;
     }
-}
-
-function createCodePosition(startToken: Token, endToken: Token): CodePosition {
-    return {
-        startRow: startToken.line - 1, 
-        startCol: startToken.column,
-        endRow: endToken.line - 1, 
-        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
-    };
 }

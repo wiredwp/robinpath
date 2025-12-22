@@ -9,7 +9,8 @@ import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { CommentParser } from './CommentParser';
-import type { ScopeBlock, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
+import { createCodePosition } from './ParserUtils';
+import type { ScopeBlock, Statement, CommentWithPosition, DecoratorCall } from '../types/Ast.type';
 import type { AttributePathSegment } from '../utils/types';
 
 export class ScopeParser {
@@ -312,17 +313,4 @@ export class ScopeParser {
             stream.popContext();
         }
     }
-}
-
-
-/**
- * Helper: Create CodePosition from start and end tokens
- */
-function createCodePosition(startToken: Token, endToken: Token): CodePosition {
-    return {
-        startRow: startToken.line - 1, // Convert to 0-based
-        startCol: startToken.column,
-        endRow: endToken.line - 1, // Convert to 0-based
-        endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
-    };
 }
