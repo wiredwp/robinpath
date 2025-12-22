@@ -386,13 +386,13 @@
     ]
   },
   {
-    "type": "command",
+    "type": "together",
     "lastValue": null,
     "codePos": {
       "startRow": 33,
       "startCol": 0,
-      "endRow": 33,
-      "endCol": 76
+      "endRow": 44,
+      "endCol": 10
     },
     "comments": [
       {
@@ -406,6 +406,176 @@
         "inline": false
       }
     ],
+    "blocks": [
+      {
+        "type": "do",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 34,
+          "startCol": 2,
+          "endRow": 38,
+          "endCol": 6
+        },
+        "paramNames": [
+          "a"
+        ],
+        "body": [
+          {
+            "type": "assignment",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 35,
+              "startCol": 4,
+              "endRow": 35,
+              "endCol": 14
+            },
+            "targetName": "a",
+            "targetPath": [],
+            "literalValue": 10,
+            "literalValueType": "number",
+            "isSet": true,
+            "hasAs": false
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 36,
+              "startCol": 4,
+              "endRow": 36,
+              "endCol": 22
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "var",
+                "name": "a",
+                "path": []
+              },
+              {
+                "type": "number",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 37,
+              "startCol": 4,
+              "endRow": 37,
+              "endCol": 21
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "test 3-1."
+              },
+              {
+                "type": "lastValue"
+              }
+            ]
+          }
+        ],
+        "into": {
+          "targetName": "result1c",
+          "targetPath": []
+        }
+      },
+      {
+        "type": "do",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 39,
+          "startCol": 2,
+          "endRow": 43,
+          "endCol": 6
+        },
+        "paramNames": [
+          "b"
+        ],
+        "body": [
+          {
+            "type": "assignment",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 40,
+              "startCol": 4,
+              "endRow": 40,
+              "endCol": 13
+            },
+            "targetName": "b",
+            "targetPath": [],
+            "literalValue": 5,
+            "literalValueType": "number",
+            "isSet": true,
+            "hasAs": false
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 41,
+              "startCol": 4,
+              "endRow": 41,
+              "endCol": 22
+            },
+            "name": "math.multiply",
+            "module": "math",
+            "args": [
+              {
+                "type": "var",
+                "name": "b",
+                "path": []
+              },
+              {
+                "type": "number",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 42,
+              "startCol": 4,
+              "endRow": 42,
+              "endCol": 21
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "test 3-2."
+              },
+              {
+                "type": "lastValue"
+              }
+            ]
+          }
+        ],
+        "into": {
+          "targetName": "result1d",
+          "targetPath": []
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
+      "endCol": 76
+    },
     "name": "test.assertEqual",
     "module": "test",
     "args": [
@@ -428,9 +598,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 34,
+      "startRow": 46,
       "startCol": 0,
-      "endRow": 34,
+      "endRow": 46,
       "endCol": 77
     },
     "trailingBlankLines": 1,
@@ -456,9 +626,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 36,
+      "startRow": 48,
       "startCol": 0,
-      "endRow": 36,
+      "endRow": 48,
       "endCol": 45
     },
     "name": "log",

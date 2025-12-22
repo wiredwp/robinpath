@@ -317,12 +317,15 @@ export class Printer {
         ).join('') || '');
         
         let assignmentLine: string;
+        const prefix = node.isSet ? 'set ' : '';
+        // If implicit, no operator. Otherwise space + op.
+        const opStr = node.isImplicit ? '' : (node.hasAs ? ' as' : ' =');
         
         if (node.isLastValue) {
-            assignmentLine = `${target} = $`;
+            assignmentLine = `${prefix}${target}${opStr} $`;
         } else if (node.command) {
             const cmdCode = Printer.printNode(node.command, { ...ctx, indentLevel: 0 });
-            assignmentLine = `${target} = ${cmdCode.trim()}`;
+            assignmentLine = `${prefix}${target}${opStr} ${cmdCode.trim()}`;
         } else if (node.literalValue !== undefined) {
             let valueToUse = node.literalValue;
             let typeToUse: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array';
@@ -359,7 +362,7 @@ export class Printer {
                 valueStr = typeof valueToUse === 'string' ? `"${valueToUse}"` : String(valueToUse);
             }
             
-            assignmentLine = `${target} = ${valueStr}`;
+            assignmentLine = `${prefix}${target}${opStr} ${valueStr}`;
         } else {
             return;
         }

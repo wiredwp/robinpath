@@ -1445,6 +1445,9 @@ export class RobinPath {
                         literalValue: stmt.literalValue,
                         literalValueType: stmt.literalValue !== undefined ? getValueType(stmt.literalValue) : undefined,
                         isLastValue: stmt.isLastValue,
+                        isSet: stmt.isSet,
+                        hasAs: stmt.hasAs,
+                        isImplicit: stmt.isImplicit,
                 };
             case 'shorthand':
                 return {
@@ -1588,9 +1591,7 @@ export class RobinPath {
      * @returns Updated source code
      */
     async updateCodeFromAST(originalScript: string, ast: any[]): Promise<string> {
-        console.log('---original------->\n', originalScript);
         const result = await this.astToCodeConverter.updateCodeFromAST(originalScript, ast);
-        console.log('---result------->\n', result);
         return result;
     }
 

@@ -407,6 +407,19 @@ export class Parser {
             }
         }
 
+        // Check for 'set' assignment
+        if (token.kind === TokenKind.KEYWORD && token.text === 'set') {
+            return AssignmentParser.parse(stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                createCodePosition: (start, end) => ({
+                    startRow: start.line - 1,
+                    startCol: start.column,
+                    endRow: end.line - 1,
+                    endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                })
+            });
+        }
+
         // Check for variable assignment
         if (token.kind === TokenKind.VARIABLE) {
             let offset = 1;
@@ -774,6 +787,20 @@ export class Parser {
         const currentToken = this.stream.current();
         if (!currentToken) {
             return null;
+        }
+
+        // Check for 'set' assignment: set $var as ...
+        if (currentToken.kind === TokenKind.KEYWORD && currentToken.text === 'set') {
+            const assignment = AssignmentParser.parse(this.stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                createCodePosition: (start, end) => ({
+                    startRow: start.line - 1,
+                    startCol: start.column,
+                    endRow: end.line - 1,
+                    endCol: end.column + (end.text.length > 0 ? end.text.length - 1 : 0)
+                })
+            });
+            return assignment;
         }
 
         // Check for variable assignment: $var = ...

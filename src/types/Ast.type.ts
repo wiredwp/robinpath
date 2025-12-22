@@ -266,6 +266,9 @@ export interface Assignment {
     literalValue?: Value;
     literalValueType?: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array'; // Type of literalValue, deduced from the value
     isLastValue?: boolean; // True if assignment is from $ (last value)
+    isSet?: boolean; // True if using 'set' keyword
+    hasAs?: boolean; // True if using 'as' fluffy word
+    isImplicit?: boolean; // True if assignment is implicit (no = or as), e.g. set $var value
     comments?: CommentWithPosition[]; // Comments attached to this assignment (above and inline)
     decorators?: DecoratorCall[]; // Decorators attached to this assignment
     trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)

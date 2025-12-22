@@ -1,0 +1,140 @@
+[
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 0,
+      "startCol": 0,
+      "endRow": 0,
+      "endCol": 13
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "Ryan",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 1,
+      "startCol": 0,
+      "endRow": 1,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 30,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 2,
+      "startCol": 0,
+      "endRow": 2,
+      "endCol": 18
+    },
+    "targetName": "location",
+    "targetPath": [],
+    "literalValue": "Seoul",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 0
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 3,
+        "startCol": 10,
+        "endRow": 6,
+        "endCol": 0
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 4,
+                "startCol": 2,
+                "endRow": 4,
+                "endCol": 22
+              },
+              "name": "log",
+              "module": null,
+              "args": [
+                {
+                  "type": "string",
+                  "value": "Calculating..."
+                }
+              ]
+            },
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 5,
+                "startCol": 2,
+                "endRow": 5,
+                "endCol": 15
+              },
+              "value": {
+                "type": "string",
+                "value": "Done"
+              }
+            }
+          ],
+          "codePos": {
+            "startRow": 3,
+            "startCol": 10,
+            "endRow": 6,
+            "endCol": 0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 17
+    },
+    "comments": [
+      {
+        "text": "with comments",
+        "codePos": {
+          "startRow": 7,
+          "startCol": 0,
+          "endRow": 7,
+          "endCol": 14
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "targetName": "job",
+    "targetPath": [],
+    "literalValue": "Developer",
+    "literalValueType": "string"
+  }
+]

@@ -1,4 +1,3 @@
-
 # why there are some comments here?
 # because we want it!
 log "this is good!"
@@ -11,12 +10,12 @@ set $say as "Hello, world!"
 
 add 5 5 into $result
 
-if $name == "Ryan" then
+if $name is "Ryan" then
 ---
 This person is $ryan and he wants to say:
 $say 
 ---
- elseif $name == "Alice" then
+ elseif $name is "Alice" then
  ---
   
  ---

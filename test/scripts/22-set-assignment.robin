@@ -1,0 +1,9 @@
+set $name as "Ryan"
+set $age = 30
+$location = "Seoul"
+set $result as $(
+  log "Calculating..."
+  return "Done"
+)
+# with comments
+set $job as "Developer"  # inline comment

@@ -54,6 +54,7 @@ const testFiles = [
     '19-last-value.robin',
     '20-comments.robin',
     '21-fenced.robin',
+    '22-set-assignment.robin',
 ];
 
 /**

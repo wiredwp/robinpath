@@ -1,5 +1,7 @@
 {
   "version": "0.2.0",
   "description": "This is a test",
-  "title": "RobinPath Test!"
+  "title": "My Automation!",
+  "defaultModel": "gpt-4o"
+ 
 }

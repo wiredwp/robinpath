@@ -36,54 +36,65 @@ export class AssignmentParser {
      * @returns Assignment AST node
      */
     static parse(stream: TokenStream, context?: AssignmentParserContext): Assignment {
-        const startToken = stream.current();
+        let startToken = stream.current();
         if (!startToken) {
             throw new Error('Unexpected end of input while parsing assignment');
         }
 
-        // Parse target variable: $var or $var.path
-        if (startToken.kind !== TokenKind.VARIABLE) {
-            throw new Error(`Expected variable at ${stream.formatPosition()}, got ${startToken.kind}`);
+        let isSet = false;
+        if (startToken.kind === TokenKind.KEYWORD && startToken.text === 'set') {
+            isSet = true;
+            stream.next(); // Consume 'set'
+            
+            // Skip whitespace and comments
+            stream.skipWhitespaceAndComments();
+            // Update startToken to the variable token for codePos if needed, 
+            // but usually we want codePos to include 'set'
         }
 
-        const targetVar = startToken.text;
+        const variableToken = stream.current();
+        if (!variableToken || variableToken.kind !== TokenKind.VARIABLE) {
+            throw new Error(`Expected variable at ${stream.formatPosition()}, got ${variableToken?.kind || 'end of input'}`);
+        }
+
+        const targetVar = variableToken.text;
         const { name: targetName, path: targetPath } = LexerUtils.parseVariablePath(targetVar);
         stream.next(); // Consume variable token
 
-        // Skip whitespace and comments before the '=' token
-        while (!stream.isAtEnd()) {
-            const token = stream.current();
-            if (!token) break;
-            if (token.kind === TokenKind.COMMENT || 
-                (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
-                stream.next();
-                continue;
-            }
-            break;
-        }
+        // Skip whitespace and comments before the '=' or 'as' token
+        stream.skipWhitespaceAndComments();
 
-        // Expect = token
+        // Expect = or as token
+        let hasAs = false;
+        let isImplicit = false;
         const assignToken = stream.current();
-        if (!assignToken || assignToken.kind !== TokenKind.ASSIGN) {
-            const found = assignToken ? `${assignToken.kind} '${assignToken.text}'` : 'end of input';
-            const position = assignToken 
-                ? `line ${assignToken.line}, column ${assignToken.column}`
-                : stream.formatPosition();
-            throw new Error(`Expected '=' after variable at ${position}, found ${found}`);
+        if (!assignToken) {
+            throw new Error(`Expected '=' or 'as' after variable at ${stream.formatPosition()}`);
         }
-        stream.next(); // Consume the '=' token
 
-        // Skip whitespace and comments after the '=' token
-        while (!stream.isAtEnd()) {
-            const token = stream.current();
-            if (!token) break;
-            if (token.kind === TokenKind.COMMENT || 
-                (token.kind === TokenKind.NEWLINE && stream.peek(1)?.kind !== TokenKind.EOF)) {
-                stream.next();
-                continue;
+        if (assignToken.kind === TokenKind.ASSIGN) {
+            // Standard = assignment
+            stream.next(); // Consume the '=' token
+        } else if (assignToken.kind === TokenKind.KEYWORD && assignToken.text === 'as') {
+            // set $var as value
+            hasAs = true;
+            stream.next(); // Consume 'as'
+        } else {
+            // Check if we can allow implicit assignment (only if 'set' was used)
+            if (isSet) {
+                // Implicit assignment: set $var value
+                // Do not consume the token, it is the start of the value
+                hasAs = false; // Implicit assignment acts like standard assignment
+                isImplicit = true;
+            } else {
+                const found = `${assignToken.kind} '${assignToken.text}'`;
+                const position = `line ${assignToken.line}, column ${assignToken.column}`;
+                throw new Error(`Expected '=' or 'as' after variable at ${position}, found ${found}. Token stream context: ${stream.peek(-1)?.text} -> ${assignToken.text}`);
             }
-            break;
         }
+
+        // Skip whitespace and comments after the '=' or 'as' token (or implied assignment)
+        stream.skipWhitespaceAndComments();
 
         // Parse the assignment value
         const valueResult = this.parseAssignmentValue(stream, context);
@@ -96,6 +107,9 @@ export class AssignmentParser {
             targetName,
             targetPath,
             ...valueResult.assignmentData,
+            isSet,
+            hasAs,
+            isImplicit,
             codePos
         };
     }

@@ -87,6 +87,7 @@ export const KEYWORDS = new Set([
     'repeat',
     'iftrue', 'iffalse',
     'not', 'and', 'or',
+    'set', 'as',
 ]);
 
 /**
