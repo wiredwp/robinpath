@@ -1,0 +1,6522 @@
+[
+  {
+    "type": "comment",
+    "lastValue": null,
+    "comments": [
+      {
+        "text": "Objects and Arrays Tests\nTests for object/array literals, access, and assignment",
+        "codePos": {
+          "startRow": 0,
+          "startCol": 0,
+          "endRow": 1,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "lineNumber": 0
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 3,
+      "startCol": 0,
+      "endRow": 3,
+      "endCol": 38
+    },
+    "trailingBlankLines": 1,
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Objects and Arrays Tests ==="
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 6,
+      "startCol": 0,
+      "endRow": 6,
+      "endCol": 39
+    },
+    "comments": [
+      {
+        "text": "Test 1: Object and Array Literal Syntax {} and []",
+        "codePos": {
+          "startRow": 5,
+          "startCol": 0,
+          "endRow": 5,
+          "endCol": 50
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 1: Object and Array Literals"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 8,
+      "startCol": 0,
+      "endRow": 8,
+      "endCol": 1
+    },
+    "comments": [
+      {
+        "text": "Test empty object literal",
+        "codePos": {
+          "startRow": 7,
+          "startCol": 0,
+          "endRow": 7,
+          "endCol": 26
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": ""
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 9,
+      "startCol": 0,
+      "endRow": 9,
+      "endCol": 15
+    },
+    "targetName": "emptyObjLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 10,
+      "startCol": 0,
+      "endRow": 10,
+      "endCol": 70
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "emptyObjLit",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "object"
+      },
+      {
+        "type": "string",
+        "value": "Empty object literal {} failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 11,
+      "startCol": 0,
+      "endRow": 11,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 12,
+      "startCol": 0,
+      "endRow": 17,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 13,
+          "startCol": 2,
+          "endRow": 13,
+          "endCol": 19
+        },
+        "name": "keys",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyObjLit",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "assignment",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 14,
+          "startCol": 2,
+          "endRow": 14,
+          "endCol": 15
+        },
+        "targetName": "emptyKeys",
+        "targetPath": [],
+        "literalValue": null,
+        "literalValueType": "null",
+        "isLastValue": true
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 15,
+          "startCol": 2,
+          "endRow": 15,
+          "endCol": 25
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyKeys",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 16,
+          "startCol": 2,
+          "endRow": 16,
+          "endCol": 57
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 0
+          },
+          {
+            "type": "string",
+            "value": "Empty object literal keys failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 20,
+      "startCol": 0,
+      "endRow": 20,
+      "endCol": 22
+    },
+    "comments": [
+      {
+        "text": "Test basic object literal",
+        "codePos": {
+          "startRow": 19,
+          "startCol": 0,
+          "endRow": 19,
+          "endCol": 26
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "name:\"John\",age:30"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 21,
+      "startCol": 0,
+      "endRow": 21,
+      "endCol": 10
+    },
+    "targetName": "objLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 22,
+      "startCol": 0,
+      "endRow": 22,
+      "endCol": 75
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "objLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "Object literal basic creation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 23,
+      "startCol": 0,
+      "endRow": 23,
+      "endCol": 67
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "objLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "age"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Object literal with number failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
+      "startCol": 0,
+      "endRow": 26,
+      "endCol": 41
+    },
+    "comments": [
+      {
+        "text": "Test object literal with nested object",
+        "codePos": {
+          "startRow": 25,
+          "startCol": 0,
+          "endRow": 25,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "nested:{key:\"value\"},array:[1,2,3]"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 0,
+      "endRow": 27,
+      "endCol": 17
+    },
+    "targetName": "complexObjLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 0,
+      "endRow": 28,
+      "endCol": 88
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "nested"
+          },
+          {
+            "type": "property",
+            "name": "key"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "value"
+      },
+      {
+        "type": "string",
+        "value": "Object literal nested object failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 29,
+      "startCol": 0,
+      "endRow": 29,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "array"
+          },
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "Object literal with array failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 71
+    },
+    "comments": [
+      {
+        "text": "Test object literal with JSON5 features",
+        "codePos": {
+          "startRow": 31,
+          "startCol": 0,
+          "endRow": 31,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "unquoted:\"works\",singleQuotes:\"also works\",numbers:42,bool:true"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 0,
+      "endRow": 33,
+      "endCol": 15
+    },
+    "targetName": "json5ObjLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 0,
+      "endRow": 34,
+      "endCol": 84
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "json5ObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "unquoted"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "works"
+      },
+      {
+        "type": "string",
+        "value": "Object literal unquoted keys failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 35,
+      "startCol": 0,
+      "endRow": 35,
+      "endCol": 93
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "json5ObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "singleQuotes"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "also works"
+      },
+      {
+        "type": "string",
+        "value": "Object literal single quotes failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 36,
+      "startCol": 0,
+      "endRow": 36,
+      "endCol": 78
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "json5ObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "numbers"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Object literal number values failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 0,
+      "endRow": 37,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "json5ObjLit",
+        "path": [
+          {
+            "type": "property",
+            "name": "bool"
+          }
+        ]
+      },
+      {
+        "type": "literal",
+        "value": true
+      },
+      {
+        "type": "string",
+        "value": "Object literal boolean values failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 0,
+      "endRow": 40,
+      "endCol": 1
+    },
+    "comments": [
+      {
+        "text": "Test empty array literal",
+        "codePos": {
+          "startRow": 39,
+          "startCol": 0,
+          "endRow": 39,
+          "endCol": 25
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": ""
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 41,
+      "startCol": 0,
+      "endRow": 41,
+      "endCol": 15
+    },
+    "targetName": "emptyArrLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 42,
+      "startCol": 0,
+      "endRow": 42,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 0,
+      "endRow": 46,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 44,
+          "startCol": 2,
+          "endRow": 44,
+          "endCol": 27
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyArrLit",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 45,
+          "startCol": 2,
+          "endRow": 45,
+          "endCol": 54
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 0
+          },
+          {
+            "type": "string",
+            "value": "Empty array literal [] failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 49,
+      "startCol": 0,
+      "endRow": 49,
+      "endCol": 8
+    },
+    "comments": [
+      {
+        "text": "Test basic array literal",
+        "codePos": {
+          "startRow": 48,
+          "startCol": 0,
+          "endRow": 48,
+          "endCol": 25
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "1,2,3"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 50,
+      "startCol": 0,
+      "endRow": 50,
+      "endCol": 10
+    },
+    "targetName": "arrLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 51,
+      "startCol": 0,
+      "endRow": 51,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 52,
+      "startCol": 0,
+      "endRow": 55,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 53,
+          "startCol": 2,
+          "endRow": 53,
+          "endCol": 22
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "arrLit",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 54,
+          "startCol": 2,
+          "endRow": 54,
+          "endCol": 52
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 3
+          },
+          {
+            "type": "string",
+            "value": "Array literal length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 56,
+      "startCol": 0,
+      "endRow": 56,
+      "endCol": 66
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "Array literal first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 57,
+      "startCol": 0,
+      "endRow": 57,
+      "endCol": 67
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "Array literal second element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 58,
+      "startCol": 0,
+      "endRow": 58,
+      "endCol": 66
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Array literal third element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 61,
+      "startCol": 0,
+      "endRow": 61,
+      "endCol": 27
+    },
+    "comments": [
+      {
+        "text": "Test array literal with mixed types",
+        "codePos": {
+          "startRow": 60,
+          "startCol": 0,
+          "endRow": 60,
+          "endCol": 36
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "\"hello\",\"world\",42,true"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 62,
+      "startCol": 0,
+      "endRow": 62,
+      "endCol": 15
+    },
+    "targetName": "mixedArrLit",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 63,
+      "startCol": 0,
+      "endRow": 63,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 0,
+      "endRow": 67,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 65,
+          "startCol": 2,
+          "endRow": 65,
+          "endCol": 27
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "mixedArrLit",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 66,
+          "startCol": 2,
+          "endRow": 66,
+          "endCol": 64
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 4
+          },
+          {
+            "type": "string",
+            "value": "Array literal mixed types length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 0,
+      "endRow": 68,
+      "endCol": 78
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "hello"
+      },
+      {
+        "type": "string",
+        "value": "Array literal string element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
+      "startCol": 0,
+      "endRow": 69,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Array literal number element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 70,
+      "startCol": 0,
+      "endRow": 70,
+      "endCol": 76
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArrLit",
+        "path": [
+          {
+            "type": "index",
+            "index": 3
+          }
+        ]
+      },
+      {
+        "type": "literal",
+        "value": true
+      },
+      {
+        "type": "string",
+        "value": "Array literal boolean element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 73,
+      "startCol": 0,
+      "endRow": 73,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 2: Variable interpolation in object and array literals",
+        "codePos": {
+          "startRow": 72,
+          "startCol": 0,
+          "endRow": 72,
+          "endCol": 60
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 2: Variable interpolation in literals"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 0,
+      "endRow": 74,
+      "endCol": 5
+    },
+    "targetName": "a",
+    "targetPath": [],
+    "literalValue": 1,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 75,
+      "startCol": 0,
+      "endRow": 75,
+      "endCol": 13
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 75,
+        "startCol": 5,
+        "endRow": 75,
+        "endCol": 13
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        {
+          "type": "object",
+          "code": "a:$a"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 76,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 73
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "b",
+        "path": [
+          {
+            "type": "property",
+            "name": "a"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "Variable interpolation in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 0,
+      "endRow": 78,
+      "endCol": 15
+    },
+    "targetName": "key",
+    "targetPath": [],
+    "literalValue": "keyname",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 79,
+      "startCol": 0,
+      "endRow": 79,
+      "endCol": 17
+    },
+    "targetName": "b",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 79,
+        "startCol": 5,
+        "endRow": 79,
+        "endCol": 17
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        {
+          "type": "object",
+          "code": "[$key]:1"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 80,
+      "startCol": 0,
+      "endRow": 80,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "b",
+        "path": [
+          {
+            "type": "property",
+            "name": "keyname"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "Computed property name in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 0,
+      "endRow": 82,
+      "endCol": 8
+    },
+    "targetName": "num",
+    "targetPath": [],
+    "literalValue": 42,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 16
+    },
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 83,
+        "startCol": 7,
+        "endRow": 83,
+        "endCol": 16
+      },
+      "name": "_array",
+      "module": null,
+      "args": [
+        {
+          "type": "array",
+          "code": "$num,43"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 0,
+      "endRow": 84,
+      "endCol": 76
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 42
+      },
+      {
+        "type": "string",
+        "value": "Variable interpolation in array literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 85,
+      "startCol": 0,
+      "endRow": 85,
+      "endCol": 93
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 43
+      },
+      {
+        "type": "string",
+        "value": "Variable interpolation in array literal - second element failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 87,
+      "startCol": 0,
+      "endRow": 87,
+      "endCol": 13
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "John",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 0,
+      "endRow": 88,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 30,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 0,
+      "endRow": 89,
+      "endCol": 32
+    },
+    "targetName": "obj",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 89,
+        "startCol": 7,
+        "endRow": 89,
+        "endCol": 32
+      },
+      "name": "_object",
+      "module": null,
+      "args": [
+        {
+          "type": "object",
+          "code": "name:$name,age:$age"
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 90,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 92
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "Multiple variable interpolation in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 91,
+      "endCol": 93
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "obj",
+        "path": [
+          {
+            "type": "property",
+            "name": "age"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Multiple variable interpolation in object literal - age failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 94,
+      "startCol": 0,
+      "endRow": 94,
+      "endCol": 49
+    },
+    "comments": [
+      {
+        "text": "Test 3: Attribute access and array indexing",
+        "codePos": {
+          "startRow": 93,
+          "startCol": 0,
+          "endRow": 93,
+          "endCol": 44
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 3: Attribute access and array indexing"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 95,
+      "startCol": 0,
+      "endRow": 95,
+      "endCol": 82
+    },
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"name\": \"John\", \"age\": 30, \"address\": {\"city\": \"NYC\", \"zip\": 10001}}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 96,
+      "startCol": 0,
+      "endRow": 96,
+      "endCol": 8
+    },
+    "targetName": "user",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 97,
+      "startCol": 0,
+      "endRow": 97,
+      "endCol": 65
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "Basic property access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 98,
+      "startCol": 0,
+      "endRow": 98,
+      "endCol": 72
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "age"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Basic property access with number failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 99,
+      "startCol": 0,
+      "endRow": 99,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "address"
+          },
+          {
+            "type": "property",
+            "name": "city"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "NYC"
+      },
+      {
+        "type": "string",
+        "value": "Nested property access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 100,
+      "startCol": 0,
+      "endRow": 100,
+      "endCol": 84
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "address"
+          },
+          {
+            "type": "property",
+            "name": "zip"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10001
+      },
+      {
+        "type": "string",
+        "value": "Nested property access with number failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 103,
+      "startCol": 0,
+      "endRow": 103,
+      "endCol": 18
+    },
+    "comments": [
+      {
+        "text": "Test array indexing",
+        "codePos": {
+          "startRow": 102,
+          "startCol": 0,
+          "endRow": 102,
+          "endCol": 20
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 103,
+        "startCol": 7,
+        "endRow": 103,
+        "endCol": 18
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 10
+        },
+        {
+          "type": "number",
+          "value": 15
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 104,
+      "startCol": 0,
+      "endRow": 104,
+      "endCol": 50
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Array index 0 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 105,
+      "startCol": 0,
+      "endRow": 105,
+      "endCol": 50
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 12
+      },
+      {
+        "type": "string",
+        "value": "Array index 2 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 106,
+      "startCol": 0,
+      "endRow": 106,
+      "endCol": 50
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 5
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "Array index 5 failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 107,
+      "startCol": 0,
+      "endRow": 107,
+      "endCol": 78
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 10
+          }
+        ]
+      },
+      {
+        "type": "literal",
+        "value": null
+      },
+      {
+        "type": "string",
+        "value": "Out of bounds array access should return null"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 110,
+      "startCol": 0,
+      "endRow": 110,
+      "endCol": 88
+    },
+    "comments": [
+      {
+        "text": "Test combined property and array access",
+        "codePos": {
+          "startRow": 109,
+          "startCol": 0,
+          "endRow": 109,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"items\": [{\"name\": \"item1\", \"price\": 10}, {\"name\": \"item2\", \"price\": 20}]}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 111,
+      "startCol": 0,
+      "endRow": 111,
+      "endCol": 8
+    },
+    "targetName": "data",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 112,
+      "startCol": 0,
+      "endRow": 112,
+      "endCol": 88
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "item1"
+      },
+      {
+        "type": "string",
+        "value": "Combined property and array access failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 0,
+      "endRow": 113,
+      "endCol": 96
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "price"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Combined property and array access with number failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 0,
+      "endRow": 114,
+      "endCol": 100
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 1
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "item2"
+      },
+      {
+        "type": "string",
+        "value": "Combined property and array access second item failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 0,
+      "endRow": 117,
+      "endCol": 61
+    },
+    "comments": [
+      {
+        "text": "Test 4: Assignment to attribute paths and array indices",
+        "codePos": {
+          "startRow": 116,
+          "startCol": 0,
+          "endRow": 116,
+          "endCol": 56
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 4: Assignment to attribute paths and array indices"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 40
+    },
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"name\": \"John\", \"age\": 30}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 0,
+      "endRow": 119,
+      "endCol": 8
+    },
+    "targetName": "user",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 0,
+      "endRow": 120,
+      "endCol": 20
+    },
+    "targetName": "user",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "city"
+      }
+    ],
+    "literalValue": "London",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 121,
+      "startCol": 0,
+      "endRow": 121,
+      "endCol": 73
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "city"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "London"
+      },
+      {
+        "type": "string",
+        "value": "Assignment to property path failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 122,
+      "startCol": 0,
+      "endRow": 122,
+      "endCol": 97
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "Assignment to property path should preserve other properties"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 0,
+      "endRow": 125,
+      "endCol": 25
+    },
+    "comments": [
+      {
+        "text": "Test assignment to nested property path",
+        "codePos": {
+          "startRow": 124,
+          "startCol": 0,
+          "endRow": 124,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "user",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "address"
+      },
+      {
+        "type": "property",
+        "name": "city"
+      }
+    ],
+    "literalValue": "NYC",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 0,
+      "endRow": 126,
+      "endCol": 85
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "address"
+          },
+          {
+            "type": "property",
+            "name": "city"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "NYC"
+      },
+      {
+        "type": "string",
+        "value": "Assignment to nested property path failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 127,
+      "startCol": 0,
+      "endRow": 127,
+      "endCol": 104
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "user",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "Assignment to nested property path should preserve other properties"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 16
+    },
+    "comments": [
+      {
+        "text": "Test assignment to array index",
+        "codePos": {
+          "startRow": 129,
+          "startCol": 0,
+          "endRow": 129,
+          "endCol": 31
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 130,
+        "startCol": 7,
+        "endRow": 130,
+        "endCol": 16
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 1
+        },
+        {
+          "type": "number",
+          "value": 5
+        }
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 131,
+      "endCol": 12
+    },
+    "targetName": "arr",
+    "targetPath": [
+      {
+        "type": "index",
+        "index": 0
+      }
+    ],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 132,
+      "startCol": 0,
+      "endRow": 132,
+      "endCol": 63
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "Assignment to array index failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 133,
+      "startCol": 0,
+      "endRow": 133,
+      "endCol": 85
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "Assignment to array index should preserve other elements"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 136,
+      "startCol": 0,
+      "endRow": 136,
+      "endCol": 36
+    },
+    "comments": [
+      {
+        "text": "Test assignment to nested array index",
+        "codePos": {
+          "startRow": 135,
+          "startCol": 0,
+          "endRow": 135,
+          "endCol": 38
+        },
+        "inline": false
+      }
+    ],
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"items\": [10, 20, 30]}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 137,
+      "startCol": 0,
+      "endRow": 137,
+      "endCol": 8
+    },
+    "targetName": "data",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 138,
+      "startCol": 0,
+      "endRow": 138,
+      "endCol": 19
+    },
+    "targetName": "data",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "items"
+      },
+      {
+        "type": "index",
+        "index": 0
+      }
+    ],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 139,
+      "startCol": 0,
+      "endRow": 139,
+      "endCol": 77
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "Assignment to nested array index failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 140,
+      "startCol": 0,
+      "endRow": 140,
+      "endCol": 100
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Assignment to nested array index should preserve other elements"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 143,
+      "startCol": 0,
+      "endRow": 143,
+      "endCol": 56
+    },
+    "comments": [
+      {
+        "text": "Test assignment to combined path",
+        "codePos": {
+          "startRow": 142,
+          "startCol": 0,
+          "endRow": 142,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "json.parse",
+    "module": "json",
+    "args": [
+      {
+        "type": "string",
+        "value": "{\"items\": [{\"name\": \"item1\", \"price\": 10}]}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 144,
+      "startCol": 0,
+      "endRow": 144,
+      "endCol": 8
+    },
+    "targetName": "data",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 145,
+      "startCol": 0,
+      "endRow": 145,
+      "endCol": 24
+    },
+    "targetName": "data",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "items"
+      },
+      {
+        "type": "index",
+        "index": 0
+      },
+      {
+        "type": "property",
+        "name": "price"
+      }
+    ],
+    "literalValue": 50,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 146,
+      "startCol": 0,
+      "endRow": 146,
+      "endCol": 77
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "price"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 50
+      },
+      {
+        "type": "string",
+        "value": "Assignment to combined path failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 147,
+      "startCol": 0,
+      "endRow": 147,
+      "endCol": 107
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "data",
+        "path": [
+          {
+            "type": "property",
+            "name": "items"
+          },
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "item1"
+      },
+      {
+        "type": "string",
+        "value": "Assignment to combined path should preserve other properties"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 150,
+      "startCol": 0,
+      "endRow": 150,
+      "endCol": 14
+    },
+    "comments": [
+      {
+        "text": "Test assignment creates intermediate objects",
+        "codePos": {
+          "startRow": 149,
+          "startCol": 0,
+          "endRow": 149,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "animal",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "cat"
+      }
+    ],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 151,
+      "startCol": 0,
+      "endRow": 151,
+      "endCol": 79
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "animal",
+        "path": [
+          {
+            "type": "property",
+            "name": "cat"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 5
+      },
+      {
+        "type": "string",
+        "value": "Assignment creating intermediate object failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 154,
+      "startCol": 0,
+      "endRow": 154,
+      "endCol": 34
+    },
+    "comments": [
+      {
+        "text": "Test assignment creates nested intermediate objects",
+        "codePos": {
+          "startRow": 153,
+          "startCol": 0,
+          "endRow": 153,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "config",
+    "targetPath": [
+      {
+        "type": "property",
+        "name": "database"
+      },
+      {
+        "type": "property",
+        "name": "host"
+      }
+    ],
+    "literalValue": "localhost",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 155,
+      "startCol": 0,
+      "endRow": 155,
+      "endCol": 107
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "config",
+        "path": [
+          {
+            "type": "property",
+            "name": "database"
+          },
+          {
+            "type": "property",
+            "name": "host"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "localhost"
+      },
+      {
+        "type": "string",
+        "value": "Assignment creating nested intermediate objects failed"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 0,
+      "endRow": 158,
+      "endCol": 16
+    },
+    "comments": [
+      {
+        "text": "Test assignment to array index out of bounds (should extend array)",
+        "codePos": {
+          "startRow": 157,
+          "startCol": 0,
+          "endRow": 157,
+          "endCol": 67
+        },
+        "inline": false
+      }
+    ],
+    "targetName": "arr",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 158,
+        "startCol": 7,
+        "endRow": 158,
+        "endCol": 16
+      },
+      "name": "range",
+      "module": null,
+      "args": [
+        {
+          "type": "number",
+          "value": 1
+        },
+        {
+          "type": "number",
+          "value": 3
+        }
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 159,
+      "startCol": 0,
+      "endRow": 159,
+      "endCol": 12
+    },
+    "targetName": "arr",
+    "targetPath": [
+      {
+        "type": "index",
+        "index": 5
+      }
+    ],
+    "literalValue": 100,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 160,
+      "startCol": 0,
+      "endRow": 160,
+      "endCol": 77
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr",
+        "path": [
+          {
+            "type": "index",
+            "index": 5
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "string",
+        "value": "Assignment to out of bounds array index failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 161,
+      "startCol": 0,
+      "endRow": 161,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 162,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 163,
+          "startCol": 2,
+          "endRow": 163,
+          "endCol": 19
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "arr",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 164,
+          "startCol": 2,
+          "endRow": 164,
+          "endCol": 84
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 6
+          },
+          {
+            "type": "string",
+            "value": "Assignment to out of bounds array index should extend array"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 168,
+      "startCol": 0,
+      "endRow": 168,
+      "endCol": 44
+    },
+    "comments": [
+      {
+        "text": "Test 5: obj and array builtin commands",
+        "codePos": {
+          "startRow": 167,
+          "startCol": 0,
+          "endRow": 167,
+          "endCol": 39
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 5: obj and array builtin commands"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 169,
+      "startCol": 0,
+      "endRow": 169,
+      "endCol": 2
+    },
+    "name": "obj",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 170,
+      "startCol": 0,
+      "endRow": 170,
+      "endCol": 12
+    },
+    "targetName": "emptyObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 171,
+      "startCol": 0,
+      "endRow": 171,
+      "endCol": 60
+    },
+    "name": "test.assertType",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "emptyObj",
+        "path": []
+      },
+      {
+        "type": "string",
+        "value": "object"
+      },
+      {
+        "type": "string",
+        "value": "obj without args failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 0,
+      "endRow": 172,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 173,
+      "startCol": 0,
+      "endRow": 178,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 174,
+          "startCol": 2,
+          "endRow": 174,
+          "endCol": 16
+        },
+        "name": "keys",
+        "module": null,
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyObj",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "assignment",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 175,
+          "startCol": 2,
+          "endRow": 175,
+          "endCol": 15
+        },
+        "targetName": "emptyKeys",
+        "targetPath": [],
+        "literalValue": null,
+        "literalValueType": "null",
+        "isLastValue": true
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 176,
+          "startCol": 2,
+          "endRow": 176,
+          "endCol": 25
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyKeys",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 177,
+          "startCol": 2,
+          "endRow": 177,
+          "endCol": 53
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 0
+          },
+          {
+            "type": "string",
+            "value": "obj empty object keys failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 180,
+      "startCol": 0,
+      "endRow": 180,
+      "endCol": 29
+    },
+    "name": "obj",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "{name: \"John\", age: 30}"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 181,
+      "startCol": 0,
+      "endRow": 181,
+      "endCol": 14
+    },
+    "targetName": "objCreated",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 182,
+      "startCol": 0,
+      "endRow": 182,
+      "endCol": 76
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "objCreated",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "John"
+      },
+      {
+        "type": "string",
+        "value": "obj command basic creation failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 183,
+      "startCol": 0,
+      "endRow": 183,
+      "endCol": 68
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "objCreated",
+        "path": [
+          {
+            "type": "property",
+            "name": "age"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "obj command with number failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 185,
+      "startCol": 0,
+      "endRow": 185,
+      "endCol": 4
+    },
+    "name": "array",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 186,
+      "startCol": 0,
+      "endRow": 186,
+      "endCol": 14
+    },
+    "targetName": "emptyArray",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 187,
+      "startCol": 0,
+      "endRow": 187,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 188,
+      "startCol": 0,
+      "endRow": 191,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 189,
+          "startCol": 2,
+          "endRow": 189,
+          "endCol": 26
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "emptyArray",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 190,
+          "startCol": 2,
+          "endRow": 190,
+          "endCol": 50
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 0
+          },
+          {
+            "type": "string",
+            "value": "array without args failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 193,
+      "startCol": 0,
+      "endRow": 193,
+      "endCol": 11
+    },
+    "name": "array",
+    "module": null,
+    "args": [
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "number",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 194,
+      "startCol": 0,
+      "endRow": 194,
+      "endCol": 8
+    },
+    "targetName": "arr1",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 195,
+      "startCol": 0,
+      "endRow": 195,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 196,
+      "startCol": 0,
+      "endRow": 199,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 197,
+          "startCol": 2,
+          "endRow": 197,
+          "endCol": 20
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "arr1",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 198,
+          "startCol": 2,
+          "endRow": 198,
+          "endCol": 52
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 3
+          },
+          {
+            "type": "string",
+            "value": "array command length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 200,
+      "startCol": 0,
+      "endRow": 200,
+      "endCol": 64
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr1",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 1
+      },
+      {
+        "type": "string",
+        "value": "array command first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 201,
+      "startCol": 0,
+      "endRow": 201,
+      "endCol": 65
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr1",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "array command second element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 202,
+      "startCol": 0,
+      "endRow": 202,
+      "endCol": 64
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "arr1",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "array command third element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 205,
+      "startCol": 0,
+      "endRow": 205,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Test 6: Multi-line object and array literals",
+        "codePos": {
+          "startRow": 204,
+          "startCol": 0,
+          "endRow": 204,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 6: Multi-line object and array literals"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 206,
+      "startCol": 0,
+      "endRow": 210,
+      "endCol": 0
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nname:\"Multi\",\nage:25,\ncity:\"NYC\"\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 211,
+      "startCol": 0,
+      "endRow": 211,
+      "endCol": 16
+    },
+    "targetName": "multiLineObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 212,
+      "startCol": 0,
+      "endRow": 212,
+      "endCol": 78
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiLineObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Multi"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 213,
+      "startCol": 0,
+      "endRow": 213,
+      "endCol": 76
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiLineObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "age"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "Multi-line object literal age failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 214,
+      "startCol": 0,
+      "endRow": 214,
+      "endCol": 81
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiLineObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "city"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "NYC"
+      },
+      {
+        "type": "string",
+        "value": "Multi-line object literal city failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 216,
+      "startCol": 0,
+      "endRow": 220,
+      "endCol": 0
+    },
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "\n1,\n2,\n3\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 221,
+      "startCol": 0,
+      "endRow": 221,
+      "endCol": 16
+    },
+    "targetName": "multiLineArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 222,
+      "startCol": 0,
+      "endRow": 222,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 223,
+      "startCol": 0,
+      "endRow": 226,
+      "endCol": 4
+    },
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 224,
+          "startCol": 2,
+          "endRow": 224,
+          "endCol": 28
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "multiLineArr",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 225,
+          "startCol": 2,
+          "endRow": 225,
+          "endCol": 63
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 3
+          },
+          {
+            "type": "string",
+            "value": "Multi-line array literal length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 227,
+      "startCol": 0,
+      "endRow": 227,
+      "endCol": 77
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiLineArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 2
+      },
+      {
+        "type": "string",
+        "value": "Multi-line array literal element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 230,
+      "startCol": 0,
+      "endRow": 230,
+      "endCol": 48
+    },
+    "comments": [
+      {
+        "text": "Test 7: Array manipulation with array.push",
+        "codePos": {
+          "startRow": 229,
+          "startCol": 0,
+          "endRow": 229,
+          "endCol": 43
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 7: Array manipulation with array.push"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 231,
+      "startCol": 0,
+      "endRow": 231,
+      "endCol": 18
+    },
+    "targetName": "multiContinue",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 231,
+        "startCol": 17,
+        "endRow": 231,
+        "endCol": 18
+      },
+      "name": "_array",
+      "module": null,
+      "args": [
+        {
+          "type": "array",
+          "code": ""
+        }
+      ]
+    }
+  },
+  {
+    "type": "forLoop",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 232,
+      "startCol": 0,
+      "endRow": 240,
+      "endCol": 5
+    },
+    "varName": "i",
+    "iterable": {
+      "type": "call",
+      "callee": "range",
+      "args": [
+        {
+          "type": "number",
+          "value": 1,
+          "codePos": {
+            "startRow": 232,
+            "startCol": 16,
+            "endRow": 232,
+            "endCol": 16
+          }
+        },
+        {
+          "type": "number",
+          "value": 10,
+          "codePos": {
+            "startRow": 232,
+            "startCol": 18,
+            "endRow": 232,
+            "endCol": 19
+          }
+        }
+      ],
+      "codePos": {
+        "startRow": 232,
+        "startCol": 10,
+        "endRow": 232,
+        "endCol": 19
+      }
+    },
+    "body": [
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 233,
+          "startCol": 2,
+          "endRow": 235,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 233,
+              "startCol": 5,
+              "endRow": 233,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 233,
+              "startCol": 10,
+              "endRow": 233,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 233,
+            "startCol": 5,
+            "endRow": 233,
+            "endCol": 8
+          }
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 233,
+              "startCol": 5,
+              "endRow": 233,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 3,
+            "codePos": {
+              "startRow": 233,
+              "startCol": 10,
+              "endRow": 233,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 233,
+            "startCol": 5,
+            "endRow": 233,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 234,
+              "startCol": 4,
+              "endRow": 235,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "ifBlock",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 236,
+          "startCol": 2,
+          "endRow": 238,
+          "endCol": 6
+        },
+        "condition": {
+          "type": "binary",
+          "operator": ">",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 236,
+              "startCol": 5,
+              "endRow": 236,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 7,
+            "codePos": {
+              "startRow": 236,
+              "startCol": 10,
+              "endRow": 236,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 236,
+            "startCol": 5,
+            "endRow": 236,
+            "endCol": 8
+          }
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": ">",
+          "left": {
+            "type": "var",
+            "name": "i",
+            "path": [],
+            "codePos": {
+              "startRow": 236,
+              "startCol": 5,
+              "endRow": 236,
+              "endCol": 6
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 7,
+            "codePos": {
+              "startRow": 236,
+              "startCol": 10,
+              "endRow": 236,
+              "endCol": 10
+            }
+          },
+          "codePos": {
+            "startRow": 236,
+            "startCol": 5,
+            "endRow": 236,
+            "endCol": 8
+          }
+        },
+        "thenBranch": [
+          {
+            "type": "continue",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 237,
+              "startCol": 4,
+              "endRow": 238,
+              "endCol": 6
+            }
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 239,
+          "startCol": 2,
+          "endRow": 239,
+          "endCol": 30
+        },
+        "name": "array.push",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "multiContinue",
+            "path": []
+          },
+          {
+            "type": "var",
+            "name": "i",
+            "path": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 241,
+      "startCol": 0,
+      "endRow": 241,
+      "endCol": 86
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiContinue",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Array.push with continue - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 242,
+      "startCol": 0,
+      "endRow": 242,
+      "endCol": 85
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "multiContinue",
+        "path": [
+          {
+            "type": "index",
+            "index": 4
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 7
+      },
+      {
+        "type": "string",
+        "value": "Array.push with continue - last element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 243,
+      "startCol": 0,
+      "endRow": 243,
+      "endCol": 4
+    },
+    "name": "clear",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "do",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 244,
+      "startCol": 0,
+      "endRow": 247,
+      "endCol": 4
+    },
+    "trailingBlankLines": 1,
+    "body": [
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 245,
+          "startCol": 2,
+          "endRow": 245,
+          "endCol": 29
+        },
+        "name": "array.length",
+        "module": "array",
+        "args": [
+          {
+            "type": "var",
+            "name": "multiContinue",
+            "path": []
+          }
+        ]
+      },
+      {
+        "type": "command",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 246,
+          "startCol": 2,
+          "endRow": 246,
+          "endCol": 65
+        },
+        "name": "test.assertEqual",
+        "module": "test",
+        "args": [
+          {
+            "type": "lastValue"
+          },
+          {
+            "type": "number",
+            "value": 5
+          },
+          {
+            "type": "string",
+            "value": "Array.push with continue - length failed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 250,
+      "startCol": 0,
+      "endRow": 250,
+      "endCol": 68
+    },
+    "comments": [
+      {
+        "text": "Test 8: Template strings and subexpressions in object literals",
+        "codePos": {
+          "startRow": 249,
+          "startCol": 0,
+          "endRow": 249,
+          "endCol": 63
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 8: Template strings and subexpressions in object literals"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 251,
+      "startCol": 0,
+      "endRow": 251,
+      "endCol": 14
+    },
+    "targetName": "name",
+    "targetPath": [],
+    "literalValue": "Alice",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 252,
+      "startCol": 0,
+      "endRow": 252,
+      "endCol": 8
+    },
+    "targetName": "age",
+    "targetPath": [],
+    "literalValue": 25,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 253,
+      "startCol": 0,
+      "endRow": 253,
+      "endCol": 12
+    },
+    "trailingBlankLines": 1,
+    "targetName": "city",
+    "targetPath": [],
+    "literalValue": "NYC",
+    "literalValueType": "string"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 256,
+      "startCol": 0,
+      "endRow": 260,
+      "endCol": 0
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nname:`$name`,\ngreeting:`Hello, $name!`,\ninfo:`$name is $age years old`\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 261,
+      "startCol": 0,
+      "endRow": 261,
+      "endCol": 15
+    },
+    "targetName": "templateObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 262,
+      "startCol": 0,
+      "endRow": 262,
+      "endCol": 85
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Alice"
+      },
+      {
+        "type": "string",
+        "value": "Template string in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 263,
+      "startCol": 0,
+      "endRow": 263,
+      "endCol": 116
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "greeting"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Hello, Alice!"
+      },
+      {
+        "type": "string",
+        "value": "Template string with interpolation in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 264,
+      "startCol": 0,
+      "endRow": 264,
+      "endCol": 125
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "info"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Alice is 25 years old"
+      },
+      {
+        "type": "string",
+        "value": "Template string with multiple variables in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 267,
+      "startCol": 0,
+      "endRow": 271,
+      "endCol": 0
+    },
+    "comments": [
+      {
+        "text": "Subexpressions in object literals",
+        "codePos": {
+          "startRow": 266,
+          "startCol": 0,
+          "endRow": 266,
+          "endCol": 34
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nsum:$(math.add 10 20),\nproduct:$(math.multiply 5 6),\ndifference:$(math.subtract 50 30)\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 272,
+      "startCol": 0,
+      "endRow": 272,
+      "endCol": 14
+    },
+    "targetName": "subexprObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 273,
+      "startCol": 0,
+      "endRow": 273,
+      "endCol": 82
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "sum"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in object literal - sum failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 274,
+      "startCol": 0,
+      "endRow": 274,
+      "endCol": 90
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "product"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in object literal - product failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 275,
+      "startCol": 0,
+      "endRow": 275,
+      "endCol": 96
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "difference"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 20
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in object literal - difference failed"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 278,
+      "startCol": 0,
+      "endRow": 280,
+      "endCol": 5
+    },
+    "comments": [
+      {
+        "text": "Nested subexpressions in object literals",
+        "codePos": {
+          "startRow": 277,
+          "startCol": 0,
+          "endRow": 277,
+          "endCol": 41
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "name": "double",
+    "paramNames": [
+      "x"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 279,
+          "startCol": 2,
+          "endRow": 279,
+          "endCol": 27
+        },
+        "value": {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 279,
+                "startCol": 9,
+                "endRow": 279,
+                "endCol": 27
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "x",
+                  "path": []
+                },
+                {
+                  "type": "number",
+                  "value": 2
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 279,
+            "startCol": 9,
+            "endRow": 279,
+            "endCol": 27
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 282,
+      "startCol": 0,
+      "endRow": 285,
+      "endCol": 0
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nresult:$(math.add $(double 5)$(double 10)),\nnested:$(math.multiply $(math.add 2 3)$(math.subtract 10 5))\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 286,
+      "startCol": 0,
+      "endRow": 286,
+      "endCol": 20
+    },
+    "targetName": "nestedSubexprObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 287,
+      "startCol": 0,
+      "endRow": 287,
+      "endCol": 121
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "nestedSubexprObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "result"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions in object literal failed (5*2=10, 10*2=20, 10+20=30)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 288,
+      "startCol": 0,
+      "endRow": 288,
+      "endCol": 138
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "nestedSubexprObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "nested"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions in object literal - nested calculation failed (2+3=5, 10-5=5, 5*5=25)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 291,
+      "startCol": 0,
+      "endRow": 295,
+      "endCol": 0
+    },
+    "comments": [
+      {
+        "text": "Combined template strings and subexpressions",
+        "codePos": {
+          "startRow": 290,
+          "startCol": 0,
+          "endRow": 290,
+          "endCol": 45
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nmessage:`Sum is $(math.add 15 25)`,\ndescription:`$name calculated $(math.multiply $age 2)`,\ncombined:`Result: $(math.add $(double 3) $(double 7))`\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 296,
+      "startCol": 0,
+      "endRow": 296,
+      "endCol": 15
+    },
+    "targetName": "combinedObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 297,
+      "startCol": 0,
+      "endRow": 297,
+      "endCol": 119
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "combinedObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "message"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Sum is 40"
+      },
+      {
+        "type": "string",
+        "value": "Combined template string and subexpression in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 298,
+      "startCol": 0,
+      "endRow": 298,
+      "endCol": 129
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "combinedObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "description"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Alice calculated 50"
+      },
+      {
+        "type": "string",
+        "value": "Combined template string with variable and subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 299,
+      "startCol": 0,
+      "endRow": 299,
+      "endCol": 137
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "combinedObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "combined"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Result: 20"
+      },
+      {
+        "type": "string",
+        "value": "Combined template string with nested subexpressions failed (3*2=6, 7*2=14, 6+14=20)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 302,
+      "startCol": 0,
+      "endRow": 302,
+      "endCol": 16
+    },
+    "comments": [
+      {
+        "text": "Template strings with last value",
+        "codePos": {
+          "startRow": 301,
+          "startCol": 0,
+          "endRow": 301,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "math.add",
+    "module": "math",
+    "args": [
+      {
+        "type": "number",
+        "value": 100
+      },
+      {
+        "type": "number",
+        "value": 200
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 303,
+      "startCol": 0,
+      "endRow": 306,
+      "endCol": 0
+    },
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nlastValue:`Last was $`,\nprevious:`Previous: $`\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 307,
+      "startCol": 0,
+      "endRow": 307,
+      "endCol": 16
+    },
+    "targetName": "lastValueObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 308,
+      "startCol": 0,
+      "endRow": 308,
+      "endCol": 114
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "lastValueObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "lastValue"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Last was 300"
+      },
+      {
+        "type": "string",
+        "value": "Template string with last value in object literal failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 311,
+      "startCol": 0,
+      "endRow": 311,
+      "endCol": 67
+    },
+    "comments": [
+      {
+        "text": "Test 9: Template strings and subexpressions in array literals",
+        "codePos": {
+          "startRow": 310,
+          "startCol": 0,
+          "endRow": 310,
+          "endCol": 62
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 9: Template strings and subexpressions in array literals"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 312,
+      "startCol": 0,
+      "endRow": 312,
+      "endCol": 14
+    },
+    "targetName": "item",
+    "targetPath": [],
+    "literalValue": "apple",
+    "literalValueType": "string"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 313,
+      "startCol": 0,
+      "endRow": 313,
+      "endCol": 9
+    },
+    "trailingBlankLines": 1,
+    "targetName": "count",
+    "targetPath": [],
+    "literalValue": 5,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 316,
+      "startCol": 0,
+      "endRow": 316,
+      "endCol": 50
+    },
+    "comments": [
+      {
+        "text": "Template strings in array literals",
+        "codePos": {
+          "startRow": 315,
+          "startCol": 0,
+          "endRow": 315,
+          "endCol": 35
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "`$item`,`Count: $count`,`$item count is $count`"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 317,
+      "startCol": 0,
+      "endRow": 317,
+      "endCol": 15
+    },
+    "targetName": "templateArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 318,
+      "startCol": 0,
+      "endRow": 318,
+      "endCol": 98
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "apple"
+      },
+      {
+        "type": "string",
+        "value": "Template string in array literal - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 319,
+      "startCol": 0,
+      "endRow": 319,
+      "endCol": 102
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Count: 5"
+      },
+      {
+        "type": "string",
+        "value": "Template string in array literal - second element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 320,
+      "startCol": 0,
+      "endRow": 320,
+      "endCol": 109
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "templateArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "apple count is 5"
+      },
+      {
+        "type": "string",
+        "value": "Template string in array literal - third element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 323,
+      "startCol": 0,
+      "endRow": 323,
+      "endCol": 61
+    },
+    "comments": [
+      {
+        "text": "Subexpressions in array literals",
+        "codePos": {
+          "startRow": 322,
+          "startCol": 0,
+          "endRow": 322,
+          "endCol": 33
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "$(math.add 1 2),$(math.multiply 3 4),$(math.subtract 10 3)"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 324,
+      "startCol": 0,
+      "endRow": 324,
+      "endCol": 14
+    },
+    "targetName": "subexprArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 325,
+      "startCol": 0,
+      "endRow": 325,
+      "endCol": 89
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 3
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in array literal - first element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 326,
+      "startCol": 0,
+      "endRow": 326,
+      "endCol": 91
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 12
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in array literal - second element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 327,
+      "startCol": 0,
+      "endRow": 327,
+      "endCol": 89
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "subexprArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 7
+      },
+      {
+        "type": "string",
+        "value": "Subexpression in array literal - third element failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 330,
+      "startCol": 0,
+      "endRow": 330,
+      "endCol": 91
+    },
+    "comments": [
+      {
+        "text": "Nested subexpressions in array literals",
+        "codePos": {
+          "startRow": 329,
+          "startCol": 0,
+          "endRow": 329,
+          "endCol": 40
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "$(math.add $(double 2) $(double 3)),$(math.multiply $(math.add 1 1) $(math.subtract 5 2))"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 331,
+      "startCol": 0,
+      "endRow": 331,
+      "endCol": 20
+    },
+    "targetName": "nestedSubexprArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 332,
+      "startCol": 0,
+      "endRow": 332,
+      "endCol": 111
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "nestedSubexprArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions in array literal failed (2*2=4, 3*2=6, 4+6=10)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 333,
+      "startCol": 0,
+      "endRow": 333,
+      "endCol": 126
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "nestedSubexprArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 6
+      },
+      {
+        "type": "string",
+        "value": "Nested subexpressions in array literal - second element failed (1+1=2, 5-2=3, 2*3=6)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 336,
+      "startCol": 0,
+      "endRow": 336,
+      "endCol": 78
+    },
+    "comments": [
+      {
+        "text": "Mixed: variables, template strings, and subexpressions",
+        "codePos": {
+          "startRow": 335,
+          "startCol": 0,
+          "endRow": 335,
+          "endCol": 55
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "$item,`$item`,$(math.add $count $count),`Total: $(math.multiply $count 2)`"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 337,
+      "startCol": 0,
+      "endRow": 337,
+      "endCol": 12
+    },
+    "targetName": "mixedArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 338,
+      "startCol": 0,
+      "endRow": 338,
+      "endCol": 69
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "apple"
+      },
+      {
+        "type": "string",
+        "value": "Mixed array - variable failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 339,
+      "startCol": 0,
+      "endRow": 339,
+      "endCol": 76
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "apple"
+      },
+      {
+        "type": "string",
+        "value": "Mixed array - template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 340,
+      "startCol": 0,
+      "endRow": 340,
+      "endCol": 83
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 2
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 10
+      },
+      {
+        "type": "string",
+        "value": "Mixed array - subexpression with variable failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 341,
+      "startCol": 0,
+      "endRow": 341,
+      "endCol": 99
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "mixedArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 3
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Total: 10"
+      },
+      {
+        "type": "string",
+        "value": "Mixed array - template string with subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "define",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 344,
+      "startCol": 0,
+      "endRow": 346,
+      "endCol": 5
+    },
+    "comments": [
+      {
+        "text": "Array with nested subexpressions and function calls",
+        "codePos": {
+          "startRow": 343,
+          "startCol": 0,
+          "endRow": 343,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "trailingBlankLines": 1,
+    "name": "square",
+    "paramNames": [
+      "x"
+    ],
+    "body": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 345,
+          "startCol": 2,
+          "endRow": 345,
+          "endCol": 28
+        },
+        "value": {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 345,
+                "startCol": 9,
+                "endRow": 345,
+                "endCol": 28
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "x",
+                  "path": []
+                },
+                {
+                  "type": "var",
+                  "name": "x",
+                  "path": []
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 345,
+            "startCol": 9,
+            "endRow": 345,
+            "endCol": 28
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 348,
+      "startCol": 0,
+      "endRow": 348,
+      "endCol": 78
+    },
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "$(math.add $(square 3) $(square 4)),$(math.multiply $(double 5) $(double 6))"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 349,
+      "startCol": 0,
+      "endRow": 349,
+      "endCol": 15
+    },
+    "targetName": "functionArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 350,
+      "startCol": 0,
+      "endRow": 350,
+      "endCol": 113
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "functionArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 25
+      },
+      {
+        "type": "string",
+        "value": "Array with function calls in subexpressions failed (3*3=9, 4*4=16, 9+16=25)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 351,
+      "startCol": 0,
+      "endRow": 351,
+      "endCol": 106
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "functionArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 120
+      },
+      {
+        "type": "string",
+        "value": "Array with nested function calls failed (5*2=10, 6*2=12, 10*12=120)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 354,
+      "startCol": 0,
+      "endRow": 354,
+      "endCol": 40
+    },
+    "comments": [
+      {
+        "text": "Test 10: Complex nested structures with template strings and subexpressions",
+        "codePos": {
+          "startRow": 353,
+          "startCol": 0,
+          "endRow": 353,
+          "endCol": 76
+        },
+        "inline": false
+      }
+    ],
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "Test 10: Complex nested structures"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 355,
+      "startCol": 0,
+      "endRow": 355,
+      "endCol": 9
+    },
+    "targetName": "base",
+    "targetPath": [],
+    "literalValue": 10,
+    "literalValueType": "number"
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 356,
+      "startCol": 0,
+      "endRow": 356,
+      "endCol": 14
+    },
+    "trailingBlankLines": 1,
+    "targetName": "multiplier",
+    "targetPath": [],
+    "literalValue": 3,
+    "literalValueType": "number"
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 359,
+      "startCol": 0,
+      "endRow": 366,
+      "endCol": 0
+    },
+    "comments": [
+      {
+        "text": "Object with nested arrays containing subexpressions",
+        "codePos": {
+          "startRow": 358,
+          "startCol": 0,
+          "endRow": 358,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "_object",
+    "module": null,
+    "args": [
+      {
+        "type": "object",
+        "code": "\nnumbers:[$(math.add $base 5),$(math.multiply $base $multiplier),$(math.subtract $base 2)],\nlabels:[`Value: $base`,`Multiplied: $(math.multiply $base $multiplier)`,`Result: $(math.add $base $base)`],\nnested:{\ncalculation:$(math.add $(double $base)$(double $multiplier)),\ndescription:`Base $base times $multiplier is $(math.multiply $base $multiplier)`\n}\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 367,
+      "startCol": 0,
+      "endRow": 367,
+      "endCol": 14
+    },
+    "targetName": "complexObj",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 368,
+      "startCol": 0,
+      "endRow": 368,
+      "endCol": 100
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "numbers"
+          },
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested array with subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 369,
+      "startCol": 0,
+      "endRow": 369,
+      "endCol": 109
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "numbers"
+          },
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 30
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested array with variable subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 370,
+      "startCol": 0,
+      "endRow": 370,
+      "endCol": 110
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "labels"
+          },
+          {
+            "type": "index",
+            "index": 0
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Value: 10"
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested array with template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 371,
+      "startCol": 0,
+      "endRow": 371,
+      "endCol": 126
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "labels"
+          },
+          {
+            "type": "index",
+            "index": 1
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Multiplied: 30"
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested array with template and subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 372,
+      "startCol": 0,
+      "endRow": 372,
+      "endCol": 135
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "nested"
+          },
+          {
+            "type": "property",
+            "name": "calculation"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 26
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested object with subexpression failed (10*2=20, 3*2=6, 20+6=26)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 373,
+      "startCol": 0,
+      "endRow": 373,
+      "endCol": 143
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexObj",
+        "path": [
+          {
+            "type": "property",
+            "name": "nested"
+          },
+          {
+            "type": "property",
+            "name": "description"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Base 10 times 3 is 30"
+      },
+      {
+        "type": "string",
+        "value": "Complex object - nested object with template and subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 376,
+      "startCol": 0,
+      "endRow": 385,
+      "endCol": 0
+    },
+    "comments": [
+      {
+        "text": "Array with nested objects containing subexpressions",
+        "codePos": {
+          "startRow": 375,
+          "startCol": 0,
+          "endRow": 375,
+          "endCol": 52
+        },
+        "inline": false
+      }
+    ],
+    "name": "_array",
+    "module": null,
+    "args": [
+      {
+        "type": "array",
+        "code": "\n{\nname:`Item $base`,\nvalue:$(math.add $base 5)\n},\n{\nname:`Item $(math.add $base $multiplier)`,\ncalculation:$(math.multiply $(double $base) $(double $multiplier))\n}\n"
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 386,
+      "startCol": 0,
+      "endRow": 386,
+      "endCol": 14
+    },
+    "targetName": "complexArr",
+    "targetPath": [],
+    "literalValue": null,
+    "literalValueType": "null",
+    "isLastValue": true
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 387,
+      "startCol": 0,
+      "endRow": 387,
+      "endCol": 106
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Item 10"
+      },
+      {
+        "type": "string",
+        "value": "Complex array - nested object with template string failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 388,
+      "startCol": 0,
+      "endRow": 388,
+      "endCol": 98
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 0
+          },
+          {
+            "type": "property",
+            "name": "value"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 15
+      },
+      {
+        "type": "string",
+        "value": "Complex array - nested object with subexpression failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 389,
+      "startCol": 0,
+      "endRow": 389,
+      "endCol": 124
+    },
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          },
+          {
+            "type": "property",
+            "name": "name"
+          }
+        ]
+      },
+      {
+        "type": "string",
+        "value": "Item 13"
+      },
+      {
+        "type": "string",
+        "value": "Complex array - nested object with template and subexpression in key failed"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 390,
+      "startCol": 0,
+      "endRow": 390,
+      "endCol": 140
+    },
+    "trailingBlankLines": 1,
+    "name": "test.assertEqual",
+    "module": "test",
+    "args": [
+      {
+        "type": "var",
+        "name": "complexArr",
+        "path": [
+          {
+            "type": "index",
+            "index": 1
+          },
+          {
+            "type": "property",
+            "name": "calculation"
+          }
+        ]
+      },
+      {
+        "type": "number",
+        "value": 120
+      },
+      {
+        "type": "string",
+        "value": "Complex array - nested object with nested subexpressions failed (10*2=20, 3*2=6, 20*6=120)"
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 392,
+      "startCol": 0,
+      "endRow": 392,
+      "endCol": 47
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "=== Objects and Arrays Tests Complete ==="
+      }
+    ]
+  }
+]

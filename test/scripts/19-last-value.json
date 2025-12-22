@@ -1452,10 +1452,9 @@
     "codePos": {
       "startRow": 98,
       "startCol": 0,
-      "endRow": 99,
-      "endCol": 3
+      "endRow": 98,
+      "endCol": 8
     },
-    "trailingBlankLines": 2,
     "name": "get_value",
     "module": null,
     "args": []
@@ -1469,7 +1468,7 @@
       "endRow": 99,
       "endCol": 52
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "name": "test.assertEqual",
     "module": "test",
     "args": [
@@ -1490,18 +1489,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 103,
+      "startRow": 102,
       "startCol": 0,
-      "endRow": 103,
+      "endRow": 102,
       "endCol": 54
     },
     "comments": [
       {
         "text": "Test 15: Last value with object/array operations",
         "codePos": {
-          "startRow": 102,
+          "startRow": 101,
           "startCol": 0,
-          "endRow": 102,
+          "endRow": 101,
           "endCol": 49
         },
         "inline": false
@@ -1520,9 +1519,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 104,
+      "startRow": 103,
       "startCol": 0,
-      "endRow": 104,
+      "endRow": 103,
       "endCol": 23
     },
     "name": "_object",
@@ -1538,9 +1537,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 105,
+      "startRow": 104,
       "startCol": 0,
-      "endRow": 105,
+      "endRow": 104,
       "endCol": 12
     },
     "name": "get",
@@ -1559,9 +1558,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 106,
+      "startRow": 105,
       "startCol": 0,
-      "endRow": 106,
+      "endRow": 105,
       "endCol": 67
     },
     "trailingBlankLines": 1,
@@ -1585,9 +1584,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 108,
+      "startRow": 107,
       "startCol": 0,
-      "endRow": 108,
+      "endRow": 107,
       "endCol": 14
     },
     "name": "_array",
@@ -1603,9 +1602,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 109,
+      "startRow": 108,
       "startCol": 0,
-      "endRow": 109,
+      "endRow": 108,
       "endCol": 14
     },
     "name": "array.length",
@@ -1620,9 +1619,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 110,
+      "startRow": 109,
       "startCol": 0,
-      "endRow": 110,
+      "endRow": 109,
       "endCol": 62
     },
     "trailingBlankLines": 1,
@@ -1646,18 +1645,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 113,
+      "startRow": 112,
       "startCol": 0,
-      "endRow": 113,
+      "endRow": 112,
       "endCol": 31
     },
     "comments": [
       {
         "text": "Test 16: Last value chain",
         "codePos": {
-          "startRow": 112,
+          "startRow": 111,
           "startCol": 0,
-          "endRow": 112,
+          "endRow": 111,
           "endCol": 26
         },
         "inline": false
@@ -1676,9 +1675,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 114,
+      "startRow": 113,
       "startCol": 0,
-      "endRow": 114,
+      "endRow": 113,
       "endCol": 1
     },
     "name": "_literal",
@@ -1694,9 +1693,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 115,
+      "startRow": 114,
       "startCol": 0,
-      "endRow": 115,
+      "endRow": 114,
       "endCol": 12
     },
     "name": "math.add",
@@ -1715,9 +1714,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 116,
+      "startRow": 115,
       "startCol": 0,
-      "endRow": 116,
+      "endRow": 115,
       "endCol": 17
     },
     "name": "math.multiply",
@@ -1736,9 +1735,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 117,
+      "startRow": 116,
       "startCol": 0,
-      "endRow": 117,
+      "endRow": 116,
       "endCol": 17
     },
     "name": "math.subtract",
@@ -1757,9 +1756,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 118,
+      "startRow": 117,
       "startCol": 0,
-      "endRow": 118,
+      "endRow": 117,
       "endCol": 92
     },
     "trailingBlankLines": 1,
@@ -1783,18 +1782,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 121,
+      "startRow": 120,
       "startCol": 0,
-      "endRow": 121,
+      "endRow": 120,
       "endCol": 42
     },
     "comments": [
       {
         "text": "Test 17: Last value with conditional",
         "codePos": {
-          "startRow": 120,
+          "startRow": 119,
           "startCol": 0,
-          "endRow": 120,
+          "endRow": 119,
           "endCol": 37
         },
         "inline": false
@@ -1813,9 +1812,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 122,
+      "startRow": 121,
       "startCol": 0,
-      "endRow": 122,
+      "endRow": 121,
       "endCol": 1
     },
     "name": "_literal",
@@ -1831,9 +1830,9 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 123,
+      "startRow": 122,
       "startCol": 0,
-      "endRow": 125,
+      "endRow": 124,
       "endCol": 4
     },
     "condition": {
@@ -1842,9 +1841,9 @@
       "left": {
         "type": "lastValue",
         "codePos": {
-          "startRow": 123,
+          "startRow": 122,
           "startCol": 3,
-          "endRow": 123,
+          "endRow": 122,
           "endCol": 3
         }
       },
@@ -1852,16 +1851,45 @@
         "type": "number",
         "value": 5,
         "codePos": {
-          "startRow": 123,
+          "startRow": 122,
           "startCol": 7,
-          "endRow": 123,
+          "endRow": 122,
           "endCol": 7
         }
       },
       "codePos": {
-        "startRow": 123,
+        "startRow": 122,
         "startCol": 3,
-        "endRow": 123,
+        "endRow": 122,
+        "endCol": 5
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "lastValue",
+        "codePos": {
+          "startRow": 122,
+          "startCol": 3,
+          "endRow": 122,
+          "endCol": 3
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 122,
+          "startCol": 7,
+          "endRow": 122,
+          "endCol": 7
+        }
+      },
+      "codePos": {
+        "startRow": 122,
+        "startCol": 3,
+        "endRow": 122,
         "endCol": 5
       }
     },
@@ -1870,9 +1898,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 124,
+          "startRow": 123,
           "startCol": 2,
-          "endRow": 124,
+          "endRow": 123,
           "endCol": 19
         },
         "name": "math.multiply",
@@ -1894,9 +1922,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 126,
+      "startRow": 125,
       "startCol": 0,
-      "endRow": 126,
+      "endRow": 125,
       "endCol": 61
     },
     "trailingBlankLines": 1,
@@ -1920,18 +1948,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 129,
+      "startRow": 128,
       "startCol": 0,
-      "endRow": 129,
+      "endRow": 128,
       "endCol": 36
     },
     "comments": [
       {
         "text": "Test 18: Last value with loops",
         "codePos": {
-          "startRow": 128,
+          "startRow": 127,
           "startCol": 0,
-          "endRow": 128,
+          "endRow": 127,
           "endCol": 31
         },
         "inline": false
@@ -1950,9 +1978,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 130,
+      "startRow": 129,
       "startCol": 0,
-      "endRow": 130,
+      "endRow": 129,
       "endCol": 0
     },
     "name": "_literal",
@@ -1968,9 +1996,9 @@
     "type": "forLoop",
     "lastValue": null,
     "codePos": {
-      "startRow": 131,
+      "startRow": 130,
       "startCol": 0,
-      "endRow": 133,
+      "endRow": 132,
       "endCol": 5
     },
     "varName": "i",
@@ -1982,9 +2010,9 @@
           "type": "number",
           "value": 1,
           "codePos": {
-            "startRow": 131,
+            "startRow": 130,
             "startCol": 16,
-            "endRow": 131,
+            "endRow": 130,
             "endCol": 16
           }
         },
@@ -1992,17 +2020,17 @@
           "type": "number",
           "value": 5,
           "codePos": {
-            "startRow": 131,
+            "startRow": 130,
             "startCol": 19,
-            "endRow": 131,
+            "endRow": 130,
             "endCol": 19
           }
         }
       ],
       "codePos": {
-        "startRow": 131,
+        "startRow": 130,
         "startCol": 10,
-        "endRow": 131,
+        "endRow": 130,
         "endCol": 20
       }
     },
@@ -2011,9 +2039,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 132,
+          "startRow": 131,
           "startCol": 2,
-          "endRow": 132,
+          "endRow": 131,
           "endCol": 15
         },
         "name": "math.add",
@@ -2035,9 +2063,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 134,
+      "startRow": 133,
       "startCol": 0,
-      "endRow": 134,
+      "endRow": 133,
       "endCol": 77
     },
     "trailingBlankLines": 1,
@@ -2061,18 +2089,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 137,
+      "startRow": 136,
       "startCol": 0,
-      "endRow": 137,
+      "endRow": 136,
       "endCol": 40
     },
     "comments": [
       {
         "text": "Test 19: Last value with do blocks",
         "codePos": {
-          "startRow": 136,
+          "startRow": 135,
           "startCol": 0,
-          "endRow": 136,
+          "endRow": 135,
           "endCol": 35
         },
         "inline": false
@@ -2091,9 +2119,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 138,
+      "startRow": 137,
       "startCol": 0,
-      "endRow": 138,
+      "endRow": 137,
       "endCol": 1
     },
     "name": "_literal",
@@ -2109,9 +2137,9 @@
     "type": "do",
     "lastValue": null,
     "codePos": {
-      "startRow": 139,
+      "startRow": 138,
       "startCol": 0,
-      "endRow": 141,
+      "endRow": 140,
       "endCol": 4
     },
     "body": [
@@ -2119,9 +2147,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 140,
+          "startRow": 139,
           "startCol": 2,
-          "endRow": 140,
+          "endRow": 139,
           "endCol": 19
         },
         "name": "math.multiply",
@@ -2142,9 +2170,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 142,
+      "startRow": 141,
       "startCol": 0,
-      "endRow": 142,
+      "endRow": 141,
       "endCol": 58
     },
     "trailingBlankLines": 1,
@@ -2168,18 +2196,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 145,
+      "startRow": 144,
       "startCol": 0,
-      "endRow": 145,
+      "endRow": 144,
       "endCol": 55
     },
     "comments": [
       {
         "text": "Test 20: Last value preservation with assignments",
         "codePos": {
-          "startRow": 144,
+          "startRow": 143,
           "startCol": 0,
-          "endRow": 144,
+          "endRow": 143,
           "endCol": 50
         },
         "inline": false
@@ -2198,9 +2226,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 146,
+      "startRow": 145,
       "startCol": 0,
-      "endRow": 146,
+      "endRow": 145,
       "endCol": 9
     },
     "name": "_literal",
@@ -2216,9 +2244,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 147,
+      "startRow": 146,
       "startCol": 0,
-      "endRow": 147,
+      "endRow": 146,
       "endCol": 14
     },
     "targetName": "a",
@@ -2230,9 +2258,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 148,
+      "startRow": 147,
       "startCol": 0,
-      "endRow": 148,
+      "endRow": 147,
       "endCol": 82
     },
     "trailingBlankLines": 1,
@@ -2256,18 +2284,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 151,
+      "startRow": 150,
       "startCol": 0,
-      "endRow": 151,
+      "endRow": 150,
       "endCol": 31
     },
     "comments": [
       {
         "text": "Test 21: Empty last value",
         "codePos": {
-          "startRow": 150,
+          "startRow": 149,
           "startCol": 0,
-          "endRow": 150,
+          "endRow": 149,
           "endCol": 26
         },
         "inline": false
@@ -2286,12 +2314,11 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 152,
+      "startRow": 151,
       "startCol": 0,
-      "endRow": 153,
-      "endCol": 3
+      "endRow": 151,
+      "endCol": 4
     },
-    "trailingBlankLines": 2,
     "name": "clear",
     "module": null,
     "args": []
@@ -2300,12 +2327,12 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 153,
+      "startRow": 152,
       "startCol": 0,
-      "endRow": 153,
+      "endRow": 152,
       "endCol": 54
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "name": "test.assertEqual",
     "module": "test",
     "args": [
@@ -2326,18 +2353,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 157,
+      "startRow": 155,
       "startCol": 0,
-      "endRow": 157,
+      "endRow": 155,
       "endCol": 48
     },
     "comments": [
       {
         "text": "Test 22: Last value with nested operations",
         "codePos": {
-          "startRow": 156,
+          "startRow": 154,
           "startCol": 0,
-          "endRow": 156,
+          "endRow": 154,
           "endCol": 43
         },
         "inline": false
@@ -2356,9 +2383,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 158,
+      "startRow": 156,
       "startCol": 0,
-      "endRow": 158,
+      "endRow": 156,
       "endCol": 0
     },
     "name": "_literal",
@@ -2374,9 +2401,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 159,
+      "startRow": 157,
       "startCol": 0,
-      "endRow": 159,
+      "endRow": 157,
       "endCol": 9
     },
     "name": "math.add",
@@ -2392,9 +2419,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 159,
+              "startRow": 157,
               "startCol": 13,
-              "endRow": 159,
+              "endRow": 157,
               "endCol": 30
             },
             "name": "math.multiply",
@@ -2411,9 +2438,9 @@
           }
         ],
         "codePos": {
-          "startRow": 159,
+          "startRow": 157,
           "startCol": 11,
-          "endRow": 159,
+          "endRow": 157,
           "endCol": 31
         }
       }
@@ -2423,9 +2450,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 160,
+      "startRow": 158,
       "startCol": 0,
-      "endRow": 160,
+      "endRow": 158,
       "endCol": 83
     },
     "trailingBlankLines": 1,
@@ -2449,18 +2476,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 163,
+      "startRow": 161,
       "startCol": 0,
-      "endRow": 163,
+      "endRow": 161,
       "endCol": 42
     },
     "comments": [
       {
         "text": "Test 23: Last value with say and log",
         "codePos": {
-          "startRow": 162,
+          "startRow": 160,
           "startCol": 0,
-          "endRow": 162,
+          "endRow": 160,
           "endCol": 37
         },
         "inline": false
@@ -2479,9 +2506,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 164,
+      "startRow": 162,
       "startCol": 0,
-      "endRow": 164,
+      "endRow": 162,
       "endCol": 10
     },
     "name": "say",
@@ -2497,18 +2524,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 165,
+      "startRow": 163,
       "startCol": 0,
-      "endRow": 165,
+      "endRow": 163,
       "endCol": 25
     },
     "comments": [
       {
         "text": "Should log \"test\"",
         "codePos": {
-          "startRow": 165,
+          "startRow": 163,
           "startCol": 7,
-          "endRow": 165,
+          "endRow": 163,
           "endCol": 25
         },
         "inline": true
@@ -2526,9 +2553,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 166,
+      "startRow": 164,
       "startCol": 0,
-      "endRow": 166,
+      "endRow": 164,
       "endCol": 73
     },
     "trailingBlankLines": 1,
@@ -2552,18 +2579,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 169,
+      "startRow": 167,
       "startCol": 0,
-      "endRow": 169,
+      "endRow": 167,
       "endCol": 57
     },
     "comments": [
       {
         "text": "Test 24: Last value with template string evaluation",
         "codePos": {
-          "startRow": 168,
+          "startRow": 166,
           "startCol": 0,
-          "endRow": 168,
+          "endRow": 166,
           "endCol": 52
         },
         "inline": false
@@ -2582,9 +2609,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 170,
+      "startRow": 168,
       "startCol": 0,
-      "endRow": 170,
+      "endRow": 168,
       "endCol": 6
     },
     "name": "_literal",
@@ -2600,9 +2627,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 171,
+      "startRow": 169,
       "startCol": 0,
-      "endRow": 171,
+      "endRow": 169,
       "endCol": 22
     },
     "targetName": "greeting",
@@ -2614,9 +2641,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 172,
+      "startRow": 170,
       "startCol": 0,
-      "endRow": 172,
+      "endRow": 170,
       "endCol": 79
     },
     "trailingBlankLines": 1,
@@ -2642,18 +2669,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 175,
+      "startRow": 173,
       "startCol": 0,
-      "endRow": 175,
+      "endRow": 173,
       "endCol": 45
     },
     "comments": [
       {
         "text": "Test 25: Last value with complex object",
         "codePos": {
-          "startRow": 174,
+          "startRow": 172,
           "startCol": 0,
-          "endRow": 174,
+          "endRow": 172,
           "endCol": 40
         },
         "inline": false
@@ -2672,9 +2699,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 176,
+      "startRow": 174,
       "startCol": 0,
-      "endRow": 182,
+      "endRow": 180,
       "endCol": 0
     },
     "name": "_object",
@@ -2690,9 +2717,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 183,
+      "startRow": 181,
       "startCol": 0,
-      "endRow": 183,
+      "endRow": 181,
       "endCol": 12
     },
     "name": "get",
@@ -2711,9 +2738,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 184,
+      "startRow": 182,
       "startCol": 0,
-      "endRow": 184,
+      "endRow": 182,
       "endCol": 12
     },
     "name": "get",
@@ -2732,9 +2759,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 185,
+      "startRow": 183,
       "startCol": 0,
-      "endRow": 185,
+      "endRow": 183,
       "endCol": 66
     },
     "trailingBlankLines": 1,
@@ -2758,18 +2785,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 188,
+      "startRow": 186,
       "startCol": 0,
-      "endRow": 188,
+      "endRow": 186,
       "endCol": 50
     },
     "comments": [
       {
         "text": "Test 26: Basic subexpression sets last value",
         "codePos": {
-          "startRow": 187,
+          "startRow": 185,
           "startCol": 0,
-          "endRow": 187,
+          "endRow": 185,
           "endCol": 45
         },
         "inline": false
@@ -2788,9 +2815,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 189,
+      "startRow": 187,
       "startCol": 0,
-      "endRow": 189,
+      "endRow": 187,
       "endCol": 15
     },
     "name": "_subexpr",
@@ -2803,9 +2830,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 189,
+              "startRow": 187,
               "startCol": 2,
-              "endRow": 189,
+              "endRow": 187,
               "endCol": 14
             },
             "name": "math.add",
@@ -2823,9 +2850,9 @@
           }
         ],
         "codePos": {
-          "startRow": 189,
+          "startRow": 187,
           "startCol": 0,
-          "endRow": 189,
+          "endRow": 187,
           "endCol": 15
         }
       }
@@ -2835,9 +2862,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 190,
+      "startRow": 188,
       "startCol": 0,
-      "endRow": 190,
+      "endRow": 188,
       "endCol": 63
     },
     "trailingBlankLines": 1,
@@ -2861,18 +2888,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 193,
+      "startRow": 191,
       "startCol": 0,
-      "endRow": 193,
+      "endRow": 191,
       "endCol": 51
     },
     "comments": [
       {
         "text": "Test 27: Subexpression with string operations",
         "codePos": {
-          "startRow": 192,
+          "startRow": 190,
           "startCol": 0,
-          "endRow": 192,
+          "endRow": 190,
           "endCol": 46
         },
         "inline": false
@@ -2891,9 +2918,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 194,
+      "startRow": 192,
       "startCol": 0,
-      "endRow": 194,
+      "endRow": 192,
       "endCol": 32
     },
     "name": "_subexpr",
@@ -2906,9 +2933,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 194,
+              "startRow": 192,
               "startCol": 2,
-              "endRow": 194,
+              "endRow": 192,
               "endCol": 31
             },
             "name": "string.concat",
@@ -2926,9 +2953,9 @@
           }
         ],
         "codePos": {
-          "startRow": 194,
+          "startRow": 192,
           "startCol": 0,
-          "endRow": 194,
+          "endRow": 192,
           "endCol": 32
         }
       }
@@ -2938,9 +2965,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 195,
+      "startRow": 193,
       "startCol": 0,
-      "endRow": 195,
+      "endRow": 193,
       "endCol": 79
     },
     "trailingBlankLines": 1,
@@ -2964,18 +2991,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 198,
+      "startRow": 196,
       "startCol": 0,
-      "endRow": 198,
+      "endRow": 196,
       "endCol": 53
     },
     "comments": [
       {
         "text": "Test 28: Subexpression with multiple statements",
         "codePos": {
-          "startRow": 197,
+          "startRow": 195,
           "startCol": 0,
-          "endRow": 197,
+          "endRow": 195,
           "endCol": 48
         },
         "inline": false
@@ -2994,9 +3021,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 199,
+      "startRow": 197,
       "startCol": 0,
-      "endRow": 202,
+      "endRow": 200,
       "endCol": 1
     },
     "name": "_subexpr",
@@ -3009,9 +3036,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 200,
+              "startRow": 198,
               "startCol": 2,
-              "endRow": 200,
+              "endRow": 198,
               "endCol": 15
             },
             "name": "math.add",
@@ -3031,9 +3058,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 201,
+              "startRow": 199,
               "startCol": 2,
-              "endRow": 201,
+              "endRow": 199,
               "endCol": 19
             },
             "name": "math.multiply",
@@ -3050,9 +3077,9 @@
           }
         ],
         "codePos": {
-          "startRow": 199,
+          "startRow": 197,
           "startCol": 0,
-          "endRow": 202,
+          "endRow": 200,
           "endCol": 1
         }
       }
@@ -3062,9 +3089,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 203,
+      "startRow": 201,
       "startCol": 0,
-      "endRow": 203,
+      "endRow": 201,
       "endCol": 109
     },
     "trailingBlankLines": 1,
@@ -3088,18 +3115,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 206,
+      "startRow": 204,
       "startCol": 0,
-      "endRow": 206,
+      "endRow": 204,
       "endCol": 46
     },
     "comments": [
       {
         "text": "Test 29: Nested subexpression (2 levels)",
         "codePos": {
-          "startRow": 205,
+          "startRow": 203,
           "startCol": 0,
-          "endRow": 205,
+          "endRow": 203,
           "endCol": 41
         },
         "inline": false
@@ -3118,9 +3145,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 207,
+      "startRow": 205,
       "startCol": 0,
-      "endRow": 207,
+      "endRow": 205,
       "endCol": 34
     },
     "name": "_subexpr",
@@ -3133,9 +3160,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 207,
+              "startRow": 205,
               "startCol": 2,
-              "endRow": 207,
+              "endRow": 205,
               "endCol": 33
             },
             "name": "math.add",
@@ -3148,9 +3175,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 207,
+                      "startRow": 205,
                       "startCol": 13,
-                      "endRow": 207,
+                      "endRow": 205,
                       "endCol": 30
                     },
                     "name": "math.multiply",
@@ -3168,9 +3195,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 207,
+                  "startRow": 205,
                   "startCol": 11,
-                  "endRow": 207,
+                  "endRow": 205,
                   "endCol": 32
                 }
               },
@@ -3182,9 +3209,9 @@
           }
         ],
         "codePos": {
-          "startRow": 207,
+          "startRow": 205,
           "startCol": 0,
-          "endRow": 207,
+          "endRow": 205,
           "endCol": 34
         }
       }
@@ -3194,9 +3221,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 208,
+      "startRow": 206,
       "startCol": 0,
-      "endRow": 208,
+      "endRow": 206,
       "endCol": 74
     },
     "trailingBlankLines": 1,
@@ -3220,18 +3247,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 211,
+      "startRow": 209,
       "startCol": 0,
-      "endRow": 211,
+      "endRow": 209,
       "endCol": 53
     },
     "comments": [
       {
         "text": "Test 30: Deeply nested subexpression (3 levels)",
         "codePos": {
-          "startRow": 210,
+          "startRow": 208,
           "startCol": 0,
-          "endRow": 210,
+          "endRow": 208,
           "endCol": 48
         },
         "inline": false
@@ -3250,9 +3277,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 212,
+      "startRow": 210,
       "startCol": 0,
-      "endRow": 212,
+      "endRow": 210,
       "endCol": 49
     },
     "name": "_subexpr",
@@ -3265,9 +3292,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 212,
+              "startRow": 210,
               "startCol": 2,
-              "endRow": 212,
+              "endRow": 210,
               "endCol": 48
             },
             "name": "math.add",
@@ -3280,9 +3307,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 212,
+                      "startRow": 210,
                       "startCol": 13,
-                      "endRow": 212,
+                      "endRow": 210,
                       "endCol": 44
                     },
                     "name": "math.multiply",
@@ -3295,9 +3322,9 @@
                             "type": "command",
                             "lastValue": null,
                             "codePos": {
-                              "startRow": 212,
+                              "startRow": 210,
                               "startCol": 29,
-                              "endRow": 212,
+                              "endRow": 210,
                               "endCol": 41
                             },
                             "name": "math.add",
@@ -3315,9 +3342,9 @@
                           }
                         ],
                         "codePos": {
-                          "startRow": 212,
+                          "startRow": 210,
                           "startCol": 27,
-                          "endRow": 212,
+                          "endRow": 210,
                           "endCol": 43
                         }
                       },
@@ -3329,9 +3356,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 212,
+                  "startRow": 210,
                   "startCol": 11,
-                  "endRow": 212,
+                  "endRow": 210,
                   "endCol": 47
                 }
               },
@@ -3343,9 +3370,9 @@
           }
         ],
         "codePos": {
-          "startRow": 212,
+          "startRow": 210,
           "startCol": 0,
-          "endRow": 212,
+          "endRow": 210,
           "endCol": 49
         }
       }
@@ -3355,9 +3382,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 213,
+      "startRow": 211,
       "startCol": 0,
-      "endRow": 213,
+      "endRow": 211,
       "endCol": 89
     },
     "trailingBlankLines": 1,
@@ -3381,18 +3408,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 216,
+      "startRow": 214,
       "startCol": 0,
-      "endRow": 216,
+      "endRow": 214,
       "endCol": 68
     },
     "comments": [
       {
         "text": "Test 31: Nested subexpression with last value from outer scope",
         "codePos": {
-          "startRow": 215,
+          "startRow": 213,
           "startCol": 0,
-          "endRow": 215,
+          "endRow": 213,
           "endCol": 63
         },
         "inline": false
@@ -3411,9 +3438,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 217,
+      "startRow": 215,
       "startCol": 0,
-      "endRow": 217,
+      "endRow": 215,
       "endCol": 1
     },
     "name": "_literal",
@@ -3429,9 +3456,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 218,
+      "startRow": 216,
       "startCol": 0,
-      "endRow": 218,
+      "endRow": 216,
       "endCol": 34
     },
     "name": "_subexpr",
@@ -3444,9 +3471,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 218,
+              "startRow": 216,
               "startCol": 2,
-              "endRow": 218,
+              "endRow": 216,
               "endCol": 33
             },
             "name": "math.multiply",
@@ -3459,9 +3486,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 218,
+                      "startRow": 216,
                       "startCol": 18,
-                      "endRow": 218,
+                      "endRow": 216,
                       "endCol": 30
                     },
                     "name": "math.add",
@@ -3478,9 +3505,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 218,
+                  "startRow": 216,
                   "startCol": 16,
-                  "endRow": 218,
+                  "endRow": 216,
                   "endCol": 32
                 }
               },
@@ -3492,9 +3519,9 @@
           }
         ],
         "codePos": {
-          "startRow": 218,
+          "startRow": 216,
           "startCol": 0,
-          "endRow": 218,
+          "endRow": 216,
           "endCol": 34
         }
       }
@@ -3504,9 +3531,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 219,
+      "startRow": 217,
       "startCol": 0,
-      "endRow": 219,
+      "endRow": 217,
       "endCol": 89
     },
     "trailingBlankLines": 1,
@@ -3530,18 +3557,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 222,
+      "startRow": 220,
       "startCol": 0,
-      "endRow": 222,
+      "endRow": 220,
       "endCol": 34
     },
     "comments": [
       {
         "text": "Test 32: Subexpression chain",
         "codePos": {
-          "startRow": 221,
+          "startRow": 219,
           "startCol": 0,
-          "endRow": 221,
+          "endRow": 219,
           "endCol": 29
         },
         "inline": false
@@ -3560,9 +3587,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 223,
+      "startRow": 221,
       "startCol": 0,
-      "endRow": 223,
+      "endRow": 221,
       "endCol": 15
     },
     "name": "_subexpr",
@@ -3575,9 +3602,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 223,
+              "startRow": 221,
               "startCol": 2,
-              "endRow": 223,
+              "endRow": 221,
               "endCol": 14
             },
             "name": "math.add",
@@ -3595,9 +3622,9 @@
           }
         ],
         "codePos": {
-          "startRow": 223,
+          "startRow": 221,
           "startCol": 0,
-          "endRow": 223,
+          "endRow": 221,
           "endCol": 15
         }
       }
@@ -3607,9 +3634,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 224,
+      "startRow": 222,
       "startCol": 0,
-      "endRow": 224,
+      "endRow": 222,
       "endCol": 20
     },
     "name": "_subexpr",
@@ -3622,9 +3649,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 224,
+              "startRow": 222,
               "startCol": 2,
-              "endRow": 224,
+              "endRow": 222,
               "endCol": 19
             },
             "name": "math.multiply",
@@ -3641,9 +3668,9 @@
           }
         ],
         "codePos": {
-          "startRow": 224,
+          "startRow": 222,
           "startCol": 0,
-          "endRow": 224,
+          "endRow": 222,
           "endCol": 20
         }
       }
@@ -3653,9 +3680,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 225,
+      "startRow": 223,
       "startCol": 0,
-      "endRow": 225,
+      "endRow": 223,
       "endCol": 73
     },
     "trailingBlankLines": 1,
@@ -3679,18 +3706,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 228,
+      "startRow": 226,
       "startCol": 0,
-      "endRow": 228,
+      "endRow": 226,
       "endCol": 45
     },
     "comments": [
       {
         "text": "Test 33: Subexpression returning string",
         "codePos": {
-          "startRow": 227,
+          "startRow": 225,
           "startCol": 0,
-          "endRow": 227,
+          "endRow": 225,
           "endCol": 40
         },
         "inline": false
@@ -3709,9 +3736,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 229,
+      "startRow": 227,
       "startCol": 0,
-      "endRow": 229,
+      "endRow": 227,
       "endCol": 31
     },
     "name": "_subexpr",
@@ -3724,9 +3751,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 229,
+              "startRow": 227,
               "startCol": 2,
-              "endRow": 229,
+              "endRow": 227,
               "endCol": 30
             },
             "name": "string.concat",
@@ -3744,9 +3771,9 @@
           }
         ],
         "codePos": {
-          "startRow": 229,
+          "startRow": 227,
           "startCol": 0,
-          "endRow": 229,
+          "endRow": 227,
           "endCol": 31
         }
       }
@@ -3756,9 +3783,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 230,
+      "startRow": 228,
       "startCol": 0,
-      "endRow": 230,
+      "endRow": 228,
       "endCol": 81
     },
     "trailingBlankLines": 1,
@@ -3782,18 +3809,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 233,
+      "startRow": 231,
       "startCol": 0,
-      "endRow": 233,
+      "endRow": 231,
       "endCol": 44
     },
     "comments": [
       {
         "text": "Test 34: Subexpression returning array",
         "codePos": {
-          "startRow": 232,
+          "startRow": 230,
           "startCol": 0,
-          "endRow": 232,
+          "endRow": 230,
           "endCol": 39
         },
         "inline": false
@@ -3812,9 +3839,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 234,
+      "startRow": 232,
       "startCol": 0,
-      "endRow": 234,
+      "endRow": 232,
       "endCol": 28
     },
     "targetName": "arr",
@@ -3823,9 +3850,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 234,
+        "startRow": 232,
         "startCol": 7,
-        "endRow": 234,
+        "endRow": 232,
         "endCol": 28
       },
       "name": "_subexpr",
@@ -3838,9 +3865,9 @@
               "type": "command",
               "lastValue": null,
               "codePos": {
-                "startRow": 234,
+                "startRow": 232,
                 "startCol": 9,
-                "endRow": 234,
+                "endRow": 232,
                 "endCol": 27
               },
               "name": "array.create",
@@ -3862,9 +3889,9 @@
             }
           ],
           "codePos": {
-            "startRow": 234,
+            "startRow": 232,
             "startCol": 7,
-            "endRow": 234,
+            "endRow": 232,
             "endCol": 28
           }
         }
@@ -3875,9 +3902,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 235,
+      "startRow": 233,
       "startCol": 0,
-      "endRow": 235,
+      "endRow": 233,
       "endCol": 81
     },
     "trailingBlankLines": 1,
@@ -3903,18 +3930,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 238,
+      "startRow": 236,
       "startCol": 0,
-      "endRow": 238,
+      "endRow": 236,
       "endCol": 45
     },
     "comments": [
       {
         "text": "Test 35: Subexpression returning object",
         "codePos": {
-          "startRow": 237,
+          "startRow": 235,
           "startCol": 0,
-          "endRow": 237,
+          "endRow": 235,
           "endCol": 40
         },
         "inline": false
@@ -3933,9 +3960,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 239,
+      "startRow": 237,
       "startCol": 0,
-      "endRow": 241,
+      "endRow": 239,
       "endCol": 1
     },
     "targetName": "obj",
@@ -3944,9 +3971,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 239,
+        "startRow": 237,
         "startCol": 7,
-        "endRow": 241,
+        "endRow": 239,
         "endCol": 1
       },
       "name": "_subexpr",
@@ -3959,9 +3986,9 @@
               "type": "command",
               "lastValue": null,
               "codePos": {
-                "startRow": 240,
+                "startRow": 238,
                 "startCol": 2,
-                "endRow": 240,
+                "endRow": 238,
                 "endCol": 26
               },
               "name": "_object",
@@ -3975,9 +4002,9 @@
             }
           ],
           "codePos": {
-            "startRow": 239,
+            "startRow": 237,
             "startCol": 7,
-            "endRow": 241,
+            "endRow": 239,
             "endCol": 1
           }
         }
@@ -3988,9 +4015,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 242,
+      "startRow": 240,
       "startCol": 0,
-      "endRow": 242,
+      "endRow": 240,
       "endCol": 98
     },
     "trailingBlankLines": 1,
@@ -4016,18 +4043,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 245,
+      "startRow": 243,
       "startCol": 0,
-      "endRow": 245,
+      "endRow": 243,
       "endCol": 61
     },
     "comments": [
       {
         "text": "Test 36: Nested subexpression with different operations",
         "codePos": {
-          "startRow": 244,
+          "startRow": 242,
           "startCol": 0,
-          "endRow": 244,
+          "endRow": 242,
           "endCol": 56
         },
         "inline": false
@@ -4046,9 +4073,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 246,
+      "startRow": 244,
       "startCol": 0,
-      "endRow": 246,
+      "endRow": 244,
       "endCol": 41
     },
     "name": "_subexpr",
@@ -4061,9 +4088,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 246,
+              "startRow": 244,
               "startCol": 2,
-              "endRow": 246,
+              "endRow": 244,
               "endCol": 40
             },
             "name": "string.concat",
@@ -4076,9 +4103,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 246,
+                      "startRow": 244,
                       "startCol": 18,
-                      "endRow": 246,
+                      "endRow": 244,
                       "endCol": 30
                     },
                     "name": "math.add",
@@ -4096,9 +4123,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 246,
+                  "startRow": 244,
                   "startCol": 16,
-                  "endRow": 246,
+                  "endRow": 244,
                   "endCol": 39
                 }
               },
@@ -4110,9 +4137,9 @@
           }
         ],
         "codePos": {
-          "startRow": 246,
+          "startRow": 244,
           "startCol": 0,
-          "endRow": 246,
+          "endRow": 244,
           "endCol": 41
         }
       }
@@ -4122,9 +4149,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 247,
+      "startRow": 245,
       "startCol": 0,
-      "endRow": 247,
+      "endRow": 245,
       "endCol": 84
     },
     "trailingBlankLines": 1,
@@ -4148,18 +4175,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 250,
+      "startRow": 248,
       "startCol": 0,
-      "endRow": 250,
+      "endRow": 248,
       "endCol": 59
     },
     "comments": [
       {
         "text": "Test 37: Multiple nested subexpressions at same level",
         "codePos": {
-          "startRow": 249,
+          "startRow": 247,
           "startCol": 0,
-          "endRow": 249,
+          "endRow": 247,
           "endCol": 54
         },
         "inline": false
@@ -4178,9 +4205,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 251,
+      "startRow": 249,
       "startCol": 0,
-      "endRow": 251,
+      "endRow": 249,
       "endCol": 48
     },
     "name": "_subexpr",
@@ -4193,9 +4220,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 251,
+              "startRow": 249,
               "startCol": 2,
-              "endRow": 251,
+              "endRow": 249,
               "endCol": 47
             },
             "name": "math.add",
@@ -4208,9 +4235,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 251,
+                      "startRow": 249,
                       "startCol": 13,
-                      "endRow": 251,
+                      "endRow": 249,
                       "endCol": 30
                     },
                     "name": "math.multiply",
@@ -4228,9 +4255,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 251,
+                  "startRow": 249,
                   "startCol": 11,
-                  "endRow": 251,
+                  "endRow": 249,
                   "endCol": 33
                 }
               },
@@ -4241,9 +4268,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 251,
+                      "startRow": 249,
                       "startCol": 34,
-                      "endRow": 251,
+                      "endRow": 249,
                       "endCol": 46
                     },
                     "name": "math.add",
@@ -4261,9 +4288,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 251,
+                  "startRow": 249,
                   "startCol": 32,
-                  "endRow": 251,
+                  "endRow": 249,
                   "endCol": 47
                 }
               }
@@ -4271,9 +4298,9 @@
           }
         ],
         "codePos": {
-          "startRow": 251,
+          "startRow": 249,
           "startCol": 0,
-          "endRow": 251,
+          "endRow": 249,
           "endCol": 48
         }
       }
@@ -4283,9 +4310,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 252,
+      "startRow": 250,
       "startCol": 0,
-      "endRow": 252,
+      "endRow": 250,
       "endCol": 89
     },
     "trailingBlankLines": 1,
@@ -4309,18 +4336,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 255,
+      "startRow": 253,
       "startCol": 0,
-      "endRow": 255,
+      "endRow": 253,
       "endCol": 52
     },
     "comments": [
       {
         "text": "Test 38: Subexpression with conditional inside",
         "codePos": {
-          "startRow": 254,
+          "startRow": 252,
           "startCol": 0,
-          "endRow": 254,
+          "endRow": 252,
           "endCol": 47
         },
         "inline": false
@@ -4339,10 +4366,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 256,
+      "startRow": 254,
       "startCol": 0,
       "endRow": 260,
-      "endCol": 6
+      "endCol": 1
     },
     "name": "_subexpr",
     "module": null,
@@ -4354,18 +4381,28 @@
             "type": "ifBlock",
             "lastValue": null,
             "codePos": {
-              "startRow": 256,
+              "startRow": 255,
               "startCol": 2,
-              "endRow": 260,
-              "endCol": 4
+              "endRow": 259,
+              "endCol": 6
             },
             "condition": {
               "type": "literal",
               "value": true,
               "codePos": {
-                "startRow": 256,
+                "startRow": 255,
                 "startCol": 5,
-                "endRow": 256,
+                "endRow": 255,
+                "endCol": 8
+              }
+            },
+            "conditionExpr": {
+              "type": "literal",
+              "value": true,
+              "codePos": {
+                "startRow": 255,
+                "startCol": 5,
+                "endRow": 255,
                 "endCol": 8
               }
             },
@@ -4374,10 +4411,10 @@
                 "type": "command",
                 "lastValue": null,
                 "codePos": {
-                  "startRow": 257,
-                  "startCol": 2,
-                  "endRow": 257,
-                  "endCol": 16
+                  "startRow": 256,
+                  "startCol": 4,
+                  "endRow": 256,
+                  "endCol": 18
                 },
                 "name": "math.add",
                 "module": "math",
@@ -4398,10 +4435,10 @@
                 "type": "command",
                 "lastValue": null,
                 "codePos": {
-                  "startRow": 259,
-                  "startCol": 2,
-                  "endRow": 259,
-                  "endCol": 14
+                  "startRow": 258,
+                  "startCol": 4,
+                  "endRow": 258,
+                  "endCol": 16
                 },
                 "name": "math.add",
                 "module": "math",
@@ -4421,10 +4458,10 @@
           }
         ],
         "codePos": {
-          "startRow": 256,
+          "startRow": 254,
           "startCol": 0,
           "endRow": 260,
-          "endCol": 6
+          "endCol": 1
         }
       }
     ]

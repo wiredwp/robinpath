@@ -25,7 +25,7 @@
       "endRow": 3,
       "endCol": 31
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "name": "log",
     "module": null,
     "args": [
@@ -39,18 +39,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 7,
+      "startRow": 6,
       "startCol": 0,
-      "endRow": 7,
+      "endRow": 6,
       "endCol": 32
     },
     "comments": [
       {
         "text": "Test 1: Inline conditional",
         "codePos": {
-          "startRow": 6,
+          "startRow": 5,
           "startCol": 0,
-          "endRow": 6,
+          "endRow": 5,
           "endCol": 27
         },
         "inline": false
@@ -69,9 +69,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 8,
+      "startRow": 7,
       "startCol": 0,
-      "endRow": 8,
+      "endRow": 7,
       "endCol": 13
     },
     "targetName": "balance",
@@ -83,12 +83,12 @@
     "type": "inlineIf",
     "lastValue": null,
     "codePos": {
-      "startRow": 9,
+      "startRow": 8,
       "startCol": 0,
-      "endRow": 9,
+      "endRow": 8,
       "endCol": 55
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "conditionExpr": {
       "type": "binary",
       "operator": ">",
@@ -97,9 +97,9 @@
         "name": "balance",
         "path": [],
         "codePos": {
-          "startRow": 9,
+          "startRow": 8,
           "startCol": 3,
-          "endRow": 9,
+          "endRow": 8,
           "endCol": 10
         }
       },
@@ -107,16 +107,16 @@
         "type": "number",
         "value": 0,
         "codePos": {
-          "startRow": 9,
+          "startRow": 8,
           "startCol": 14,
-          "endRow": 9,
+          "endRow": 8,
           "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 9,
+        "startRow": 8,
         "startCol": 3,
-        "endRow": 9,
+        "endRow": 8,
         "endCol": 12
       }
     },
@@ -124,9 +124,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 9,
+        "startRow": 8,
         "startCol": 21,
-        "endRow": 9,
+        "endRow": 8,
         "endCol": 55
       },
       "name": "log",
@@ -143,18 +143,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 13,
+      "startRow": 11,
       "startCol": 0,
-      "endRow": 13,
+      "endRow": 11,
       "endCol": 32
     },
     "comments": [
       {
         "text": "Test 2: Block if with else",
         "codePos": {
-          "startRow": 12,
+          "startRow": 10,
           "startCol": 0,
-          "endRow": 12,
+          "endRow": 10,
           "endCol": 27
         },
         "inline": false
@@ -173,9 +173,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 14,
+      "startRow": 12,
       "startCol": 0,
-      "endRow": 14,
+      "endRow": 12,
       "endCol": 10
     },
     "targetName": "score",
@@ -187,12 +187,12 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 15,
+      "startRow": 13,
       "startCol": 0,
-      "endRow": 23,
+      "endRow": 21,
       "endCol": 4
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "condition": {
       "type": "binary",
       "operator": ">=",
@@ -201,9 +201,9 @@
         "name": "score",
         "path": [],
         "codePos": {
-          "startRow": 15,
+          "startRow": 13,
           "startCol": 3,
-          "endRow": 15,
+          "endRow": 13,
           "endCol": 8
         }
       },
@@ -211,16 +211,47 @@
         "type": "number",
         "value": 90,
         "codePos": {
-          "startRow": 15,
+          "startRow": 13,
           "startCol": 13,
-          "endRow": 15,
+          "endRow": 13,
           "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 15,
+        "startRow": 13,
         "startCol": 3,
-        "endRow": 15,
+        "endRow": 13,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">=",
+      "left": {
+        "type": "var",
+        "name": "score",
+        "path": [],
+        "codePos": {
+          "startRow": 13,
+          "startCol": 3,
+          "endRow": 13,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 90,
+        "codePos": {
+          "startRow": 13,
+          "startCol": 13,
+          "endRow": 13,
+          "endCol": 14
+        }
+      },
+      "codePos": {
+        "startRow": 13,
+        "startCol": 3,
+        "endRow": 13,
         "endCol": 11
       }
     },
@@ -229,9 +260,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 16,
+          "startRow": 14,
           "startCol": 2,
-          "endRow": 16,
+          "endRow": 14,
           "endCol": 25
         },
         "name": "log",
@@ -254,6 +285,90 @@
             "name": "score",
             "path": [],
             "codePos": {
+              "startRow": 15,
+              "startCol": 7,
+              "endRow": 15,
+              "endCol": 12
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 80,
+            "codePos": {
+              "startRow": 15,
+              "startCol": 17,
+              "endRow": 15,
+              "endCol": 18
+            }
+          },
+          "codePos": {
+            "startRow": 15,
+            "startCol": 7,
+            "endRow": 15,
+            "endCol": 15
+          }
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": ">=",
+          "left": {
+            "type": "var",
+            "name": "score",
+            "path": [],
+            "codePos": {
+              "startRow": 15,
+              "startCol": 7,
+              "endRow": 15,
+              "endCol": 12
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 80,
+            "codePos": {
+              "startRow": 15,
+              "startCol": 17,
+              "endRow": 15,
+              "endCol": 18
+            }
+          },
+          "codePos": {
+            "startRow": 15,
+            "startCol": 7,
+            "endRow": 15,
+            "endCol": 15
+          }
+        },
+        "body": [
+          {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 16,
+              "startCol": 2,
+              "endRow": 16,
+              "endCol": 25
+            },
+            "name": "log",
+            "module": null,
+            "args": [
+              {
+                "type": "string",
+                "value": "Test 2 - Grade: B"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "binary",
+          "operator": ">=",
+          "left": {
+            "type": "var",
+            "name": "score",
+            "path": [],
+            "codePos": {
               "startRow": 17,
               "startCol": 7,
               "endRow": 17,
@@ -262,7 +377,38 @@
           },
           "right": {
             "type": "number",
-            "value": 80,
+            "value": 70,
+            "codePos": {
+              "startRow": 17,
+              "startCol": 17,
+              "endRow": 17,
+              "endCol": 18
+            }
+          },
+          "codePos": {
+            "startRow": 17,
+            "startCol": 7,
+            "endRow": 17,
+            "endCol": 15
+          }
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": ">=",
+          "left": {
+            "type": "var",
+            "name": "score",
+            "path": [],
+            "codePos": {
+              "startRow": 17,
+              "startCol": 7,
+              "endRow": 17,
+              "endCol": 12
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 70,
             "codePos": {
               "startRow": 17,
               "startCol": 17,
@@ -292,59 +438,6 @@
             "args": [
               {
                 "type": "string",
-                "value": "Test 2 - Grade: B"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "condition": {
-          "type": "binary",
-          "operator": ">=",
-          "left": {
-            "type": "var",
-            "name": "score",
-            "path": [],
-            "codePos": {
-              "startRow": 19,
-              "startCol": 7,
-              "endRow": 19,
-              "endCol": 12
-            }
-          },
-          "right": {
-            "type": "number",
-            "value": 70,
-            "codePos": {
-              "startRow": 19,
-              "startCol": 17,
-              "endRow": 19,
-              "endCol": 18
-            }
-          },
-          "codePos": {
-            "startRow": 19,
-            "startCol": 7,
-            "endRow": 19,
-            "endCol": 15
-          }
-        },
-        "body": [
-          {
-            "type": "command",
-            "lastValue": null,
-            "codePos": {
-              "startRow": 20,
-              "startCol": 2,
-              "endRow": 20,
-              "endCol": 25
-            },
-            "name": "log",
-            "module": null,
-            "args": [
-              {
-                "type": "string",
                 "value": "Test 2 - Grade: C"
               }
             ]
@@ -357,9 +450,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 22,
+          "startRow": 20,
           "startCol": 2,
-          "endRow": 22,
+          "endRow": 20,
           "endCol": 25
         },
         "name": "log",
@@ -377,18 +470,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 27,
+      "startRow": 24,
       "startCol": 0,
-      "endRow": 27,
+      "endRow": 24,
       "endCol": 33
     },
     "comments": [
       {
         "text": "Test 3: Nested conditionals",
         "codePos": {
-          "startRow": 26,
+          "startRow": 23,
           "startCol": 0,
-          "endRow": 26,
+          "endRow": 23,
           "endCol": 28
         },
         "inline": false
@@ -407,9 +500,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 28,
+      "startRow": 25,
       "startCol": 0,
-      "endRow": 28,
+      "endRow": 25,
       "endCol": 10
     },
     "targetName": "value",
@@ -421,12 +514,12 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 29,
+      "startRow": 26,
       "startCol": 0,
-      "endRow": 37,
+      "endRow": 34,
       "endCol": 4
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "condition": {
       "type": "binary",
       "operator": ">",
@@ -435,9 +528,9 @@
         "name": "value",
         "path": [],
         "codePos": {
-          "startRow": 29,
+          "startRow": 26,
           "startCol": 3,
-          "endRow": 29,
+          "endRow": 26,
           "endCol": 8
         }
       },
@@ -445,16 +538,47 @@
         "type": "number",
         "value": 0,
         "codePos": {
-          "startRow": 29,
+          "startRow": 26,
           "startCol": 12,
-          "endRow": 29,
+          "endRow": 26,
           "endCol": 12
         }
       },
       "codePos": {
-        "startRow": 29,
+        "startRow": 26,
         "startCol": 3,
-        "endRow": 29,
+        "endRow": 26,
+        "endCol": 10
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "value",
+        "path": [],
+        "codePos": {
+          "startRow": 26,
+          "startCol": 3,
+          "endRow": 26,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 0,
+        "codePos": {
+          "startRow": 26,
+          "startCol": 12,
+          "endRow": 26,
+          "endCol": 12
+        }
+      },
+      "codePos": {
+        "startRow": 26,
+        "startCol": 3,
+        "endRow": 26,
         "endCol": 10
       }
     },
@@ -463,9 +587,9 @@
         "type": "ifBlock",
         "lastValue": null,
         "codePos": {
-          "startRow": 30,
+          "startRow": 27,
           "startCol": 2,
-          "endRow": 34,
+          "endRow": 31,
           "endCol": 6
         },
         "condition": {
@@ -476,9 +600,9 @@
             "name": "value",
             "path": [],
             "codePos": {
-              "startRow": 30,
+              "startRow": 27,
               "startCol": 5,
-              "endRow": 30,
+              "endRow": 27,
               "endCol": 10
             }
           },
@@ -486,16 +610,47 @@
             "type": "number",
             "value": 50,
             "codePos": {
-              "startRow": 30,
+              "startRow": 27,
               "startCol": 14,
-              "endRow": 30,
+              "endRow": 27,
               "endCol": 15
             }
           },
           "codePos": {
-            "startRow": 30,
+            "startRow": 27,
             "startCol": 5,
-            "endRow": 30,
+            "endRow": 27,
+            "endCol": 12
+          }
+        },
+        "conditionExpr": {
+          "type": "binary",
+          "operator": "<",
+          "left": {
+            "type": "var",
+            "name": "value",
+            "path": [],
+            "codePos": {
+              "startRow": 27,
+              "startCol": 5,
+              "endRow": 27,
+              "endCol": 10
+            }
+          },
+          "right": {
+            "type": "number",
+            "value": 50,
+            "codePos": {
+              "startRow": 27,
+              "startCol": 14,
+              "endRow": 27,
+              "endCol": 15
+            }
+          },
+          "codePos": {
+            "startRow": 27,
+            "startCol": 5,
+            "endRow": 27,
             "endCol": 12
           }
         },
@@ -504,9 +659,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 31,
+              "startRow": 28,
               "startCol": 4,
-              "endRow": 31,
+              "endRow": 28,
               "endCol": 44
             },
             "name": "log",
@@ -524,9 +679,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 33,
+              "startRow": 30,
               "startCol": 4,
-              "endRow": 33,
+              "endRow": 30,
               "endCol": 41
             },
             "name": "log",
@@ -546,9 +701,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 36,
+          "startRow": 33,
           "startCol": 2,
-          "endRow": 36,
+          "endRow": 33,
           "endCol": 42
         },
         "name": "log",
@@ -566,18 +721,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 41,
+      "startRow": 37,
       "startCol": 0,
-      "endRow": 41,
+      "endRow": 37,
       "endCol": 49
     },
     "comments": [
       {
         "text": "Test 4: Conditional with complex expression",
         "codePos": {
-          "startRow": 40,
+          "startRow": 36,
           "startCol": 0,
-          "endRow": 40,
+          "endRow": 36,
           "endCol": 44
         },
         "inline": false
@@ -596,9 +751,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 42,
+      "startRow": 38,
       "startCol": 0,
-      "endRow": 42,
+      "endRow": 38,
       "endCol": 8
     },
     "targetName": "age",
@@ -610,9 +765,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 43,
+      "startRow": 39,
       "startCol": 0,
-      "endRow": 43,
+      "endRow": 39,
       "endCol": 15
     },
     "targetName": "citizen",
@@ -624,12 +779,12 @@
     "type": "inlineIf",
     "lastValue": null,
     "codePos": {
-      "startRow": 44,
+      "startRow": 40,
       "startCol": 0,
-      "endRow": 44,
+      "endRow": 40,
       "endCol": 72
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "conditionExpr": {
       "type": "binary",
       "operator": "and",
@@ -641,9 +796,9 @@
           "name": "age",
           "path": [],
           "codePos": {
-            "startRow": 44,
+            "startRow": 40,
             "startCol": 4,
-            "endRow": 44,
+            "endRow": 40,
             "endCol": 7
           }
         },
@@ -651,16 +806,16 @@
           "type": "number",
           "value": 18,
           "codePos": {
-            "startRow": 44,
+            "startRow": 40,
             "startCol": 12,
-            "endRow": 44,
+            "endRow": 40,
             "endCol": 13
           }
         },
         "codePos": {
-          "startRow": 44,
+          "startRow": 40,
           "startCol": 3,
-          "endRow": 44,
+          "endRow": 40,
           "endCol": 10
         },
         "parenthesized": true
@@ -673,9 +828,9 @@
           "name": "citizen",
           "path": [],
           "codePos": {
-            "startRow": 44,
+            "startRow": 40,
             "startCol": 20,
-            "endRow": 44,
+            "endRow": 40,
             "endCol": 27
           }
         },
@@ -683,24 +838,24 @@
           "type": "string",
           "value": "yes",
           "codePos": {
-            "startRow": 44,
+            "startRow": 40,
             "startCol": 32,
-            "endRow": 44,
+            "endRow": 40,
             "endCol": 36
           }
         },
         "codePos": {
-          "startRow": 44,
+          "startRow": 40,
           "startCol": 3,
-          "endRow": 44,
+          "endRow": 40,
           "endCol": 30
         },
         "parenthesized": true
       },
       "codePos": {
-        "startRow": 44,
+        "startRow": 40,
         "startCol": 3,
-        "endRow": 44,
+        "endRow": 40,
         "endCol": 17
       },
       "operatorText": "&&"
@@ -709,9 +864,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 44,
+        "startRow": 40,
         "startCol": 44,
-        "endRow": 44,
+        "endRow": 40,
         "endCol": 72
       },
       "name": "log",
@@ -728,18 +883,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 48,
+      "startRow": 43,
       "startCol": 0,
-      "endRow": 48,
+      "endRow": 43,
       "endCol": 47
     },
     "comments": [
       {
         "text": "Test 5: Conditional with return statement",
         "codePos": {
-          "startRow": 47,
+          "startRow": 42,
           "startCol": 0,
-          "endRow": 47,
+          "endRow": 42,
           "endCol": 42
         },
         "inline": false
@@ -758,9 +913,9 @@
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 49,
+      "startRow": 44,
       "startCol": 0,
-      "endRow": 54,
+      "endRow": 49,
       "endCol": 5
     },
     "trailingBlankLines": 1,
@@ -771,18 +926,28 @@
         "type": "ifBlock",
         "lastValue": null,
         "codePos": {
-          "startRow": 50,
+          "startRow": 45,
           "startCol": 2,
-          "endRow": 52,
+          "endRow": 47,
           "endCol": 6
         },
         "condition": {
           "type": "literal",
           "value": true,
           "codePos": {
-            "startRow": 50,
+            "startRow": 45,
             "startCol": 5,
-            "endRow": 50,
+            "endRow": 45,
+            "endCol": 8
+          }
+        },
+        "conditionExpr": {
+          "type": "literal",
+          "value": true,
+          "codePos": {
+            "startRow": 45,
+            "startCol": 5,
+            "endRow": 45,
             "endCol": 8
           }
         },
@@ -791,9 +956,9 @@
             "type": "return",
             "lastValue": null,
             "codePos": {
-              "startRow": 51,
+              "startRow": 46,
               "startCol": 4,
-              "endRow": 51,
+              "endRow": 46,
               "endCol": 22
             },
             "value": {
@@ -807,9 +972,9 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 53,
+          "startRow": 48,
           "startCol": 2,
-          "endRow": 53,
+          "endRow": 48,
           "endCol": 19
         },
         "value": {
@@ -823,10 +988,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 56,
+      "startRow": 51,
       "startCol": 0,
-      "endRow": 57,
-      "endCol": 1
+      "endRow": 51,
+      "endCol": 4
     },
     "name": "clear",
     "module": null,
@@ -836,9 +1001,9 @@
     "type": "do",
     "lastValue": null,
     "codePos": {
-      "startRow": 57,
+      "startRow": 52,
       "startCol": 0,
-      "endRow": 60,
+      "endRow": 55,
       "endCol": 4
     },
     "trailingBlankLines": 1,
@@ -847,10 +1012,10 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 58,
+          "startRow": 53,
           "startCol": 2,
-          "endRow": 59,
-          "endCol": 5
+          "endRow": 53,
+          "endCol": 13
         },
         "name": "return_in_if",
         "module": null,
@@ -860,9 +1025,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 59,
+          "startRow": 54,
           "startCol": 2,
-          "endRow": 59,
+          "endRow": 54,
           "endCol": 60
         },
         "name": "test.assertEqual",
@@ -887,9 +1052,9 @@
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 62,
+      "startRow": 57,
       "startCol": 0,
-      "endRow": 69,
+      "endRow": 64,
       "endCol": 5
     },
     "trailingBlankLines": 1,
@@ -900,18 +1065,28 @@
         "type": "ifBlock",
         "lastValue": null,
         "codePos": {
-          "startRow": 63,
+          "startRow": 58,
           "startCol": 2,
-          "endRow": 67,
+          "endRow": 62,
           "endCol": 6
         },
         "condition": {
           "type": "literal",
           "value": false,
           "codePos": {
-            "startRow": 63,
+            "startRow": 58,
             "startCol": 5,
-            "endRow": 63,
+            "endRow": 58,
+            "endCol": 9
+          }
+        },
+        "conditionExpr": {
+          "type": "literal",
+          "value": false,
+          "codePos": {
+            "startRow": 58,
+            "startCol": 5,
+            "endRow": 58,
             "endCol": 9
           }
         },
@@ -920,9 +1095,9 @@
             "type": "assignment",
             "lastValue": null,
             "codePos": {
-              "startRow": 64,
+              "startRow": 59,
               "startCol": 4,
-              "endRow": 64,
+              "endRow": 59,
               "endCol": 15
             },
             "targetName": "temp",
@@ -936,9 +1111,9 @@
             "type": "return",
             "lastValue": null,
             "codePos": {
-              "startRow": 66,
+              "startRow": 61,
               "startCol": 4,
-              "endRow": 66,
+              "endRow": 61,
               "endCol": 24
             },
             "value": {
@@ -952,9 +1127,9 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 68,
+          "startRow": 63,
           "startCol": 2,
-          "endRow": 68,
+          "endRow": 63,
           "endCol": 21
         },
         "value": {
@@ -968,10 +1143,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 71,
+      "startRow": 66,
       "startCol": 0,
-      "endRow": 72,
-      "endCol": 1
+      "endRow": 66,
+      "endCol": 4
     },
     "name": "clear",
     "module": null,
@@ -981,21 +1156,21 @@
     "type": "do",
     "lastValue": null,
     "codePos": {
-      "startRow": 72,
+      "startRow": 67,
       "startCol": 0,
-      "endRow": 75,
+      "endRow": 70,
       "endCol": 4
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "body": [
       {
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 73,
+          "startRow": 68,
           "startCol": 2,
-          "endRow": 74,
-          "endCol": 5
+          "endRow": 68,
+          "endCol": 15
         },
         "name": "return_in_else",
         "module": null,
@@ -1005,9 +1180,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 74,
+          "startRow": 69,
           "startCol": 2,
-          "endRow": 74,
+          "endRow": 69,
           "endCol": 64
         },
         "name": "test.assertEqual",
@@ -1032,18 +1207,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 79,
+      "startRow": 73,
       "startCol": 0,
-      "endRow": 79,
+      "endRow": 73,
       "endCol": 1
     },
     "comments": [
       {
         "text": "test 6: allowing then indentation multi line conditional",
         "codePos": {
-          "startRow": 78,
+          "startRow": 72,
           "startCol": 0,
-          "endRow": 78,
+          "endRow": 72,
           "endCol": 57
         },
         "inline": false
@@ -1062,9 +1237,9 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 80,
+      "startRow": 74,
       "startCol": 0,
-      "endRow": 82,
+      "endRow": 76,
       "endCol": 4
     },
     "condition": {
@@ -1073,9 +1248,9 @@
       "left": {
         "type": "lastValue",
         "codePos": {
-          "startRow": 80,
+          "startRow": 74,
           "startCol": 3,
-          "endRow": 80,
+          "endRow": 74,
           "endCol": 3
         }
       },
@@ -1083,16 +1258,45 @@
         "type": "number",
         "value": 5,
         "codePos": {
-          "startRow": 80,
+          "startRow": 74,
           "startCol": 7,
-          "endRow": 80,
+          "endRow": 74,
           "endCol": 7
         }
       },
       "codePos": {
-        "startRow": 80,
+        "startRow": 74,
         "startCol": 3,
-        "endRow": 80,
+        "endRow": 74,
+        "endCol": 5
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "lastValue",
+        "codePos": {
+          "startRow": 74,
+          "startCol": 3,
+          "endRow": 74,
+          "endCol": 3
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 74,
+          "startCol": 7,
+          "endRow": 74,
+          "endCol": 7
+        }
+      },
+      "codePos": {
+        "startRow": 74,
+        "startCol": 3,
+        "endRow": 74,
         "endCol": 5
       }
     },
@@ -1101,9 +1305,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 81,
+          "startRow": 75,
           "startCol": 2,
-          "endRow": 81,
+          "endRow": 75,
           "endCol": 19
         },
         "name": "math.multiply",
@@ -1125,12 +1329,12 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 83,
+      "startRow": 77,
       "startCol": 0,
-      "endRow": 83,
+      "endRow": 77,
       "endCol": 61
     },
-    "trailingBlankLines": 2,
+    "trailingBlankLines": 1,
     "name": "test.assertEqual",
     "module": "test",
     "args": [
@@ -1151,18 +1355,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 87,
+      "startRow": 80,
       "startCol": 0,
-      "endRow": 87,
+      "endRow": 80,
       "endCol": 61
     },
     "comments": [
       {
         "text": "Test 7: If block should return lastValue from executed branch",
         "codePos": {
-          "startRow": 86,
+          "startRow": 79,
           "startCol": 0,
-          "endRow": 86,
+          "endRow": 79,
           "endCol": 62
         },
         "inline": false
@@ -1181,9 +1385,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 88,
+      "startRow": 81,
       "startCol": 0,
-      "endRow": 88,
+      "endRow": 81,
       "endCol": 6
     },
     "targetName": "a",
@@ -1195,9 +1399,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 89,
+      "startRow": 82,
       "startCol": 0,
-      "endRow": 89,
+      "endRow": 82,
       "endCol": 5
     },
     "name": "_literal",
@@ -1213,18 +1417,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 90,
+      "startRow": 83,
       "startCol": 0,
-      "endRow": 90,
+      "endRow": 83,
       "endCol": 25
     },
     "comments": [
       {
         "text": "Should log \"test\"",
         "codePos": {
-          "startRow": 90,
+          "startRow": 83,
           "startCol": 7,
-          "endRow": 90,
+          "endRow": 83,
           "endCol": 25
         },
         "inline": true
@@ -1242,9 +1446,9 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 91,
+      "startRow": 84,
       "startCol": 0,
-      "endRow": 95,
+      "endRow": 88,
       "endCol": 4
     },
     "condition": {
@@ -1255,9 +1459,9 @@
         "name": "a",
         "path": [],
         "codePos": {
-          "startRow": 91,
+          "startRow": 84,
           "startCol": 3,
-          "endRow": 91,
+          "endRow": 84,
           "endCol": 4
         }
       },
@@ -1265,16 +1469,47 @@
         "type": "number",
         "value": 5,
         "codePos": {
-          "startRow": 91,
+          "startRow": 84,
           "startCol": 8,
-          "endRow": 91,
+          "endRow": 84,
           "endCol": 8
         }
       },
       "codePos": {
-        "startRow": 91,
+        "startRow": 84,
         "startCol": 3,
-        "endRow": 91,
+        "endRow": 84,
+        "endCol": 6
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": ">",
+      "left": {
+        "type": "var",
+        "name": "a",
+        "path": [],
+        "codePos": {
+          "startRow": 84,
+          "startCol": 3,
+          "endRow": 84,
+          "endCol": 4
+        }
+      },
+      "right": {
+        "type": "number",
+        "value": 5,
+        "codePos": {
+          "startRow": 84,
+          "startCol": 8,
+          "endRow": 84,
+          "endCol": 8
+        }
+      },
+      "codePos": {
+        "startRow": 84,
+        "startCol": 3,
+        "endRow": 84,
         "endCol": 6
       }
     },
@@ -1283,10 +1518,10 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 92,
+          "startRow": 85,
           "startCol": 2,
-          "endRow": 92,
-          "endCol": 7
+          "endRow": 85,
+          "endCol": 17
         },
         "name": "_literal",
         "module": null,
@@ -1303,10 +1538,10 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 94,
+          "startRow": 87,
           "startCol": 2,
-          "endRow": 94,
-          "endCol": 6
+          "endRow": 87,
+          "endCol": 16
         },
         "name": "_literal",
         "module": null,
@@ -1323,9 +1558,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 96,
+      "startRow": 89,
       "startCol": 0,
-      "endRow": 96,
+      "endRow": 89,
       "endCol": 81
     },
     "trailingBlankLines": 1,
@@ -1349,9 +1584,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 98,
+      "startRow": 91,
       "startCol": 0,
-      "endRow": 98,
+      "endRow": 91,
       "endCol": 40
     },
     "name": "log",
