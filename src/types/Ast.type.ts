@@ -43,6 +43,7 @@ export interface CommentStatement {
     type: 'comment';
     comments: CommentWithPosition[]; // Array of comment objects with position (always use this, never 'text')
     lineNumber: number; // Original line number for reference (deprecated, derive from comments[0].codePos.startRow)
+    trailingBlankLines?: number; // Number of blank lines after this statement
     // codePos is derived from comments array - no need to store it separately
 }
 

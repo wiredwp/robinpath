@@ -8,6 +8,7 @@ import { TokenStream, ParsingContext } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
+import { CommentParser } from './CommentParser';
 import type { ScopeBlock, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
 import type { AttributePathSegment } from '../utils/types';
 
@@ -244,6 +245,15 @@ export class ScopeParser {
                         stmt.comments = [...pendingComments, ...stmt.comments];
                         pendingComments = [];
                     }
+
+                    // Check for inline comment immediately after statement
+                    if ('codePos' in stmt && stmt.codePos) {
+                        const inlineComment = CommentParser.parseInlineComment(stream, stmt.codePos.endRow);
+                        if (inlineComment) {
+                            CommentParser.attachComments(stmt, [inlineComment]);
+                        }
+                    }
+
                     if (ScopeParser.debug) {
                         const timestamp = new Date().toISOString();
                         console.log(`[ScopeParser.parse] [${timestamp}] Parsed statement type: ${stmt.type} in do block body`);

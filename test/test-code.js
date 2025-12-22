@@ -12,10 +12,10 @@
  * Handles multiple test blocks separated by "---"
  * 
  * Usage:
- *   npm run test-code-convert -- 0    (tests 00-custom.robin, default 3 cycles)
- *   npm run test-code-convert -- 1    (tests 01-variable-assignment.robin, default 3 cycles)
- *   npm run test-code-convert -- 0-5  (tests 0 through 5, default 3 cycles)
- *   npm run test-code-convert -- 0 --cycle 5  (tests 00-custom.robin with 5 cycles)
+ *   npm run test-code -- 0    (tests 00-custom.robin, default 3 cycles)
+ *   npm run test-code -- 1    (tests 01-variable-assignment.robin, default 3 cycles)
+ *   npm run test-code -- 0-5  (tests 0 through 5, default 3 cycles)
+ *   npm run test-code -- 0 --cycle 5  (tests 00-custom.robin with 5 cycles)
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -66,7 +66,8 @@ function splitIntoBlocks(code) {
     
     // Regex to match chunk markers: --- chunk:<id> [meta] ---
     // Allow IDs that start with letters, digits, or underscores
-    const chunkMarkerRegex = /^\s*---\s*chunk:([A-Za-z0-9_][A-Za-z0-9_-]*)\b.*?---\s*$/;
+    // Only match markers at the START of the line (no indentation) to avoid splitting code blocks
+    const chunkMarkerRegex = /^---\s*chunk:([A-Za-z0-9_][A-Za-z0-9_-]*)\b.*?---\s*$/;
     
     for (const line of lines) {
         if (chunkMarkerRegex.test(line)) {
@@ -423,10 +424,10 @@ function parseArgs() {
     const DEFAULT_CYCLES = 3;
     
     if (args.length === 0) {
-        console.error('Usage: npm run test-code-convert -- <test-number> [--cycle <num>]');
-        console.error('Example: npm run test-code-convert -- 0');
-        console.error('         npm run test-code-convert -- 0-5');
-        console.error('         npm run test-code-convert -- 0 --cycle 5');
+        console.error('Usage: npm run test-code -- <test-number> [--cycle <num>]');
+        console.error('Example: npm run test-code -- 0');
+        console.error('         npm run test-code -- 0-5');
+        console.error('         npm run test-code -- 0 --cycle 5');
         process.exit(1);
     }
     

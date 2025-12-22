@@ -32,9 +32,6 @@ export function parseContinue(
     // Consume 'continue' keyword
     stream.next();
 
-    // Skip whitespace and comments after 'continue' (including inline comments)
-    stream.skipWhitespaceAndComments();
-
     // Find the end token (last token before newline/EOF)
     let endToken = continueToken;
     const current = stream.current();

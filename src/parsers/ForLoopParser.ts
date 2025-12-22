@@ -8,6 +8,7 @@ import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import { LexerUtils } from '../utils';
 import { parseExpression } from './ExpressionParser';
+import { CommentParser } from './CommentParser';
 import type { ForLoop, Statement, CommentWithPosition, CodePosition, Expression, DecoratorCall } from '../types/Ast.type';
 
 export interface ForLoopParserContext {
@@ -190,7 +191,19 @@ export function parseForLoop(
         
         // Skip newlines and comments at the statement boundary
         if (t.kind === TokenKind.NEWLINE) {
-            stream.next();
+            let newlineCount = 0;
+            while (stream.current()?.kind === TokenKind.NEWLINE) {
+                newlineCount++;
+                stream.next();
+            }
+
+            // If we have > 1 newline, it means we have at least one blank line.
+            // We attribute this to the previous statement if possible.
+            if (body.length > 0 && newlineCount > 1) {
+                const lastStmt = body[body.length - 1];
+                // One newline is standard statement terminator/separator. Extra are blank lines.
+                lastStmt.trailingBlankLines = (lastStmt.trailingBlankLines || 0) + (newlineCount - 1);
+            }
             continue;
         }
         
@@ -215,6 +228,13 @@ export function parseForLoop(
         // Parse statement using context-provided parseStatement
         const stmt = context.parseStatement(stream);
         if (stmt) {
+            // Check for inline comment immediately after statement
+            if ('codePos' in stmt && stmt.codePos) {
+                const inlineComment = CommentParser.parseInlineComment(stream, stmt.codePos.endRow);
+                if (inlineComment) {
+                    CommentParser.attachComments(stmt, [inlineComment]);
+                }
+            }
             body.push(stmt);
         } else {
             // If parseStatement returns null, ensure progress

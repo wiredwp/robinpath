@@ -253,7 +253,7 @@ export class AssignmentParser {
                 createCodePosition: context?.createCodePosition || createCodePosition
             });
             // Wrap in _subexpr command for backward compatibility with Executor
-            const endToken = stream.current() || startToken;
+            const endToken = stream.peek(-1) || startToken;
             return {
                 assignmentData: {
                     command: {

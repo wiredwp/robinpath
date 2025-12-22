@@ -1230,6 +1230,18 @@
           "endRow": 107,
           "endCol": 35
         },
+        "comments": [
+          {
+            "text": "inline comment in do",
+            "codePos": {
+              "startRow": 107,
+              "startCol": 14,
+              "endRow": 107,
+              "endCol": 35
+            },
+            "inline": true
+          }
+        ],
         "name": "log",
         "module": null,
         "args": [
@@ -1273,6 +1285,18 @@
           "endRow": 112,
           "endCol": 29
         },
+        "comments": [
+          {
+            "text": "first comment",
+            "codePos": {
+              "startRow": 112,
+              "startCol": 15,
+              "endRow": 112,
+              "endCol": 29
+            },
+            "inline": true
+          }
+        ],
         "name": "log",
         "module": null,
         "args": [
@@ -1293,14 +1317,14 @@
         },
         "comments": [
           {
-            "text": "first comment",
-            "inline": false,
+            "text": "second comment",
             "codePos": {
-              "startRow": 112,
-              "startCol": 15,
-              "endRow": 112,
-              "endCol": 29
-            }
+              "startRow": 113,
+              "startCol": 16,
+              "endRow": 113,
+              "endCol": 31
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -1323,14 +1347,14 @@
         },
         "comments": [
           {
-            "text": "second comment",
-            "inline": false,
+            "text": "assignment comment",
             "codePos": {
-              "startRow": 113,
-              "startCol": 16,
-              "endRow": 113,
-              "endCol": 31
-            }
+              "startRow": 114,
+              "startCol": 15,
+              "endRow": 114,
+              "endCol": 34
+            },
+            "inline": true
           }
         ],
         "targetName": "value",
@@ -1497,6 +1521,16 @@
               "endRow": 131,
               "endCol": 30
             }
+          },
+          {
+            "text": "inline comment",
+            "codePos": {
+              "startRow": 132,
+              "startCol": 14,
+              "endRow": 132,
+              "endCol": 29
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -1519,16 +1553,6 @@
         },
         "comments": [
           {
-            "text": "inline comment",
-            "inline": false,
-            "codePos": {
-              "startRow": 132,
-              "startCol": 14,
-              "endRow": 132,
-              "endCol": 29
-            }
-          },
-          {
             "text": "Standalone comment in middle",
             "inline": false,
             "codePos": {
@@ -1537,6 +1561,16 @@
               "endRow": 134,
               "endCol": 31
             }
+          },
+          {
+            "text": "inline assignment comment",
+            "codePos": {
+              "startRow": 135,
+              "startCol": 15,
+              "endRow": 135,
+              "endCol": 41
+            },
+            "inline": true
           }
         ],
         "targetName": "value",
@@ -1555,16 +1589,6 @@
         },
         "comments": [
           {
-            "text": "inline assignment comment",
-            "inline": false,
-            "codePos": {
-              "startRow": 135,
-              "startCol": 15,
-              "endRow": 135,
-              "endCol": 41
-            }
-          },
-          {
             "text": "Standalone comment before end",
             "inline": false,
             "codePos": {
@@ -1573,6 +1597,16 @@
               "endRow": 137,
               "endCol": 32
             }
+          },
+          {
+            "text": "final inline comment",
+            "codePos": {
+              "startRow": 138,
+              "startCol": 14,
+              "endRow": 138,
+              "endCol": 35
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -1628,6 +1662,16 @@
               "endRow": 143,
               "endCol": 25
             }
+          },
+          {
+            "text": "outer inline",
+            "codePos": {
+              "startRow": 144,
+              "startCol": 15,
+              "endRow": 144,
+              "endCol": 28
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -1648,18 +1692,6 @@
           "endRow": 149,
           "endCol": 6
         },
-        "comments": [
-          {
-            "text": "outer inline",
-            "inline": false,
-            "codePos": {
-              "startRow": 144,
-              "startCol": 15,
-              "endRow": 144,
-              "endCol": 28
-            }
-          }
-        ],
         "body": [
           {
             "type": "command",
@@ -1680,6 +1712,16 @@
                   "endRow": 147,
                   "endCol": 27
                 }
+              },
+              {
+                "text": "inner inline",
+                "codePos": {
+                  "startRow": 148,
+                  "startCol": 17,
+                  "endRow": 148,
+                  "endCol": 30
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -1767,6 +1809,16 @@
               "endRow": 157,
               "endCol": 23
             }
+          },
+          {
+            "text": "x value",
+            "codePos": {
+              "startRow": 158,
+              "startCol": 10,
+              "endRow": 158,
+              "endCol": 18
+            },
+            "inline": true
           }
         ],
         "targetName": "x",
@@ -1785,14 +1837,14 @@
         },
         "comments": [
           {
-            "text": "x value",
-            "inline": false,
+            "text": "y value",
             "codePos": {
-              "startRow": 158,
-              "startCol": 10,
-              "endRow": 158,
-              "endCol": 18
-            }
+              "startRow": 159,
+              "startCol": 11,
+              "endRow": 159,
+              "endCol": 19
+            },
+            "inline": true
           }
         ],
         "targetName": "y",
@@ -1811,16 +1863,6 @@
         },
         "comments": [
           {
-            "text": "y value",
-            "inline": false,
-            "codePos": {
-              "startRow": 159,
-              "startCol": 11,
-              "endRow": 159,
-              "endCol": 19
-            }
-          },
-          {
             "text": "Log result",
             "inline": false,
             "codePos": {
@@ -1829,6 +1871,16 @@
               "endRow": 161,
               "endCol": 13
             }
+          },
+          {
+            "text": "result output",
+            "codePos": {
+              "startRow": 162,
+              "startCol": 25,
+              "endRow": 162,
+              "endCol": 39
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -2009,8 +2061,8 @@
     "codePos": {
       "startRow": 181,
       "startCol": 0,
-      "endRow": 181,
-      "endCol": 7
+      "endRow": 183,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2024,6 +2076,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2044,6 +2097,18 @@
             "endRow": 182,
             "endCol": 37
           },
+          "comments": [
+            {
+              "text": "inline comment in with",
+              "codePos": {
+                "startRow": 182,
+                "startCol": 14,
+                "endRow": 182,
+                "endCol": 37
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2062,8 +2127,8 @@
     "codePos": {
       "startRow": 186,
       "startCol": 0,
-      "endRow": 186,
-      "endCol": 7
+      "endRow": 190,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2077,6 +2142,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2097,6 +2163,18 @@
             "endRow": 187,
             "endCol": 29
           },
+          "comments": [
+            {
+              "text": "first comment",
+              "codePos": {
+                "startRow": 187,
+                "startCol": 15,
+                "endRow": 187,
+                "endCol": 29
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2115,6 +2193,18 @@
             "endRow": 188,
             "endCol": 31
           },
+          "comments": [
+            {
+              "text": "second comment",
+              "codePos": {
+                "startRow": 188,
+                "startCol": 16,
+                "endRow": 188,
+                "endCol": 31
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2133,6 +2223,18 @@
             "endRow": 189,
             "endCol": 30
           },
+          "comments": [
+            {
+              "text": "increment comment",
+              "codePos": {
+                "startRow": 189,
+                "startCol": 12,
+                "endRow": 189,
+                "endCol": 30
+              },
+              "inline": true
+            }
+          ],
           "name": "add",
           "module": null,
           "args": [
@@ -2156,8 +2258,8 @@
     "codePos": {
       "startRow": 193,
       "startCol": 0,
-      "endRow": 193,
-      "endCol": 7
+      "endRow": 202,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2171,6 +2273,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2245,8 +2348,8 @@
     "codePos": {
       "startRow": 205,
       "startCol": 0,
-      "endRow": 205,
-      "endCol": 7
+      "endRow": 214,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2260,6 +2363,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2280,6 +2384,18 @@
             "endRow": 207,
             "endCol": 29
           },
+          "comments": [
+            {
+              "text": "inline comment",
+              "codePos": {
+                "startRow": 207,
+                "startCol": 14,
+                "endRow": 207,
+                "endCol": 29
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2298,6 +2414,18 @@
             "endRow": 210,
             "endCol": 30
           },
+          "comments": [
+            {
+              "text": "increment comment",
+              "codePos": {
+                "startRow": 210,
+                "startCol": 12,
+                "endRow": 210,
+                "endCol": 30
+              },
+              "inline": true
+            }
+          ],
           "name": "add",
           "module": null,
           "args": [
@@ -2321,6 +2449,18 @@
             "endRow": 213,
             "endCol": 27
           },
+          "comments": [
+            {
+              "text": "return comment",
+              "codePos": {
+                "startRow": 213,
+                "startCol": 12,
+                "endRow": 213,
+                "endCol": 27
+              },
+              "inline": true
+            }
+          ],
           "value": {
             "type": "lastValue"
           }
@@ -2334,8 +2474,8 @@
     "codePos": {
       "startRow": 217,
       "startCol": 0,
-      "endRow": 217,
-      "endCol": 7
+      "endRow": 223,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2349,6 +2489,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2369,6 +2510,18 @@
             "endRow": 219,
             "endCol": 27
           },
+          "comments": [
+            {
+              "text": "increment by 1",
+              "codePos": {
+                "startRow": 219,
+                "startCol": 12,
+                "endRow": 219,
+                "endCol": 27
+              },
+              "inline": true
+            }
+          ],
           "name": "add",
           "module": null,
           "args": [
@@ -2392,6 +2545,18 @@
             "endRow": 222,
             "endCol": 31
           },
+          "comments": [
+            {
+              "text": "return accumulated",
+              "codePos": {
+                "startRow": 222,
+                "startCol": 12,
+                "endRow": 222,
+                "endCol": 31
+              },
+              "inline": true
+            }
+          ],
           "value": {
             "type": "lastValue"
           }
@@ -2409,8 +2574,8 @@
     "codePos": {
       "startRow": 226,
       "startCol": 0,
-      "endRow": 226,
-      "endCol": 7
+      "endRow": 235,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2424,6 +2589,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2444,6 +2610,18 @@
             "endRow": 228,
             "endCol": 28
           },
+          "comments": [
+            {
+              "text": "first inline",
+              "codePos": {
+                "startRow": 228,
+                "startCol": 15,
+                "endRow": 228,
+                "endCol": 28
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2462,6 +2640,18 @@
             "endRow": 231,
             "endCol": 30
           },
+          "comments": [
+            {
+              "text": "second inline",
+              "codePos": {
+                "startRow": 231,
+                "startCol": 16,
+                "endRow": 231,
+                "endCol": 30
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2480,6 +2670,18 @@
             "endRow": 234,
             "endCol": 26
           },
+          "comments": [
+            {
+              "text": "done inline",
+              "codePos": {
+                "startRow": 234,
+                "startCol": 14,
+                "endRow": 234,
+                "endCol": 26
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [
@@ -2498,8 +2700,8 @@
     "codePos": {
       "startRow": 238,
       "startCol": 0,
-      "endRow": 238,
-      "endCol": 8
+      "endRow": 246,
+      "endCol": 12
     },
     "comments": [
       {
@@ -2513,6 +2715,7 @@
         "inline": false
       }
     ],
+    "trailingBlankLines": 1,
     "name": "repeat",
     "module": null,
     "args": [
@@ -2520,239 +2723,233 @@
         "type": "number",
         "value": 5
       }
-    ]
-  },
-  {
-    "type": "ifBlock",
-    "lastValue": null,
-    "codePos": {
-      "startRow": 240,
-      "startCol": 32,
-      "endRow": 245,
-      "endCol": 20
-    },
-    "comments": [
-      {
-        "text": "Check if even",
-        "codePos": {
-          "startRow": 239,
-          "startCol": 2,
-          "endRow": 239,
-          "endCol": 16
-        },
-        "inline": false
-      }
     ],
-    "trailingBlankLines": 1,
-    "condition": {
-      "type": "binary",
-      "operator": "==",
-      "left": {
-        "type": "binary",
-        "operator": "%",
-        "left": {
-          "type": "var",
-          "name": "2",
-          "path": [],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "ifBlock",
+          "lastValue": null,
           "codePos": {
-            "startRow": 240,
-            "startCol": 35,
-            "endRow": 240,
-            "endCol": 36
-          }
-        },
-        "right": {
-          "type": "number",
-          "value": 2,
-          "codePos": {
-            "startRow": 240,
-            "startCol": 40,
-            "endRow": 240,
-            "endCol": 40
-          }
-        },
-        "codePos": {
-          "startRow": 240,
-          "startCol": 35,
-          "endRow": 240,
-          "endCol": 38
-        }
-      },
-      "right": {
-        "type": "number",
-        "value": 0,
-        "codePos": {
-          "startRow": 240,
-          "startCol": 45,
-          "endRow": 240,
-          "endCol": 45
-        }
-      },
-      "codePos": {
-        "startRow": 240,
-        "startCol": 35,
-        "endRow": 240,
-        "endCol": 43
-      }
-    },
-    "conditionExpr": {
-      "type": "binary",
-      "operator": "==",
-      "left": {
-        "type": "binary",
-        "operator": "%",
-        "left": {
-          "type": "var",
-          "name": "2",
-          "path": [],
-          "codePos": {
-            "startRow": 240,
-            "startCol": 35,
-            "endRow": 240,
-            "endCol": 36
-          }
-        },
-        "right": {
-          "type": "number",
-          "value": 2,
-          "codePos": {
-            "startRow": 240,
-            "startCol": 40,
-            "endRow": 240,
-            "endCol": 40
-          }
-        },
-        "codePos": {
-          "startRow": 240,
-          "startCol": 35,
-          "endRow": 240,
-          "endCol": 38
-        }
-      },
-      "right": {
-        "type": "number",
-        "value": 0,
-        "codePos": {
-          "startRow": 240,
-          "startCol": 45,
-          "endRow": 240,
-          "endCol": 45
-        }
-      },
-      "codePos": {
-        "startRow": 240,
-        "startCol": 35,
-        "endRow": 240,
-        "endCol": 43
-      }
-    },
-    "thenBranch": [
-      {
-        "type": "command",
-        "lastValue": null,
-        "codePos": {
-          "startRow": 242,
-          "startCol": 18,
-          "endRow": 242,
-          "endCol": 43
-        },
-        "comments": [
-          {
-            "text": "Even number comment",
-            "codePos": {
-              "startRow": 241,
-              "startCol": 18,
-              "endRow": 241,
-              "endCol": 38
-            },
-            "inline": false
+            "startRow": 239,
+            "startCol": 2,
+            "endRow": 244,
+            "endCol": 6
           },
-          {
-            "text": "even comment",
-            "codePos": {
-              "startRow": 242,
-              "startCol": 30,
-              "endRow": 242,
-              "endCol": 43
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "binary",
+              "operator": "%",
+              "left": {
+                "type": "var",
+                "name": "2",
+                "path": [],
+                "codePos": {
+                  "startRow": 239,
+                  "startCol": 5,
+                  "endRow": 239,
+                  "endCol": 6
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 2,
+                "codePos": {
+                  "startRow": 239,
+                  "startCol": 10,
+                  "endRow": 239,
+                  "endCol": 10
+                }
+              },
+              "codePos": {
+                "startRow": 239,
+                "startCol": 5,
+                "endRow": 239,
+                "endCol": 8
+              }
             },
-            "inline": true
-          }
-        ],
-        "name": "log",
-        "module": null,
-        "args": [
-          {
-            "type": "string",
-            "value": "even"
-          }
-        ]
-      }
-    ],
-    "elseBranch": [
-      {
-        "type": "command",
-        "lastValue": null,
-        "codePos": {
-          "startRow": 244,
-          "startCol": 18,
-          "endRow": 244,
-          "endCol": 27
+            "right": {
+              "type": "number",
+              "value": 0,
+              "codePos": {
+                "startRow": 239,
+                "startCol": 15,
+                "endRow": 239,
+                "endCol": 15
+              }
+            },
+            "codePos": {
+              "startRow": 239,
+              "startCol": 5,
+              "endRow": 239,
+              "endCol": 13
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "binary",
+              "operator": "%",
+              "left": {
+                "type": "var",
+                "name": "2",
+                "path": [],
+                "codePos": {
+                  "startRow": 239,
+                  "startCol": 5,
+                  "endRow": 239,
+                  "endCol": 6
+                }
+              },
+              "right": {
+                "type": "number",
+                "value": 2,
+                "codePos": {
+                  "startRow": 239,
+                  "startCol": 10,
+                  "endRow": 239,
+                  "endCol": 10
+                }
+              },
+              "codePos": {
+                "startRow": 239,
+                "startCol": 5,
+                "endRow": 239,
+                "endCol": 8
+              }
+            },
+            "right": {
+              "type": "number",
+              "value": 0,
+              "codePos": {
+                "startRow": 239,
+                "startCol": 15,
+                "endRow": 239,
+                "endCol": 15
+              }
+            },
+            "codePos": {
+              "startRow": 239,
+              "startCol": 5,
+              "endRow": 239,
+              "endCol": 13
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 241,
+                "startCol": 4,
+                "endRow": 241,
+                "endCol": 29
+              },
+              "comments": [
+                {
+                  "text": "Even number comment",
+                  "codePos": {
+                    "startRow": 240,
+                    "startCol": 4,
+                    "endRow": 240,
+                    "endCol": 24
+                  },
+                  "inline": false
+                },
+                {
+                  "text": "even comment",
+                  "codePos": {
+                    "startRow": 241,
+                    "startCol": 16,
+                    "endRow": 241,
+                    "endCol": 29
+                  },
+                  "inline": true
+                }
+              ],
+              "name": "log",
+              "module": null,
+              "args": [
+                {
+                  "type": "string",
+                  "value": "even"
+                }
+              ]
+            }
+          ],
+          "elseBranch": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 243,
+                "startCol": 4,
+                "endRow": 243,
+                "endCol": 27
+              },
+              "comments": [
+                {
+                  "text": "odd comment",
+                  "codePos": {
+                    "startRow": 243,
+                    "startCol": 15,
+                    "endRow": 243,
+                    "endCol": 27
+                  },
+                  "inline": true
+                }
+              ],
+              "name": "log",
+              "module": null,
+              "args": [
+                {
+                  "type": "string",
+                  "value": "odd"
+                }
+              ]
+            }
+          ]
         },
-        "name": "log",
-        "module": null,
-        "args": [
-          {
-            "type": "string",
-            "value": "odd"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "command",
-    "lastValue": null,
-    "codePos": {
-      "startRow": 248,
-      "startCol": 2,
-      "endRow": 248,
-      "endCol": 22
-    },
-    "comments": [
-      {
-        "text": "After conditional",
-        "codePos": {
-          "startRow": 247,
-          "startCol": 2,
-          "endRow": 247,
-          "endCol": 20
-        },
-        "inline": false
-      },
-      {
-        "text": "increment",
-        "codePos": {
-          "startRow": 248,
-          "startCol": 12,
-          "endRow": 248,
-          "endCol": 22
-        },
-        "inline": true
-      }
-    ],
-    "name": "add",
-    "module": null,
-    "args": [
-      {
-        "type": "var",
-        "name": "2",
-        "path": []
-      },
-      {
-        "type": "number",
-        "value": 1
-      }
-    ]
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 245,
+            "startCol": 2,
+            "endRow": 245,
+            "endCol": 22
+          },
+          "comments": [
+            {
+              "text": "increment",
+              "codePos": {
+                "startRow": 245,
+                "startCol": 12,
+                "endRow": 245,
+                "endCol": 22
+              },
+              "inline": true
+            }
+          ],
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "type": "command",
@@ -2760,23 +2957,22 @@
     "codePos": {
       "startRow": 249,
       "startCol": 0,
-      "endRow": 249,
-      "endCol": 6
+      "endRow": 258,
+      "endCol": 12
     },
+    "comments": [
+      {
+        "text": "Test 25: Comments in with block with variables",
+        "codePos": {
+          "startRow": 248,
+          "startCol": 0,
+          "endRow": 248,
+          "endCol": 47
+        },
+        "inline": false
+      }
+    ],
     "trailingBlankLines": 1,
-    "name": "endwith",
-    "module": null,
-    "args": []
-  },
-  {
-    "type": "command",
-    "lastValue": null,
-    "codePos": {
-      "startRow": 252,
-      "startCol": 0,
-      "endRow": 252,
-      "endCol": 7
-    },
     "name": "repeat",
     "module": null,
     "args": [
@@ -2792,20 +2988,32 @@
           "type": "assignment",
           "lastValue": null,
           "codePos": {
-            "startRow": 254,
+            "startRow": 251,
             "startCol": 2,
-            "endRow": 254,
+            "endRow": 251,
             "endCol": 12
           },
+          "comments": [
+            {
+              "text": "copy iteration value",
+              "codePos": {
+                "startRow": 251,
+                "startCol": 15,
+                "endRow": 251,
+                "endCol": 36
+              },
+              "inline": true
+            }
+          ],
           "targetName": "local",
           "targetPath": [],
           "command": {
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 254,
+              "startRow": 251,
               "startCol": 11,
-              "endRow": 254,
+              "endRow": 251,
               "endCol": 12
             },
             "name": "_var",
@@ -2823,9 +3031,9 @@
           "type": "assignment",
           "lastValue": null,
           "codePos": {
-            "startRow": 257,
+            "startRow": 254,
             "startCol": 2,
-            "endRow": 257,
+            "endRow": 254,
             "endCol": 16
           },
           "targetName": "local",
@@ -2834,9 +3042,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 257,
+              "startRow": 254,
               "startCol": 11,
-              "endRow": 257,
+              "endRow": 254,
               "endCol": 16
             },
             "name": "_var",
@@ -2854,11 +3062,23 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 257,
+            "startRow": 254,
             "startCol": 20,
-            "endRow": 257,
+            "endRow": 254,
             "endCol": 20
           },
+          "comments": [
+            {
+              "text": "double it",
+              "codePos": {
+                "startRow": 254,
+                "startCol": 23,
+                "endRow": 254,
+                "endCol": 33
+              },
+              "inline": true
+            }
+          ],
           "name": "_literal",
           "module": null,
           "args": [
@@ -2872,11 +3092,23 @@
           "type": "return",
           "lastValue": null,
           "codePos": {
-            "startRow": 260,
+            "startRow": 257,
             "startCol": 2,
-            "endRow": 260,
+            "endRow": 257,
             "endCol": 32
           },
+          "comments": [
+            {
+              "text": "return doubled",
+              "codePos": {
+                "startRow": 257,
+                "startCol": 17,
+                "endRow": 257,
+                "endCol": 32
+              },
+              "inline": true
+            }
+          ],
           "value": {
             "type": "var",
             "name": "local",
@@ -2893,32 +3125,32 @@
       {
         "text": "============================================\nMIXED BLOCK COMMENT TESTS\n============================================",
         "codePos": {
-          "startRow": 263,
+          "startRow": 260,
           "startCol": 0,
-          "endRow": 265,
+          "endRow": 262,
           "endCol": 45
         },
         "inline": false
       }
     ],
-    "lineNumber": 263
+    "lineNumber": 260
   },
   {
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 268,
+      "startRow": 265,
       "startCol": 0,
-      "endRow": 279,
+      "endRow": 276,
       "endCol": 5
     },
     "comments": [
       {
         "text": "Test 26: Comments in def with do block",
         "codePos": {
-          "startRow": 267,
+          "startRow": 264,
           "startCol": 0,
-          "endRow": 267,
+          "endRow": 264,
           "endCol": 39
         },
         "inline": false
@@ -2932,18 +3164,18 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 270,
+          "startRow": 267,
           "startCol": 2,
-          "endRow": 270,
+          "endRow": 267,
           "endCol": 28
         },
         "comments": [
           {
             "text": "Function start comment",
             "codePos": {
-              "startRow": 269,
+              "startRow": 266,
               "startCol": 2,
-              "endRow": 269,
+              "endRow": 266,
               "endCol": 25
             },
             "inline": false
@@ -2951,9 +3183,9 @@
           {
             "text": "start inline",
             "codePos": {
-              "startRow": 270,
+              "startRow": 267,
               "startCol": 15,
-              "endRow": 270,
+              "endRow": 267,
               "endCol": 28
             },
             "inline": true
@@ -2972,9 +3204,9 @@
         "type": "do",
         "lastValue": null,
         "codePos": {
-          "startRow": 272,
+          "startRow": 269,
           "startCol": 2,
-          "endRow": 275,
+          "endRow": 272,
           "endCol": 6
         },
         "body": [
@@ -2982,9 +3214,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 274,
+              "startRow": 271,
               "startCol": 4,
-              "endRow": 274,
+              "endRow": 271,
               "endCol": 27
             },
             "comments": [
@@ -2992,11 +3224,21 @@
                 "text": "Do block in function",
                 "inline": false,
                 "codePos": {
-                  "startRow": 273,
+                  "startRow": 270,
                   "startCol": 4,
-                  "endRow": 273,
+                  "endRow": 270,
                   "endCol": 25
                 }
+              },
+              {
+                "text": "do inline",
+                "codePos": {
+                  "startRow": 271,
+                  "startCol": 17,
+                  "endRow": 271,
+                  "endCol": 27
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -3014,18 +3256,18 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 278,
+          "startRow": 275,
           "startCol": 2,
-          "endRow": 278,
+          "endRow": 275,
           "endCol": 24
         },
         "comments": [
           {
             "text": "After do in function",
             "codePos": {
-              "startRow": 277,
+              "startRow": 274,
               "startCol": 2,
-              "endRow": 277,
+              "endRow": 274,
               "endCol": 23
             },
             "inline": false
@@ -3033,9 +3275,9 @@
           {
             "text": "end inline",
             "codePos": {
-              "startRow": 278,
+              "startRow": 275,
               "startCol": 13,
-              "endRow": 278,
+              "endRow": 275,
               "endCol": 24
             },
             "inline": true
@@ -3056,18 +3298,18 @@
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 282,
+      "startRow": 279,
       "startCol": 0,
-      "endRow": 293,
+      "endRow": 290,
       "endCol": 5
     },
     "comments": [
       {
         "text": "Test 27: Comments in def with do block (with blocks not allowed in def)",
         "codePos": {
-          "startRow": 281,
+          "startRow": 278,
           "startCol": 0,
-          "endRow": 281,
+          "endRow": 278,
           "endCol": 72
         },
         "inline": false
@@ -3081,18 +3323,18 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 284,
+          "startRow": 281,
           "startCol": 2,
-          "endRow": 284,
+          "endRow": 281,
           "endCol": 28
         },
         "comments": [
           {
             "text": "Function start comment",
             "codePos": {
-              "startRow": 283,
+              "startRow": 280,
               "startCol": 2,
-              "endRow": 283,
+              "endRow": 280,
               "endCol": 25
             },
             "inline": false
@@ -3100,9 +3342,9 @@
           {
             "text": "start inline",
             "codePos": {
-              "startRow": 284,
+              "startRow": 281,
               "startCol": 15,
-              "endRow": 284,
+              "endRow": 281,
               "endCol": 28
             },
             "inline": true
@@ -3121,9 +3363,9 @@
         "type": "do",
         "lastValue": null,
         "codePos": {
-          "startRow": 286,
+          "startRow": 283,
           "startCol": 2,
-          "endRow": 289,
+          "endRow": 286,
           "endCol": 6
         },
         "body": [
@@ -3131,9 +3373,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 288,
+              "startRow": 285,
               "startCol": 4,
-              "endRow": 288,
+              "endRow": 285,
               "endCol": 27
             },
             "comments": [
@@ -3141,11 +3383,21 @@
                 "text": "Do block in function",
                 "inline": false,
                 "codePos": {
-                  "startRow": 287,
+                  "startRow": 284,
                   "startCol": 4,
-                  "endRow": 287,
+                  "endRow": 284,
                   "endCol": 25
                 }
+              },
+              {
+                "text": "do inline",
+                "codePos": {
+                  "startRow": 285,
+                  "startCol": 17,
+                  "endRow": 285,
+                  "endCol": 27
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -3163,18 +3415,18 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 292,
+          "startRow": 289,
           "startCol": 2,
-          "endRow": 292,
+          "endRow": 289,
           "endCol": 24
         },
         "comments": [
           {
             "text": "After do in function",
             "codePos": {
-              "startRow": 291,
+              "startRow": 288,
               "startCol": 2,
-              "endRow": 291,
+              "endRow": 288,
               "endCol": 23
             },
             "inline": false
@@ -3182,9 +3434,9 @@
           {
             "text": "end inline",
             "codePos": {
-              "startRow": 292,
+              "startRow": 289,
               "startCol": 13,
-              "endRow": 292,
+              "endRow": 289,
               "endCol": 24
             },
             "inline": true
@@ -3205,18 +3457,18 @@
     "type": "do",
     "lastValue": null,
     "codePos": {
-      "startRow": 296,
+      "startRow": 293,
       "startCol": 0,
-      "endRow": 302,
+      "endRow": 299,
       "endCol": 4
     },
     "comments": [
       {
         "text": "Test 28: Comments in do with nested def call",
         "codePos": {
-          "startRow": 295,
+          "startRow": 292,
           "startCol": 0,
-          "endRow": 295,
+          "endRow": 292,
           "endCol": 45
         },
         "inline": false
@@ -3228,9 +3480,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 298,
+          "startRow": 295,
           "startCol": 2,
-          "endRow": 298,
+          "endRow": 295,
           "endCol": 12
         },
         "comments": [
@@ -3238,9 +3490,9 @@
             "text": "Before function call",
             "inline": false,
             "codePos": {
-              "startRow": 297,
+              "startRow": 294,
               "startCol": 2,
-              "endRow": 297,
+              "endRow": 294,
               "endCol": 23
             }
           }
@@ -3253,11 +3505,23 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 301,
+          "startRow": 298,
           "startCol": 2,
-          "endRow": 301,
+          "endRow": 298,
           "endCol": 27
         },
+        "comments": [
+          {
+            "text": "done comment",
+            "codePos": {
+              "startRow": 298,
+              "startCol": 14,
+              "endRow": 298,
+              "endCol": 27
+            },
+            "inline": true
+          }
+        ],
         "name": "log",
         "module": null,
         "args": [
@@ -3273,18 +3537,18 @@
     "type": "define",
     "lastValue": null,
     "codePos": {
-      "startRow": 305,
+      "startRow": 302,
       "startCol": 0,
-      "endRow": 326,
+      "endRow": 323,
       "endCol": 5
     },
     "comments": [
       {
         "text": "Test 29: Complex nested structure with comments",
         "codePos": {
-          "startRow": 304,
+          "startRow": 301,
           "startCol": 0,
-          "endRow": 304,
+          "endRow": 301,
           "endCol": 48
         },
         "inline": false
@@ -3298,18 +3562,18 @@
         "type": "do",
         "lastValue": null,
         "codePos": {
-          "startRow": 310,
+          "startRow": 307,
           "startCol": 2,
-          "endRow": 322,
+          "endRow": 319,
           "endCol": 6
         },
         "comments": [
           {
             "text": "Function documentation",
             "codePos": {
-              "startRow": 306,
+              "startRow": 303,
               "startCol": 2,
-              "endRow": 306,
+              "endRow": 303,
               "endCol": 25
             },
             "inline": false
@@ -3317,9 +3581,9 @@
           {
             "text": "This function has nested blocks",
             "codePos": {
-              "startRow": 307,
+              "startRow": 304,
               "startCol": 2,
-              "endRow": 307,
+              "endRow": 304,
               "endCol": 34
             },
             "inline": false
@@ -3327,9 +3591,9 @@
           {
             "text": "Start processing",
             "codePos": {
-              "startRow": 309,
+              "startRow": 306,
               "startCol": 2,
-              "endRow": 309,
+              "endRow": 306,
               "endCol": 19
             },
             "inline": false
@@ -3340,9 +3604,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 312,
+              "startRow": 309,
               "startCol": 4,
-              "endRow": 312,
+              "endRow": 309,
               "endCol": 28
             },
             "comments": [
@@ -3350,11 +3614,21 @@
                 "text": "Do block start",
                 "inline": false,
                 "codePos": {
-                  "startRow": 311,
+                  "startRow": 308,
                   "startCol": 4,
-                  "endRow": 311,
+                  "endRow": 308,
                   "endCol": 19
                 }
+              },
+              {
+                "text": "do comment",
+                "codePos": {
+                  "startRow": 309,
+                  "startCol": 17,
+                  "endRow": 309,
+                  "endCol": 28
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -3370,29 +3644,19 @@
             "type": "do",
             "lastValue": null,
             "codePos": {
-              "startRow": 315,
+              "startRow": 312,
               "startCol": 4,
-              "endRow": 318,
+              "endRow": 315,
               "endCol": 8
             },
             "comments": [
               {
-                "text": "do comment",
-                "inline": false,
-                "codePos": {
-                  "startRow": 312,
-                  "startCol": 17,
-                  "endRow": 312,
-                  "endCol": 28
-                }
-              },
-              {
                 "text": "Nested do block",
                 "inline": false,
                 "codePos": {
-                  "startRow": 314,
+                  "startRow": 311,
                   "startCol": 4,
-                  "endRow": 314,
+                  "endRow": 311,
                   "endCol": 20
                 }
               }
@@ -3402,9 +3666,9 @@
                 "type": "command",
                 "lastValue": null,
                 "codePos": {
-                  "startRow": 317,
+                  "startRow": 314,
                   "startCol": 6,
-                  "endRow": 317,
+                  "endRow": 314,
                   "endCol": 35
                 },
                 "comments": [
@@ -3412,11 +3676,21 @@
                     "text": "Inner do block",
                     "inline": false,
                     "codePos": {
-                      "startRow": 316,
+                      "startRow": 313,
                       "startCol": 6,
-                      "endRow": 316,
+                      "endRow": 313,
                       "endCol": 21
                     }
+                  },
+                  {
+                    "text": "nested comment",
+                    "codePos": {
+                      "startRow": 314,
+                      "startCol": 20,
+                      "endRow": 314,
+                      "endCol": 35
+                    },
+                    "inline": true
                   }
                 ],
                 "name": "log",
@@ -3434,9 +3708,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 321,
+              "startRow": 318,
               "startCol": 4,
-              "endRow": 321,
+              "endRow": 318,
               "endCol": 33
             },
             "comments": [
@@ -3444,11 +3718,21 @@
                 "text": "Do block end",
                 "inline": false,
                 "codePos": {
-                  "startRow": 320,
+                  "startRow": 317,
                   "startCol": 4,
-                  "endRow": 320,
+                  "endRow": 317,
                   "endCol": 17
                 }
+              },
+              {
+                "text": "do end comment",
+                "codePos": {
+                  "startRow": 318,
+                  "startCol": 18,
+                  "endRow": 318,
+                  "endCol": 33
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -3466,18 +3750,18 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 325,
+          "startRow": 322,
           "startCol": 2,
-          "endRow": 325,
+          "endRow": 322,
           "endCol": 30
         },
         "comments": [
           {
             "text": "Function end",
             "codePos": {
-              "startRow": 324,
+              "startRow": 321,
               "startCol": 2,
-              "endRow": 324,
+              "endRow": 321,
               "endCol": 15
             },
             "inline": false
@@ -3485,9 +3769,9 @@
           {
             "text": "return comment",
             "codePos": {
-              "startRow": 325,
+              "startRow": 322,
               "startCol": 15,
-              "endRow": 325,
+              "endRow": 322,
               "endCol": 30
             },
             "inline": true
@@ -3504,18 +3788,18 @@
     "type": "do",
     "lastValue": null,
     "codePos": {
-      "startRow": 329,
+      "startRow": 326,
       "startCol": 0,
-      "endRow": 341,
+      "endRow": 338,
       "endCol": 4
     },
     "comments": [
       {
         "text": "Test 30: Comments with all block types",
         "codePos": {
-          "startRow": 328,
+          "startRow": 325,
           "startCol": 0,
-          "endRow": 328,
+          "endRow": 325,
           "endCol": 39
         },
         "inline": false
@@ -3527,9 +3811,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 331,
+          "startRow": 328,
           "startCol": 2,
-          "endRow": 331,
+          "endRow": 328,
           "endCol": 28
         },
         "comments": [
@@ -3537,11 +3821,21 @@
             "text": "Top level do comment",
             "inline": false,
             "codePos": {
-              "startRow": 330,
+              "startRow": 327,
               "startCol": 2,
-              "endRow": 330,
+              "endRow": 327,
               "endCol": 23
             }
+          },
+          {
+            "text": "start inline",
+            "codePos": {
+              "startRow": 328,
+              "startCol": 15,
+              "endRow": 328,
+              "endCol": 28
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -3557,29 +3851,19 @@
         "type": "do",
         "lastValue": null,
         "codePos": {
-          "startRow": 334,
+          "startRow": 331,
           "startCol": 2,
-          "endRow": 337,
+          "endRow": 334,
           "endCol": 6
         },
         "comments": [
           {
-            "text": "start inline",
-            "inline": false,
-            "codePos": {
-              "startRow": 331,
-              "startCol": 15,
-              "endRow": 331,
-              "endCol": 28
-            }
-          },
-          {
             "text": "Nested do block",
             "inline": false,
             "codePos": {
-              "startRow": 333,
+              "startRow": 330,
               "startCol": 2,
-              "endRow": 333,
+              "endRow": 330,
               "endCol": 18
             }
           }
@@ -3589,9 +3873,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 336,
+              "startRow": 333,
               "startCol": 4,
-              "endRow": 336,
+              "endRow": 333,
               "endCol": 35
             },
             "comments": [
@@ -3599,11 +3883,21 @@
                 "text": "Nested do comment",
                 "inline": false,
                 "codePos": {
-                  "startRow": 335,
+                  "startRow": 332,
                   "startCol": 4,
-                  "endRow": 335,
+                  "endRow": 332,
                   "endCol": 22
                 }
+              },
+              {
+                "text": "nested inline",
+                "codePos": {
+                  "startRow": 333,
+                  "startCol": 21,
+                  "endRow": 333,
+                  "endCol": 35
+                },
+                "inline": true
               }
             ],
             "name": "log",
@@ -3621,9 +3915,9 @@
         "type": "command",
         "lastValue": null,
         "codePos": {
-          "startRow": 340,
+          "startRow": 337,
           "startCol": 2,
-          "endRow": 340,
+          "endRow": 337,
           "endCol": 36
         },
         "comments": [
@@ -3631,11 +3925,21 @@
             "text": "Use with block at top level (not nested)",
             "inline": false,
             "codePos": {
-              "startRow": 339,
+              "startRow": 336,
               "startCol": 2,
-              "endRow": 339,
+              "endRow": 336,
               "endCol": 43
             }
+          },
+          {
+            "text": "before comment",
+            "codePos": {
+              "startRow": 337,
+              "startCol": 21,
+              "endRow": 337,
+              "endCol": 36
+            },
+            "inline": true
           }
         ],
         "name": "log",
@@ -3653,18 +3957,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 344,
+      "startRow": 341,
       "startCol": 0,
       "endRow": 344,
-      "endCol": 7
+      "endCol": 12
     },
     "comments": [
       {
         "text": "With block at top level",
         "codePos": {
-          "startRow": 343,
+          "startRow": 340,
           "startCol": 0,
-          "endRow": 343,
+          "endRow": 340,
           "endCol": 24
         },
         "inline": false
@@ -3685,11 +3989,23 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 346,
+            "startRow": 343,
             "startCol": 2,
-            "endRow": 346,
+            "endRow": 343,
             "endCol": 26
           },
+          "comments": [
+            {
+              "text": "with inline",
+              "codePos": {
+                "startRow": 343,
+                "startCol": 14,
+                "endRow": 343,
+                "endCol": 26
+              },
+              "inline": true
+            }
+          ],
           "name": "log",
           "module": null,
           "args": [

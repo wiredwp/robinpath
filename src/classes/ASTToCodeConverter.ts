@@ -255,22 +255,22 @@ export class ASTToCodeConverter {
             
             if (commentsAbove.length > 0) {
                 const firstCommentAbove = commentsAbove[0];
-                const lastCommentAbove = commentsAbove[commentsAbove.length - 1];
                 
-                // Check if comments overlap or are adjacent to the statement
-                if (lastCommentAbove.codePos.endRow >= node.codePos.startRow) {
-                    commentsOverlapStatement = true;
-                    // Merge ranges: from first comment to end of statement (including inline comments)
-                    combinedStartRow = firstCommentAbove.codePos.startRow;
-                    combinedStartCol = firstCommentAbove.codePos.startCol;
-                    combinedEndRow = node.codePos.endRow;
-                    combinedEndCol = node.codePos.endCol;
-                    
-                    // Extend to include inline comments
-                    for (const inlineComment of inlineComments) {
-                        if (inlineComment.codePos.endCol > combinedEndCol) {
-                            combinedEndCol = inlineComment.codePos.endCol;
-                        }
+                // Always include attached comments in the replacement range
+                // Since reconstructCodeFromASTNode now includes comments, we must ensure
+                // the original comments are removed by including them in the range to replace.
+                commentsOverlapStatement = true;
+                
+                // Merge ranges: from first comment to end of statement (including inline comments)
+                combinedStartRow = firstCommentAbove.codePos.startRow;
+                combinedStartCol = firstCommentAbove.codePos.startCol;
+                combinedEndRow = node.codePos.endRow;
+                combinedEndCol = node.codePos.endCol;
+                
+                // Extend to include inline comments
+                for (const inlineComment of inlineComments) {
+                    if (inlineComment.codePos.endCol > combinedEndCol) {
+                        combinedEndCol = inlineComment.codePos.endCol;
                     }
                 }
             }
@@ -279,17 +279,8 @@ export class ASTToCodeConverter {
                 // Merge comment and statement into a single update
                 const reconstructed = this.reconstructCodeFromASTNode(node, 0);
                 if (reconstructed !== null) {
-                    // Build combined code: comments above + statement
-                    // Filter out empty comments before reconstructing
-                    // Preserve blank lines between comment groups by including them in the range
-                    const commentCodes = commentsAbove
-                        .map(c => this.reconstructCommentCode(c, 0))
-                        .filter(code => code !== '');
-                    
-                    // Join comments with newlines (blank lines are preserved via the range calculation)
-                    const combinedCode = commentCodes.length > 0 
-                        ? [...commentCodes, reconstructed].join('\n')
-                        : reconstructed;
+                    // Comments are now handled by reconstructCodeFromASTNode so we don't need to prepend them here
+                    const combinedCode = reconstructed;
                     
                     // Calculate endOffset to include blank lines after the last comment
                     // until the statement starts
@@ -683,6 +674,61 @@ export class ASTToCodeConverter {
      * @returns Reconstructed code string, or null if cannot be reconstructed
      */
     private reconstructCodeFromASTNode(node: any, indentLevel: number = 0): string | null {
+        let result = this._reconstructCodeFromASTNode(node, indentLevel);
+        if (result === null) return null;
+
+        // Handle attached comments (above the node)
+        if (node.comments && Array.isArray(node.comments)) {
+            const commentsAbove = node.comments.filter((c: any) => !c.inline);
+            if (commentsAbove.length > 0) {
+                // DEBUG
+                // console.log(`Processing comments for ${node.type} at ${node.codePos?.startRow}`);
+                
+                const commentCodes: string[] = [];
+                for (let i = 0; i < commentsAbove.length; i++) {
+                    const c = commentsAbove[i];
+                    const code = this.reconstructCommentCode(c, indentLevel);
+                    if (code === '') continue;
+                    
+                    // Handle gaps between comments
+                    if (i > 0) {
+                        const prev = commentsAbove[i-1];
+                        if (c.codePos && prev.codePos) {
+                            const gap = c.codePos.startRow - prev.codePos.endRow - 1;
+                            // DEBUG
+                            // console.log(`Gap between comments ${i-1} (${prev.codePos.endRow}) and ${i} (${c.codePos.startRow}): ${gap}`);
+                            if (gap > 0) {
+                                for (let k = 0; k < gap; k++) commentCodes.push('');
+                            }
+                        }
+                    }
+                    commentCodes.push(code);
+                }
+                
+                if (commentCodes.length > 0) {
+                    // Handle gap between last comment and node
+                    const lastComment = commentsAbove[commentsAbove.length - 1];
+                    if (lastComment.codePos && node.codePos) {
+                         const gap = node.codePos.startRow - lastComment.codePos.endRow - 1;
+                         // DEBUG
+                         // console.log(`Gap between last comment (${lastComment.codePos.endRow}) and node (${node.codePos.startRow}): ${gap}`);
+                         if (gap > 0) {
+                             for (let k = 0; k < gap; k++) commentCodes.push('');
+                         }
+                    }
+                    
+                    result = [...commentCodes, result].join('\n');
+                }
+            }
+        }
+
+        if (node && typeof node.trailingBlankLines === 'number' && node.trailingBlankLines > 0) {
+            result += '\n'.repeat(node.trailingBlankLines);
+        }
+        return result;
+    }
+
+    private _reconstructCodeFromASTNode(node: any, indentLevel: number = 0): string | null {
         const indent = '  '.repeat(indentLevel);
 
         switch (node.type) {

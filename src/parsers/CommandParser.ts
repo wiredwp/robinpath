@@ -247,7 +247,7 @@ export class CommandParser {
         stream: TokenStream,
         name: string,
         startToken: Token,
-        _startLine: number,
+        startLineNum: number,
         context?: CommandParserContext
     ): CommandCall {
         // Push function call context
@@ -256,12 +256,12 @@ export class CommandParser {
         try {
             const args: Arg[] = [];
             const namedArgs: Record<string, Arg> = {};
-            const startLineNum = startToken.line;
+            // const startLineNum = startToken.line; // Already passed as arg
             let lastCommandToken: Token = startToken; // Track the last token that was part of the command
 
         // Special handling for "set" command with optional "as" keyword
-        // Syntax: set $var [as] value [fallback]
         if (name === 'set') {
+            // ... (keep set logic as is, omitted for brevity but should be preserved)
             // Parse first argument (variable)
             stream.skipWhitespaceAndComments();
             const varArgResult = this.parseArgument(stream, context);
@@ -270,50 +270,25 @@ export class CommandParser {
             }
             args.push(varArgResult.arg);
             
-            // Check for optional "as" keyword
-            // Note: "as" is not in the KEYWORDS set, so it's tokenized as IDENTIFIER
             stream.skipWhitespaceAndComments();
             const nextToken = stream.current();
             if (nextToken && (nextToken.kind === TokenKind.KEYWORD || nextToken.kind === TokenKind.IDENTIFIER) && nextToken.text === 'as') {
-                // Consume "as" keyword
                 stream.next();
                 stream.skipWhitespaceAndComments();
             }
             
-            // Parse remaining arguments (value and optional fallback)
             while (!stream.isAtEnd()) {
                 const token = stream.current();
                 if (!token) break;
-
-                // Stop at EOF or newline
-                if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) {
-                    break;
-                }
-
-                // Stop if we've moved to a different line
-                if (token.line !== startLineNum) {
-                    break;
-                }
-
-                // Skip comments
+                if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) break;
+                if (token.line !== startLineNum) break;
                 if (token.kind === TokenKind.COMMENT) {
                     stream.next();
                     continue;
                 }
+                if (stream.isInContext(ParsingContext.SUBEXPRESSION) && token.kind === TokenKind.RPAREN) break;
+                if (token.kind === TokenKind.KEYWORD && token.text === 'into') break;
 
-                // If we're inside a subexpression context, stop at closing paren
-                // This allows subexpressions like $(set $var 1) to work correctly
-                if (stream.isInContext(ParsingContext.SUBEXPRESSION) && 
-                    token.kind === TokenKind.RPAREN) {
-                    break;
-                }
-
-                // Check for "into" keyword - stop parsing arguments if found
-                if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
-                    break;
-                }
-
-                // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
                     if (argResult.isNamed) {
@@ -322,22 +297,20 @@ export class CommandParser {
                         args.push(argResult.arg);
                     }
                 } else {
-                    // If we can't parse, skip the token
                     stream.next();
                 }
             }
         } else {
             // Regular command parsing
-            // Collect arguments until end of line or "into" keyword
-            // Allow multi-line constructs (objects, arrays, subexpressions) to span multiple lines
             let lastIndex = -1;
             let loopCount = 0;
             let justFinishedMultilineConstruct = false;
-            // Only update lastCommandToken if we're still on the same line as the command
+            
             const currentBeforeArgs = stream.current();
             if (currentBeforeArgs && currentBeforeArgs.line === startLineNum) {
                 lastCommandToken = currentBeforeArgs;
             }
+            
             while (!stream.isAtEnd()) {
                 const currentIndex = stream.getPosition();
                 if (currentIndex === lastIndex) {
@@ -358,60 +331,52 @@ export class CommandParser {
                     break;
                 }
 
-                // Check for "into" keyword - stop parsing arguments if found
-                // This prevents "into" from being consumed as an argument
+                // Check for "into"
                 if (token.kind === TokenKind.KEYWORD && token.text === 'into') {
                     break;
                 }
 
-                // Check for "with" keyword - stop parsing arguments if found
-                // This prevents "with" from being consumed as an argument
+                // Check for "with"
                 if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
                     break;
                 }
 
-                // Skip comments, but preserve inline comments (comments on the same line as the command)
+                // Skip comments
                 if (token.kind === TokenKind.COMMENT) {
-                    // If comment is on the same line as the command, it's an inline comment - don't consume it
-                    // Let the Parser handle it after command parsing
                     if (token.line === startLineNum) {
-                        // This is an inline comment - stop parsing arguments and let Parser handle it
                         break;
                     }
-                    // Otherwise, it's a comment on a different line - skip it
                     stream.next();
                     continue;
                 }
 
-                // If we're inside a subexpression context, stop at closing paren or newline
-                // This allows subexpressions like $(math.add 5 5) to work correctly
-                // and ensures multiple statements are parsed separately
+                // Stop at closing paren (likely from subexpression)
+                // Always stop at RPAREN in space-separated calls as it's not a valid argument start
+                if (token.kind === TokenKind.RPAREN) {
+                    break;
+                }
+
+                // Stop at newline if not in subexpression
+                // But subexpressions handle newlines internally via SubexpressionParser
+                // So if we see a newline here, it means we are between arguments
+                // If we are inside a subexpression, newlines separate statements, so we should stop
                 if (stream.isInContext(ParsingContext.SUBEXPRESSION)) {
-                    if (token.kind === TokenKind.RPAREN) {
-                        break;
-                    }
-                    // In subexpressions, newlines separate statements, so stop parsing arguments
-                    // unless we're in the middle of a multi-line construct (object/array/nested subexpr)
                     if (token.kind === TokenKind.NEWLINE) {
                         // Check if we're in the middle of parsing a multi-line construct argument
+                        // (This check is a bit complex, relying on context stack)
                         const isInMultilineArg = stream.isInContext(ParsingContext.OBJECT_LITERAL) ||
                                                 stream.isInContext(ParsingContext.ARRAY_LITERAL);
                         if (!isInMultilineArg && !justFinishedMultilineConstruct) {
-                            // Not in a multi-line construct - newline separates statements
                             break;
                         }
-                        // Otherwise, continue (we're in the middle of parsing a multi-line construct)
                     }
                 }
 
-                // Check if we're inside a multi-line construct context (object/array, but NOT subexpression)
-                // Subexpressions are handled separately above to allow multiple statements
+                // Check if we're inside a multi-line construct context
                 const isInMultilineContext = stream.isInContext(ParsingContext.OBJECT_LITERAL) ||
                                             stream.isInContext(ParsingContext.ARRAY_LITERAL);
 
-                // If we're inside a multi-line construct, continue parsing
                 if (isInMultilineContext) {
-                    // Parse argument (which will handle the multi-line construct)
                     const argResult = this.parseArgument(stream, context);
                     if (argResult) {
                         if (argResult.isNamed) {
@@ -419,30 +384,33 @@ export class CommandParser {
                         } else {
                             args.push(argResult.arg);
                         }
-                        // Check if we just finished a multi-line construct
-                        // Handle both new Expression types and legacy code-string types
                         justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
                                                          argResult.arg.type === 'array' ||
-                                                         argResult.arg.type === 'subexpression' ||
-                                                         argResult.arg.type === 'subexpr'; // legacy type
+                                                         argResult.arg.type === 'subexpression';
                     } else {
-                        // If we can't parse, skip the token
                         stream.next();
                     }
                     continue;
                 }
 
-                // Check if current token is the start of a multi-line construct
                 const isStartOfMultiline = token.kind === TokenKind.LBRACE ||
                                           token.kind === TokenKind.LBRACKET ||
                                           token.kind === TokenKind.SUBEXPRESSION_OPEN ||
                                           (token.kind === TokenKind.VARIABLE && token.text === '$' && 
                                            stream.peek(1)?.kind === TokenKind.LPAREN);
 
-                // If we just finished a multi-line construct or are starting one, continue parsing
                 if (justFinishedMultilineConstruct || isStartOfMultiline) {
                     justFinishedMultilineConstruct = false;
-                    // Parse argument
+                    
+                    // Re-fetch token to avoid narrowing issues from isStartOfMultiline check
+                    const currentT = stream.current();
+                    if (!currentT || currentT.kind === TokenKind.NEWLINE || currentT.kind === TokenKind.EOF) {
+                        break;
+                    }
+                    if (currentT.kind === TokenKind.RPAREN) {
+                        break;
+                    }
+
                     const argResult = this.parseArgument(stream, context);
                     if (argResult) {
                         if (argResult.isNamed) {
@@ -450,33 +418,34 @@ export class CommandParser {
                         } else {
                             args.push(argResult.arg);
                         }
-                        // Check if we just finished a multi-line construct
-                        // Handle both new Expression types and legacy code-string types
+                        lastCommandToken = stream.peek(-1) || lastCommandToken;
+                        
                         justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
                                                          argResult.arg.type === 'array' ||
-                                                         argResult.arg.type === 'subexpression' ||
-                                                         argResult.arg.type === 'subexpr'; // legacy type
+                                                         argResult.arg.type === 'subexpression';
                     } else {
-                        // If we can't parse, skip the token
+                        const current = stream.current();
+                        if (!current || current.kind === TokenKind.NEWLINE || current.kind === TokenKind.EOF) {
+                            break;
+                        }
+                        if (current.kind === TokenKind.RPAREN) {
+                            break;
+                        }
                         stream.next();
                     }
                     continue;
                 }
 
-                // Stop at newline if we're not in/after a multi-line construct
                 if (token.kind === TokenKind.NEWLINE) {
                     break;
                 }
 
-                // Stop if we've moved to a different line and we're not in/after a multi-line construct
                 if (token.line !== startLineNum && !justFinishedMultilineConstruct) {
                     break;
                 }
 
-                // Remember token before parsing
                 const tokenBeforeArg = stream.current();
                 
-                // Parse argument
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
                     if (argResult.isNamed) {
@@ -484,16 +453,13 @@ export class CommandParser {
                     } else {
                         args.push(argResult.arg);
                     }
-                    // Update lastCommandToken if the arg was on the same line as the command start
                     if (tokenBeforeArg && tokenBeforeArg.line === startLineNum) {
                         lastCommandToken = tokenBeforeArg;
                     }
-                    // Check if we just finished a multi-line construct
                     justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
                                                      argResult.arg.type === 'array' ||
                                                      argResult.arg.type === 'subexpression';
                 } else {
-                    // If we can't parse, skip the token
                     stream.next();
                 }
             }
@@ -502,24 +468,33 @@ export class CommandParser {
         // Combine positional and named args
         const allArgs: Arg[] = [...args];
         if (Object.keys(namedArgs).length > 0) {
-            // Cast namedArgs to Record<string, Expression> since NamedArgsExpression expects Expression types
             allArgs.push({ type: 'namedArgs', args: namedArgs as Record<string, Expression> });
         }
 
-        // Check for callback block first (before 'into' to avoid position issues)
+        // Callback and Into parsing
         const callback = this.parseCallback(stream, context);
+        if (callback && callback.codePos) {
+            lastCommandToken = {
+                kind: TokenKind.KEYWORD,
+                text: 'endwith',
+                line: callback.codePos.endRow + 1,
+                column: callback.codePos.endCol,
+                value: undefined
+            };
+        }
 
-        // Check for "into $var" (parseInto handles skipping whitespace/newlines)
-        // Note: 'into' can appear after 'with' in the callback header (e.g., "repeat 5 with into $var")
-        // but for the command itself, 'into' comes before the callback
         const intoInfo = this.parseInto(stream);
+        if (intoInfo) {
+            const current = stream.current();
+            if (current) {
+                lastCommandToken = stream.peek(-1) || lastCommandToken;
+            }
+        }
 
-            // Use the last command token to get accurate endRow
-            // This ensures codePos.endRow correctly reflects the command's last line
+        try {
             let endToken = lastCommandToken;
-            // If current token is on the same line as the start, use it for more accurate end position
             const currentToken = stream.current();
-            if (currentToken && currentToken.line === startToken.line) {
+            if (!callback && currentToken && currentToken.line === startToken.line) {
                 endToken = currentToken;
             }
             const codePos = context?.createCodePosition 
@@ -535,8 +510,13 @@ export class CommandParser {
                 codePos
             };
         } finally {
-            // Always pop the context, even if we error out
             stream.popContext();
+        }
+        } finally {
+            // Ensure context is popped if error occurs before inner try
+            if (stream.getCurrentContext() === ParsingContext.FUNCTION_CALL) {
+                stream.popContext();
+            }
         }
     }
 
@@ -554,7 +534,6 @@ export class CommandParser {
         if (token.kind === TokenKind.IDENTIFIER || token.kind === TokenKind.KEYWORD) {
             const nextToken = stream.peek(1);
             if (nextToken && nextToken.kind === TokenKind.ASSIGN) {
-                // Named argument: key = value
                 const key = token.text;
                 stream.next(); // Consume key
                 stream.next(); // Consume '='
@@ -567,7 +546,6 @@ export class CommandParser {
             }
         }
 
-        // Check for variable named argument: $param=value
         if (token.kind === TokenKind.VARIABLE && token.text !== '$') {
             const varText = token.text;
             const nextToken = stream.peek(1);
@@ -586,7 +564,6 @@ export class CommandParser {
             }
         }
 
-        // Positional argument
         const valueArg = this.parseArgumentValue(stream, context);
         if (valueArg) {
             return { arg: valueArg, isNamed: false };
@@ -605,69 +582,57 @@ export class CommandParser {
         const token = stream.current();
         if (!token) return null;
 
-        // Last value: $
         if (token.kind === TokenKind.VARIABLE && token.text === '$') {
             stream.next();
             return { type: 'lastValue' };
         }
 
-        // Variable
         if (token.kind === TokenKind.VARIABLE) {
             const { name, path } = LexerUtils.parseVariablePath(token.text);
             stream.next();
             return { type: 'var', name, path };
         }
 
-        // String
         if (token.kind === TokenKind.STRING) {
             const isTemplateString = token.text.startsWith('`');
             const value = token.value !== undefined ? token.value : LexerUtils.parseString(token.text);
             stream.next();
-            // Store template string flag in the value by prefixing with special marker
-            // We'll detect this in evaluateExpression
             if (isTemplateString) {
                 return { type: 'string', value: `\0TEMPLATE\0${value}` };
             }
             return { type: 'string', value };
         }
 
-        // Number
         if (token.kind === TokenKind.NUMBER) {
             const value = token.value !== undefined ? token.value : parseFloat(token.text);
             stream.next();
             return { type: 'number', value };
         }
 
-        // Boolean
         if (token.kind === TokenKind.BOOLEAN) {
             const value = token.value !== undefined ? token.value : (token.text === 'true');
             stream.next();
             return { type: 'literal', value };
         }
 
-        // Null
         if (token.kind === TokenKind.NULL) {
             stream.next();
             return { type: 'literal', value: null };
         }
 
-        // Subexpression: $(...)
         if (SubexpressionParser.isSubexpression(stream)) {
             const subexpr = SubexpressionParser.parse(stream, {
                 parseStatement: context?.parseStatement || (() => null),
                 createCodePosition: context?.createCodePosition || createCodePosition
             });
-            // Return SubexpressionExpression directly as an Arg (Expression)
             return subexpr;
         }
 
-        // Object literal: {...}
         if (token.kind === TokenKind.LBRACE) {
             const objResult = ObjectLiteralParser.parse(stream);
             return { type: 'object', code: objResult.code };
         }
 
-        // Array literal: [...]
         if (token.kind === TokenKind.LBRACKET) {
             const arrResult = ArrayLiteralParser.parse(stream);
             return { type: 'array', code: arrResult.code };
@@ -679,17 +644,31 @@ export class CommandParser {
             stream.next();
             
             // Check for module.function syntax (e.g., "math.add")
-            stream.skipWhitespaceAndComments();
+            const savedPos = stream.save();
+            
+            // Skip comments only (not newlines)
+            while (stream.check(TokenKind.COMMENT)) {
+                stream.next();
+            }
+            
             const dotToken = stream.current();
             if (dotToken && dotToken.kind === TokenKind.DOT) {
                 stream.next(); // Consume '.'
-                stream.skipWhitespaceAndComments();
+                
+                // Skip comments only
+                while (stream.check(TokenKind.COMMENT)) {
+                    stream.next();
+                }
                 
                 const funcToken = stream.current();
                 if (funcToken && (funcToken.kind === TokenKind.IDENTIFIER || funcToken.kind === TokenKind.KEYWORD)) {
                     value = `${value}.${funcToken.text}`;
                     stream.next(); // Consume function name
+                } else {
+                    stream.restore(savedPos);
                 }
+            } else {
+                stream.restore(savedPos);
             }
             
             return { type: 'literal', value };
@@ -700,29 +679,22 @@ export class CommandParser {
 
     /**
      * Parse "into $var" syntax
-     * Handles "into" on the same line or next line (for multiline calls)
      */
     private static parseInto(stream: TokenStream): { targetName: string; targetPath?: AttributePathSegment[] } | null {
         const savedPos = stream.save();
         
-        // Skip whitespace, comments, and newlines to find "into"
-        // This allows "into" to appear on the next line for multiline parenthesized calls
         while (!stream.isAtEnd()) {
             const token = stream.current();
             if (!token) break;
             
-            // Skip comments and newlines
             if (token.kind === TokenKind.COMMENT || token.kind === TokenKind.NEWLINE) {
                 stream.next();
                 continue;
             }
             
-            // Stop at EOF
             if (token.kind === TokenKind.EOF) {
                 break;
             }
-            
-            // Found a non-whitespace token - check if it's "into"
             break;
         }
 
@@ -732,9 +704,8 @@ export class CommandParser {
             return null;
         }
 
-        stream.next(); // Consume 'into'
+        stream.next(); 
         
-        // Skip whitespace, comments, and newlines before variable
         while (!stream.isAtEnd()) {
             const token = stream.current();
             if (!token) break;
@@ -747,7 +718,6 @@ export class CommandParser {
             if (token.kind === TokenKind.EOF) {
                 break;
             }
-            
             break;
         }
 
@@ -764,8 +734,7 @@ export class CommandParser {
     }
 
     /**
-     * Parse callback block (with only - do blocks are standalone statements, not callbacks)
-     * Only accepts callbacks on the same line as the command (does not skip newlines)
+     * Parse callback block (with only)
      */
     private static parseCallback(
         stream: TokenStream,
@@ -778,41 +747,33 @@ export class CommandParser {
         const savedPos = stream.save();
         const startLine = stream.current()?.line;
 
-        // Check current token and next tokens (skipping comments) on the same line
         let checkedTokens = 0;
-        while (!stream.isAtEnd() && checkedTokens < 10) { // Limit to avoid infinite loops
-        const token = stream.current();
+        while (!stream.isAtEnd() && checkedTokens < 10) {
+            const token = stream.current();
             if (!token) break;
             
-            // Stop if we've moved to a different line
             if (startLine !== undefined && token.line !== startLine) {
                 break;
             }
             
-            // Skip comments
             if (token.kind === TokenKind.COMMENT) {
                 stream.next();
                 checkedTokens++;
                 continue;
             }
             
-            // Stop at newline - callbacks must be on the same line
             if (token.kind === TokenKind.NEWLINE) {
                 break;
             }
             
-            // Stop at EOF
             if (token.kind === TokenKind.EOF) {
                 break;
-        }
+            }
 
-            // Check if this is 'with' keyword
             if (token.kind === TokenKind.KEYWORD && token.text === 'with') {
-                // Found 'with' - parse it (don't restore savedPos)
-            return context.parseScope(stream);
+                return context.parseScope(stream);
             }
             
-            // Not 'with' and not a comment - stop looking
             break;
         }
 
@@ -821,17 +782,11 @@ export class CommandParser {
     }
 }
 
-
-
-
-/**
- * Helper: Create CodePosition from start and end tokens
- */
 function createCodePosition(startToken: Token, endToken: Token): CodePosition {
     return {
-        startRow: startToken.line - 1, // Convert to 0-based
+        startRow: startToken.line - 1, 
         startCol: startToken.column,
-        endRow: endToken.line - 1, // Convert to 0-based
+        endRow: endToken.line - 1, 
         endCol: endToken.column + (endToken.text.length > 0 ? endToken.text.length - 1 : 0)
     };
 }

@@ -32,9 +32,6 @@ export function parseBreak(
     // Consume 'break' keyword
     stream.next();
 
-    // Skip whitespace and comments after 'break' (including inline comments)
-    skipWhitespaceAndComments(stream);
-
     // Find the end token (last token before newline/EOF)
     let endToken = breakToken;
     const current = stream.current();
@@ -46,28 +43,4 @@ export function parseBreak(
         type: 'break',
         codePos: context.createCodePosition(breakToken, endToken)
     };
-}
-
-/**
- * Skip whitespace (newlines) and comments
- */
-function skipWhitespaceAndComments(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        // Consume comments (including inline comments after break)
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        // Stop at newline or EOF (end of statement)
-        if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.EOF) {
-            break;
-        }
-        
-        // If we encounter anything else, stop (might be next statement)
-        break;
-    }
 }

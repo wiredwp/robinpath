@@ -9,6 +9,7 @@ import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
 import type { OnBlock, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
 import type { Environment } from '../index';
+import { CommentParser } from './CommentParser';
 
 export class EventParser {
     /**
@@ -199,6 +200,13 @@ export class EventParser {
                 // Parse statement using the callback
                 const stmt = parseStatement(stream);
                 if (stmt) {
+                    // Check for inline comment immediately after statement
+                    if ('codePos' in stmt && stmt.codePos) {
+                        const inlineComment = CommentParser.parseInlineComment(stream, stmt.codePos.endRow);
+                        if (inlineComment) {
+                            CommentParser.attachComments(stmt, [inlineComment]);
+                        }
+                    }
                     body.push(stmt);
                     // Track the last token of the successfully parsed statement
                     // We'll use the current token position as a proxy

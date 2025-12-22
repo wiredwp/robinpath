@@ -1651,6 +1651,21 @@ export class RobinPath {
                     serialized[key] = this.serializeArg(valueArg);
                 }
                 return { type: 'namedArgs', args: serialized };
+            case 'objectLiteral':
+                return {
+                    type: 'objectLiteral',
+                    properties: (arg as any).properties.map((p: any) => ({
+                        key: typeof p.key === 'string' ? p.key : this.serializeArg(p.key),
+                        value: this.serializeArg(p.value)
+                    })),
+                    codePos: (arg as any).codePos
+                };
+            case 'arrayLiteral':
+                return {
+                    type: 'arrayLiteral',
+                    elements: (arg as any).elements.map((e: any) => this.serializeArg(e)),
+                    codePos: (arg as any).codePos
+                };
             case 'object':
                 return { type: 'object', code: (arg as any).code };
             case 'array':

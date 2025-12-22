@@ -24,10 +24,10 @@ export interface SubexpressionParserContext {
 export class SubexpressionParser {
     /**
      * Parse a subexpression from TokenStream
-     * Expects stream to be positioned at the '$' token
+     * Expects stream to be positioned at the '$(' token
      * Syntax: $( ... )
      * 
-     * @param stream - TokenStream positioned at the '$' token
+     * @param stream - TokenStream positioned at the '$(' token
      * @param context - Context with helper methods
      * @returns Parsed SubexpressionExpression
      */
@@ -36,109 +36,56 @@ export class SubexpressionParser {
         context: SubexpressionParserContext
     ): SubexpressionExpression {
         const startToken = stream.current();
-        if (!startToken) {
-            throw new Error(`Expected $( at start of subexpression, got EOF`);
-        }
-        
-        // Subexpression must start with SUBEXPRESSION_OPEN ($()
-        // Regular parentheses ( ) are handled by other parsers, not SubexpressionParser
-        if (startToken.kind !== TokenKind.SUBEXPRESSION_OPEN) {
-            throw new Error(`Expected $( at start of subexpression, got ${startToken.kind} '${startToken.text || 'EOF'}'`);
+        if (!startToken || startToken.kind !== TokenKind.SUBEXPRESSION_OPEN) {
+            throw new Error(`Expected $( at start of subexpression`);
         }
         
         // Consume the SUBEXPRESSION_OPEN token
-        const openingToken = startToken;
         stream.next();
 
         // Push subexpression context
         stream.pushContext(ParsingContext.SUBEXPRESSION);
 
         try {
-            // Parse statements inside the subexpression
-            // SubexpressionParser only handles $( ... ), not regular ( ... )
-            // Regular parentheses are handled by BracketParser
             const body: Statement[] = [];
-            let lastToken: Token = openingToken;
 
             while (!stream.isAtEnd()) {
+                // Skip leading whitespace and comments within the subexpression
+                stream.skipWhitespaceAndComments();
+                
                 const token = stream.current();
-                if (!token) break;
+                if (!token || token.kind === TokenKind.EOF) break;
 
-                // Check for closing paren - this closes the subexpression
+                // Check for closing paren
                 if (token.kind === TokenKind.RPAREN) {
-                    // Found closing paren - done parsing
-                    lastToken = token;
+                    const endToken = token;
                     stream.next(); // Consume closing ')'
-                    break;
-                }
-
-                // Skip newlines and comments
-                if (token.kind === TokenKind.NEWLINE || token.kind === TokenKind.COMMENT) {
-                    stream.next();
-                    continue;
+                    
+                    return {
+                        type: 'subexpression',
+                        body,
+                        codePos: context.createCodePosition(startToken, endToken)
+                    };
                 }
 
                 // Parse a statement
-                // Nested subexpressions $( ... ) and regular brackets ( ... ) 
-                // are handled by their respective parsers via parseStatement
                 const statement = context.parseStatement(stream);
                 if (statement) {
                     body.push(statement);
-                    lastToken = stream.current() || token;
-                    
-                    // After parsing a statement, skip whitespace and comments, then check if we've reached the closing paren
-                    // This prevents parsing additional statements beyond the subexpression boundary
-                    // Note: We need to manually skip whitespace/comments here because parseStatement might have consumed
-                    // a newline (e.g., after endif), and we need to check what comes next
-                    let foundClosingParen = false;
-                    while (!stream.isAtEnd()) {
-                        const peekToken = stream.current();
-                        if (!peekToken) break;
-                        
-                        if (peekToken.kind === TokenKind.NEWLINE || peekToken.kind === TokenKind.COMMENT) {
-                            stream.next();
-                            continue;
-                        }
-                        
-                        if (peekToken.kind === TokenKind.RPAREN) {
-                            // Found closing paren - done parsing
-                            lastToken = peekToken;
-                            stream.next(); // Consume closing ')'
-                            foundClosingParen = true;
-                            break;
-                        }
-                        
-                        // Not whitespace/comment and not RPAREN, so there's more to parse
-                        break;
-                    }
-                    
-                    // If we found the closing paren, exit the main loop
-                    if (foundClosingParen) {
-                        break;
-                    }
                 } else {
-                    // If we can't parse a statement, check if it's the closing paren
+                    // If we can't parse a statement and it's not RPAREN, ensure progress
                     const currentToken = stream.current();
-                    if (currentToken && currentToken.kind === TokenKind.RPAREN) {
-                        lastToken = currentToken;
-                        stream.next(); // Consume closing ')'
+                    if (currentToken && currentToken.kind !== TokenKind.RPAREN) {
+                        stream.next();
+                    } else if (!currentToken) {
                         break;
                     }
-                    // Otherwise skip the token
-                    stream.next();
                 }
             }
 
-            const endToken = stream.current() || lastToken;
-            const codePos = context.createCodePosition(startToken, endToken);
-
-            return {
-                type: 'subexpression',
-                body,
-                codePos
-            };
+            throw new Error(`Unclosed subexpression starting at line ${startToken.line}, column ${startToken.column}`);
         } finally {
-            // Always pop the context, even if we error out
+            // Always pop the context
             stream.popContext();
         }
     }
@@ -146,18 +93,12 @@ export class SubexpressionParser {
     /**
      * Check if the current token is the start of a subexpression
      * Subexpressions must start with SUBEXPRESSION_OPEN ($()
-     * Regular parentheses ( ) are handled by other parsers
      * 
      * @param stream - TokenStream to check
      * @returns true if current token is SUBEXPRESSION_OPEN
      */
     static isSubexpression(stream: TokenStream): boolean {
         const token = stream.current();
-        if (!token) {
-            return false;
-        }
-
-        // Subexpression must start with SUBEXPRESSION_OPEN ($()
-        return token.kind === TokenKind.SUBEXPRESSION_OPEN;
+        return token ? token.kind === TokenKind.SUBEXPRESSION_OPEN : false;
     }
 }

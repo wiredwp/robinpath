@@ -283,6 +283,13 @@ function parseIfBlock(
                 
                 const stmt = context.parseStatement(stream);
                 if (stmt) {
+                    // Check for inline comment immediately after statement
+                    if ('codePos' in stmt && stmt.codePos) {
+                        const inlineComment = CommentParser.parseInlineComment(stream, stmt.codePos.endRow);
+                        if (inlineComment) {
+                            CommentParser.attachComments(stmt, [inlineComment]);
+                        }
+                    }
                     elseifBody.push(stmt);
                 } else {
                     stream.next();
@@ -336,6 +343,13 @@ function parseIfBlock(
                 
                 const stmt = context.parseStatement(stream);
                 if (stmt) {
+                    // Check for inline comment immediately after statement
+                    if ('codePos' in stmt && stmt.codePos) {
+                        const inlineComment = CommentParser.parseInlineComment(stream, stmt.codePos.endRow);
+                        if (inlineComment) {
+                            CommentParser.attachComments(stmt, [inlineComment]);
+                        }
+                    }
                     elseBranch = elseBranch || [];
                     elseBranch.push(stmt);
                 } else {

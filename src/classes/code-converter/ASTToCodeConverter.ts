@@ -448,11 +448,21 @@ const printers: Record<string, PrinterFn> = {
         
         writer.pushLine(returnLine);
     },
-    break: (_node, writer) => {
-        writer.pushLine('break');
+    break: (node, writer) => {
+        let line = 'break';
+        const inlineComment = Print.getInlineComment(node);
+        if (inlineComment) {
+            line += Print.formatInlineComment(inlineComment);
+        }
+        writer.pushLine(line);
     },
-    continue: (_node, writer) => {
-        writer.pushLine('continue');
+    continue: (node, writer) => {
+        let line = 'continue';
+        const inlineComment = Print.getInlineComment(node);
+        if (inlineComment) {
+            line += Print.formatInlineComment(inlineComment);
+        }
+        writer.pushLine(line);
     },
     comment: Print.printCommentNode,
     chunk_marker: Print.printChunkMarker,
@@ -812,14 +822,7 @@ export class PatchPlanner {
         // Extract original code from the script
         const originalCode = this.extractOriginalCode(node, range);
         
-        // For define statements with decorators, we can't use original code extraction
-        // because extractOriginalCode excludes decorators, but we need them
-        const hasDecorators = node.type === 'define' && 
-            (node as any).decorators && 
-            Array.isArray((node as any).decorators) && 
-            (node as any).decorators.length > 0;
-        
-        if (originalCode !== null && !hasDecorators) {
+        if (originalCode !== null) {
             // Node hasn't changed - use original code with formatting preserved
             return originalCode;
         }
@@ -1106,8 +1109,8 @@ export class PatchPlanner {
         let startRow = node.codePos.startRow;
         let startCol = node.codePos.startCol;
 
-        // For define statements, check if decorators are on earlier lines
-        if (node.type === 'define' && (node as any).decorators && Array.isArray((node as any).decorators)) {
+        // Check for decorators that might be on earlier lines
+        if ((node as any).decorators && Array.isArray((node as any).decorators)) {
             const decorators = (node as any).decorators;
             if (decorators.length > 0) {
                 const firstDecorator = decorators[0];
@@ -1198,26 +1201,17 @@ export class PatchPlanner {
         // Try to preserve original code formatting if the node hasn't changed
         const originalCode = this.extractOriginalCode(node, range);
         
-        // For define statements with decorators, we can't use original code extraction
-        // because decorators are printed by the printer, and we'd get duplication
-        // So we always regenerate define statements with decorators
         if (originalCode !== null && layout.leadingComments.length === 0) {
-            // Check if this is a define statement with decorators
-            if (node.type === 'define' && (node as any).decorators && Array.isArray((node as any).decorators) && (node as any).decorators.length > 0) {
-                // Don't use original code - let the printer handle decorators
-                // Fall through to regeneration
-            } else {
-                // Node hasn't changed and no leading comments - use original code
-                return originalCode;
-            }
+            // Node hasn't changed and no leading comments - use original code
+            return originalCode;
         }
         
         // Add statement code - preserve indentation if regenerating
         // When regenerating, don't allow extracting original code (node has changed)
-        // For define statements with decorators, always use the printer directly (not generateCodeWithPreservedIndentation)
+        // For statements with decorators, always use the printer directly (not generateCodeWithPreservedIndentation)
         // to avoid including decorators from the original code
         const nodeCode = (layout.leadingComments.length > 0 || 
-                         (node.type === 'define' && (node as any).decorators && Array.isArray((node as any).decorators) && (node as any).decorators.length > 0))
+                         ((node as any).decorators && Array.isArray((node as any).decorators) && (node as any).decorators.length > 0))
             ? Printer.printNode(node, {
                 indentLevel: 0,
                 lineIndex: this.lineIndex,
@@ -1406,20 +1400,18 @@ export class PatchPlanner {
             
             if (shouldUseOriginalCode) {
                 // Node hasn't changed - use original code with all formatting preserved
-                // For define statements, we need to handle decorators specially:
-                // - Decorators are printed by the printer, so we shouldn't include them in the extracted code
-                // - Start from the define statement itself, not from decorators
+                // Determine start position for extraction
                 let extractStartRow = node.codePos.startRow;
                 let extractStartCol = node.codePos.startCol;
                 
-                if (node.type === 'define' && (node as any).decorators && Array.isArray((node as any).decorators)) {
+                // Include decorators in extraction if they are on earlier lines
+                if ((node as any).decorators && Array.isArray((node as any).decorators)) {
                     const decorators = (node as any).decorators;
                     if (decorators.length > 0) {
                         const firstDecorator = decorators[0];
-                        // If decorators are on earlier lines, start extraction from the define statement itself
                         if (firstDecorator.codePos && firstDecorator.codePos.startRow < node.codePos.startRow) {
-                            extractStartRow = node.codePos.startRow;
-                            extractStartCol = node.codePos.startCol;
+                            extractStartRow = firstDecorator.codePos.startRow;
+                            extractStartCol = firstDecorator.codePos.startCol;
                         }
                     }
                 }
@@ -1531,7 +1523,8 @@ export class PatchPlanner {
             'literalValueType',  // Added by serializeStatement for assignments
             'hasThen',           // ifBlock syntax variant
             'operatorText',      // Expression original operator text
-            'parenthesized'      // Expression was in parentheses
+            'parenthesized',     // Expression was in parentheses
+            'conditionExpr'      // Duplicate of condition added by serializeStatement
         ]);
         
         const node1Str = JSON.stringify(node1, (key, value) => {
@@ -1578,11 +1571,11 @@ export class PatchPlanner {
 
         // Extract original code to preserve its formatting patterns
         // Use lineEndOffset to get just the statement line, not any blank lines after it
-        // For define statements, INCLUDE decorators in extraction because Printer prints them
+        // INCLUDE decorators in extraction because Printer prints them
         let extractStartRow = node.codePos.startRow;
         let extractStartCol = node.codePos.startCol;
         
-        if (node.type === 'define' && (node as any).decorators && Array.isArray((node as any).decorators)) {
+        if ((node as any).decorators && Array.isArray((node as any).decorators)) {
             const decorators = (node as any).decorators;
             if (decorators.length > 0) {
                 const firstDecorator = decorators[0];
@@ -1625,29 +1618,10 @@ export class PatchPlanner {
             }
         }
         
-        // Handle trailing blank lines based on trailingBlankLines property
+        // Handle trailing newline from Printer.printNode
         // First, remove the empty string from split('\n') if it exists (from code ending with '\n')
         if (indentedLines.length > 0 && indentedLines[indentedLines.length - 1] === '') {
             indentedLines.pop();
-        }
-        
-        // Get trailingBlankLines from the node
-        let trailingBlankLines = (node as any).trailingBlankLines;
-        
-        // If not found in the modified node, try to find it from originalNode
-        if ((trailingBlankLines === undefined || trailingBlankLines === null) && this.originalAST) {
-            const originalNode = this.findOriginalNode(node);
-            if (originalNode) {
-                trailingBlankLines = (originalNode as any).trailingBlankLines;
-            }
-        }
-
-        // Only add empty strings if trailingBlankLines is explicitly set
-        if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
-            // Add exactly trailingBlankLines number of empty strings
-            for (let i = 0; i < trailingBlankLines; i++) {
-                indentedLines.push('');
-            }
         }
         
         const result = indentedLines.join('\n');

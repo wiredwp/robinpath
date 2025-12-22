@@ -198,6 +198,111 @@ export class Print {
                 return '$';
             case 'subexpr':
                 return `$(${arg.code || ''})`;
+            case 'subexpression': {
+                // Handle subexpression with body
+                const subexprBody = arg.body || [];
+                if (subexprBody.length === 0) {
+                    return '$()';
+                }
+                
+                // Use a temporary writer to print the body
+                const writer = new Writer();
+                
+                // Check code positions if available
+                const startRow = arg.codePos?.startRow;
+                const endRow = arg.codePos?.endRow;
+                const bodyStartRow = subexprBody[0]?.codePos?.startRow;
+                const bodyEndRow = subexprBody[subexprBody.length - 1]?.codePos?.endRow;
+                
+                const startsOnSameLine = (startRow !== undefined && bodyStartRow !== undefined && startRow === bodyStartRow);
+                
+                // DEBUG LOGGING
+                /*
+                if (arg.codePos) {
+                   console.log(`[DEBUG] subexpr: startRow=${startRow}, bodyStartRow=${bodyStartRow}, startsOnSameLine=${startsOnSameLine}`);
+                }
+                */
+
+                // Check if it's multiline
+                const isMultiline = subexprBody.length > 1 || 
+                    (arg.codePos && arg.codePos.endRow > arg.codePos.startRow);
+                
+                if (isMultiline) {
+                    if (startsOnSameLine) {
+                        writer.push('$');
+                        for (let i = 0; i < subexprBody.length; i++) {
+                            const stmt = subexprBody[i];
+                            // Use current indent level for the statements so they align with the parent expression's block
+                            const stmtCode = Print.printNode(stmt, { ..._ctx, indentLevel: _ctx.indentLevel });
+                            
+                            if (i === 0) {
+                                // For the first statement on the same line, trim leading indentation
+                                // stmtCode likely includes the indentation for _ctx.indentLevel
+                                // We add '(' and then the trimmed code
+                                writer.push('(' + (stmtCode ? stmtCode.trimStart() : ''));
+                            } else {
+                                // For subsequent statements, append as is (preserving their indentation relative to parent)
+                                if (stmtCode) {
+                                    writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                                }
+                            }
+                        }
+                        
+                        // Handle closing parenthesis
+                        const endsOnSameLine = (endRow !== undefined && bodyEndRow !== undefined && endRow === bodyEndRow);
+                        let result = writer.toString();
+                        
+                        if (endsOnSameLine) {
+                            // If it ends on the same line, remove the last newline and add ')'
+                            if (result.endsWith('\n')) {
+                                result = result.slice(0, -1);
+                            }
+                            result += ')';
+                        } else {
+                            // If it ends on a new line, ensure newline and add indented ')'
+                            if (!result.endsWith('\n')) {
+                                result += '\n';
+                            }
+                            // Manually create indentation string since writer instance is fresh/local
+                            // but we want to use _ctx.indentLevel
+                            const indent = '  '.repeat(_ctx.indentLevel);
+                            result += indent + ')';
+                        }
+                        return result;
+                    } else {
+                        // Standard multiline formatting
+                        writer.push('$(\n');
+                        for (const stmt of subexprBody) {
+                            const stmtCode = Print.printNode(stmt, { ..._ctx, indentLevel: _ctx.indentLevel + 1 });
+                            if (stmtCode) {
+                                writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                            }
+                        }
+                        writer.indent(_ctx.indentLevel);
+                        writer.pushIndented(')');
+                        return writer.toString();
+                    }
+                } else {
+                    // Single line
+                    const bodyCode = subexprBody.map((stmt: any) => {
+                        const stmtCode = Print.printNode(stmt, { ..._ctx, indentLevel: 0 });
+                        return stmtCode ? stmtCode.trim() : '';
+                    }).filter((code: string) => code).join(' ');
+                    return `$(${bodyCode})`;
+                }
+            }
+            case 'objectLiteral': {
+                const props = (arg.properties || []).map((p: any) => {
+                    const key = typeof p.key === 'string' ? p.key : Print.printArg(p.key, _ctx);
+                    const value = Print.printArg(p.value, _ctx);
+                    return `${key}: ${value}`;
+                }).join(', ');
+                return `{${props}}`;
+            }
+            case 'arrayLiteral': {
+                const elements = (arg.elements || []).map((e: any) => Print.printArg(e, _ctx)).join(', ');
+                return `[${elements}]`;
+            }
             case 'object':
                 return `{${arg.code || ''}}`;
             case 'array':
@@ -278,6 +383,9 @@ export class Print {
      * Print assignment node
      */
     static printAssignment(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         const target = '$' + node.targetName + (node.targetPath?.map((seg: any) => 
             seg.type === 'property' ? '.' + seg.name : `[${seg.index}]`
         ).join('') || '');
@@ -445,8 +553,8 @@ export class Print {
             const subexprArg = node.args[0];
             // Handle both deprecated 'subexpr' type (with code) and new 'subexpression' type (with body)
             if (subexprArg.type === 'subexpr') {
-            writer.pushLine(`$(${subexprArg.code || ''})`);
-            return;
+                writer.pushLine(`$(${subexprArg.code || ''})`);
+                return;
             } else if (subexprArg.type === 'subexpression') {
                 // Print subexpression with body
                 const subexprBody = subexprArg.body || [];
@@ -454,20 +562,67 @@ export class Print {
                     writer.pushLine('$()');
                     return;
                 }
+                
+                // Check code positions if available
+                const startRow = subexprArg.codePos?.startRow;
+                const endRow = subexprArg.codePos?.endRow;
+                const bodyStartRow = subexprBody[0]?.codePos?.startRow;
+                const bodyEndRow = subexprBody[subexprBody.length - 1]?.codePos?.endRow;
+                
+                const startsOnSameLine = (startRow !== undefined && bodyStartRow !== undefined && startRow === bodyStartRow);
+
                 // Check if it's multiline (spans multiple lines)
                 const isMultiline = subexprBody.length > 1 || 
                     (subexprArg.codePos && subexprArg.codePos.endRow > subexprArg.codePos.startRow);
                 
                 if (isMultiline) {
-                    writer.pushIndented('$(\n');
-                    for (const stmt of subexprBody) {
-                        const stmtCode = Print.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel + 1 });
-                        if (stmtCode) {
-                            writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                    if (startsOnSameLine) {
+                        writer.pushIndented('$');
+                        const endsOnSameLine = (endRow !== undefined && bodyEndRow !== undefined && endRow === bodyEndRow);
+
+                        for (let i = 0; i < subexprBody.length; i++) {
+                            const stmt = subexprBody[i];
+                            let stmtCode = Print.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel });
+                            
+                            if (i === 0) {
+                                stmtCode = stmtCode ? stmtCode.trimStart() : '';
+                                writer.push('(');
+                            }
+                            
+                            if (i === subexprBody.length - 1 && endsOnSameLine) {
+                                // Last statement and ends on same line: trim trailing newline
+                                if (stmtCode.endsWith('\n')) {
+                                    stmtCode = stmtCode.slice(0, -1);
+                                }
+                                writer.push(stmtCode + ')');
+                                writer.newline();
+                            } else {
+                                // Not last, or not ends on same line
+                                // Ensure newline if missing (unlikely for blocks)
+                                if (stmtCode && !stmtCode.endsWith('\n')) {
+                                    stmtCode += '\n';
+                                }
+                                writer.push(stmtCode);
+                                
+                                if (i === subexprBody.length - 1) {
+                                    // Last statement, but ends on new line
+                                    // Add closing parenthesis on new line
+                                    writer.pushIndented(')');
+                                    writer.newline();
+                                }
+                            }
                         }
+                    } else {
+                        writer.pushIndented('$(\n');
+                        for (const stmt of subexprBody) {
+                            const stmtCode = Print.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel + 1 });
+                            if (stmtCode) {
+                                writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                            }
+                        }
+                        writer.pushIndented(')');
+                        writer.newline();
                     }
-                    writer.pushIndented(')');
-                    writer.newline();
                 } else {
                     // Single line
                     const bodyCode = subexprBody.map((stmt: any) => {
@@ -476,6 +631,22 @@ export class Print {
                     }).filter((code: string) => code).join(' ');
                     writer.pushLine(`$(${bodyCode})`);
                 }
+                return;
+            }
+        }
+
+        // Special handling for _literal command - just output the literal value
+        if (node.name === '_literal' && node.args && node.args.length === 1 && node.args[0]) {
+            const arg = node.args[0];
+            const argCode = Print.printArg(arg, ctx);
+            if (argCode !== null) {
+                // Add inline comment if present
+                let line = argCode;
+                const inlineComment = Print.getInlineComment(node);
+                if (inlineComment) {
+                    line += Print.formatInlineComment(inlineComment);
+                }
+                writer.pushLine(line);
                 return;
             }
         }
@@ -602,6 +773,43 @@ export class Print {
             commandLine += Print.formatInlineComment(inlineComment);
         }
         
+        // Handle callback block if present
+        if (node.callback) {
+            writer.pushIndented(commandLine);
+            writer.push(' with');
+            
+            // Print callback parameters if present
+            if (node.callback.paramNames && node.callback.paramNames.length > 0) {
+                writer.push(' ' + node.callback.paramNames.map((p: string) => `$${p}`).join(' '));
+            }
+            
+            // Print callback into target if present
+            if (node.callback.into) {
+                const target = Print.printIntoTarget(node.callback.into.targetName, node.callback.into.targetPath);
+                writer.push(` into ${target}`);
+            }
+            
+            // Add callback header inline comment
+            const headerComment = Print.getInlineComment(node.callback);
+            if (headerComment) {
+                writer.push(Print.formatInlineComment(headerComment));
+            }
+            
+            writer.newline();
+            
+            // Print callback body
+            if (node.callback.body && Array.isArray(node.callback.body)) {
+                for (const stmt of node.callback.body) {
+                    Print.emitLeadingComments(stmt, writer, ctx, ctx.indentLevel + 1);
+                    const stmtCode = Print.printNode(stmt, { ...ctx, indentLevel: ctx.indentLevel + 1 });
+                    if (stmtCode) writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                }
+            }
+            
+            writer.pushLine('endwith');
+            return;
+        }
+
         writer.pushLine(commandLine);
     }
 
@@ -664,6 +872,23 @@ export class Print {
             return '';
         }
         return `  # ${comment.text}`;
+    }
+
+    /**
+     * Emit decorators for a node if they exist.
+     */
+    private static emitDecorators(node: any, writer: Writer, ctx: PrintContext): void {
+        if (node.decorators && Array.isArray(node.decorators) && node.decorators.length > 0) {
+            for (const decorator of node.decorators) {
+                const decoratorArgs: string[] = [];
+                for (const arg of decorator.args || []) {
+                    const argCode = Print.printArg(arg, ctx);
+                    if (argCode !== null) decoratorArgs.push(argCode);
+                }
+                const argsStr = decoratorArgs.length > 0 ? ' ' + decoratorArgs.join(' ') : '';
+                writer.pushLine(`@${decorator.name}${argsStr}`);
+            }
+        }
     }
 
     /**
@@ -773,17 +998,7 @@ export class Print {
      */
     static printDefine(node: any, writer: Writer, ctx: PrintContext): void {
         // Print decorators first (if any)
-        if (node.decorators && Array.isArray(node.decorators) && node.decorators.length > 0) {
-            for (const decorator of node.decorators) {
-                const decoratorArgs: string[] = [];
-                for (const arg of decorator.args || []) {
-                    const argCode = Print.printArg(arg, ctx);
-                    if (argCode !== null) decoratorArgs.push(argCode);
-                }
-                const argsStr = decoratorArgs.length > 0 ? ' ' + decoratorArgs.join(' ') : '';
-                writer.pushLine(`@${decorator.name}${argsStr}`);
-            }
-        }
+        Print.emitDecorators(node, writer, ctx);
 
         // Parameters are stored as paramNames (array of strings), not params
         const paramNames = node.paramNames && Array.isArray(node.paramNames) ? node.paramNames : [];
@@ -795,20 +1010,27 @@ export class Print {
                 const stmt = node.body[i];
                 const prevStmt = i > 0 ? node.body[i - 1] : null;
                 
-                // Check for blank lines between previous statement and current statement
+                                // Check for blank lines between previous statement and current statement
                 if (i === 0 && 'codePos' in node && node.codePos && 'codePos' in stmt && stmt.codePos) {
                     // Check gap between header and first statement
                     // Approximate header end: startRow + decorators count
                     const decoratorsCount = (node.decorators && Array.isArray(node.decorators)) ? node.decorators.length : 0;
                     const headerEndRow = node.codePos.startRow + decoratorsCount;
-                    const gap = stmt.codePos.startRow - headerEndRow;
+                    
+                    // Use effective start row (including leading comments if any)
+                    let effectiveStartRow = stmt.codePos.startRow;
+                    const leadingComments = Print.getLeadingComments(stmt);
+                    if (leadingComments.length > 0 && leadingComments[0].codePos) {
+                        effectiveStartRow = leadingComments[0].codePos.startRow;
+                    }
+                    
+                    const gap = effectiveStartRow - headerEndRow;
                     if (gap > 1) {
                         writer.pushBlankLine();
                     }
                 } else {
-                Print.emitBlankLineBetweenStatements(prevStmt, stmt, writer);
-                }
-                
+                                    Print.emitBlankLineBetweenStatements(prevStmt, stmt, writer);
+                                }                
                 // Emit leading comments
                 Print.emitLeadingComments(stmt, writer, ctx, ctx.indentLevel + 1);
                 
@@ -843,6 +1065,9 @@ export class Print {
      * Print do block node
      */
     static printDo(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         // Build the do header with optional parameters and into target
         let doHeader = 'do';
         if (node.paramNames && Array.isArray(node.paramNames) && node.paramNames.length > 0) {
@@ -876,6 +1101,9 @@ export class Print {
      * Print for loop node
      */
     static printForLoop(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         const varName = node.varName || node.var || node.iterator || '$i';
         const varPrefix = varName.startsWith('$') ? '' : '$';
 
@@ -917,6 +1145,9 @@ export class Print {
      * Print ifBlock node
      */
     static printIfBlock(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         // Note: Leading comments attached to the ifBlock are printed by the parent
         // (e.g., printDefine's emitLeadingComments), so we don't print them here.
         // We only print the if statement and its branches.
@@ -1012,6 +1243,9 @@ export class Print {
      * Print on block node
      */
     static printOnBlock(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         const eventName = node.eventName || node.event || '';
         // Event name needs to be quoted
         writer.pushLine(`on "${eventName}"`.trimEnd());
@@ -1065,10 +1299,16 @@ export class Print {
      * Print together block node
      */
     static printTogether(node: any, writer: Writer, ctx: PrintContext): void {
+        // Print decorators first (if any)
+        Print.emitDecorators(node, writer, ctx);
+
         writer.pushLine('together');
 
         if (node.blocks && Array.isArray(node.blocks)) {
             for (const block of node.blocks) {
+                // Emit leading comments for each block
+                Print.emitLeadingComments(block, writer, ctx, ctx.indentLevel + 1);
+                
                 // Each block is a 'do' block
                 const blockCode = Print.printNode(block, { ...ctx, indentLevel: ctx.indentLevel + 1 });
                 if (blockCode) writer.push(blockCode.endsWith('\n') ? blockCode : blockCode + '\n');

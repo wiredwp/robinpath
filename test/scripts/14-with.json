@@ -85,7 +85,7 @@
       "startRow": 8,
       "startCol": 0,
       "endRow": 8,
-      "endCol": 8
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -94,15 +94,149 @@
         "type": "number",
         "value": 5
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 9,
+            "startCol": 2,
+            "endRow": 9,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2a: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 10,
+            "startCol": 2,
+            "endRow": 12,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 10,
+                "startCol": 5,
+                "endRow": 10,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 10,
+                "startCol": 11,
+                "endRow": 10,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 10,
+              "startCol": 5,
+              "endRow": 10,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 10,
+                "startCol": 5,
+                "endRow": 10,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 10,
+                "startCol": 11,
+                "endRow": 10,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 10,
+              "startCol": 5,
+              "endRow": 10,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 11,
+                "startCol": 4,
+                "endRow": 11,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 1
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 13,
+            "startCol": 2,
+            "endRow": 13,
+            "endCol": 10
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 9,
+      "startRow": 15,
       "startCol": 2,
-      "endRow": 9,
+      "endRow": 15,
       "endCol": 37
     },
     "name": "log",
@@ -118,10 +252,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 10,
-      "startCol": 32,
-      "endRow": 12,
-      "endCol": 20
+      "startRow": 16,
+      "startCol": 2,
+      "endRow": 18,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -131,27 +265,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 10,
-          "startCol": 35,
-          "endRow": 10,
-          "endCol": 36
+          "startRow": 16,
+          "startCol": 5,
+          "endRow": 16,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 10,
-          "startCol": 41,
-          "endRow": 10,
-          "endCol": 44
+          "startRow": 16,
+          "startCol": 11,
+          "endRow": 16,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 10,
-        "startCol": 35,
-        "endRow": 10,
-        "endCol": 39
+        "startRow": 16,
+        "startCol": 5,
+        "endRow": 16,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -162,27 +296,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 10,
-          "startCol": 35,
-          "endRow": 10,
-          "endCol": 36
+          "startRow": 16,
+          "startCol": 5,
+          "endRow": 16,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 10,
-          "startCol": 41,
-          "endRow": 10,
-          "endCol": 44
+          "startRow": 16,
+          "startCol": 11,
+          "endRow": 16,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 10,
-        "startCol": 35,
-        "endRow": 10,
-        "endCol": 39
+        "startRow": 16,
+        "startCol": 5,
+        "endRow": 16,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -190,10 +324,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 11,
-          "startCol": 18,
-          "endRow": 11,
-          "endCol": 26
+          "startRow": 17,
+          "startCol": 4,
+          "endRow": 17,
+          "endCol": 12
         },
         "value": {
           "type": "number",
@@ -206,9 +340,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 13,
+      "startRow": 19,
       "startCol": 2,
-      "endRow": 13,
+      "endRow": 19,
       "endCol": 10
     },
     "name": "add",
@@ -229,9 +363,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 14,
+      "startRow": 20,
       "startCol": 0,
-      "endRow": 14,
+      "endRow": 20,
       "endCol": 6
     },
     "name": "endwith",
@@ -242,9 +376,577 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 15,
+      "startRow": 21,
+      "startCol": 2,
+      "endRow": 21,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2a: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 22,
+      "startCol": 4,
+      "endRow": 24,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 22,
+          "startCol": 7,
+          "endRow": 22,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 22,
+          "startCol": 13,
+          "endRow": 22,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 22,
+        "startCol": 7,
+        "endRow": 22,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 22,
+          "startCol": 7,
+          "endRow": 22,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 22,
+          "startCol": 13,
+          "endRow": 22,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 22,
+        "startCol": 7,
+        "endRow": 22,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 23,
+          "startCol": 4,
+          "endRow": 23,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 25,
+      "startCol": 2,
+      "endRow": 25,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 26,
       "startCol": 0,
-      "endRow": 15,
+      "endRow": 26,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 27,
+      "startCol": 2,
+      "endRow": 27,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2a: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 28,
+      "startCol": 8,
+      "endRow": 30,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 28,
+          "startCol": 11,
+          "endRow": 28,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 28,
+          "startCol": 17,
+          "endRow": 28,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 28,
+        "startCol": 11,
+        "endRow": 28,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 28,
+          "startCol": 11,
+          "endRow": 28,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 28,
+          "startCol": 17,
+          "endRow": 28,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 28,
+        "startCol": 11,
+        "endRow": 28,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 29,
+          "startCol": 6,
+          "endRow": 29,
+          "endCol": 14
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 31,
+      "startCol": 2,
+      "endRow": 31,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 32,
+      "startCol": 0,
+      "endRow": 32,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 33,
+      "startCol": 2,
+      "endRow": 33,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2a: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 34,
+      "startCol": 16,
+      "endRow": 36,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 34,
+          "startCol": 19,
+          "endRow": 34,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 34,
+          "startCol": 25,
+          "endRow": 34,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 34,
+        "startCol": 19,
+        "endRow": 34,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 34,
+          "startCol": 19,
+          "endRow": 34,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 34,
+          "startCol": 25,
+          "endRow": 34,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 34,
+        "startCol": 19,
+        "endRow": 34,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 35,
+          "startCol": 10,
+          "endRow": 35,
+          "endCol": 18
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 37,
+      "startCol": 2,
+      "endRow": 37,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 38,
+      "startCol": 0,
+      "endRow": 38,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 39,
+      "startCol": 2,
+      "endRow": 39,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2a: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 40,
+      "startCol": 32,
+      "endRow": 42,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 40,
+          "startCol": 35,
+          "endRow": 40,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 40,
+          "startCol": 41,
+          "endRow": 40,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 40,
+        "startCol": 35,
+        "endRow": 40,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 40,
+          "startCol": 35,
+          "endRow": 40,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 40,
+          "startCol": 41,
+          "endRow": 40,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 40,
+        "startCol": 35,
+        "endRow": 40,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 41,
+          "startCol": 18,
+          "endRow": 41,
+          "endCol": 26
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 43,
+      "startCol": 2,
+      "endRow": 43,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 44,
+      "startCol": 0,
+      "endRow": 44,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 45,
+      "startCol": 0,
+      "endRow": 45,
       "endCol": 97
     },
     "trailingBlankLines": 1,
@@ -268,9 +970,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 17,
+      "startRow": 47,
       "startCol": 0,
-      "endRow": 17,
+      "endRow": 47,
       "endCol": 4
     },
     "name": "clear",
@@ -281,10 +983,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 18,
+      "startRow": 48,
       "startCol": 0,
-      "endRow": 18,
-      "endCol": 8
+      "endRow": 48,
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -293,15 +995,162 @@
         "type": "number",
         "value": 3
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 49,
+            "startCol": 2,
+            "endRow": 49,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2b: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 50,
+            "startCol": 2,
+            "endRow": 52,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 50,
+                "startCol": 5,
+                "endRow": 50,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 50,
+                "startCol": 11,
+                "endRow": 50,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 50,
+              "startCol": 5,
+              "endRow": 50,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 50,
+                "startCol": 5,
+                "endRow": 50,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 50,
+                "startCol": 11,
+                "endRow": 50,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 50,
+              "startCol": 5,
+              "endRow": 50,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 51,
+                "startCol": 4,
+                "endRow": 51,
+                "endCol": 13
+              },
+              "value": {
+                "type": "number",
+                "value": 10
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 53,
+            "startCol": 2,
+            "endRow": 53,
+            "endCol": 10
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 54,
+            "startCol": 2,
+            "endRow": 54,
+            "endCol": 10
+          },
+          "value": {
+            "type": "lastValue"
+          }
+        }
+      ]
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 19,
+      "startRow": 56,
       "startCol": 2,
-      "endRow": 19,
+      "endRow": 56,
       "endCol": 37
     },
     "name": "log",
@@ -317,10 +1166,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 20,
-      "startCol": 32,
-      "endRow": 22,
-      "endCol": 20
+      "startRow": 57,
+      "startCol": 2,
+      "endRow": 59,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -330,27 +1179,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 20,
-          "startCol": 35,
-          "endRow": 20,
-          "endCol": 36
+          "startRow": 57,
+          "startCol": 5,
+          "endRow": 57,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 20,
-          "startCol": 41,
-          "endRow": 20,
-          "endCol": 44
+          "startRow": 57,
+          "startCol": 11,
+          "endRow": 57,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 20,
-        "startCol": 35,
-        "endRow": 20,
-        "endCol": 39
+        "startRow": 57,
+        "startCol": 5,
+        "endRow": 57,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -361,27 +1210,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 20,
-          "startCol": 35,
-          "endRow": 20,
-          "endCol": 36
+          "startRow": 57,
+          "startCol": 5,
+          "endRow": 57,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 20,
-          "startCol": 41,
-          "endRow": 20,
-          "endCol": 44
+          "startRow": 57,
+          "startCol": 11,
+          "endRow": 57,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 20,
-        "startCol": 35,
-        "endRow": 20,
-        "endCol": 39
+        "startRow": 57,
+        "startCol": 5,
+        "endRow": 57,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -389,10 +1238,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 21,
-          "startCol": 18,
-          "endRow": 21,
-          "endCol": 27
+          "startRow": 58,
+          "startCol": 4,
+          "endRow": 58,
+          "endCol": 13
         },
         "value": {
           "type": "number",
@@ -405,9 +1254,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 23,
+      "startRow": 60,
       "startCol": 2,
-      "endRow": 23,
+      "endRow": 60,
       "endCol": 10
     },
     "name": "add",
@@ -428,9 +1277,9 @@
     "type": "return",
     "lastValue": null,
     "codePos": {
-      "startRow": 24,
+      "startRow": 61,
       "startCol": 2,
-      "endRow": 24,
+      "endRow": 61,
       "endCol": 10
     },
     "value": {
@@ -441,9 +1290,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 25,
+      "startRow": 62,
       "startCol": 0,
-      "endRow": 25,
+      "endRow": 62,
       "endCol": 6
     },
     "name": "endwith",
@@ -454,9 +1303,629 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 26,
+      "startRow": 63,
+      "startCol": 2,
+      "endRow": 63,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2b: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 64,
+      "startCol": 4,
+      "endRow": 66,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 64,
+          "startCol": 7,
+          "endRow": 64,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 64,
+          "startCol": 13,
+          "endRow": 64,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 64,
+        "startCol": 7,
+        "endRow": 64,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 64,
+          "startCol": 7,
+          "endRow": 64,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 64,
+          "startCol": 13,
+          "endRow": 64,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 64,
+        "startCol": 7,
+        "endRow": 64,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 65,
+          "startCol": 4,
+          "endRow": 65,
+          "endCol": 13
+        },
+        "value": {
+          "type": "number",
+          "value": 10
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 67,
+      "startCol": 2,
+      "endRow": 67,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 68,
+      "startCol": 2,
+      "endRow": 68,
+      "endCol": 10
+    },
+    "value": {
+      "type": "lastValue"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 69,
       "startCol": 0,
-      "endRow": 26,
+      "endRow": 69,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 70,
+      "startCol": 2,
+      "endRow": 70,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2b: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 71,
+      "startCol": 8,
+      "endRow": 73,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 71,
+          "startCol": 11,
+          "endRow": 71,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 71,
+          "startCol": 17,
+          "endRow": 71,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 71,
+        "startCol": 11,
+        "endRow": 71,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 71,
+          "startCol": 11,
+          "endRow": 71,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 71,
+          "startCol": 17,
+          "endRow": 71,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 71,
+        "startCol": 11,
+        "endRow": 71,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 72,
+          "startCol": 6,
+          "endRow": 72,
+          "endCol": 15
+        },
+        "value": {
+          "type": "number",
+          "value": 10
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 74,
+      "startCol": 2,
+      "endRow": 74,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 75,
+      "startCol": 2,
+      "endRow": 75,
+      "endCol": 10
+    },
+    "value": {
+      "type": "lastValue"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 76,
+      "startCol": 0,
+      "endRow": 76,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 77,
+      "startCol": 2,
+      "endRow": 77,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2b: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 78,
+      "startCol": 16,
+      "endRow": 80,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 78,
+          "startCol": 19,
+          "endRow": 78,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 78,
+          "startCol": 25,
+          "endRow": 78,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 78,
+        "startCol": 19,
+        "endRow": 78,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 78,
+          "startCol": 19,
+          "endRow": 78,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 78,
+          "startCol": 25,
+          "endRow": 78,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 78,
+        "startCol": 19,
+        "endRow": 78,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 79,
+          "startCol": 10,
+          "endRow": 79,
+          "endCol": 19
+        },
+        "value": {
+          "type": "number",
+          "value": 10
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 81,
+      "startCol": 2,
+      "endRow": 81,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 82,
+      "startCol": 2,
+      "endRow": 82,
+      "endCol": 10
+    },
+    "value": {
+      "type": "lastValue"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 83,
+      "startCol": 0,
+      "endRow": 83,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 84,
+      "startCol": 2,
+      "endRow": 84,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2b: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 85,
+      "startCol": 32,
+      "endRow": 87,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 85,
+          "startCol": 35,
+          "endRow": 85,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 85,
+          "startCol": 41,
+          "endRow": 85,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 85,
+        "startCol": 35,
+        "endRow": 85,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 85,
+          "startCol": 35,
+          "endRow": 85,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 85,
+          "startCol": 41,
+          "endRow": 85,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 85,
+        "startCol": 35,
+        "endRow": 85,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 86,
+          "startCol": 18,
+          "endRow": 86,
+          "endCol": 27
+        },
+        "value": {
+          "type": "number",
+          "value": 10
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 88,
+      "startCol": 2,
+      "endRow": 88,
+      "endCol": 10
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 89,
+      "startCol": 2,
+      "endRow": 89,
+      "endCol": 10
+    },
+    "value": {
+      "type": "lastValue"
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 90,
+      "startCol": 0,
+      "endRow": 90,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 91,
+      "startCol": 0,
+      "endRow": 91,
       "endCol": 92
     },
     "trailingBlankLines": 1,
@@ -480,9 +1949,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 28,
+      "startRow": 93,
       "startCol": 0,
-      "endRow": 28,
+      "endRow": 93,
       "endCol": 4
     },
     "name": "clear",
@@ -493,10 +1962,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 29,
+      "startRow": 94,
       "startCol": 0,
-      "endRow": 29,
-      "endCol": 8
+      "endRow": 94,
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -505,15 +1974,153 @@
         "type": "number",
         "value": 4
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 95,
+            "startCol": 2,
+            "endRow": 95,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2c: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 96,
+            "startCol": 2,
+            "endRow": 98,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 96,
+                "startCol": 5,
+                "endRow": 96,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 96,
+                "startCol": 11,
+                "endRow": 96,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 96,
+              "startCol": 5,
+              "endRow": 96,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 96,
+                "startCol": 5,
+                "endRow": 96,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 96,
+                "startCol": 11,
+                "endRow": 96,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 96,
+              "startCol": 5,
+              "endRow": 96,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 97,
+                "startCol": 4,
+                "endRow": 97,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 99,
+            "startCol": 2,
+            "endRow": 99,
+            "endCol": 20
+          },
+          "name": "math.multiply",
+          "module": "math",
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "number",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "into": {
+        "targetName": "result2",
+        "targetPath": []
+      }
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 30,
+      "startRow": 101,
       "startCol": 2,
-      "endRow": 30,
+      "endRow": 101,
       "endCol": 37
     },
     "name": "log",
@@ -529,10 +2136,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 31,
-      "startCol": 32,
-      "endRow": 33,
-      "endCol": 20
+      "startRow": 102,
+      "startCol": 2,
+      "endRow": 104,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -542,27 +2149,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 31,
-          "startCol": 35,
-          "endRow": 31,
-          "endCol": 36
+          "startRow": 102,
+          "startCol": 5,
+          "endRow": 102,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 31,
-          "startCol": 41,
-          "endRow": 31,
-          "endCol": 44
+          "startRow": 102,
+          "startCol": 11,
+          "endRow": 102,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 31,
-        "startCol": 35,
-        "endRow": 31,
-        "endCol": 39
+        "startRow": 102,
+        "startCol": 5,
+        "endRow": 102,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -573,27 +2180,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 31,
-          "startCol": 35,
-          "endRow": 31,
-          "endCol": 36
+          "startRow": 102,
+          "startCol": 5,
+          "endRow": 102,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 31,
-          "startCol": 41,
-          "endRow": 31,
-          "endCol": 44
+          "startRow": 102,
+          "startCol": 11,
+          "endRow": 102,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 31,
-        "startCol": 35,
-        "endRow": 31,
-        "endCol": 39
+        "startRow": 102,
+        "startCol": 5,
+        "endRow": 102,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -601,10 +2208,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 32,
-          "startCol": 18,
-          "endRow": 32,
-          "endCol": 26
+          "startRow": 103,
+          "startCol": 4,
+          "endRow": 103,
+          "endCol": 12
         },
         "value": {
           "type": "number",
@@ -617,9 +2224,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 34,
+      "startRow": 105,
       "startCol": 2,
-      "endRow": 34,
+      "endRow": 105,
       "endCol": 20
     },
     "name": "math.multiply",
@@ -640,9 +2247,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 35,
+      "startRow": 106,
       "startCol": 0,
-      "endRow": 35,
+      "endRow": 106,
       "endCol": 6
     },
     "name": "endwith",
@@ -653,9 +2260,577 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 36,
+      "startRow": 107,
+      "startCol": 2,
+      "endRow": 107,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2c: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 108,
+      "startCol": 4,
+      "endRow": 110,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 108,
+          "startCol": 7,
+          "endRow": 108,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 108,
+          "startCol": 13,
+          "endRow": 108,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 108,
+        "startCol": 7,
+        "endRow": 108,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 108,
+          "startCol": 7,
+          "endRow": 108,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 108,
+          "startCol": 13,
+          "endRow": 108,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 108,
+        "startCol": 7,
+        "endRow": 108,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 109,
+          "startCol": 4,
+          "endRow": 109,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 2
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 111,
+      "startCol": 2,
+      "endRow": 111,
+      "endCol": 20
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 112,
       "startCol": 0,
-      "endRow": 36,
+      "endRow": 112,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 113,
+      "startCol": 2,
+      "endRow": 113,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2c: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 114,
+      "startCol": 8,
+      "endRow": 116,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 114,
+          "startCol": 11,
+          "endRow": 114,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 114,
+          "startCol": 17,
+          "endRow": 114,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 114,
+        "startCol": 11,
+        "endRow": 114,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 114,
+          "startCol": 11,
+          "endRow": 114,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 114,
+          "startCol": 17,
+          "endRow": 114,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 114,
+        "startCol": 11,
+        "endRow": 114,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 115,
+          "startCol": 6,
+          "endRow": 115,
+          "endCol": 14
+        },
+        "value": {
+          "type": "number",
+          "value": 2
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 117,
+      "startCol": 2,
+      "endRow": 117,
+      "endCol": 20
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 118,
+      "startCol": 0,
+      "endRow": 118,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 119,
+      "startCol": 2,
+      "endRow": 119,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2c: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 120,
+      "startCol": 16,
+      "endRow": 122,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 120,
+          "startCol": 19,
+          "endRow": 120,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 120,
+          "startCol": 25,
+          "endRow": 120,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 120,
+        "startCol": 19,
+        "endRow": 120,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 120,
+          "startCol": 19,
+          "endRow": 120,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 120,
+          "startCol": 25,
+          "endRow": 120,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 120,
+        "startCol": 19,
+        "endRow": 120,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 121,
+          "startCol": 10,
+          "endRow": 121,
+          "endCol": 18
+        },
+        "value": {
+          "type": "number",
+          "value": 2
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 123,
+      "startCol": 2,
+      "endRow": 123,
+      "endCol": 20
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 124,
+      "startCol": 0,
+      "endRow": 124,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 125,
+      "startCol": 2,
+      "endRow": 125,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2c: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 126,
+      "startCol": 32,
+      "endRow": 128,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 126,
+          "startCol": 35,
+          "endRow": 126,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 126,
+          "startCol": 41,
+          "endRow": 126,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 126,
+        "startCol": 35,
+        "endRow": 126,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 126,
+          "startCol": 35,
+          "endRow": 126,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 126,
+          "startCol": 41,
+          "endRow": 126,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 126,
+        "startCol": 35,
+        "endRow": 126,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 127,
+          "startCol": 18,
+          "endRow": 127,
+          "endCol": 26
+        },
+        "value": {
+          "type": "number",
+          "value": 2
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 129,
+      "startCol": 2,
+      "endRow": 129,
+      "endCol": 20
+    },
+    "name": "math.multiply",
+    "module": "math",
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "number",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 130,
+      "startCol": 0,
+      "endRow": 130,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 131,
+      "startCol": 0,
+      "endRow": 131,
       "endCol": 91
     },
     "trailingBlankLines": 1,
@@ -681,9 +2856,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 38,
+      "startRow": 133,
       "startCol": 0,
-      "endRow": 38,
+      "endRow": 133,
       "endCol": 4
     },
     "name": "clear",
@@ -694,9 +2869,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 39,
+      "startRow": 134,
       "startCol": 0,
-      "endRow": 39,
+      "endRow": 134,
       "endCol": 7
     },
     "name": "repeat",
@@ -714,9 +2889,9 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 40,
+            "startRow": 135,
             "startCol": 2,
-            "endRow": 40,
+            "endRow": 135,
             "endCol": 54
           },
           "name": "log",
@@ -732,9 +2907,9 @@
           "type": "return",
           "lastValue": null,
           "codePos": {
-            "startRow": 41,
+            "startRow": 136,
             "startCol": 2,
-            "endRow": 41,
+            "endRow": 136,
             "endCol": 12
           },
           "value": {
@@ -749,9 +2924,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 43,
+      "startRow": 138,
       "startCol": 0,
-      "endRow": 43,
+      "endRow": 138,
       "endCol": 63
     },
     "trailingBlankLines": 1,
@@ -771,9 +2946,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 45,
+      "startRow": 140,
       "startCol": 0,
-      "endRow": 45,
+      "endRow": 140,
       "endCol": 4
     },
     "name": "clear",
@@ -784,10 +2959,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 46,
+      "startRow": 141,
       "startCol": 0,
-      "endRow": 46,
-      "endCol": 8
+      "endRow": 141,
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -796,15 +2971,150 @@
         "type": "number",
         "value": 5
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 142,
+            "startCol": 2,
+            "endRow": 142,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 2e: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 143,
+            "startCol": 2,
+            "endRow": 145,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 143,
+                "startCol": 5,
+                "endRow": 143,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 143,
+                "startCol": 11,
+                "endRow": 143,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 143,
+              "startCol": 5,
+              "endRow": 143,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 143,
+                "startCol": 5,
+                "endRow": 143,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 143,
+                "startCol": 11,
+                "endRow": 143,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 143,
+              "startCol": 5,
+              "endRow": 143,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 144,
+                "startCol": 4,
+                "endRow": 144,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 146,
+            "startCol": 2,
+            "endRow": 146,
+            "endCol": 11
+          },
+          "name": "add",
+          "module": null,
+          "args": [
+            {
+              "type": "var",
+              "name": "2",
+              "path": []
+            },
+            {
+              "type": "var",
+              "name": "1",
+              "path": []
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 47,
+      "startRow": 148,
       "startCol": 2,
-      "endRow": 47,
+      "endRow": 148,
       "endCol": 37
     },
     "name": "log",
@@ -820,10 +3130,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 48,
-      "startCol": 32,
-      "endRow": 50,
-      "endCol": 20
+      "startRow": 149,
+      "startCol": 2,
+      "endRow": 151,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -833,27 +3143,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 48,
-          "startCol": 35,
-          "endRow": 48,
-          "endCol": 36
+          "startRow": 149,
+          "startCol": 5,
+          "endRow": 149,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 48,
-          "startCol": 41,
-          "endRow": 48,
-          "endCol": 44
+          "startRow": 149,
+          "startCol": 11,
+          "endRow": 149,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 48,
-        "startCol": 35,
-        "endRow": 48,
-        "endCol": 39
+        "startRow": 149,
+        "startCol": 5,
+        "endRow": 149,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -864,27 +3174,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 48,
-          "startCol": 35,
-          "endRow": 48,
-          "endCol": 36
+          "startRow": 149,
+          "startCol": 5,
+          "endRow": 149,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 48,
-          "startCol": 41,
-          "endRow": 48,
-          "endCol": 44
+          "startRow": 149,
+          "startCol": 11,
+          "endRow": 149,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 48,
-        "startCol": 35,
-        "endRow": 48,
-        "endCol": 39
+        "startRow": 149,
+        "startCol": 5,
+        "endRow": 149,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -892,10 +3202,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 49,
-          "startCol": 18,
-          "endRow": 49,
-          "endCol": 26
+          "startRow": 150,
+          "startCol": 4,
+          "endRow": 150,
+          "endCol": 12
         },
         "value": {
           "type": "number",
@@ -908,9 +3218,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 51,
+      "startRow": 152,
       "startCol": 2,
-      "endRow": 51,
+      "endRow": 152,
       "endCol": 11
     },
     "name": "add",
@@ -932,9 +3242,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 52,
+      "startRow": 153,
       "startCol": 0,
-      "endRow": 52,
+      "endRow": 153,
       "endCol": 6
     },
     "name": "endwith",
@@ -945,9 +3255,581 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 53,
+      "startRow": 154,
+      "startCol": 2,
+      "endRow": 154,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2e: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 155,
+      "startCol": 4,
+      "endRow": 157,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 155,
+          "startCol": 7,
+          "endRow": 155,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 155,
+          "startCol": 13,
+          "endRow": 155,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 155,
+        "startCol": 7,
+        "endRow": 155,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 155,
+          "startCol": 7,
+          "endRow": 155,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 155,
+          "startCol": 13,
+          "endRow": 155,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 155,
+        "startCol": 7,
+        "endRow": 155,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 156,
+          "startCol": 4,
+          "endRow": 156,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 158,
+      "startCol": 2,
+      "endRow": 158,
+      "endCol": 11
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "1",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 159,
       "startCol": 0,
-      "endRow": 53,
+      "endRow": 159,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 160,
+      "startCol": 2,
+      "endRow": 160,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2e: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 161,
+      "startCol": 8,
+      "endRow": 163,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 161,
+          "startCol": 11,
+          "endRow": 161,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 161,
+          "startCol": 17,
+          "endRow": 161,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 161,
+        "startCol": 11,
+        "endRow": 161,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 161,
+          "startCol": 11,
+          "endRow": 161,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 161,
+          "startCol": 17,
+          "endRow": 161,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 161,
+        "startCol": 11,
+        "endRow": 161,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 162,
+          "startCol": 6,
+          "endRow": 162,
+          "endCol": 14
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 164,
+      "startCol": 2,
+      "endRow": 164,
+      "endCol": 11
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "1",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 165,
+      "startCol": 0,
+      "endRow": 165,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 166,
+      "startCol": 2,
+      "endRow": 166,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2e: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 167,
+      "startCol": 16,
+      "endRow": 169,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 167,
+          "startCol": 19,
+          "endRow": 167,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 167,
+          "startCol": 25,
+          "endRow": 167,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 167,
+        "startCol": 19,
+        "endRow": 167,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 167,
+          "startCol": 19,
+          "endRow": 167,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 167,
+          "startCol": 25,
+          "endRow": 167,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 167,
+        "startCol": 19,
+        "endRow": 167,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 168,
+          "startCol": 10,
+          "endRow": 168,
+          "endCol": 18
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 170,
+      "startCol": 2,
+      "endRow": 170,
+      "endCol": 11
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "1",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 171,
+      "startCol": 0,
+      "endRow": 171,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 172,
+      "startCol": 2,
+      "endRow": 172,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 2e: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 173,
+      "startCol": 32,
+      "endRow": 175,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 173,
+          "startCol": 35,
+          "endRow": 173,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 173,
+          "startCol": 41,
+          "endRow": 173,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 173,
+        "startCol": 35,
+        "endRow": 173,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 173,
+          "startCol": 35,
+          "endRow": 173,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 173,
+          "startCol": 41,
+          "endRow": 173,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 173,
+        "startCol": 35,
+        "endRow": 173,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 174,
+          "startCol": 18,
+          "endRow": 174,
+          "endCol": 26
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 176,
+      "startCol": 2,
+      "endRow": 176,
+      "endCol": 11
+    },
+    "name": "add",
+    "module": null,
+    "args": [
+      {
+        "type": "var",
+        "name": "2",
+        "path": []
+      },
+      {
+        "type": "var",
+        "name": "1",
+        "path": []
+      }
+    ]
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 177,
+      "startCol": 0,
+      "endRow": 177,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 178,
+      "startCol": 0,
+      "endRow": 178,
       "endCol": 78
     },
     "trailingBlankLines": 1,
@@ -971,18 +3853,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 56,
+      "startRow": 181,
       "startCol": 0,
-      "endRow": 56,
+      "endRow": 181,
       "endCol": 49
     },
     "comments": [
       {
         "text": "Test 21: Repeat with subexpression using $1",
         "codePos": {
-          "startRow": 55,
+          "startRow": 180,
           "startCol": 0,
-          "endRow": 55,
+          "endRow": 180,
           "endCol": 44
         },
         "inline": false
@@ -1001,9 +3883,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 57,
+      "startRow": 182,
       "startCol": 0,
-      "endRow": 57,
+      "endRow": 182,
       "endCol": 4
     },
     "name": "clear",
@@ -1014,9 +3896,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 58,
+      "startRow": 183,
       "startCol": 0,
-      "endRow": 58,
+      "endRow": 183,
       "endCol": 7
     },
     "targetName": "sum",
@@ -1028,9 +3910,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 59,
+      "startRow": 184,
       "startCol": 0,
-      "endRow": 59,
+      "endRow": 184,
       "endCol": 7
     },
     "name": "repeat",
@@ -1048,9 +3930,9 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 60,
+            "startRow": 185,
             "startCol": 2,
-            "endRow": 60,
+            "endRow": 185,
             "endCol": 37
           },
           "name": "log",
@@ -1066,9 +3948,9 @@
           "type": "assignment",
           "lastValue": null,
           "codePos": {
-            "startRow": 62,
+            "startRow": 187,
             "startCol": 2,
-            "endRow": 62,
+            "endRow": 187,
             "endCol": 23
           },
           "targetName": "sum",
@@ -1077,9 +3959,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 62,
+              "startRow": 187,
               "startCol": 9,
-              "endRow": 62,
+              "endRow": 187,
               "endCol": 23
             },
             "name": "_subexpr",
@@ -1092,9 +3974,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 62,
+                      "startRow": 187,
                       "startCol": 11,
-                      "endRow": 62,
+                      "endRow": 187,
                       "endCol": 22
                     },
                     "name": "add",
@@ -1114,9 +3996,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 62,
+                  "startRow": 187,
                   "startCol": 9,
-                  "endRow": 62,
+                  "endRow": 187,
                   "endCol": 23
                 }
               }
@@ -1130,9 +4012,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 64,
+      "startRow": 189,
       "startCol": 0,
-      "endRow": 64,
+      "endRow": 189,
       "endCol": 96
     },
     "trailingBlankLines": 1,
@@ -1158,18 +4040,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 67,
+      "startRow": 192,
       "startCol": 0,
-      "endRow": 67,
+      "endRow": 192,
       "endCol": 46
     },
     "comments": [
       {
         "text": "Test 22: Repeat with $1 used directly and in subexpression",
         "codePos": {
-          "startRow": 66,
+          "startRow": 191,
           "startCol": 0,
-          "endRow": 66,
+          "endRow": 191,
           "endCol": 59
         },
         "inline": false
@@ -1188,9 +4070,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 68,
+      "startRow": 193,
       "startCol": 0,
-      "endRow": 68,
+      "endRow": 193,
       "endCol": 4
     },
     "name": "clear",
@@ -1201,9 +4083,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 69,
+      "startRow": 194,
       "startCol": 0,
-      "endRow": 69,
+      "endRow": 194,
       "endCol": 7
     },
     "name": "repeat",
@@ -1221,9 +4103,9 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 70,
+            "startRow": 195,
             "startCol": 2,
-            "endRow": 70,
+            "endRow": 195,
             "endCol": 37
           },
           "name": "log",
@@ -1239,9 +4121,9 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 71,
+            "startRow": 196,
             "startCol": 2,
-            "endRow": 71,
+            "endRow": 196,
             "endCol": 12
           },
           "name": "log",
@@ -1262,9 +4144,9 @@
           "type": "return",
           "lastValue": null,
           "codePos": {
-            "startRow": 72,
+            "startRow": 197,
             "startCol": 2,
-            "endRow": 72,
+            "endRow": 197,
             "endCol": 20
           },
           "value": {
@@ -1274,9 +4156,9 @@
                 "type": "command",
                 "lastValue": null,
                 "codePos": {
-                  "startRow": 72,
+                  "startRow": 197,
                   "startCol": 11,
-                  "endRow": 72,
+                  "endRow": 197,
                   "endCol": 19
                 },
                 "name": "add",
@@ -1295,9 +4177,9 @@
               }
             ],
             "codePos": {
-              "startRow": 72,
+              "startRow": 197,
               "startCol": 9,
-              "endRow": 72,
+              "endRow": 197,
               "endCol": 20
             }
           }
@@ -1309,18 +4191,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 75,
+      "startRow": 200,
       "startCol": 0,
-      "endRow": 75,
+      "endRow": 200,
       "endCol": 76
     },
     "comments": [
       {
         "text": "Last value should be 6 (from last iteration: add 4 2)",
         "codePos": {
-          "startRow": 74,
+          "startRow": 199,
           "startCol": 0,
-          "endRow": 74,
+          "endRow": 199,
           "endCol": 54
         },
         "inline": false
@@ -1347,18 +4229,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 78,
+      "startRow": 203,
       "startCol": 0,
-      "endRow": 78,
+      "endRow": 203,
       "endCol": 53
     },
     "comments": [
       {
         "text": "Test 23: Repeat with $1 and $2 in subexpression",
         "codePos": {
-          "startRow": 77,
+          "startRow": 202,
           "startCol": 0,
-          "endRow": 77,
+          "endRow": 202,
           "endCol": 48
         },
         "inline": false
@@ -1377,9 +4259,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 79,
+      "startRow": 204,
       "startCol": 0,
-      "endRow": 79,
+      "endRow": 204,
       "endCol": 4
     },
     "name": "clear",
@@ -1390,10 +4272,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 80,
+      "startRow": 205,
       "startCol": 0,
-      "endRow": 80,
-      "endCol": 8
+      "endRow": 205,
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -1402,15 +4284,202 @@
         "type": "number",
         "value": 3
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 206,
+            "startCol": 2,
+            "endRow": 206,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 23: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 207,
+            "startCol": 2,
+            "endRow": 209,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 207,
+                "startCol": 5,
+                "endRow": 207,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 207,
+                "startCol": 11,
+                "endRow": 207,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 207,
+              "startCol": 5,
+              "endRow": 207,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 207,
+                "startCol": 5,
+                "endRow": 207,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 207,
+                "startCol": 11,
+                "endRow": 207,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 207,
+              "startCol": 5,
+              "endRow": 207,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 208,
+                "startCol": 4,
+                "endRow": 208,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 210,
+            "startCol": 2,
+            "endRow": 210,
+            "endCol": 24
+          },
+          "targetName": "result",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 210,
+              "startCol": 12,
+              "endRow": 210,
+              "endCol": 24
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 210,
+                      "startCol": 14,
+                      "endRow": 210,
+                      "endCol": 23
+                    },
+                    "name": "add",
+                    "module": null,
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "1",
+                        "path": []
+                      },
+                      {
+                        "type": "var",
+                        "name": "2",
+                        "path": []
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 210,
+                  "startCol": 12,
+                  "endRow": 210,
+                  "endCol": 24
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 211,
+            "startCol": 2,
+            "endRow": 211,
+            "endCol": 16
+          },
+          "value": {
+            "type": "var",
+            "name": "result",
+            "path": []
+          }
+        }
+      ]
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 81,
+      "startRow": 213,
       "startCol": 2,
-      "endRow": 81,
+      "endRow": 213,
       "endCol": 37
     },
     "name": "log",
@@ -1426,10 +4495,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 82,
-      "startCol": 32,
-      "endRow": 84,
-      "endCol": 20
+      "startRow": 214,
+      "startCol": 2,
+      "endRow": 216,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -1439,27 +4508,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 82,
-          "startCol": 35,
-          "endRow": 82,
-          "endCol": 36
+          "startRow": 214,
+          "startCol": 5,
+          "endRow": 214,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 82,
-          "startCol": 41,
-          "endRow": 82,
-          "endCol": 44
+          "startRow": 214,
+          "startCol": 11,
+          "endRow": 214,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 82,
-        "startCol": 35,
-        "endRow": 82,
-        "endCol": 39
+        "startRow": 214,
+        "startCol": 5,
+        "endRow": 214,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -1470,27 +4539,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 82,
-          "startCol": 35,
-          "endRow": 82,
-          "endCol": 36
+          "startRow": 214,
+          "startCol": 5,
+          "endRow": 214,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 82,
-          "startCol": 41,
-          "endRow": 82,
-          "endCol": 44
+          "startRow": 214,
+          "startCol": 11,
+          "endRow": 214,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 82,
-        "startCol": 35,
-        "endRow": 82,
-        "endCol": 39
+        "startRow": 214,
+        "startCol": 5,
+        "endRow": 214,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -1498,10 +4567,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 83,
-          "startCol": 18,
-          "endRow": 83,
-          "endCol": 26
+          "startRow": 215,
+          "startCol": 4,
+          "endRow": 215,
+          "endCol": 12
         },
         "value": {
           "type": "number",
@@ -1514,9 +4583,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 85,
+      "startRow": 217,
       "startCol": 2,
-      "endRow": 85,
+      "endRow": 217,
       "endCol": 24
     },
     "targetName": "result",
@@ -1525,9 +4594,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 85,
+        "startRow": 217,
         "startCol": 12,
-        "endRow": 85,
+        "endRow": 217,
         "endCol": 24
       },
       "name": "_subexpr",
@@ -1540,9 +4609,9 @@
               "type": "command",
               "lastValue": null,
               "codePos": {
-                "startRow": 85,
+                "startRow": 217,
                 "startCol": 14,
-                "endRow": 85,
+                "endRow": 217,
                 "endCol": 23
               },
               "name": "add",
@@ -1562,9 +4631,9 @@
             }
           ],
           "codePos": {
-            "startRow": 85,
+            "startRow": 217,
             "startCol": 12,
-            "endRow": 85,
+            "endRow": 217,
             "endCol": 24
           }
         }
@@ -1575,9 +4644,9 @@
     "type": "return",
     "lastValue": null,
     "codePos": {
-      "startRow": 86,
+      "startRow": 218,
       "startCol": 2,
-      "endRow": 86,
+      "endRow": 218,
       "endCol": 16
     },
     "value": {
@@ -1590,9 +4659,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 87,
+      "startRow": 219,
       "startCol": 0,
-      "endRow": 87,
+      "endRow": 219,
       "endCol": 6
     },
     "name": "endwith",
@@ -1603,9 +4672,789 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 88,
+      "startRow": 220,
+      "startCol": 2,
+      "endRow": 220,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 23: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 221,
+      "startCol": 4,
+      "endRow": 223,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 221,
+          "startCol": 7,
+          "endRow": 221,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 221,
+          "startCol": 13,
+          "endRow": 221,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 221,
+        "startCol": 7,
+        "endRow": 221,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 221,
+          "startCol": 7,
+          "endRow": 221,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 221,
+          "startCol": 13,
+          "endRow": 221,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 221,
+        "startCol": 7,
+        "endRow": 221,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 222,
+          "startCol": 4,
+          "endRow": 222,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 224,
+      "startCol": 2,
+      "endRow": 224,
+      "endCol": 24
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 224,
+        "startCol": 12,
+        "endRow": 224,
+        "endCol": 24
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 224,
+                "startCol": 14,
+                "endRow": 224,
+                "endCol": 23
+              },
+              "name": "add",
+              "module": null,
+              "args": [
+                {
+                  "type": "var",
+                  "name": "1",
+                  "path": []
+                },
+                {
+                  "type": "var",
+                  "name": "2",
+                  "path": []
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 224,
+            "startCol": 12,
+            "endRow": 224,
+            "endCol": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 225,
+      "startCol": 2,
+      "endRow": 225,
+      "endCol": 16
+    },
+    "value": {
+      "type": "var",
+      "name": "result",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 226,
       "startCol": 0,
-      "endRow": 88,
+      "endRow": 226,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 227,
+      "startCol": 2,
+      "endRow": 227,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 23: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 228,
+      "startCol": 8,
+      "endRow": 230,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 228,
+          "startCol": 11,
+          "endRow": 228,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 228,
+          "startCol": 17,
+          "endRow": 228,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 228,
+        "startCol": 11,
+        "endRow": 228,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 228,
+          "startCol": 11,
+          "endRow": 228,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 228,
+          "startCol": 17,
+          "endRow": 228,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 228,
+        "startCol": 11,
+        "endRow": 228,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 229,
+          "startCol": 6,
+          "endRow": 229,
+          "endCol": 14
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 231,
+      "startCol": 2,
+      "endRow": 231,
+      "endCol": 24
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 231,
+        "startCol": 12,
+        "endRow": 231,
+        "endCol": 24
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 231,
+                "startCol": 14,
+                "endRow": 231,
+                "endCol": 23
+              },
+              "name": "add",
+              "module": null,
+              "args": [
+                {
+                  "type": "var",
+                  "name": "1",
+                  "path": []
+                },
+                {
+                  "type": "var",
+                  "name": "2",
+                  "path": []
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 231,
+            "startCol": 12,
+            "endRow": 231,
+            "endCol": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 232,
+      "startCol": 2,
+      "endRow": 232,
+      "endCol": 16
+    },
+    "value": {
+      "type": "var",
+      "name": "result",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 233,
+      "startCol": 0,
+      "endRow": 233,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 234,
+      "startCol": 2,
+      "endRow": 234,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 23: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 235,
+      "startCol": 16,
+      "endRow": 237,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 235,
+          "startCol": 19,
+          "endRow": 235,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 235,
+          "startCol": 25,
+          "endRow": 235,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 235,
+        "startCol": 19,
+        "endRow": 235,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 235,
+          "startCol": 19,
+          "endRow": 235,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 235,
+          "startCol": 25,
+          "endRow": 235,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 235,
+        "startCol": 19,
+        "endRow": 235,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 236,
+          "startCol": 10,
+          "endRow": 236,
+          "endCol": 18
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 238,
+      "startCol": 2,
+      "endRow": 238,
+      "endCol": 24
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 238,
+        "startCol": 12,
+        "endRow": 238,
+        "endCol": 24
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 238,
+                "startCol": 14,
+                "endRow": 238,
+                "endCol": 23
+              },
+              "name": "add",
+              "module": null,
+              "args": [
+                {
+                  "type": "var",
+                  "name": "1",
+                  "path": []
+                },
+                {
+                  "type": "var",
+                  "name": "2",
+                  "path": []
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 238,
+            "startCol": 12,
+            "endRow": 238,
+            "endCol": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 239,
+      "startCol": 2,
+      "endRow": 239,
+      "endCol": 16
+    },
+    "value": {
+      "type": "var",
+      "name": "result",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 240,
+      "startCol": 0,
+      "endRow": 240,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 241,
+      "startCol": 2,
+      "endRow": 241,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 23: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 242,
+      "startCol": 32,
+      "endRow": 244,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 242,
+          "startCol": 35,
+          "endRow": 242,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 242,
+          "startCol": 41,
+          "endRow": 242,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 242,
+        "startCol": 35,
+        "endRow": 242,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 242,
+          "startCol": 35,
+          "endRow": 242,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 242,
+          "startCol": 41,
+          "endRow": 242,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 242,
+        "startCol": 35,
+        "endRow": 242,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 243,
+          "startCol": 18,
+          "endRow": 243,
+          "endCol": 26
+        },
+        "value": {
+          "type": "number",
+          "value": 0
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 245,
+      "startCol": 2,
+      "endRow": 245,
+      "endCol": 24
+    },
+    "targetName": "result",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 245,
+        "startCol": 12,
+        "endRow": 245,
+        "endCol": 24
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 245,
+                "startCol": 14,
+                "endRow": 245,
+                "endCol": 23
+              },
+              "name": "add",
+              "module": null,
+              "args": [
+                {
+                  "type": "var",
+                  "name": "1",
+                  "path": []
+                },
+                {
+                  "type": "var",
+                  "name": "2",
+                  "path": []
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 245,
+            "startCol": 12,
+            "endRow": 245,
+            "endCol": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 246,
+      "startCol": 2,
+      "endRow": 246,
+      "endCol": 16
+    },
+    "value": {
+      "type": "var",
+      "name": "result",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 247,
+      "startCol": 0,
+      "endRow": 247,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 248,
+      "startCol": 0,
+      "endRow": 248,
       "endCol": 105
     },
     "trailingBlankLines": 1,
@@ -1629,18 +5478,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 91,
+      "startRow": 251,
       "startCol": 0,
-      "endRow": 91,
+      "endRow": 251,
       "endCol": 57
     },
     "comments": [
       {
         "text": "Test 24: Repeat with nested subexpressions using $1",
         "codePos": {
-          "startRow": 90,
+          "startRow": 250,
           "startCol": 0,
-          "endRow": 90,
+          "endRow": 250,
           "endCol": 52
         },
         "inline": false
@@ -1659,9 +5508,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 92,
+      "startRow": 252,
       "startCol": 0,
-      "endRow": 92,
+      "endRow": 252,
       "endCol": 4
     },
     "name": "clear",
@@ -1672,9 +5521,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 93,
+      "startRow": 253,
       "startCol": 0,
-      "endRow": 93,
+      "endRow": 253,
       "endCol": 11
     },
     "targetName": "product",
@@ -1686,10 +5535,10 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 94,
+      "startRow": 254,
       "startCol": 0,
-      "endRow": 94,
-      "endCol": 8
+      "endRow": 254,
+      "endCol": 7
     },
     "name": "repeat",
     "module": null,
@@ -1698,15 +5547,231 @@
         "type": "number",
         "value": 4
       }
-    ]
+    ],
+    "callback": {
+      "type": "do",
+      "body": [
+        {
+          "type": "command",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 255,
+            "startCol": 2,
+            "endRow": 255,
+            "endCol": 37
+          },
+          "name": "log",
+          "module": null,
+          "args": [
+            {
+              "type": "string",
+              "value": "-> Test 24: with block is run"
+            }
+          ]
+        },
+        {
+          "type": "ifBlock",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 256,
+            "startCol": 2,
+            "endRow": 258,
+            "endCol": 6
+          },
+          "condition": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 256,
+                "startCol": 5,
+                "endRow": 256,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 256,
+                "startCol": 11,
+                "endRow": 256,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 256,
+              "startCol": 5,
+              "endRow": 256,
+              "endCol": 9
+            }
+          },
+          "conditionExpr": {
+            "type": "binary",
+            "operator": "==",
+            "left": {
+              "type": "var",
+              "name": "2",
+              "path": [],
+              "codePos": {
+                "startRow": 256,
+                "startCol": 5,
+                "endRow": 256,
+                "endCol": 6
+              }
+            },
+            "right": {
+              "type": "literal",
+              "value": null,
+              "codePos": {
+                "startRow": 256,
+                "startCol": 11,
+                "endRow": 256,
+                "endCol": 14
+              }
+            },
+            "codePos": {
+              "startRow": 256,
+              "startCol": 5,
+              "endRow": 256,
+              "endCol": 9
+            }
+          },
+          "thenBranch": [
+            {
+              "type": "return",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 257,
+                "startCol": 4,
+                "endRow": 257,
+                "endCol": 12
+              },
+              "value": {
+                "type": "number",
+                "value": 1
+              }
+            }
+          ]
+        },
+        {
+          "type": "assignment",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 259,
+            "startCol": 2,
+            "endRow": 259,
+            "endCol": 50
+          },
+          "targetName": "product",
+          "targetPath": [],
+          "command": {
+            "type": "command",
+            "lastValue": null,
+            "codePos": {
+              "startRow": 259,
+              "startCol": 13,
+              "endRow": 259,
+              "endCol": 50
+            },
+            "name": "_subexpr",
+            "module": null,
+            "args": [
+              {
+                "type": "subexpression",
+                "body": [
+                  {
+                    "type": "command",
+                    "lastValue": null,
+                    "codePos": {
+                      "startRow": 259,
+                      "startCol": 15,
+                      "endRow": 259,
+                      "endCol": 49
+                    },
+                    "name": "math.multiply",
+                    "module": "math",
+                    "args": [
+                      {
+                        "type": "var",
+                        "name": "product",
+                        "path": []
+                      },
+                      {
+                        "type": "subexpression",
+                        "body": [
+                          {
+                            "type": "command",
+                            "lastValue": null,
+                            "codePos": {
+                              "startRow": 259,
+                              "startCol": 40,
+                              "endRow": 259,
+                              "endCol": 48
+                            },
+                            "name": "add",
+                            "module": null,
+                            "args": [
+                              {
+                                "type": "var",
+                                "name": "1",
+                                "path": []
+                              },
+                              {
+                                "type": "number",
+                                "value": 1
+                              }
+                            ]
+                          }
+                        ],
+                        "codePos": {
+                          "startRow": 259,
+                          "startCol": 38,
+                          "endRow": 259,
+                          "endCol": 49
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "codePos": {
+                  "startRow": 259,
+                  "startCol": 13,
+                  "endRow": 259,
+                  "endCol": 50
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "return",
+          "lastValue": null,
+          "codePos": {
+            "startRow": 260,
+            "startCol": 2,
+            "endRow": 260,
+            "endCol": 17
+          },
+          "value": {
+            "type": "var",
+            "name": "product",
+            "path": []
+          }
+        }
+      ]
+    }
   },
   {
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 95,
+      "startRow": 262,
       "startCol": 2,
-      "endRow": 95,
+      "endRow": 262,
       "endCol": 37
     },
     "name": "log",
@@ -1722,10 +5787,10 @@
     "type": "ifBlock",
     "lastValue": null,
     "codePos": {
-      "startRow": 96,
-      "startCol": 32,
-      "endRow": 98,
-      "endCol": 20
+      "startRow": 263,
+      "startCol": 2,
+      "endRow": 265,
+      "endCol": 6
     },
     "condition": {
       "type": "binary",
@@ -1735,27 +5800,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 96,
-          "startCol": 35,
-          "endRow": 96,
-          "endCol": 36
+          "startRow": 263,
+          "startCol": 5,
+          "endRow": 263,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 96,
-          "startCol": 41,
-          "endRow": 96,
-          "endCol": 44
+          "startRow": 263,
+          "startCol": 11,
+          "endRow": 263,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 96,
-        "startCol": 35,
-        "endRow": 96,
-        "endCol": 39
+        "startRow": 263,
+        "startCol": 5,
+        "endRow": 263,
+        "endCol": 9
       }
     },
     "conditionExpr": {
@@ -1766,27 +5831,27 @@
         "name": "2",
         "path": [],
         "codePos": {
-          "startRow": 96,
-          "startCol": 35,
-          "endRow": 96,
-          "endCol": 36
+          "startRow": 263,
+          "startCol": 5,
+          "endRow": 263,
+          "endCol": 6
         }
       },
       "right": {
         "type": "literal",
         "value": null,
         "codePos": {
-          "startRow": 96,
-          "startCol": 41,
-          "endRow": 96,
-          "endCol": 44
+          "startRow": 263,
+          "startCol": 11,
+          "endRow": 263,
+          "endCol": 14
         }
       },
       "codePos": {
-        "startRow": 96,
-        "startCol": 35,
-        "endRow": 96,
-        "endCol": 39
+        "startRow": 263,
+        "startCol": 5,
+        "endRow": 263,
+        "endCol": 9
       }
     },
     "thenBranch": [
@@ -1794,10 +5859,10 @@
         "type": "return",
         "lastValue": null,
         "codePos": {
-          "startRow": 97,
-          "startCol": 18,
-          "endRow": 97,
-          "endCol": 26
+          "startRow": 264,
+          "startCol": 4,
+          "endRow": 264,
+          "endCol": 12
         },
         "value": {
           "type": "number",
@@ -1810,9 +5875,9 @@
     "type": "assignment",
     "lastValue": null,
     "codePos": {
-      "startRow": 99,
+      "startRow": 266,
       "startCol": 2,
-      "endRow": 99,
+      "endRow": 266,
       "endCol": 50
     },
     "targetName": "product",
@@ -1821,9 +5886,9 @@
       "type": "command",
       "lastValue": null,
       "codePos": {
-        "startRow": 99,
+        "startRow": 266,
         "startCol": 13,
-        "endRow": 99,
+        "endRow": 266,
         "endCol": 50
       },
       "name": "_subexpr",
@@ -1836,9 +5901,9 @@
               "type": "command",
               "lastValue": null,
               "codePos": {
-                "startRow": 99,
+                "startRow": 266,
                 "startCol": 15,
-                "endRow": 99,
+                "endRow": 266,
                 "endCol": 49
               },
               "name": "math.multiply",
@@ -1856,9 +5921,9 @@
                       "type": "command",
                       "lastValue": null,
                       "codePos": {
-                        "startRow": 99,
+                        "startRow": 266,
                         "startCol": 40,
-                        "endRow": 99,
+                        "endRow": 266,
                         "endCol": 48
                       },
                       "name": "add",
@@ -1877,9 +5942,9 @@
                     }
                   ],
                   "codePos": {
-                    "startRow": 99,
+                    "startRow": 266,
                     "startCol": 38,
-                    "endRow": 99,
+                    "endRow": 266,
                     "endCol": 49
                   }
                 }
@@ -1887,9 +5952,9 @@
             }
           ],
           "codePos": {
-            "startRow": 99,
+            "startRow": 266,
             "startCol": 13,
-            "endRow": 99,
+            "endRow": 266,
             "endCol": 50
           }
         }
@@ -1900,9 +5965,9 @@
     "type": "return",
     "lastValue": null,
     "codePos": {
-      "startRow": 100,
+      "startRow": 267,
       "startCol": 2,
-      "endRow": 100,
+      "endRow": 267,
       "endCol": 17
     },
     "value": {
@@ -1915,9 +5980,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 101,
+      "startRow": 268,
       "startCol": 0,
-      "endRow": 101,
+      "endRow": 268,
       "endCol": 6
     },
     "name": "endwith",
@@ -1928,9 +5993,905 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 102,
+      "startRow": 269,
+      "startCol": 2,
+      "endRow": 269,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 24: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 270,
+      "startCol": 4,
+      "endRow": 272,
+      "endCol": 6
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 270,
+          "startCol": 7,
+          "endRow": 270,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 270,
+          "startCol": 13,
+          "endRow": 270,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 270,
+        "startCol": 7,
+        "endRow": 270,
+        "endCol": 11
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 270,
+          "startCol": 7,
+          "endRow": 270,
+          "endCol": 8
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 270,
+          "startCol": 13,
+          "endRow": 270,
+          "endCol": 16
+        }
+      },
+      "codePos": {
+        "startRow": 270,
+        "startCol": 7,
+        "endRow": 270,
+        "endCol": 11
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 271,
+          "startCol": 4,
+          "endRow": 271,
+          "endCol": 12
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 273,
+      "startCol": 2,
+      "endRow": 273,
+      "endCol": 50
+    },
+    "targetName": "product",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 273,
+        "startCol": 13,
+        "endRow": 273,
+        "endCol": 50
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 273,
+                "startCol": 15,
+                "endRow": 273,
+                "endCol": 49
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "product",
+                  "path": []
+                },
+                {
+                  "type": "subexpression",
+                  "body": [
+                    {
+                      "type": "command",
+                      "lastValue": null,
+                      "codePos": {
+                        "startRow": 273,
+                        "startCol": 40,
+                        "endRow": 273,
+                        "endCol": 48
+                      },
+                      "name": "add",
+                      "module": null,
+                      "args": [
+                        {
+                          "type": "var",
+                          "name": "1",
+                          "path": []
+                        },
+                        {
+                          "type": "number",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "codePos": {
+                    "startRow": 273,
+                    "startCol": 38,
+                    "endRow": 273,
+                    "endCol": 49
+                  }
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 273,
+            "startCol": 13,
+            "endRow": 273,
+            "endCol": 50
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 274,
+      "startCol": 2,
+      "endRow": 274,
+      "endCol": 17
+    },
+    "value": {
+      "type": "var",
+      "name": "product",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 275,
       "startCol": 0,
-      "endRow": 102,
+      "endRow": 275,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 276,
+      "startCol": 2,
+      "endRow": 276,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 24: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 277,
+      "startCol": 8,
+      "endRow": 279,
+      "endCol": 8
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 277,
+          "startCol": 11,
+          "endRow": 277,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 277,
+          "startCol": 17,
+          "endRow": 277,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 277,
+        "startCol": 11,
+        "endRow": 277,
+        "endCol": 15
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 277,
+          "startCol": 11,
+          "endRow": 277,
+          "endCol": 12
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 277,
+          "startCol": 17,
+          "endRow": 277,
+          "endCol": 20
+        }
+      },
+      "codePos": {
+        "startRow": 277,
+        "startCol": 11,
+        "endRow": 277,
+        "endCol": 15
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 278,
+          "startCol": 6,
+          "endRow": 278,
+          "endCol": 14
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 280,
+      "startCol": 2,
+      "endRow": 280,
+      "endCol": 50
+    },
+    "targetName": "product",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 280,
+        "startCol": 13,
+        "endRow": 280,
+        "endCol": 50
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 280,
+                "startCol": 15,
+                "endRow": 280,
+                "endCol": 49
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "product",
+                  "path": []
+                },
+                {
+                  "type": "subexpression",
+                  "body": [
+                    {
+                      "type": "command",
+                      "lastValue": null,
+                      "codePos": {
+                        "startRow": 280,
+                        "startCol": 40,
+                        "endRow": 280,
+                        "endCol": 48
+                      },
+                      "name": "add",
+                      "module": null,
+                      "args": [
+                        {
+                          "type": "var",
+                          "name": "1",
+                          "path": []
+                        },
+                        {
+                          "type": "number",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "codePos": {
+                    "startRow": 280,
+                    "startCol": 38,
+                    "endRow": 280,
+                    "endCol": 49
+                  }
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 280,
+            "startCol": 13,
+            "endRow": 280,
+            "endCol": 50
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 281,
+      "startCol": 2,
+      "endRow": 281,
+      "endCol": 17
+    },
+    "value": {
+      "type": "var",
+      "name": "product",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 282,
+      "startCol": 0,
+      "endRow": 282,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 283,
+      "startCol": 2,
+      "endRow": 283,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 24: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 284,
+      "startCol": 16,
+      "endRow": 286,
+      "endCol": 12
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 284,
+          "startCol": 19,
+          "endRow": 284,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 284,
+          "startCol": 25,
+          "endRow": 284,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 284,
+        "startCol": 19,
+        "endRow": 284,
+        "endCol": 23
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 284,
+          "startCol": 19,
+          "endRow": 284,
+          "endCol": 20
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 284,
+          "startCol": 25,
+          "endRow": 284,
+          "endCol": 28
+        }
+      },
+      "codePos": {
+        "startRow": 284,
+        "startCol": 19,
+        "endRow": 284,
+        "endCol": 23
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 285,
+          "startCol": 10,
+          "endRow": 285,
+          "endCol": 18
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 287,
+      "startCol": 2,
+      "endRow": 287,
+      "endCol": 50
+    },
+    "targetName": "product",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 287,
+        "startCol": 13,
+        "endRow": 287,
+        "endCol": 50
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 287,
+                "startCol": 15,
+                "endRow": 287,
+                "endCol": 49
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "product",
+                  "path": []
+                },
+                {
+                  "type": "subexpression",
+                  "body": [
+                    {
+                      "type": "command",
+                      "lastValue": null,
+                      "codePos": {
+                        "startRow": 287,
+                        "startCol": 40,
+                        "endRow": 287,
+                        "endCol": 48
+                      },
+                      "name": "add",
+                      "module": null,
+                      "args": [
+                        {
+                          "type": "var",
+                          "name": "1",
+                          "path": []
+                        },
+                        {
+                          "type": "number",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "codePos": {
+                    "startRow": 287,
+                    "startCol": 38,
+                    "endRow": 287,
+                    "endCol": 49
+                  }
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 287,
+            "startCol": 13,
+            "endRow": 287,
+            "endCol": 50
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 288,
+      "startCol": 2,
+      "endRow": 288,
+      "endCol": 17
+    },
+    "value": {
+      "type": "var",
+      "name": "product",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 289,
+      "startCol": 0,
+      "endRow": 289,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 290,
+      "startCol": 2,
+      "endRow": 290,
+      "endCol": 37
+    },
+    "name": "log",
+    "module": null,
+    "args": [
+      {
+        "type": "string",
+        "value": "-> Test 24: with block is run"
+      }
+    ]
+  },
+  {
+    "type": "ifBlock",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 291,
+      "startCol": 32,
+      "endRow": 293,
+      "endCol": 20
+    },
+    "condition": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 291,
+          "startCol": 35,
+          "endRow": 291,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 291,
+          "startCol": 41,
+          "endRow": 291,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 291,
+        "startCol": 35,
+        "endRow": 291,
+        "endCol": 39
+      }
+    },
+    "conditionExpr": {
+      "type": "binary",
+      "operator": "==",
+      "left": {
+        "type": "var",
+        "name": "2",
+        "path": [],
+        "codePos": {
+          "startRow": 291,
+          "startCol": 35,
+          "endRow": 291,
+          "endCol": 36
+        }
+      },
+      "right": {
+        "type": "literal",
+        "value": null,
+        "codePos": {
+          "startRow": 291,
+          "startCol": 41,
+          "endRow": 291,
+          "endCol": 44
+        }
+      },
+      "codePos": {
+        "startRow": 291,
+        "startCol": 35,
+        "endRow": 291,
+        "endCol": 39
+      }
+    },
+    "thenBranch": [
+      {
+        "type": "return",
+        "lastValue": null,
+        "codePos": {
+          "startRow": 292,
+          "startCol": 18,
+          "endRow": 292,
+          "endCol": 26
+        },
+        "value": {
+          "type": "number",
+          "value": 1
+        }
+      }
+    ]
+  },
+  {
+    "type": "assignment",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 294,
+      "startCol": 2,
+      "endRow": 294,
+      "endCol": 50
+    },
+    "targetName": "product",
+    "targetPath": [],
+    "command": {
+      "type": "command",
+      "lastValue": null,
+      "codePos": {
+        "startRow": 294,
+        "startCol": 13,
+        "endRow": 294,
+        "endCol": 50
+      },
+      "name": "_subexpr",
+      "module": null,
+      "args": [
+        {
+          "type": "subexpression",
+          "body": [
+            {
+              "type": "command",
+              "lastValue": null,
+              "codePos": {
+                "startRow": 294,
+                "startCol": 15,
+                "endRow": 294,
+                "endCol": 49
+              },
+              "name": "math.multiply",
+              "module": "math",
+              "args": [
+                {
+                  "type": "var",
+                  "name": "product",
+                  "path": []
+                },
+                {
+                  "type": "subexpression",
+                  "body": [
+                    {
+                      "type": "command",
+                      "lastValue": null,
+                      "codePos": {
+                        "startRow": 294,
+                        "startCol": 40,
+                        "endRow": 294,
+                        "endCol": 48
+                      },
+                      "name": "add",
+                      "module": null,
+                      "args": [
+                        {
+                          "type": "var",
+                          "name": "1",
+                          "path": []
+                        },
+                        {
+                          "type": "number",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "codePos": {
+                    "startRow": 294,
+                    "startCol": 38,
+                    "endRow": 294,
+                    "endCol": 49
+                  }
+                }
+              ]
+            }
+          ],
+          "codePos": {
+            "startRow": 294,
+            "startCol": 13,
+            "endRow": 294,
+            "endCol": 50
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "return",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 295,
+      "startCol": 2,
+      "endRow": 295,
+      "endCol": 17
+    },
+    "value": {
+      "type": "var",
+      "name": "product",
+      "path": []
+    }
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 296,
+      "startCol": 0,
+      "endRow": 296,
+      "endCol": 6
+    },
+    "name": "endwith",
+    "module": null,
+    "args": []
+  },
+  {
+    "type": "command",
+    "lastValue": null,
+    "codePos": {
+      "startRow": 297,
+      "startCol": 0,
+      "endRow": 297,
       "endCol": 103
     },
     "trailingBlankLines": 1,
@@ -1956,18 +6917,18 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 105,
+      "startRow": 300,
       "startCol": 0,
-      "endRow": 105,
+      "endRow": 300,
       "endCol": 60
     },
     "comments": [
       {
         "text": "Test 25: Repeat with multi-line subexpression using $1",
         "codePos": {
-          "startRow": 104,
+          "startRow": 299,
           "startCol": 0,
-          "endRow": 104,
+          "endRow": 299,
           "endCol": 55
         },
         "inline": false
@@ -1986,9 +6947,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 106,
+      "startRow": 301,
       "startCol": 0,
-      "endRow": 106,
+      "endRow": 301,
       "endCol": 4
     },
     "name": "clear",
@@ -1999,9 +6960,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 107,
+      "startRow": 302,
       "startCol": 0,
-      "endRow": 107,
+      "endRow": 302,
       "endCol": 7
     },
     "name": "repeat",
@@ -2019,9 +6980,9 @@
           "type": "command",
           "lastValue": null,
           "codePos": {
-            "startRow": 108,
+            "startRow": 303,
             "startCol": 2,
-            "endRow": 108,
+            "endRow": 303,
             "endCol": 37
           },
           "name": "log",
@@ -2037,9 +6998,9 @@
           "type": "assignment",
           "lastValue": null,
           "codePos": {
-            "startRow": 109,
+            "startRow": 304,
             "startCol": 2,
-            "endRow": 112,
+            "endRow": 307,
             "endCol": 3
           },
           "targetName": "result",
@@ -2048,9 +7009,9 @@
             "type": "command",
             "lastValue": null,
             "codePos": {
-              "startRow": 109,
+              "startRow": 304,
               "startCol": 12,
-              "endRow": 112,
+              "endRow": 307,
               "endCol": 3
             },
             "name": "_subexpr",
@@ -2063,9 +7024,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 110,
+                      "startRow": 305,
                       "startCol": 4,
-                      "endRow": 110,
+                      "endRow": 305,
                       "endCol": 12
                     },
                     "name": "add",
@@ -2086,9 +7047,9 @@
                     "type": "command",
                     "lastValue": null,
                     "codePos": {
-                      "startRow": 111,
+                      "startRow": 306,
                       "startCol": 4,
-                      "endRow": 111,
+                      "endRow": 306,
                       "endCol": 21
                     },
                     "name": "math.multiply",
@@ -2105,9 +7066,9 @@
                   }
                 ],
                 "codePos": {
-                  "startRow": 109,
+                  "startRow": 304,
                   "startCol": 12,
-                  "endRow": 112,
+                  "endRow": 307,
                   "endCol": 3
                 }
               }
@@ -2118,9 +7079,9 @@
           "type": "return",
           "lastValue": null,
           "codePos": {
-            "startRow": 113,
+            "startRow": 308,
             "startCol": 2,
-            "endRow": 113,
+            "endRow": 308,
             "endCol": 16
           },
           "value": {
@@ -2136,9 +7097,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 115,
+      "startRow": 310,
       "startCol": 0,
-      "endRow": 115,
+      "endRow": 310,
       "endCol": 105
     },
     "trailingBlankLines": 1,
@@ -2162,9 +7123,9 @@
     "type": "command",
     "lastValue": null,
     "codePos": {
-      "startRow": 117,
+      "startRow": 312,
       "startCol": 0,
-      "endRow": 117,
+      "endRow": 312,
       "endCol": 44
     },
     "name": "log",

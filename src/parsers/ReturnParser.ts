@@ -38,9 +38,6 @@ export function parseReturn(
     // Consume 'return' keyword
     stream.next();
 
-    // Skip only comments (not newlines - newlines indicate end of statement)
-    skipCommentsOnly(stream);
-
     // Check if there's a value to return
     const nextToken = stream.current();
     if (!nextToken) {
@@ -53,7 +50,7 @@ export function parseReturn(
     }
 
     // Check if we're at end of line (return without value)
-    if (nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF) {
+    if (nextToken.kind === TokenKind.NEWLINE || nextToken.kind === TokenKind.EOF || nextToken.kind === TokenKind.COMMENT) {
         // return without value - returns null
         return {
             type: 'return',
@@ -222,23 +219,4 @@ function parseReturnValue(stream: TokenStream, context: ReturnParserContext): Ar
     }
 
     throw new Error(`Unexpected token in return value: ${token.kind} '${token.text}' at line ${token.line}, column ${token.column}`);
-}
-
-
-/**
- * Skip only comments (not newlines - newlines indicate end of statement)
- */
-function skipCommentsOnly(stream: TokenStream): void {
-    while (!stream.isAtEnd()) {
-        const token = stream.current();
-        if (!token) break;
-        
-        if (token.kind === TokenKind.COMMENT) {
-            stream.next();
-            continue;
-        }
-        
-        // Don't skip newlines - they indicate the end of the return statement
-        break;
-    }
 }
