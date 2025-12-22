@@ -386,6 +386,27 @@ export class Parser {
         const token = stream.current();
         if (!token) return null;
 
+        // Check for fences (Prompt, Chunk)
+        // Note: Cell blocks are async, so they are not supported in synchronous parseStatementFromStream
+        const lines = this.source.split('\n');
+        const lineIndex = token.line - 1;
+        if (lineIndex >= 0 && lineIndex < lines.length) {
+            const rawLine = lines[lineIndex];
+            // Only check if it looks like a fence to avoid unnecessary classification
+            if (rawLine.trim().startsWith('---')) {
+                const fenceClass = classifyFenceLine(rawLine);
+                
+                if (fenceClass) {
+                    if (fenceClass.kind === 'prompt_fence') {
+                        return parsePromptBlock(stream, this.source);
+                    } else if (fenceClass.kind === 'chunk_marker') {
+                        return parseChunkMarker(stream, this.source);
+                    }
+                    // cell_open is async, can't handle here easily yet
+                }
+            }
+        }
+
         // Check for variable assignment
         if (token.kind === TokenKind.VARIABLE) {
             let offset = 1;

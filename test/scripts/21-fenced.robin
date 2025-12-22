@@ -84,3 +84,58 @@ Line 3
 }
 ---end---
 
+# Test 14: Prompt block inside if statement
+$name = "Ryan"
+$ryan = "Ryan Lee"
+$say = "Hello"
+
+if $name == "Ryan" then
+  ---
+  This person is $ryan and he wants to say:
+  $say 
+  ---
+  log "Inside if block after prompt"
+endif
+
+# Test 15: Chunk marker inside if statement (should act as regular statement node)
+if true then
+  --- chunk:inner_chunk ---
+  log "Inside chunk in if"
+endif
+
+# Test 16: Prompt block inside function definition
+def myFunction $p1
+  log "Start function"
+  ---
+  Prompt with param: $p1
+  ---
+  log "End function"
+enddef
+
+myFunction "test_param"
+
+# Test 17: Prompt block inside loop
+for $i in [1, 2]
+  ---
+  Iteration: $i
+  ---
+endfor
+
+# Test 18: Prompt block inside do block
+do
+  $local = "secret"
+  ---
+  Confidential: $local
+  ---
+enddo
+
+# Test 19: Nested prompt block with indentation
+if true then
+  if true then
+    ---
+    Deeply nested prompt
+    with indentation
+    ---
+    log "Deep log"
+  endif
+endif
