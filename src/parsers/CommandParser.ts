@@ -282,7 +282,7 @@ export class CommandParser {
                 const token = stream.current();
                 if (!token) break;
                 if (token.kind === TokenKind.EOF || token.kind === TokenKind.NEWLINE) break;
-                if (token.line !== startLineNum) break;
+                if (token.line !== startLineNum && !token.isContinuation) break;
                 if (token.kind === TokenKind.COMMENT) {
                     stream.next();
                     continue;
@@ -297,6 +297,8 @@ export class CommandParser {
                     } else {
                         args.push(argResult.arg);
                     }
+                    // Update lastCommandToken to the token just consumed
+                    lastCommandToken = stream.peek(-1) || lastCommandToken;
                 } else {
                     stream.next();
                 }
@@ -441,11 +443,9 @@ export class CommandParser {
                     break;
                 }
 
-                if (token.line !== startLineNum && !justFinishedMultilineConstruct) {
+                if (token.line !== startLineNum && !justFinishedMultilineConstruct && !token.isContinuation) {
                     break;
                 }
-
-                const tokenBeforeArg = stream.current();
                 
                 const argResult = this.parseArgument(stream, context);
                 if (argResult) {
@@ -454,9 +454,9 @@ export class CommandParser {
                     } else {
                         args.push(argResult.arg);
                     }
-                    if (tokenBeforeArg && tokenBeforeArg.line === startLineNum) {
-                        lastCommandToken = tokenBeforeArg;
-                    }
+                    // Update lastCommandToken to the token just consumed
+                    lastCommandToken = stream.peek(-1) || lastCommandToken;
+                    
                     justFinishedMultilineConstruct = argResult.arg.type === 'object' || 
                                                      argResult.arg.type === 'array' ||
                                                      argResult.arg.type === 'subexpression';

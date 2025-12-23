@@ -480,50 +480,14 @@ export class PatchPlanner {
         
         // Node has changed - regenerate but preserve indentation
         const nodeCode = this.generateCodeWithPreservedIndentation(node, range);
-            // Check if this is the last node in the file
-            const scriptLength = this.originalScript.length;
-            const isLastNode = range.endOffset >= scriptLength;
             
-            // Try to use trailingBlankLines from the node first (before falling back to preserveBlankLinesInRange)
-            const nodeTrailingBlankLines = (node as any).trailingBlankLines;
-            let blankLines = '';
-            if (nodeTrailingBlankLines !== undefined && nodeTrailingBlankLines !== null) {
-                // For the last node, check if the original file had a trailing newline
-                if (isLastNode) {
-                    const originalEndsWithNewline = this.originalScript.endsWith('\n');
-                    // If original doesn't end with newline, don't add trailing blank lines
-                    if (!originalEndsWithNewline) {
-                        blankLines = '';
-                    } else if (nodeTrailingBlankLines === 1) {
-                        // Original ends with newline and trailingBlankLines=1 means the newline is already in the range
-                        blankLines = '';
-                    } else {
-                        // Original ends with newline and trailingBlankLines > 1 means there were extra blank lines
-                        // But since it's the last node, we should only preserve what was there
-                        // The range already includes the newline, so we add (trailingBlankLines - 2) more
-                        blankLines =  '\n'.repeat(nodeTrailingBlankLines - 2) + '\n';
-                    }
-                } else {
-                    // Not the last node - add trailing blank lines normally
-                    // Return: newline + comment + remaining blank lines
-                    if (nodeTrailingBlankLines === 1) {
-                        blankLines = '\n';
-                    } else {
-                        blankLines = '\n'.repeat(nodeTrailingBlankLines - 1) + '\n';
-                    }
-                }
-            } else {
-                // No trailingBlankLines set - this means there are no blank lines after this statement
-                // Don't include any blank lines from the range, even if they're there
-                // (They might belong to the next statement or be incorrectly included)
-                blankLines = '';
-            }
+        // Preserve blank lines that were included in the range
+        // Use shared method which handles fallback to original AST for trailingBlankLines
+        const blankLines = this.preserveBlankLinesInRange(node, range);
             
-            // The generated code should already end with a newline
-            // We only need to add the blank lines (which are additional newlines)
-            // So if blankLines is "\n\n", that means 2 blank lines after the node's line
-            // Note: preserveBlankLinesInRange already includes trace comments, so we just append
-            return (nodeCode || '') + blankLines;
+        // The generated code should already end with a newline
+        // We only need to add the blank lines (which are additional newlines)
+        return (nodeCode || '') + blankLines;
     }
 
     /**
@@ -1155,7 +1119,7 @@ export class PatchPlanner {
     }
 
     /**
-     * Compare two nodes to see if they're equal (ignoring codePos)
+     * Compare two nodes to see if they're equal (ignoring codePos and metadata)
      */
     private nodesAreEqual(node1: Statement, node2: Statement): boolean {
         // Quick type check
@@ -1172,22 +1136,65 @@ export class PatchPlanner {
             'lineNumber',        // Derived from codePos
             'comments',          // Comments are handled separately
             'literalValueType',  // Added by serializeStatement for assignments
-            'hasThen',           // ifBlock syntax variant
             'operatorText',      // Expression original operator text
             'parenthesized',     // Expression was in parentheses
-            'conditionExpr'      // Duplicate of condition added by serializeStatement
+            'conditionExpr',     // Duplicate of condition added by serializeStatement
+            'keywordPos',        // Pos of elseif/else keywords (metadata)
+            'elseKeywordPos',    // Pos of else keyword (metadata)
+            'bodyPos',           // Pos of block body (metadata)
+            'openPos',           // Pos of block opening (metadata)
+            'closePos',          // Pos of block closing (metadata)
+            'headerPos',         // Pos of cell header (metadata)
+            'hasThen',           // ifBlock syntax variant (metadata for equality)
+            'elseHasThen'        // else branch syntax variant (metadata for equality)
         ]);
         
-        const node1Str = JSON.stringify(node1, (key, value) => {
-            if (ignoreKeys.has(key)) return undefined;
-            return value;
-        });
-        const node2Str = JSON.stringify(node2, (key, value) => {
-            if (ignoreKeys.has(key)) return undefined;
-            return value;
-        });
+        const compare = (v1: any, v2: any): boolean => {
+            // Primitive equality
+            if (v1 === v2) return true;
+            
+            // Handle null/undefined mismatch
+            if (v1 === null && v2 !== null) return false;
+            if (v1 !== null && v2 === null) return false;
+            if (v1 === undefined && v2 !== undefined) return false;
+            if (v1 !== undefined && v2 === undefined) return false;
+            
+            // Type mismatch
+            if (typeof v1 !== typeof v2) return false;
+            
+            // Primitive types that aren't equal (already checked ===)
+            if (typeof v1 !== 'object') return false;
+            
+            // Array comparison
+            if (Array.isArray(v1) !== Array.isArray(v2)) return false;
+            if (Array.isArray(v1)) {
+                if (v1.length !== v2.length) return false;
+                for (let i = 0; i < v1.length; i++) {
+                    if (!compare(v1[i], v2[i])) return false;
+                }
+                return true;
+            }
+            
+            // Object comparison
+            const keys1 = Object.keys(v1).filter(k => !ignoreKeys.has(k));
+            const keys2 = Object.keys(v2).filter(k => !ignoreKeys.has(k));
+            
+            if (keys1.length !== keys2.length) return false;
+            
+            // Sort keys to ensure consistent order isn't required (though we check inclusion)
+            // Checking inclusion and value is enough
+            for (const key of keys1) {
+                // Determine the corresponding key in v2
+                // Usually it's the same key
+                if (!Object.prototype.hasOwnProperty.call(v2, key)) return false;
+                
+                if (!compare(v1[key], v2[key])) return false;
+            }
+            
+            return true;
+        };
 
-        return node1Str === node2Str;
+        return compare(node1, node2);
     }
 
     /**

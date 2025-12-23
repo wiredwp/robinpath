@@ -214,8 +214,10 @@ function parseIfBlock(
     hasThen?: boolean
 ): IfBlock {
     const thenBranch: Statement[] = [];
-    const elseifBranches: Array<{ condition: Expression; body: Statement[] }> = [];
+    const elseifBranches: Array<{ condition: Expression; body: Statement[]; hasThen?: boolean; keywordPos?: CodePosition }> = [];
     let elseBranch: Statement[] | undefined;
+    let elseHasThen = false;
+    let elseKeywordPos: CodePosition | undefined;
     let endToken = ifToken;
     const usedThenKeyword = hasThen === true;
 
@@ -237,12 +239,23 @@ function parseIfBlock(
 
         // Check for elseif
         if (token.kind === TokenKind.KEYWORD && token.text === 'elseif') {
+            const elseifKeywordToken = token;
             stream.next(); // consume 'elseif'
             stream.skipWhitespaceAndComments();
             
             // Parse elseif condition
             const elseifCondition = parseConditionExpression(stream, context);
             
+            // Check for 'then' after elseif condition
+            let elseifHasThen = false;
+            // Skip all whitespace and comments between condition and 'then'
+            stream.skipWhitespaceAndComments();
+            
+            if (stream.current()?.kind === TokenKind.KEYWORD && stream.current()?.text === 'then') {
+                elseifHasThen = true;
+                stream.next(); // consume 'then'
+            }
+
             // Parse elseif body
             stream.skipWhitespaceAndComments();
             if (stream.current()?.kind === TokenKind.NEWLINE) {
@@ -296,14 +309,27 @@ function parseIfBlock(
                 }
             }
             
-            elseifBranches.push({ condition: elseifCondition, body: elseifBody });
+            elseifBranches.push({ 
+                condition: elseifCondition, 
+                body: elseifBody, 
+                hasThen: elseifHasThen,
+                keywordPos: context.createCodePosition(elseifKeywordToken, elseifKeywordToken)
+            });
             continue;
         }
 
         // Check for else
         if (token.kind === TokenKind.KEYWORD && token.text === 'else') {
+            const elseKeywordToken = token;
             stream.next(); // consume 'else'
             stream.skipWhitespaceAndComments();
+            
+            // Check for 'then' after else
+            if (stream.current()?.kind === TokenKind.KEYWORD && stream.current()?.text === 'then') {
+                elseHasThen = true;
+                stream.next(); // consume 'then'
+            }
+
             if (stream.current()?.kind === TokenKind.NEWLINE) {
                 stream.next(); // consume newline
             }
@@ -356,6 +382,8 @@ function parseIfBlock(
                     stream.next();
                 }
             }
+
+            elseKeywordPos = context.createCodePosition(elseKeywordToken, elseKeywordToken);
             continue;
         }
 
@@ -543,6 +571,14 @@ function parseIfBlock(
 
     if (elseBranch) {
         result.elseBranch = elseBranch;
+    }
+
+    if (elseHasThen) {
+        result.elseHasThen = true;
+    }
+
+    if (elseKeywordPos) {
+        result.elseKeywordPos = elseKeywordPos;
     }
 
     // Attach decorators if provided

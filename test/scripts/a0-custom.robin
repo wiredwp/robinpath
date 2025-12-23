@@ -22,7 +22,3 @@ $say
 endif
 
 log "hello" $
-
-
-
-

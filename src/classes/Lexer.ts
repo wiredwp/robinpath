@@ -97,8 +97,9 @@ export interface Token {
     kind: TokenKind;
     text: string;           // Original text from source
     line: number;           // 1-based line number
-    column: number;         // 0-based column offset
-    value?: any;            // Parsed value for literals (number, boolean, string content)
+    column: number;         // 0-based column number
+    value?: any;            // Parsed value (for literals)
+    isContinuation?: boolean; // True if this token follows a backslash line continuation
 }
 
 /**
@@ -129,7 +130,12 @@ export class Lexer {
         
         // Helper to create a token
         const makeToken = (kind: TokenKind, text: string, startLine: number, startCol: number, value?: any): Token => {
-            return { kind, text, line: startLine, column: startCol, value };
+            const token: Token = { kind, text, line: startLine, column: startCol, value };
+            if (isNextTokenContinuation) {
+                token.isContinuation = true;
+                isNextTokenContinuation = false; // Reset after using it
+            }
+            return token;
         };
         
         // Helper to check if character is whitespace (excluding newline)
@@ -151,6 +157,8 @@ export class Lexer {
         const isAlphaNumeric = (char: string): boolean => {
             return isAlpha(char) || isDigit(char);
         };
+        
+        let isNextTokenContinuation = false;
         
         while (i < source.length) {
             const char = source[i];
@@ -176,6 +184,7 @@ export class Lexer {
                     i = lookAhead + 1; // Skip past newline
                     line++;
                     column = 0;
+                    isNextTokenContinuation = true;
                     continue;
                 }
                 // If not a line continuation, fall through to handle as regular character

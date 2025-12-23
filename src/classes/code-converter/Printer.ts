@@ -318,14 +318,25 @@ export class Printer {
         
         let assignmentLine: string;
         const prefix = node.isSet ? 'set ' : '';
-        // If implicit, no operator. Otherwise space + op.
-        const opStr = node.isImplicit ? '' : (node.hasAs ? ' as' : ' =');
         
+        // Determine operator/separator string based on flags
+        let opStr = ' = ';
+        if (node.isImplicit) {
+            opStr = ' ';
+        } else if (node.hasAs) {
+            opStr = ' as ';
+        } else if (!node.isSet && !node.hasAs) {
+            opStr = ' = ';
+        } else if (node.isSet && !node.hasAs && node.isImplicit === false) {
+            // Check if it was explicitly parsed with '='
+            opStr = ' = ';
+        }
+
         if (node.isLastValue) {
-            assignmentLine = `${prefix}${target}${opStr} $`;
+            assignmentLine = `${prefix}${target}${opStr}$`;
         } else if (node.command) {
             const cmdCode = Printer.printNode(node.command, { ...ctx, indentLevel: 0 });
-            assignmentLine = `${prefix}${target}${opStr} ${cmdCode.trim()}`;
+            assignmentLine = `${prefix}${target}${opStr}${cmdCode.trim()}`;
         } else if (node.literalValue !== undefined) {
             let valueToUse = node.literalValue;
             let typeToUse: 'string' | 'number' | 'boolean' | 'null' | 'object' | 'array';
@@ -349,7 +360,13 @@ export class Printer {
             
             let valueStr: string;
             if (typeToUse === 'string') {
-                valueStr = `"${String(valueToUse).replace(/"/g, '\\"')}"`;
+                const rawValue = String(valueToUse);
+                // Preserve template string backticks if it was marked as a template string
+                if (rawValue.startsWith('\0TEMPLATE\0')) {
+                    valueStr = `\`${rawValue.replace('\0TEMPLATE\0', '')}\``;
+                } else {
+                    valueStr = `"${rawValue.replace(/"/g, '\\"')}"`;
+                }
             } else if (typeToUse === 'null') {
                 valueStr = 'null';
             } else if (typeToUse === 'boolean') {
@@ -362,7 +379,7 @@ export class Printer {
                 valueStr = typeof valueToUse === 'string' ? `"${valueToUse}"` : String(valueToUse);
             }
             
-            assignmentLine = `${prefix}${target}${opStr} ${valueStr}`;
+            assignmentLine = `${prefix}${target}${opStr}${valueStr}`;
         } else {
             return;
         }
@@ -560,11 +577,25 @@ export class Printer {
         }
         
         let commandName = node.name;
+        let modulePrefix = '';
+        
         if (node.module && node.name.includes('.')) {
+            // If the name already includes a dot, it was likely parsed with a module prefix
+            modulePrefix = ''; // Prefix is already in commandName
+        } else if (node.module) {
+            // Node has a module but name doesn't have a dot. 
+            // We only add the prefix if it was likely present in the original code.
+            // Check if node.name matches the expected format from Parser
             const parts = node.name.split('.');
-            commandName = parts[parts.length - 1];
+            if (parts.length > 1) {
+                commandName = parts[parts.length - 1];
+                modulePrefix = `${node.module}.`;
+            } else {
+                // Name is simple 'add', keep it as is unless we're forced to normalize
+                commandName = node.name;
+                modulePrefix = '';
+            }
         }
-        const modulePrefix = node.module ? `${node.module}.` : '';
         
         const positionalArgs: any[] = [];
         let namedArgsObj: Record<string, any> | null = null;
@@ -1004,11 +1035,30 @@ export class Printer {
                     ? (Printer.printArg(elseifCondition, ctx) ?? String(elseifCondition))
                     : String(elseifCondition);
                 
-                writer.pushLine(`elseif ${elseifConditionStr}`);
+                // Use explicit hasThen flag if available (set by IfBlockParser)
+                let hasThen = elseifBranch.hasThen === true;
+                let bodyToPrint = elseifBranch.body || [];
                 
-                if (elseifBranch.body && Array.isArray(elseifBranch.body)) {
+                // Fallback for older ASTs: check if the body starts with a 'then' command
+                if (!hasThen && bodyToPrint.length > 0 && bodyToPrint[0]?.type === 'command' && bodyToPrint[0]?.name === 'then') {
+                    hasThen = true;
+                    bodyToPrint = bodyToPrint.slice(1);
+                }
+                
+                const elseifThen = hasThen ? ' then' : '';
+                
+                // Try to preserve elseif line prefix (indentation) if possible
+                if (ctx.lineIndex && ctx.originalScript && elseifBranch.keywordPos) {
+                    const line = ctx.lineIndex.getLine(elseifBranch.keywordPos.startRow);
+                    const indent = line.substring(0, elseifBranch.keywordPos.startCol);
+                    writer.push(indent + `elseif ${elseifConditionStr}${elseifThen}\n`);
+                } else {
+                    writer.pushLine(`elseif ${elseifConditionStr}${elseifThen}`);
+                }
+                
+                if (bodyToPrint && Array.isArray(bodyToPrint)) {
                     const bodyIndent = ctx.indentLevel + 1;
-                    for (const stmt of elseifBranch.body) {
+                    for (const stmt of bodyToPrint) {
                         Printer.emitLeadingComments(stmt, writer, ctx, bodyIndent);
                         Printer.emitBlankLineAfterComments(stmt, writer);
                         const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
@@ -1024,19 +1074,39 @@ export class Printer {
             }
         }
 
-        if (node.elseBranch && Array.isArray(node.elseBranch) && node.elseBranch.length > 0) {
-            writer.pushLine('else');
-            const bodyIndent = ctx.indentLevel + 1;
-            for (const stmt of node.elseBranch) {
-                Printer.emitLeadingComments(stmt, writer, ctx, bodyIndent);
-                Printer.emitBlankLineAfterComments(stmt, writer);
-                const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
-                if (stmtCode) {
-                    writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+        if (node.elseBranch && Array.isArray(node.elseBranch)) {
+            let elseBody = node.elseBranch;
+            // Support 'else then' flavor if present
+            let hasThen = node.elseHasThen === true;
+            if (!hasThen && elseBody.length > 0 && elseBody[0]?.type === 'command' && elseBody[0]?.name === 'then') {
+                hasThen = true;
+                elseBody = elseBody.slice(1);
+            }
+
+            if (elseBody.length > 0 || hasThen) {
+                const elseThen = hasThen ? ' then' : '';
+                
+                // Try to preserve else line prefix (indentation) if possible
+                if (ctx.lineIndex && ctx.originalScript && node.elseKeywordPos) {
+                    const line = ctx.lineIndex.getLine(node.elseKeywordPos.startRow);
+                    const indent = line.substring(0, node.elseKeywordPos.startCol);
+                    writer.push(indent + `else${elseThen}\n`);
+                } else {
+                    writer.pushLine(`else${elseThen}`);
                 }
-                const trailingBlankLines = (stmt as any)?.trailingBlankLines;
-                if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
-                    writer.push('\n'.repeat(trailingBlankLines));
+
+                const bodyIndent = ctx.indentLevel + 1;
+                for (const stmt of elseBody) {
+                    Printer.emitLeadingComments(stmt, writer, ctx, bodyIndent);
+                    Printer.emitBlankLineAfterComments(stmt, writer);
+                    const stmtCode = Printer.printNode(stmt, { ...ctx, indentLevel: bodyIndent });
+                    if (stmtCode) {
+                        writer.push(stmtCode.endsWith('\n') ? stmtCode : stmtCode + '\n');
+                    }
+                    const trailingBlankLines = (stmt as any)?.trailingBlankLines;
+                    if (trailingBlankLines !== undefined && trailingBlankLines !== null && trailingBlankLines > 0) {
+                        writer.push('\n'.repeat(trailingBlankLines));
+                    }
                 }
             }
         }
@@ -1070,7 +1140,20 @@ export class Printer {
      * Print prompt block node
      */
     static printPromptBlock(node: any, writer: Writer, _ctx: PrintContext): void {
-        writer.pushLine('---');
+        let linePrefix = '  '.repeat(_ctx.indentLevel);
+        
+        // If we have line index and original script, try to extract exact indentation
+        if (_ctx.lineIndex && _ctx.originalScript && node.codePos) {
+            const line = _ctx.lineIndex.getLine(node.codePos.startRow);
+            const match = line.match(/^(\s*)---/);
+            if (match) {
+                linePrefix = match[1];
+            }
+        } else if (node.codePos && node.codePos.startCol === 0) {
+            linePrefix = '';
+        }
+        
+        writer.push(linePrefix + '---\n');
         if (node.rawText !== undefined) {
             if (node.rawText.length > 0) {
                 writer.push(node.rawText);
@@ -1081,7 +1164,7 @@ export class Printer {
                 writer.newline();
             }
         }
-        writer.pushLine('---');
+        writer.push(linePrefix + '---\n');
     }
 
     /**

@@ -2,15 +2,15 @@
  * RobinPathThread class for managing execution threads
  */
 
-import { type Value, getValueType } from '../utils';
+import { type Value } from '../utils';
 import { Parser } from './Parser';
 import { Executor } from './Executor';
 import { ExecutionStateTracker } from './ExecutionStateTracker';
+import { ASTSerializer } from './ASTSerializer';
 import type { 
     Environment, 
     Statement, 
     Arg,
-    TogetherBlock,
     OnBlock
 } from '../index';
 import type { RobinPath } from '../index';
@@ -20,6 +20,7 @@ export class RobinPathThread {
     private executor: Executor;
     public readonly id: string;
     private parent: RobinPath | null = null;
+    private serializer: ASTSerializer;
 
     constructor(baseEnvironment: Environment, id: string, parent?: RobinPath) {
         this.id = id;
@@ -45,6 +46,7 @@ export class RobinPathThread {
         };
 
         this.executor = new Executor(this.environment, this);
+        this.serializer = new ASTSerializer(this.environment);
     }
 
     /**
@@ -239,7 +241,7 @@ export class RobinPathThread {
             }
 
             // Serialize statement with current module context
-            return this.serializeStatement(stmt, undefined, currentModuleContext);
+            return this.serializer.serializeStatement(stmt, currentModuleContext);
         });
 
         return ast;
@@ -263,7 +265,7 @@ export class RobinPathThread {
             return {
                 name: func.name,
                 paramNames: func.paramNames,
-                body: func.body.map((stmt) => this.serializeStatement(stmt, undefined, undefined))
+                body: func.body.map((stmt) => this.serializer.serializeStatement(stmt, undefined))
             };
         });
     }
@@ -290,7 +292,7 @@ export class RobinPathThread {
 
         // Serialize each event handler
         return allHandlers.map((handler) => {
-            return this.serializeStatement(handler, undefined, currentModuleContext);
+            return this.serializer.serializeStatement(handler, currentModuleContext);
         });
     }
 
@@ -330,7 +332,7 @@ export class RobinPathThread {
         // Serialize AST with execution state
         const ast = statements.map((stmt, index) => {
             const state = stateTracker.getState(index);
-            return this.serializeStatement(stmt, state, undefined);
+            return this.serializer.serializeStatement(stmt, undefined, state);
         });
 
         // Get variables
@@ -391,229 +393,6 @@ export class RobinPathThread {
         }
     }
 
-    /**
-     * Find the module name for a given function name
-     * Returns the module name if found, null otherwise
-     */
-    private findModuleName(functionName: string, currentModuleContext?: string | null): string | null {
-        // If the function name contains a dot, extract the module name
-        if (functionName.includes('.')) {
-            const parts = functionName.split('.');
-            return parts[0] || null;
-        }
-
-        // Use provided context or environment's currentModule
-        const moduleContext = currentModuleContext !== undefined ? currentModuleContext : this.environment.currentModule;
-
-        // If there's a module context, check that module first
-        if (moduleContext) {
-            const fullName = `${moduleContext}.${functionName}`;
-            if (this.environment.builtins.has(fullName) || this.environment.metadata.has(fullName)) {
-                return moduleContext;
-            }
-        }
-
-        // Check if it's a global builtin BEFORE searching modules
-        // This ensures global functions are preferred over module functions
-        // (e.g., "log" should be global, not "core.log")
-        if (this.environment.builtins.has(functionName) || this.environment.metadata.has(functionName)) {
-            return null; // Global function, no module
-        }
-
-        // Search through builtins and metadata to find which module this function belongs to
-        for (const [name] of this.environment.builtins.entries()) {
-            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
-                const parts = name.split('.');
-                return parts[0] || null;
-            }
-        }
-
-        for (const [name] of this.environment.metadata.entries()) {
-            if (name.includes('.') && name.endsWith(`.${functionName}`)) {
-                const parts = name.split('.');
-                return parts[0] || null;
-            }
-        }
-
-        return null;
-    }
-
-    private serializeStatement(stmt: Statement, state?: { lastValue: Value; beforeValue: Value }, currentModuleContext?: string | null): any {
-        // For comment nodes, don't include codePos - derive from comments array when needed
-        const base: any = {
-            type: stmt.type,
-            lastValue: state?.lastValue ?? null
-        };
-        
-        // Only add codePos for non-comment nodes
-        if (stmt.type !== 'comment') {
-            base.codePos = (stmt as any).codePos;
-        }
-
-        // Add comments if present
-        const comments = (stmt as any).comments;
-        if (comments && comments.length > 0) {
-            base.comments = comments;
-        }
-
-        switch (stmt.type) {
-            case 'command':
-                const moduleName = this.findModuleName(stmt.name, currentModuleContext);
-                return {
-                    ...base,
-                    name: stmt.name,
-                    module: moduleName,
-                    args: stmt.args.map(arg => this.serializeArg(arg)),
-                    syntaxType: (stmt as any).syntaxType
-                };
-            case 'assignment':
-                return {
-                    ...base,
-                    targetName: stmt.targetName,
-                    targetPath: stmt.targetPath,
-                    command: stmt.command ? this.serializeStatement(stmt.command, undefined, currentModuleContext) : undefined,
-                    literalValue: stmt.literalValue,
-                    literalValueType: stmt.literalValue !== undefined ? getValueType(stmt.literalValue) : (stmt.literalValueType || undefined),
-                    isLastValue: stmt.isLastValue
-                };
-            case 'shorthand':
-                return {
-                    ...base,
-                    targetName: stmt.targetName
-                };
-            case 'inlineIf':
-                return {
-                    ...base,
-                    conditionExpr: stmt.condition,
-                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
-                };
-            case 'ifBlock':
-                return {
-                    ...base,
-                    conditionExpr: stmt.condition,
-                    thenBranch: stmt.thenBranch.map(s => this.serializeStatement(s, undefined, currentModuleContext)),
-                    elseifBranches: stmt.elseifBranches?.map(branch => ({
-                        condition: branch.condition,
-                        body: branch.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                    })),
-                    elseBranch: stmt.elseBranch?.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                };
-            case 'ifTrue':
-                return {
-                    ...base,
-                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
-                };
-            case 'ifFalse':
-                return {
-                    ...base,
-                    command: this.serializeStatement(stmt.command, undefined, currentModuleContext)
-                };
-            case 'define':
-                return {
-                    ...base,
-                    name: stmt.name,
-                    paramNames: stmt.paramNames,
-                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                };
-            case 'do':
-                return {
-                    ...base,
-                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                };
-            case 'forLoop':
-                return {
-                    ...base,
-                    varName: stmt.varName,
-                    iterableExpr: stmt.iterable,
-                    body: stmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                };
-            case 'together':
-                const togetherStmt = stmt as TogetherBlock;
-                return {
-                    ...base,
-                    blocks: (togetherStmt.blocks || []).map(block => this.serializeStatement(block, undefined, currentModuleContext))
-                };
-            case 'onBlock':
-                const onBlockStmt = stmt as OnBlock;
-                return {
-                    ...base,
-                    eventName: onBlockStmt.eventName,
-                    body: onBlockStmt.body.map(s => this.serializeStatement(s, undefined, currentModuleContext))
-                };
-            case 'return':
-                return {
-                    ...base,
-                    value: stmt.value ? this.serializeArg(stmt.value) : undefined
-                };
-            case 'break':
-                return {
-                    ...base
-                };
-            case 'comment':
-                return {
-                    ...base,
-                    comments: stmt.comments || [],
-                    lineNumber: stmt.lineNumber
-                };
-            case 'chunk_marker':
-                const chunkMarkerStmt = stmt as any;
-                return {
-                    ...base,
-                    id: chunkMarkerStmt.id,
-                    meta: chunkMarkerStmt.meta,
-                    raw: chunkMarkerStmt.raw
-                };
-            case 'cell':
-                const cellBlockStmt = stmt as any;
-                const serializedCell: any = {
-                    ...base,
-                    cellType: cellBlockStmt.cellType,
-                    meta: cellBlockStmt.meta || {}
-                };
-                // Always include rawBody if present (needed for printing non-code cells)
-                if (cellBlockStmt.rawBody !== undefined && cellBlockStmt.rawBody !== null) {
-                    serializedCell.rawBody = cellBlockStmt.rawBody;
-                }
-                // Include body if present (for code cells)
-                if (cellBlockStmt.body && Array.isArray(cellBlockStmt.body) && cellBlockStmt.body.length > 0) {
-                    serializedCell.body = cellBlockStmt.body.map((s: Statement) => this.serializeStatement(s, undefined, currentModuleContext));
-                }
-                return serializedCell;
-            case 'prompt_block':
-                const promptBlockStmt = stmt as any;
-                return {
-                    ...base,
-                    rawText: promptBlockStmt.rawText,
-                    fence: promptBlockStmt.fence
-                };
-        }
-    }
-
-    /**
-     * Serialize an argument to JSON
-     */
-    private serializeArg(arg: Arg): any {
-        switch (arg.type) {
-            case 'subexpr':
-                return { type: 'subexpr', code: arg.code };
-            case 'var':
-                return { type: 'var', name: arg.name, path: arg.path };
-            case 'lastValue':
-                return { type: 'lastValue' };
-            case 'number':
-                return { type: 'number', value: arg.value };
-            case 'string':
-                return { type: 'string', value: arg.value };
-            case 'literal':
-                return { type: 'literal', value: arg.value };
-            case 'namedArgs':
-                const serialized: Record<string, any> = {};
-                for (const [key, valueArg] of Object.entries(arg.args)) {
-                    serialized[key] = this.serializeArg(valueArg);
-                }
-                return { type: 'namedArgs', args: serialized };
-        }
-    }
 
     /**
      * Get all available commands, modules, and functions for this thread

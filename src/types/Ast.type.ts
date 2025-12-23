@@ -311,7 +311,14 @@ export interface IfBlock {
     condition: Expression;
     thenBranch: Statement[];
     elseBranch?: Statement[];
-    elseifBranches?: Array<{ condition: Expression; body: Statement[] }>;
+    elseHasThen?: boolean;
+    elseKeywordPos?: CodePosition;
+    elseifBranches?: Array<{ 
+        condition: Expression; 
+        body: Statement[];
+        hasThen?: boolean;
+        keywordPos?: CodePosition;
+    }>;
     decorators?: DecoratorCall[]; // Decorators attached to this if block
     comments?: CommentWithPosition[]; // Comments attached to this if block (above and inline)
     trailingBlankLines?: number; // Number of blank lines after this statement (for preserving formatting)

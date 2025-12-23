@@ -117,7 +117,7 @@ const testCases = [
 // Each AST test file should match a corresponding script file in test/scripts/
 // Example: a1-variable-assignment.js matches 01-variable-assignment.robin
 const astTestCases = [
-    'ast/a0.js', // to keep it as 0 NOTE: DO NOT REMOVE!
+    'ast/a0-custom.js', // a0 - matches a0-custom.robin
     'ast/a1-variable-assignment.js', // a1 - matches 01-variable-assignment.robin
     'ast/a2-expressions.js',         // a2 - matches 02-expressions.robin
     'ast/a3-conditionals.js',         // a3 - matches 03-conditionals.robin
@@ -126,6 +126,20 @@ const astTestCases = [
     'ast/a6-do-blocks.js',             // a6 - matches 06-do-blocks.robin
     'ast/a7-into-syntax.js',           // a7 - matches 07-into-syntax.robin
     'ast/a8-subexpressions.js',       // a8 - matches 08-subexpressions.robin
+    'ast/a9-objects-arrays.js',       // a9 - matches 09-objects-arrays.robin
+    'ast/a10-builtin-commands.js',     // a10 - matches 10-builtin-commands.robin
+    'ast/a11-modules.js',              // a11 - matches 11-modules.robin
+    'ast/a12-events.js',               // a12 - matches 12-events.robin
+    'ast/a13-together.js',             // a13 - matches 13-together.robin
+    'ast/a14-with.js',                 // a14 - matches 14-with.robin
+    'ast/a15-meta.js',                 // a15 - matches 15-meta.robin
+    'ast/a16-decorator.js',            // a16 - matches 16-decorator.robin
+    'ast/a17-line-continuation.js',    // a17 - matches 17-line-continuation.robin
+    'ast/a18-template-strings.js',     // a18 - matches 18-template-strings.robin
+    'ast/a19-last-value.js',           // a19 - matches 19-last-value.robin
+    'ast/a20-comments.js',             // a20 - matches 20-comments.robin
+    'ast/a21-fenced.js',               // a21 - matches 21-fenced.robin
+    'ast/a22-set-assignment.js',       // a22 - matches 22-set-assignment.robin
 ];
 
 // Parse command-line arguments
@@ -202,6 +216,35 @@ for (let i = 0; i < filteredArgs.length; i++) {
         continue;
     }
     
+    // Check for AST test case range (e.g., "a0-a22")
+    if (arg.startsWith('a') && arg.includes('-')) {
+        const parts = arg.split('-');
+        if (parts.length === 2 && parts[0].startsWith('a') && parts[1].startsWith('a')) {
+            const start = parseInt(parts[0].substring(1), 10);
+            const end = parseInt(parts[1].substring(1), 10);
+            if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start && end < astTestCases.length) {
+                for (let j = start; j <= end; j++) {
+                    testCaseNumbers.push(j);
+                    testCaseIsAST.push(true);
+                }
+                continue;
+            } else {
+                console.error('='.repeat(60));
+                console.error('Invalid AST test range:', arg);
+                console.error('='.repeat(60));
+                console.error();
+                console.error('Available AST Test Cases:');
+                astTestCases.forEach((file, index) => {
+                    console.error(`  a${index}: ${file || 'null'}`);
+                });
+                console.error();
+                console.error('Usage: npm run test -- a<start>-a<end>');
+                console.error('Example: npm run test -- a0-a22  (runs AST tests 0 through 22)');
+                process.exit(1);
+            }
+        }
+    }
+
     // Check for case test range (e.g., "c0-c5")
     if (arg.startsWith('c') && arg.includes('-')) {
         const parts = arg.split('-');
