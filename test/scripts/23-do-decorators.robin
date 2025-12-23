@@ -1,0 +1,19 @@
+# Test decorators on do blocks
+log "Starting decorator tests"
+
+@desc "Top level do block"
+do
+  log "Inside top level do"
+enddo
+
+def test_nested_decorators
+  log "Inside function"
+  
+  @desc "Nested do block"
+  do
+    log "Inside nested do"
+  enddo
+enddef
+
+test_nested_decorators
+log "Decorator tests complete"

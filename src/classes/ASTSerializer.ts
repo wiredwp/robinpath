@@ -84,6 +84,11 @@ export class ASTSerializer {
             type: stmt.type,
             lastValue: resolvedLastValue
         };
+
+        // Add decorators if present
+        if ((stmt as any).decorators && (stmt as any).decorators.length > 0) {
+            base.decorators = (stmt as any).decorators;
+        }
         
         // Only add codePos for non-comment nodes
         if (stmt.type !== 'comment') {
@@ -183,8 +188,7 @@ export class ASTSerializer {
                     ...base,
                     name: stmt.name,
                     paramNames: stmt.paramNames,
-                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext)),
-                    decorators: stmt.decorators
+                    body: stmt.body.map(s => this.serializeStatement(s, currentModuleContext))
                 };
             case 'do':
                 return {

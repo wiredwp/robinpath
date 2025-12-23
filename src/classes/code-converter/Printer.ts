@@ -463,6 +463,8 @@ export class Printer {
      * Print command node
      */
     static printCommand(node: any, writer: Writer, ctx: PrintContext): void {
+        Printer.emitDecorators(node, writer, ctx);
+
         if (node.name === '_var' && node.args && node.args.length === 1 && node.args[0] && node.args[0].type === 'var') {
             const varArg = node.args[0];
             writer.pushLine(Printer.printVarRef(varArg.name, varArg.path));
@@ -861,6 +863,15 @@ export class Printer {
 
         const prevEndRow = prevStmt.codePos.endRow;
         let currentStartRow = currentStmt.codePos.startRow;
+
+        // Account for decorators
+        if (currentStmt.decorators && Array.isArray(currentStmt.decorators) && currentStmt.decorators.length > 0) {
+            const firstDecorator = currentStmt.decorators[0];
+            if (firstDecorator.codePos && firstDecorator.codePos.startRow < currentStartRow) {
+                currentStartRow = firstDecorator.codePos.startRow;
+            }
+        }
+
         const leadingComments = Printer.getLeadingComments(currentStmt);
         if (leadingComments.length > 0 && leadingComments[0]?.codePos) {
             currentStartRow = leadingComments[0].codePos.startRow;
@@ -891,6 +902,15 @@ export class Printer {
                     const decoratorsCount = (node.decorators && Array.isArray(node.decorators)) ? node.decorators.length : 0;
                     const headerEndRow = node.codePos.startRow + decoratorsCount;
                     let effectiveStartRow = stmt.codePos.startRow;
+
+                    // Account for decorators on the first statement
+                    if (stmt.decorators && Array.isArray(stmt.decorators) && stmt.decorators.length > 0) {
+                        const firstDecorator = stmt.decorators[0];
+                        if (firstDecorator.codePos && firstDecorator.codePos.startRow < effectiveStartRow) {
+                            effectiveStartRow = firstDecorator.codePos.startRow;
+                        }
+                    }
+
                     const leadingComments = Printer.getLeadingComments(stmt);
                     if (leadingComments.length > 0 && leadingComments[0].codePos) {
                         effectiveStartRow = leadingComments[0].codePos.startRow;

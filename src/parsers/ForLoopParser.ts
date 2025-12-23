@@ -262,10 +262,6 @@ export function parseForLoop(
         result.comments = headerComments;
     }
 
-    if (headerComments.length > 0) {
-        result.comments = headerComments;
-    }
-
     // Attach decorators if provided
     if (decorators && decorators.length > 0) {
         result.decorators = decorators;

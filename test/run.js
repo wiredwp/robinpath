@@ -84,6 +84,11 @@ const testFiles = [
     '19-last-value.robin',
     '20-comments.robin',
     '21-fenced.robin',
+    '22-set-assignment.robin',
+    '23-do-decorators.robin',
+    '24-nested-var-decorators.robin',
+    '25-together-decorators.robin',
+    '26-title-decorator.robin',
 ];
 
 // Define sample files mapping (sample number -> filename)
@@ -140,6 +145,10 @@ const astTestCases = [
     'ast/a20-comments.js',             // a20 - matches 20-comments.robin
     'ast/a21-fenced.js',               // a21 - matches 21-fenced.robin
     'ast/a22-set-assignment.js',       // a22 - matches 22-set-assignment.robin
+    'ast/a23-do-decorators.js',        // a23 - matches 23-do-decorators.robin
+    'ast/a24-nested-var-decorators.js', // a24 - matches 24-nested-var-decorators.robin
+    'ast/a25-together-decorators.js',  // a25 - matches 25-together-decorators.robin
+    'ast/a26-title-decorator.js',      // a26 - matches 26-title-decorator.robin
 ];
 
 // Parse command-line arguments

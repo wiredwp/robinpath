@@ -7,7 +7,6 @@
 import { TokenStream } from '../classes/TokenStream';
 import { TokenKind } from '../classes/Lexer';
 import type { Token } from '../classes/Lexer';
-import { ScopeParser } from './ScopeParser';
 import type { TogetherBlock, ScopeBlock, Statement, CommentWithPosition, CodePosition, DecoratorCall } from '../types/Ast.type';
 
 export interface TogetherBlockParserContext {
@@ -131,23 +130,17 @@ export function parseTogether(
             continue;
         }
         
-        // Only allow 'do' blocks inside together
-        if (token.kind !== TokenKind.KEYWORD || token.text !== 'do') {
-            throw new Error(`together block can only contain do blocks at line ${token.line}, column ${token.column}. Found: ${token.text}`);
-        }
+        // Parse the block using context.parseStatement
+        // This will automatically handle decorators thanks to the recursive fix in Parser.ts
+        const stmt = context.parseStatement(stream);
         
-        // Parse the do block using ScopeParser
-        // Note: do blocks inside together don't get decorators from the together block
-        const doBlock = ScopeParser.parse(
-            stream,
-            context.parseStatement,
-            context.parseComment
-        );
-        
-        if (doBlock.type === 'do') {
-            blocks.push(doBlock);
+        if (stmt && stmt.type === 'do') {
+            blocks.push(stmt as ScopeBlock);
+        } else if (stmt) {
+            throw new Error(`together block can only contain do blocks at line ${token.line}, column ${token.column}. Found statement type: ${stmt.type}`);
         } else {
-            throw new Error(`together block can only contain do blocks at line ${token.line}`);
+            // If parseStatement returns null, skip the token to avoid infinite loop
+            stream.next();
         }
     }
 

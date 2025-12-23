@@ -1,0 +1,11 @@
+# Test @title decorator on do block
+@title "Step 1: Initialization"
+do
+  log "Initializing..."
+enddo
+
+@title "Step 2: Processing"
+@desc "Processing data"
+do
+  log "Processing..."
+enddo

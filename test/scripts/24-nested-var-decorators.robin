@@ -1,0 +1,7 @@
+# Test decorators on nested vars
+do
+  @desc "Nested variable"
+  var $nestedVar "value"
+  
+  log $nestedVar
+enddo

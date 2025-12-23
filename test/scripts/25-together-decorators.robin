@@ -1,0 +1,12 @@
+# Test decorators inside together blocks
+together
+  @desc "Task 1"
+  do
+    log "Task 1"
+  enddo
+  
+  @desc "Task 2"
+  do
+    log "Task 2"
+  enddo
+endtogether

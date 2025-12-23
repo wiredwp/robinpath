@@ -386,6 +386,36 @@ export class Parser {
         const token = stream.current();
         if (!token) return null;
 
+        // Check for decorators
+        if (token.kind === TokenKind.DECORATOR) {
+            const decoratorResult = parseDecorators(stream, {
+                parseStatement: (s) => this.parseStatementFromStream(s),
+                parseComment: (s) => this.parseCommentFromStream(s)
+            });
+            const decorators = decoratorResult.decorators;
+            
+            // Now parse the actual statement following the decorators
+            const stmt = this.parseStatementFromStream(stream);
+            if (stmt) {
+                // Attach decorators to the statement
+                (stmt as any).decorators = decorators;
+
+                // Execute parse decorators for var and const
+                if (stmt.type === 'command' && (stmt.name === 'var' || stmt.name === 'const')) {
+                    if (stmt.args.length > 0 && stmt.args[0].type === 'var') {
+                        const varName = stmt.args[0].name;
+                        // Since this is a sync method, we execute without await.
+                        // Standard built-in decorators are essentially sync.
+                        this.executeParseDecorators(decorators, varName, null);
+                    }
+                }
+
+                return stmt;
+            }
+            // If no statement follows (e.g., end of block), we can't attach them
+            return null;
+        }
+
         // Check for fences (Prompt, Chunk)
         // Note: Cell blocks are async, so they are not supported in synchronous parseStatementFromStream
         const lines = this.source.split('\n');
